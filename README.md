@@ -14,17 +14,18 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 
 **To use:** open the site on GitHub Pages and click **Combat Generator**, or open `combat-generator/index.html` in any browser. No install needed. It loads the book-style fonts from Google Fonts when online and falls back to system fonts offline.
 
-1. Set the number of heroes, their level, and the difficulty.
-2. Pick **Group of monsters** or **Legendary solo boss**.
-3. Optional: armor, the flavor of the damage die, minion waves, who's paying, and flavor abilities.
-4. Click **Generate encounter**.
+1. Use **−/+** to set the number of heroes and their level.
+2. Tap **Monster Group** or **Boss**, then tap a difficulty. The fight appears right away.
+3. Armor, dice style, extra minions, who's paying, and special abilities are under **More options**.
+4. Tap **New Encounter** for a different fight with the same settings.
 
-Each monster card shows:
-- **HP**, with a box for each creature so you can track damage
-- **Damage**: a randomized dice expression with its average per round, plus a **Roll** button
-- **Save DC**, armor, and the CR it roughly matches
-
-At the bottom you'll see the **expected reward** in gold, per hero and for the whole party.
+In the fight:
+- **Tap the dice** on a monster to roll its damage.
+- **Type in the HP boxes** to track damage. A box turns red at half HP and is crossed out at 0.
+- **Tap a monster's name** to rename it.
+- **New Dice** gives new dice to the same monsters and keeps your names and HP.
+- **Copy as Text** copies the whole fight, ready to paste into your notes or Discord.
+- **Loot** shows the expected gold per hero and for the whole party.
 
 ### Randomized dice (same average)
 

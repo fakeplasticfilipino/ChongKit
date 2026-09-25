@@ -15,77 +15,91 @@
 <main>
   <a class="back" href="../">← All tools</a>
   <h1>Combat Generator</h1>
-  <p class="tagline">Monsters built by the book, with fresh dice every time. Each roll averages exactly what the guide says.</p>
+  <p class="tagline">Pick your party and a difficulty. The fight appears below.</p>
 
   <section class="block setup">
-    <div class="bname">Encounter Setup</div>
-    <div class="grid">
-      <label>Heroes <input id="heroes" type="number" min="1" max="10" value="4"></label>
-      <label>Hero Level <input id="level" type="number" min="1" max="20" value="1"></label>
-      <label>Difficulty
-        <select id="difficulty">
-          <option value="easy">Easy (under 50%)</option>
-          <option value="medium">Medium (~75%)</option>
-          <option value="hard" selected>Hard (100%)</option>
-          <option value="deadly">Deadly (100–125%)</option>
-          <option value="veryDeadly">Very Deadly (150%+)</option>
-        </select>
-      </label>
-      <label>Encounter
-        <select id="mode">
-          <option value="standard">Group of monsters</option>
-          <option value="legendary">Legendary solo</option>
-        </select>
-      </label>
-      <label>Armor
-        <select id="armor">
-          <option value="random">Guide mix (60/30/10)</option>
-          <option value="none">All unarmored</option>
-          <option value="medium">All Medium</option>
-          <option value="heavy">All Heavy</option>
-        </select>
-      </label>
-      <label>Damage Die
-        <select id="die">
-          <option value="any">Any die (random)</option>
-          <option value="4">d4 — Undead</option>
-          <option value="6">d6 — Goblins</option>
-          <option value="8">d8 — Humans</option>
-          <option value="10">d10 — Beasts</option>
-          <option value="12">d12 — Giants</option>
-          <option value="20">d20 — Mightiest</option>
-        </select>
-      </label>
-      <label>Minion Waves
-        <select id="minions">
-          <option value="0">None</option>
-          <option value="1">1 per hero</option>
-          <option value="2">2 per hero</option>
-          <option value="3">3 per hero</option>
-          <option value="4">4 per hero</option>
-        </select>
-      </label>
-      <label>Who's Paying?
-        <select id="patron">
-          <option value="poor">Poor villager (−2 lvl)</option>
-          <option value="modest">Modest (−1 lvl)</option>
-          <option value="standard" selected>Standard</option>
-          <option value="wealthy">Wealthy (+1 lvl)</option>
-          <option value="lavish">Extravagant (+2 lvl)</option>
-        </select>
-      </label>
-      <label class="check"><input id="abilities" type="checkbox"> Add flavor abilities</label>
+    <div class="row">
+      <div class="field">
+        <span class="flabel">Heroes</span>
+        <div class="stepper" data-for="heroes"><button type="button" data-step="-1" aria-label="Fewer heroes">−</button><input id="heroes" type="number" min="1" max="10" value="4" inputmode="numeric" aria-label="Heroes"><button type="button" data-step="1" aria-label="More heroes">+</button></div>
+      </div>
+      <div class="field">
+        <span class="flabel">Level</span>
+        <div class="stepper" data-for="level"><button type="button" data-step="-1" aria-label="Lower level">−</button><input id="level" type="number" min="1" max="20" value="1" inputmode="numeric" aria-label="Hero level"><button type="button" data-step="1" aria-label="Higher level">+</button></div>
+      </div>
+      <div class="field">
+        <span class="flabel">Fight</span>
+        <div class="seg" id="mode">
+          <button type="button" data-value="standard" aria-pressed="true">Monster Group</button>
+          <button type="button" data-value="legendary" aria-pressed="false">Boss</button>
+        </div>
+      </div>
     </div>
+
+    <div class="field">
+      <span class="flabel">Difficulty</span>
+      <div class="seg" id="difficulty">
+        <button type="button" data-value="easy" aria-pressed="false">Easy</button>
+        <button type="button" data-value="medium" aria-pressed="false">Medium</button>
+        <button type="button" data-value="hard" aria-pressed="true">Hard</button>
+        <button type="button" data-value="deadly" aria-pressed="false" class="danger">Deadly</button>
+        <button type="button" data-value="veryDeadly" aria-pressed="false" class="danger">Very Deadly</button>
+      </div>
+      <p class="hint" id="diffHint"></p>
+    </div>
+
+    <details class="more">
+      <summary>More options</summary>
+      <div class="grid">
+        <label>Armor
+          <select id="armor">
+            <option value="random">Mixed (like the book)</option>
+            <option value="none">No armor</option>
+            <option value="medium">All Medium</option>
+            <option value="heavy">All Heavy</option>
+          </select>
+        </label>
+        <label>Dice style
+          <select id="die">
+            <option value="any">Any dice</option>
+            <option value="4">d4: undead</option>
+            <option value="6">d6: goblins</option>
+            <option value="8">d8: humans</option>
+            <option value="10">d10: beasts</option>
+            <option value="12">d12: giants</option>
+            <option value="20">d20: mightiest</option>
+          </select>
+        </label>
+        <label>Extra minions
+          <select id="minions">
+            <option value="0">None</option>
+            <option value="1">1 per hero</option>
+            <option value="2">2 per hero</option>
+            <option value="3">3 per hero</option>
+            <option value="4">4 per hero</option>
+          </select>
+        </label>
+        <label>Who's paying?
+          <select id="patron">
+            <option value="poor">Poor villager</option>
+            <option value="modest">Modest</option>
+            <option value="standard" selected>Normal</option>
+            <option value="wealthy">Wealthy</option>
+            <option value="lavish">Very rich</option>
+          </select>
+        </label>
+        <label class="check"><input id="abilities" type="checkbox"> Give monsters a special ability</label>
+      </div>
+    </details>
+
     <div class="actions">
-      <button class="ribbon primary" id="go">Generate Encounter</button>
-      <button class="ribbon" id="reroll">New Dice Only</button>
-      <button class="ribbon" id="copy">Copy as Text</button>
+      <button class="ribbon primary" id="go">New Encounter</button>
     </div>
   </section>
 
   <div id="out"></div>
 
-  <p class="foot">Source: Nimble 5e v2 GM Guide v2.0.1. Monster Builder (p.30), Combat Encounter Guidelines (p.26–27), Running Monsters (p.25), Legendary Monster Builder (p.44), Gold (p.22), Leveling Up (p.75). See <a href="../docs/rules-reference.html">the rules reference</a>.<br>ChongKit is an independent product published under the Nimble 3rd Party Creator License and is not affiliated with Nimble Co. Nimble © 2025 Nimble Co.</p>
+  <p class="foot">Numbers from the Nimble 5e v2 GM Guide (p.22, 25–27, 30, 44, 75). <a href="../docs/rules-reference.html">Rules reference</a>.<br>ChongKit is an independent product published under the Nimble 3rd Party Creator License and is not affiliated with Nimble Co. Nimble © 2025 Nimble Co.</p>
 </main>
 
 <script src="nimble-data.js"></script>
@@ -98,22 +112,24 @@
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const gp = (n) => n.toLocaleString() + ' gp';
-  const pct = (r) => Math.round(r * 100) + '%';
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   // Heart (HP) and shield (armor) icons, like the book's stat blocks.
   const HEART = '<svg viewBox="0 0 40 30" aria-hidden="true"><path d="M20 29C8 21 1 15 1 8.5 1 4 4.5 1 9 1c4.5 0 8 3 11 7 3-4 6.5-7 11-7 4.5 0 8 3 8 7.5C39 15 32 21 20 29z"/></svg>';
   const SHIELD = '<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M2 3 15 0l13 3v9c0 9-6 15-13 18C8 27 2 21 2 12z"/></svg>';
-  const heart = (n) => `<span class="ico" title="Hit Points">${HEART}<span>${n}</span></span>`;
-  const shield = (a) => a === 'none' ? '' : `<span class="ico shield" title="${a === 'medium' ? 'Medium Armor: just the dice' : 'Heavy Armor: half the dice'}">${SHIELD}<span>${a === 'medium' ? 'M' : 'H'}</span></span>`;
+  const heart = (n) => `<span class="ico" title="Hit points">${HEART}<span>${n}</span></span>`;
+  const shield = (a) => a === 'none' ? '' : `<span class="ico shield" title="${a === 'medium' ? 'Medium Armor: takes only the dice, no modifiers' : 'Heavy Armor: takes half the dice, no modifiers'}">${SHIELD}<span>${a === 'medium' ? 'M' : 'H'}</span></span>`;
+
+  // --- Setup controls -------------------------------------------------------
+  const segValue = (id) => $(id).querySelector('[aria-pressed="true"]').dataset.value;
 
   function readOpts() {
     const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, parseInt(v, 10) || lo));
     return {
       heroes: clamp($('heroes').value, 1, 10),
       level: clamp($('level').value, 1, 20),
-      difficulty: $('difficulty').value,
-      mode: $('mode').value,
+      difficulty: segValue('difficulty'),
+      mode: segValue('mode'),
       armor: $('armor').value,
       die: $('die').value,
       minionsPerHero: parseInt($('minions').value, 10),
@@ -122,117 +138,152 @@
     };
   }
 
-  function dice(a) {
-    const approx = a.exact ? '' : ' <span class="avg" title="No dice average exactly 3; closest shown, same as the guide’s 1d4+1.">(≈)</span>';
-    return `<span class="dice">${esc(a.text)}</span> <span class="avg">(avg ${a.average})</span>${approx}`;
+  function syncSetup() {
+    $('diffHint').textContent = NIMBLE.difficulties[segValue('difficulty')].blurb;
+    const boss = segValue('mode') === 'legendary';
+    $('minions').disabled = boss; $('abilities').disabled = boss;
+  }
+
+  document.querySelectorAll('.seg').forEach((seg) => seg.addEventListener('click', (ev) => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    syncSetup(); generate();
+  }));
+
+  document.querySelectorAll('.stepper').forEach((st) => {
+    const inp = st.querySelector('input');
+    st.addEventListener('click', (ev) => {
+      const b = ev.target.closest('button');
+      if (!b) return;
+      const v = Math.min(+inp.max, Math.max(+inp.min, (parseInt(inp.value, 10) || 0) + Number(b.dataset.step)));
+      if (v !== +inp.value) { inp.value = v; generate(); }
+    });
+    inp.addEventListener('change', generate);
+  });
+  ['armor', 'die', 'minions', 'patron', 'abilities'].forEach((id) => $(id).addEventListener('change', generate));
+
+  // --- Rendering ------------------------------------------------------------
+  function dmgButton(a, key) {
+    const approx = a.exact ? '' : ' ≈';
+    return `<button class="dmg" data-roll="${key}" title="Tap to roll">${esc(a.text)}</button><span class="avg">avg ${a.average}${approx}</span><span class="roll" aria-live="polite"></span>`;
   }
 
   function hpTrack(count, hp) {
     let h = '<div class="hp">';
     for (let i = 0; i < count; i++) {
-      h += `<label data-max="${hp}">${count > 1 ? '#' + (i + 1) : 'HP'} <input type="number" value="${hp}" max="${hp}" aria-label="HP"> / ${hp}</label>`;
+      h += `<label data-max="${hp}">${count > 1 ? `<span>#${i + 1}</span>` : '<span>HP</span>'}<input type="number" value="${hp}" max="${hp}" inputmode="numeric" aria-label="HP left"></label>`;
     }
     return h + '</div>';
   }
 
-  function renderReward(r, e) {
-    return `<h2>Expected Reward</h2>
-      <div class="gold">
-        <div><div class="num">${gp(r.perHero)}</div><div class="lbl">per hero</div></div>
-        <div><div class="num">${gp(r.party)}</div><div class="lbl">for the whole party (${e.heroes})</div></div>
+  function header(title, sub) {
+    return `<div class="rhead">
+        <div><h2>${title}</h2><div class="sub">${sub}</div></div>
+        <div class="actions">
+          <button class="ribbon primary" data-act="copy">Copy as Text</button>
+          <button class="ribbon" data-act="dice">New Dice</button>
+        </div>
       </div>
-      <div class="note"><details><summary>How this is worked out</summary>
-        <p>Each hero earns about <b>${gp(r.goldPerLevel)}</b> per level at level ${r.goldLevel} (p.22)${r.patron.offset ? `. That's the party's level ${e.level}, shifted ${r.patron.offset > 0 ? '+' : ''}${r.patron.offset} for a ${esc(r.patron.name.toLowerCase())} patron` : ''}.
-        A level takes about <b>${r.sessions}</b> session(s) (p.75). A typical session has 1–2 easy, 1–2 medium and 1 hard fight (p.26), about <b>${r.weightPerSession.toFixed(2)}</b> hard fights' worth.
-        This fight is worth <b>${r.weight.toFixed(2)}</b> of a hard fight (monster levels ÷ party levels), so it pays that share of the level's gold.
-        Hand it out as coin, gems or loot.</p>
-      </details></div>`;
+      <p class="tip">Tap dice to roll · type in the HP boxes to track damage · tap a name to rename it</p>`;
+  }
+
+  function renderReward(r, e) {
+    const shift = r.patron.offset ? ` It uses the level ${r.goldLevel} gold row because of who's paying.` : '';
+    return `<h2>Loot</h2>
+      <div class="loot">
+        <span class="num">${gp(r.perHero)}</span><span class="lbl">each</span>
+        <span class="num">${gp(r.party)}</span><span class="lbl">for all ${e.heroes}</span>
+        <details><summary>Where does this come from?</summary>
+          <p>The guide says each hero earns about ${gp(r.goldPerLevel)} per level (p.22). This fight gets its fair share of that, based on how many fights a level usually takes (p.26, p.75) and how tough this one is.${shift}</p>
+        </details>
+      </div>`;
   }
 
   function render(e) {
     let h = '';
     if (e.mode === 'legendary') {
       const L = e.legendary;
-      h += `<h2>Legendary Solo <em>(${esc(e.difficulty.name)})</em></h2>
-      <div class="ribbons">
-        <div><b>Party:</b> ${e.heroes} heroes, level ${e.level}</div>
-        <div><b>Stats:</b> legendary level ${L.statLevel}${L.statLevel !== e.level ? ' (1–2 levels off = easier/harder)' : ''}</div>
-      </div>
-      <div class="note"><b>${esc(e.difficulty.name)}.</b> ${esc(e.difficulty.blurb)}</div>
-      <section class="block big legend">
+      h += header(`${esc(e.difficulty.name)} Boss Fight`, `${e.heroes} heroes, level ${e.level}`);
+      h += `<section class="block big legend">
         <div class="bhead">
-          <div><div class="kicker">Level ${L.statLevel} Solo</div>
-            <h3 class="legend-name"><span class="bname" style="font-variant:normal;font-style:normal;font-size:inherit"><span contenteditable="true" spellcheck="false">Legendary Monster</span></span></h3></div>
+          <div><div class="kicker">Legendary · Level ${L.statLevel}</div>
+            <h3 class="legend-name"><span contenteditable="true" spellcheck="false">The Boss</span></h3></div>
           <div class="icons">${heart(L.hp)}${shield(L.armor === 'Heavy Armor' ? 'heavy' : 'medium')}</div>
         </div>
         <hr>
-        <div><span class="caps">ACTIONS:</span> After each hero's turn, choose one:</div>
-        <ul>
-          <li><b>Small Attack.</b> Move (or other utility), then ${dice(L.small.attack)} <button class="rollbtn" data-roll="small">roll</button></li>
-          <li><b>Big Attack.</b> If already in position, ${dice(L.big.attack)} <button class="rollbtn" data-roll="big">roll</button></li>
-        </ul>
-        <div class="line"><b>Save DC</b> ${L.dc}</div>
-        <hr>
-        <div><span class="caps">BLOODIED:</span> At <span class="red">${L.bloodied} HP</span>, gains a new dangerous ability.</div>
-        <div><span class="caps">LAST STAND:</span> At 0 HP it is dying! <span class="red">${L.lastStand}</span> more damage and it dies.</div>
+        <div><span class="caps">Acts after every hero's turn.</span> Pick one:</div>
+        <div class="attack"><span class="what">Move &amp; hit</span>${dmgButton(L.small.attack, 'small')}</div>
+        <div class="attack"><span class="what">Big hit</span>${dmgButton(L.big.attack, 'big')}</div>
+        <div class="meta">Save DC ${L.dc}</div>
+        <div class="bar"><b>Bloodied at <span class="red">${L.bloodied} HP</span>.</b> Give it a nasty new trick.</div>
+        <div class="bar"><b>Last Stand at 0 HP.</b> It dies after <span class="red">${L.lastStand}</span> more damage.</div>
         ${hpTrack(1, L.hp)}
-        <div class="roll" aria-live="polite"></div>
       </section>`;
     } else {
       const total = e.groups.reduce((s, g) => s + g.count, 0);
-      h += `<h2>The Encounter <em>(${esc(e.difficulty.name)})</em></h2>
-      <div class="ribbons">
-        <div><b>Monster levels:</b> ${+e.monsterLevels.toFixed(2)} vs party ${e.partyLevels} (${pct(e.ratio)})</div>
-        <div><b>Foes:</b> ${total} monster${total === 1 ? '' : 's'}${e.minions ? ` + ${e.minions.count} minions` : ''}</div>
-      </div>
-      <div class="note"><b>${esc(e.difficulty.name)}.</b> ${esc(e.difficulty.blurb)}</div>
-      <div class="cols">`;
+      const foes = `${total} monster${total === 1 ? '' : 's'}${e.minions ? ` + ${e.minions.count} minions` : ''}`;
+      h += header(`${esc(e.difficulty.name)} Fight`, `${foes} vs ${e.heroes} heroes, level ${e.level}`);
       const blocks = e.groups.map((g, gi) => {
         const m = g.monster;
-        return `<section class="block" data-group="${gi}">
+        const [abName, ...abRest] = m.ability ? m.ability.split('. ') : [];
+        return `<section class="block">
           <div class="bhead">
-            <div class="bname"><span contenteditable="true" spellcheck="false">Monster ${letters[gi]}</span> <span class="lvl">lvl ${m.label}</span><span class="count">×${g.count}</span></div>
+            <div class="bname"><span contenteditable="true" spellcheck="false">Monster ${letters[gi]}</span><span class="count">×${g.count}</span></div>
             <div class="icons">${shield(m.armor.key)}${heart(m.hp)}</div>
           </div>
-          ${m.ability ? `<div class="bar"><b>${esc(m.ability.split('. ')[0])}.</b> ${esc(m.ability.split('. ').slice(1).join('. '))}</div>` : ''}
-          <div class="line"><b>Attack.</b> ${dice(m.attack)} <button class="rollbtn" data-roll="${gi}">roll</button></div>
-          <div class="meta">Save DC ${m.dc} · CR ${m.cr} equiv.${m.armor.note ? ' · ' + esc(m.armor.name) + ': ' + esc(m.armor.note.toLowerCase()) : ''}${m.ability ? ' · HP one row lower (ability)' : ''}</div>
+          ${m.ability ? `<div class="bar"><b>${esc(abName)}.</b> ${esc(abRest.join('. '))}</div>` : ''}
+          <div class="attack">${dmgButton(m.attack, gi)}</div>
+          <div class="meta">Level ${m.label} · Save DC ${m.dc}</div>
           ${hpTrack(g.count, m.hp)}
-          <div class="roll" aria-live="polite"></div>
         </section>`;
       });
       if (e.minions) {
-        blocks.push(`<section class="block" data-kind="minions">
+        blocks.push(`<section class="block">
           <div class="bhead">
-            <div class="bname"><span contenteditable="true" spellcheck="false">Minion</span> <span class="lvl">minion</span><span class="count">×${e.minions.count}</span></div>
+            <div class="bname"><span contenteditable="true" spellcheck="false">Minions</span><span class="count">×${e.minions.count}</span></div>
           </div>
-          <div class="bar"><b>Minion.</b> Any damage kills. Can't crit, misses on a 1. Attacks on one hero combine into one attack.</div>
-          <div class="line"><b>Stab.</b> <span class="dice">1d${e.minions.die}</span> <button class="rollbtn" data-roll="minion">roll</button></div>
-          <div class="meta">${esc(e.minions.note)}</div>
-          <div class="roll" aria-live="polite"></div>
+          <div class="bar"><b>One hit kills.</b> They never crit and miss on a 1. Roll all minions on one hero together.</div>
+          <div class="attack"><button class="dmg" data-roll="minion" title="Tap to roll one">1d${e.minions.die}</button><span class="avg">each</span><span class="roll" aria-live="polite"></span></div>
         </section>`);
       }
       // Two columns, filled left then right, like the bestiary pages.
       const half = Math.ceil(blocks.length / 2);
-      h += `<div>${blocks.slice(0, half).join('')}</div><div>${blocks.slice(half).join('')}</div></div>`;
+      h += `<div class="cols"><div>${blocks.slice(0, half).join('')}</div><div>${blocks.slice(half).join('')}</div></div>`;
     }
     h += renderReward(e.reward, e);
     out.innerHTML = h;
   }
 
-  const fmtRoll = (r) => (r.miss ? '<span class="miss">Miss!</span>' : `<b>${r.total}</b> damage${r.crit ? ' <span class="crit">Crit!</span>' : ''}`) + ` <small>[${r.rolls.join(', ')}]</small>`;
+  // --- Interactions -----------------------------------------------------------
+  const fmtRoll = (r) => r.miss ? '<span class="miss">Miss!</span>' : `<b>${r.total}</b>${r.crit ? ' <span class="crit">Crit!</span>' : ''}`;
+  const detail = (rs) => ` <small>[${rs.map((r) => r.rolls.join('+')).join(' | ')}]</small>`;
 
-  out.addEventListener('click', (ev) => {
+  out.addEventListener('click', async (ev) => {
+    const act = ev.target.closest('button[data-act]');
+    if (act && act.dataset.act === 'dice') return rerollDice();
+    if (act && act.dataset.act === 'copy') {
+      const t = asText();
+      try { await navigator.clipboard.writeText(t); act.textContent = 'Copied!'; }
+      catch { window.prompt('Copy this:', t); }
+      setTimeout(() => (act.textContent = 'Copy as Text'), 1500);
+      return;
+    }
     const b = ev.target.closest('button[data-roll]');
     if (!b || !current) return;
-    const el = b.closest('.block').querySelector('.roll');
+    const el = b.parentElement.querySelector('.roll');
     const key = b.dataset.roll;
-    if (key === 'small' || key === 'big') { el.innerHTML = fmtRoll(Gen.rollAttack(current.legendary[key].attack)); return; }
-    if (key === 'minion') { el.innerHTML = fmtRoll(Gen.rollAttack({ count: 1, die: current.minions.die, mod: 0 }, { canCrit: false })); return; }
-    const m = current.groups[+key].monster;
-    const parts = [];
-    for (let i = 0; i < m.attack.attacks; i++) parts.push((m.attack.attacks > 1 ? `Attack ${i + 1}: ` : '') + fmtRoll(Gen.rollAttack(m.attack)));
-    el.innerHTML = parts.join('<br>');
+    let rolls;
+    if (key === 'small' || key === 'big') rolls = [Gen.rollAttack(current.legendary[key].attack)];
+    else if (key === 'minion') rolls = [Gen.rollAttack({ count: 1, die: current.minions.die, mod: 0 }, { canCrit: false })];
+    else {
+      const a = current.groups[+key].monster.attack;
+      rolls = Array.from({ length: a.attacks }, () => Gen.rollAttack(a));
+    }
+    const total = rolls.reduce((s, r) => s + r.total, 0);
+    el.innerHTML = (rolls.length > 1
+      ? rolls.map(fmtRoll).join(' + ') + ` = <b>${total}</b>`
+      : fmtRoll(rolls[0])) + detail(rolls);
   });
 
   out.addEventListener('input', (ev) => {
@@ -255,42 +306,41 @@
     } else {
       current.groups.forEach((g) => { g.monster.attack = Gen.randomDice(g.monster.dpr, { dice: d }); });
     }
+    // Keep names and HP the GM already typed in.
+    const names = [...out.querySelectorAll('[contenteditable]')].map((n) => n.textContent);
+    const hps = [...out.querySelectorAll('.hp input')].map((i) => i.value);
     render(current);
+    out.querySelectorAll('[contenteditable]').forEach((n, i) => { if (names[i] !== undefined) n.textContent = names[i]; });
+    out.querySelectorAll('.hp input').forEach((inp, i) => { if (hps[i] !== undefined) { inp.value = hps[i]; inp.dispatchEvent(new Event('input', { bubbles: true })); } });
   }
 
   function asText() {
     const e = current; if (!e) return '';
     const names = [...out.querySelectorAll('[contenteditable]')].map((n) => n.textContent.trim());
-    const lines = [`Nimble encounter: ${e.heroes} heroes, level ${e.level}, ${e.difficulty.name}`];
+    const lines = [];
     if (e.mode === 'legendary') {
       const L = e.legendary;
-      lines.push(`${names[0]} (legendary, lvl ${L.statLevel} stats, ${L.armor}): HP ${L.hp}, Bloodied ${L.bloodied}, Last Stand ${L.lastStand}, DC ${L.dc}`,
-        `  Small: ${L.small.attack.text} (avg ${L.small.attack.average})  Big: ${L.big.attack.text} (avg ${L.big.attack.average})`,
-        '  Acts after each hero\'s turn.');
+      lines.push(`${e.difficulty.name} boss fight: ${e.heroes} heroes, level ${e.level}`,
+        `${names[0]} (legendary, level ${L.statLevel}): HP ${L.hp}, ${L.armor}, Save DC ${L.dc}`,
+        `  Acts after every hero's turn.`,
+        `  Move & hit: ${L.small.attack.text} (avg ${L.small.attack.average})`,
+        `  Big hit: ${L.big.attack.text} (avg ${L.big.attack.average})`,
+        `  Bloodied at ${L.bloodied} HP. Last Stand: dies after ${L.lastStand} more damage.`);
     } else {
-      lines.push(`Monster levels ${+e.monsterLevels.toFixed(2)} / party ${e.partyLevels} (${pct(e.ratio)})`);
+      lines.push(`${e.difficulty.name} fight: ${e.heroes} heroes, level ${e.level}`);
       e.groups.forEach((g, i) => {
         const m = g.monster;
-        lines.push(`${g.count}× ${names[i]} (lvl ${m.label}, ${m.armor.name}): HP ${m.hp}, ${m.attack.text} (avg ${m.attack.average}), DC ${m.dc}${m.ability ? ', ' + m.ability : ''}`);
+        const armor = m.armor.key === 'none' ? '' : `, ${m.armor.name}`;
+        lines.push(`- ${g.count}× ${names[i]}: HP ${m.hp}${armor}, ${m.attack.text} (avg ${m.attack.average}), Save DC ${m.dc}${m.ability ? `. ${m.ability}` : ''}`);
       });
-      if (e.minions) lines.push(`${e.minions.count}× Minions: 1d${e.minions.die}, no HP, can't crit, miss on 1`);
+      if (e.minions) lines.push(`- ${e.minions.count}× ${names[e.groups.length]}: 1d${e.minions.die} each, one hit kills, miss on a 1`);
     }
-    lines.push(`Reward: ${gp(e.reward.perHero)} per hero (${gp(e.reward.party)} total)`);
+    lines.push(`Loot: ${gp(e.reward.perHero)} each (${gp(e.reward.party)} total)`);
     return lines.join('\n');
   }
 
   $('go').addEventListener('click', generate);
-  $('reroll').addEventListener('click', rerollDice);
-  $('copy').addEventListener('click', async () => {
-    const t = asText();
-    try { await navigator.clipboard.writeText(t); $('copy').textContent = 'Copied!'; }
-    catch { window.prompt('Copy this:', t); }
-    setTimeout(() => ($('copy').textContent = 'Copy as Text'), 1500);
-  });
-  $('mode').addEventListener('change', () => {
-    const legendary = $('mode').value === 'legendary';
-    $('minions').disabled = legendary; $('abilities').disabled = legendary;
-  });
+  syncSetup();
   generate();
 })();
 </script>

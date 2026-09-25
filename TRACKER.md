@@ -20,6 +20,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Roll button (miss on 1, exploding crit on max, minions can't crit)
 - [x] HP tracker boxes, editable monster names, copy-as-text
 - [x] UI restyled to match the GM Guide (parchment, stat-block frames, ability bars, heart/shield icons)
+- [x] Friendlier UI: −/+ steppers, tap-to-pick difficulty and fight type, extra settings under More options, auto-regenerate, tap dice to roll, shorter text
+- [x] New Dice keeps typed names and HP
 - [x] Tests: dice averages, difficulty bands, HP table lookup, reward table
 
 ### 📋 Next up
