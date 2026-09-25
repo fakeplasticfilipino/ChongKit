@@ -1,12 +1,12 @@
 /* ChongKit shared styles: the look of the Nimble 5e v2 GM Guide.
-   Every tool page links this file. See CLAUDE.md "Match the GM Guide's look". */
+   Every page links this file. See CLAUDE.md "Match the GM Guide's look". */
 
 /* Palette sampled from the GM Guide pages. */
 :root {
-  --parchment: #efe7d8; --parchment-hi: #f6f0e4; --parchment-lo: #e3d8c4;
+  --parchment: #efe7d8; --parchment-hi: #f6f0e4;
   --ink: #141515; --ink-soft: #231f20; --muted: #646565;
-  --rule: #8f877b; --bar: #d8d1c4; --bar-dark: #c9c1b2; --icon: #b7b0a4;
-  --blood: #962d1f; --flourish: #b0947f;
+  --rule: #8f877b; --bar: #d8d1c4; --bar-dark: #c9c1b2;
+  --blood: #962d1f;
   --head: "Merriweather", "Beaufort Pro", Georgia, "Times New Roman", serif;
   --body: "Barlow Semi Condensed", "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   color-scheme: light;
@@ -32,139 +32,108 @@ main::before, main::after {
 main::before { left: 10px; }
 main::after { right: 10px; transform: scaleX(-1); }
 
+/* ---- Type ---------------------------------------------------------------- */
 h1, h2, h3 { font-family: var(--head); font-weight: 900; margin: 0; line-height: 1.1; }
-h1 { font-size: 2.6rem; letter-spacing: -.01em; }
-.tagline { font-style: italic; font-size: 1.1rem; margin: 4px 0 22px; color: var(--ink-soft); }
-h2 { font-size: 1.55rem; margin: 30px 0 10px; }
-h2 em { font-style: italic; font-size: .8em; }
+h1 { font-size: 2.6rem; letter-spacing: -.01em; margin-bottom: 18px; }
+h2 { font-size: 1.55rem; }
+.tagline { font-style: italic; font-size: 1.1rem; margin: -12px 0 22px; color: var(--ink-soft); }
+.back { display: inline-block; margin-bottom: 8px; color: var(--ink-soft); font-weight: 700; font-variant: small-caps; letter-spacing: .03em; text-decoration: none; }
+.back:hover { color: var(--blood); }
+.foot { margin-top: 36px; font-size: .85rem; font-style: italic; color: var(--muted); }
+.foot a { color: var(--ink-soft); }
+.label { font-weight: 700; font-variant: small-caps; letter-spacing: .04em; font-size: 1rem; color: var(--ink-soft); }
 
-/* Notched-corner frame used by every stat block (9-slice SVG border). */
+/* ---- Stat block frame (notched corners, 9-slice SVG border) --------------- */
 .block {
   position: relative;
   border: 10px solid transparent;
   border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M5 .5H25V5h4.5v20H25v4.5H5V25H.5V5H5z' fill='none' stroke='%238f877b'/%3E%3C/svg%3E") 10 / 10px stretch;
-  padding: 4px 8px 6px;
+  padding: 4px 8px 8px;
   margin-bottom: 18px;
 }
 .block.big {
   border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42'%3E%3Cpath d='M8 1.5H34V4.5H37.5V8H40.5V34H37.5V37.5H34V40.5H8V37.5H4.5V34H1.5V8H4.5V4.5H8z' fill='none' stroke='%23231f20' stroke-width='1.5'/%3E%3C/svg%3E") 14 / 14px stretch;
-  padding: 10px 16px 12px;
+  padding: 8px 14px 12px;
 }
-
-/* Stat block header: SMALL-CAPS ITALIC NAME + Lvl, icons on the right. */
-.bhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .bname { font-family: var(--head); font-style: italic; font-weight: 900; font-variant: small-caps; font-size: 1.35rem; }
-.bname [contenteditable] { outline: none; border-bottom: 1px dashed transparent; }
-.bname [contenteditable]:hover, .bname [contenteditable]:focus { border-bottom-color: var(--rule); }
-.lvl { font-family: var(--body); font-style: normal; font-weight: 400; font-variant: small-caps; font-size: .95rem; letter-spacing: .02em; }
-.count { font-family: var(--head); font-style: normal; font-size: 1.1rem; margin-left: 4px; }
-.icons { display: flex; gap: 6px; align-items: center; flex: none; }
-.ico { position: relative; display: inline-grid; place-items: center; width: 40px; height: 30px; font-family: var(--head); font-style: italic; font-weight: 900; font-size: .8rem; }
-.ico svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--icon); }
-.ico span { position: relative; padding-left: 12px; }
-.ico.shield { width: 30px; }
-.ico.shield span { padding-left: 8px; }
-
+.bname [contenteditable] { outline: none; }
+.lvl { font-family: var(--body); font-style: normal; font-weight: 400; font-variant: small-caps; font-size: .95rem; letter-spacing: .02em; color: var(--ink-soft); }
+.count { font-family: var(--head); font-style: normal; font-size: 1.2rem; margin-left: 6px; }
 .line { margin: 4px 0; }
-.line b { font-weight: 700; }
-.dice { font-weight: 700; font-size: 1.12em; }
-.avg { color: var(--muted); font-style: italic; }
-.meta { color: var(--muted); font-size: .9rem; font-style: italic; }
 
 /* Grey arrow-tipped ability bar that pokes out past the frame. */
 .bar {
-  margin: 6px -26px; padding: 5px 28px;
+  margin: 8px -26px 2px; padding: 5px 28px;
   background: var(--bar); font-style: italic; font-size: .95rem;
   clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
 }
 .bar b { font-weight: 700; }
+.red { color: var(--blood); font-weight: 700; }
 
-/* HP trackers */
-.hp { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; }
-.hp label { display: inline-flex; align-items: center; gap: 4px; font-size: .9rem; font-variant: small-caps; }
-.hp input { width: 52px; font: 700 1rem var(--body); text-align: center; color: var(--ink); background: var(--parchment-hi); border: 1px solid var(--rule); padding: 1px 2px; }
-.hp label.dead { opacity: .45; text-decoration: line-through; }
-.hp label.bloodied input { color: var(--blood); border-color: var(--blood); }
+/* Labeled stat row: small-caps label over a big number. */
+.stats { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+/* Monster rows (HP · Damage · Save DC): give damage the most room. */
+.stats:not([style]) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, .9fr); }
+.stat { background: var(--parchment-hi); border: 1px solid var(--bar-dark); padding: 4px 10px 6px; }
+.stat .label { display: block; font-size: .85rem; color: var(--muted); }
+.stat .val { font-family: var(--head); font-weight: 900; font-size: 1.45rem; line-height: 1.15; white-space: nowrap; }
+.stat .sub { display: block; font-size: .85rem; font-style: italic; color: var(--muted); }
 
-.roll { min-height: 1.4em; margin-top: 6px; font-size: .95rem; }
-.roll .crit { color: var(--blood); font-family: var(--head); font-weight: 900; font-style: italic; }
-.roll .miss { font-family: var(--head); font-weight: 900; font-style: italic; color: var(--muted); }
-.roll small { color: var(--muted); }
-
-/* Buttons: black ribbon (primary) and grey ribbon (secondary). */
-button { font: inherit; cursor: pointer; border: 0; color: var(--ink); }
-.ribbon {
-  font-family: var(--head); font-weight: 900; font-size: 1rem; padding: 9px 28px;
-  background: var(--bar-dark);
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+/* ---- Controls: squared, bordered, obviously clickable -------------------- */
+button { font: inherit; cursor: pointer; color: var(--ink); }
+.btn {
+  font: 900 1rem var(--head); padding: 9px 18px;
+  background: var(--parchment-hi); border: 1.5px solid var(--ink);
 }
-.ribbon.primary { background: var(--ink); color: var(--parchment-hi); }
-.ribbon:hover { filter: brightness(1.08); }
-.ribbon.primary:hover { background: #2b2b2b; }
-.rollbtn {
-  font-family: var(--body); font-weight: 700; font-variant: small-caps; font-size: .9rem; letter-spacing: .03em;
-  padding: 1px 14px; margin-left: 6px; background: var(--bar-dark); vertical-align: 1px;
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 7px 100%, 0 50%);
-}
-.rollbtn:hover { background: var(--ink); color: var(--parchment-hi); }
+.btn:hover { background: var(--bar); }
+.btn.primary { background: var(--ink); color: var(--parchment-hi); }
+.btn.primary:hover { background: #33302c; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* Setup form */
-.setup .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 10px 16px; margin-top: 6px; }
-.setup label { display: flex; flex-direction: column; gap: 3px; font-weight: 700; font-variant: small-caps; font-size: 1rem; letter-spacing: .03em; }
-.setup select, .setup input[type=number] {
+/* Segmented toggle: joined boxes, selected one filled black. */
+.seg { display: inline-flex; flex-wrap: wrap; border: 1.5px solid var(--ink); background: var(--parchment-hi); }
+.seg button { font: 700 1rem var(--body); padding: 7px 16px; border: 0; border-right: 1px solid var(--rule); background: transparent; }
+.seg button:last-child { border-right: 0; }
+.seg button:hover { background: var(--bar); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
+.seg button[aria-pressed="true"].danger { background: var(--blood); }
+
+/* − 4 + stepper */
+.stepper { display: inline-flex; border: 1.5px solid var(--ink); background: var(--parchment-hi); }
+.stepper button { width: 40px; font: 900 1.2rem var(--head); border: 0; background: transparent; }
+.stepper button:hover { background: var(--bar); }
+.stepper input {
+  width: 48px; text-align: center; font: 900 1.2rem var(--head); color: var(--ink);
+  background: transparent; border: 0; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule);
+  -moz-appearance: textfield; appearance: textfield;
+}
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+select {
   font: 400 1rem var(--body); color: var(--ink); background: var(--parchment-hi);
-  border: 1px solid var(--rule); border-radius: 0; padding: 5px 6px;
+  border: 1.5px solid var(--ink); border-radius: 0; padding: 6px 8px;
 }
-.setup .check { flex-direction: row; align-items: center; gap: 8px; font-variant: normal; font-weight: 500; padding-top: 22px; }
-.setup .check input { accent-color: var(--ink); width: 16px; height: 16px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+input[type=checkbox] { accent-color: var(--ink); width: 17px; height: 17px; }
 
-/* "Sample Encounters" style ribbons for the summary. */
-.ribbons { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin: 6px 0 10px; }
-.ribbons div {
-  background: var(--bar); padding: 3px 14px 3px 26px; text-align: right;
-  clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 50%);
-}
-.ribbons div:nth-child(odd) { background: var(--bar-dark); }
-.ribbons b { font-weight: 700; }
+/* Setup panel */
+.setup { display: grid; gap: 14px; }
+.setup .row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > .seg, .field > .stepper { align-self: flex-start; }
+details.more > summary { cursor: pointer; font-weight: 700; font-variant: small-caps; letter-spacing: .04em; color: var(--ink-soft); list-style: none; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "+ "; }
+details.more[open] > summary::before { content: "− "; }
+details.more .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 16px; margin-top: 10px; }
+.check { flex-direction: row; align-items: center; gap: 8px; font-weight: 500; grid-column: 1 / -1; }
 
-/* Italic callout, like "Important Note!" / "Example:" boxes. */
-.note { background: var(--bar); padding: 8px 14px; font-style: italic; margin: 10px 0; }
-.note b { font-weight: 700; }
+/* Results header */
+.rhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; margin: 30px 0 14px; }
+.rhead .sub { font-style: italic; color: var(--ink-soft); }
 
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 22px; align-items: start; }
-
-/* Legendary block */
 .kicker { font-family: var(--head); font-weight: 900; color: var(--muted); font-size: .95rem; }
-.legend-name { font-size: 2rem; }
-.legend hr { border: 0; border-top: 1px solid var(--rule); margin: 8px 0; }
-.caps { font-weight: 700; }
-.red { color: var(--blood); font-weight: 700; }
-.legend ul { margin: 4px 0; padding-left: 18px; }
-.legend li { margin: 2px 0; }
-
-/* Reward */
-.gold { display: flex; flex-wrap: wrap; gap: 6px 40px; align-items: baseline; }
-.gold .num { font-family: var(--head); font-weight: 900; font-size: 2.2rem; }
-.gold .lbl { font-style: italic; color: var(--ink-soft); }
-details summary { cursor: pointer; font-weight: 700; font-style: normal; }
-details p { margin: 6px 0 0; }
-
-.foot { margin-top: 36px; font-size: .85rem; font-style: italic; color: var(--muted); }
-.folio { font-family: var(--head); font-weight: 900; font-size: .9rem; color: var(--ink); }
-
-@media (max-width: 640px) {
-  main { padding: 40px 16px 48px; }
-  h1 { font-size: 2rem; }
-  main::before, main::after { width: 110px; height: 110px; top: 6px; }
-  main::before { left: 2px; } main::after { right: 2px; }
-  .bar { margin: 6px -18px; padding: 5px 20px; }
-}
-@media print { .setup, .actions, .rollbtn { display: none !important; } body { background: #fff; } }
-
-/* Back link on tool pages. */
-.back { display: inline-block; margin-bottom: 8px; color: var(--ink-soft); font-weight: 700; font-variant: small-caps; letter-spacing: .03em; text-decoration: none; }
-.back:hover { color: var(--blood); }
 
 /* Landing page: each tool is a stat block you can click. */
 .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 22px; margin-top: 10px; }
@@ -172,76 +141,18 @@ a.block { display: block; color: inherit; text-decoration: none; }
 a.block:hover .bname { color: var(--blood); }
 .block.soon { opacity: .55; }
 
-/* ---- Friendly controls ------------------------------------------------ */
-.field { margin: 10px 0 0; }
-.field > .flabel { display: block; font-weight: 700; font-variant: small-caps; letter-spacing: .03em; font-size: 1.05rem; margin-bottom: 4px; }
-.row { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: flex-end; }
-
-/* − 4 + stepper */
-.stepper { display: inline-flex; align-items: stretch; }
-.stepper button { width: 38px; font: 900 1.2rem var(--head); background: var(--bar-dark); }
-.stepper button:first-child { clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%); }
-.stepper button:last-child { clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); }
-.stepper button:hover { background: var(--ink); color: var(--parchment-hi); }
-.stepper input {
-  width: 54px; text-align: center; font: 900 1.25rem var(--head); color: var(--ink);
-  background: var(--parchment-hi); border: 1px solid var(--rule); border-width: 1px 0; padding: 4px 0;
-  -moz-appearance: textfield; appearance: textfield;
+@media (max-width: 640px) {
+  main { padding: 40px 16px 48px; }
+  h1 { font-size: 2rem; }
+  main::before, main::after { width: 110px; height: 110px; top: 6px; }
+  main::before { left: 2px; } main::after { right: 2px; }
+  .bar { margin: 8px -18px 2px; padding: 5px 20px; }
+  .field > .seg { align-self: stretch; flex-wrap: nowrap; }
+  .setup .row > .field:last-child { flex-basis: 100%; }
+  .seg button { flex: 1 1 0; padding: 7px 4px; line-height: 1.1; }
+  .toolbar { width: 100%; }
+  .toolbar .btn { flex: 1 1 0; padding: 9px 6px; font-size: .95rem; }
+  .stats[style*="--n: 4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat .val { font-size: 1.25rem; white-space: normal; }
 }
-.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-/* Segmented ribbon buttons (one pressed at a time). */
-.seg { display: flex; flex-wrap: wrap; gap: 4px; }
-.seg button {
-  font: 700 1rem var(--body); padding: 6px 20px; background: var(--bar);
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
-}
-.seg button:hover { background: var(--bar-dark); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
-.seg button[aria-pressed="true"].danger { background: var(--blood); }
-.hint { margin: 5px 0 0; font-style: italic; color: var(--ink-soft); font-size: .95rem; }
-
-/* Collapsible extra options */
-details.more { margin-top: 12px; }
-details.more > summary { font-weight: 700; font-variant: small-caps; letter-spacing: .03em; color: var(--ink-soft); list-style: none; }
-details.more > summary::-webkit-details-marker { display: none; }
-details.more > summary::before { content: "▸ "; }
-details.more[open] > summary::before { content: "▾ "; }
-details.more .grid { margin-top: 8px; }
-
-/* Results header: title on the left, Copy / New dice on the right. */
-.rhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px; margin: 28px 0 4px; }
-.rhead h2 { margin: 0; }
-.rhead .sub { font-style: italic; color: var(--ink-soft); }
-.rhead .actions { margin: 0; }
-.tip { font-size: .9rem; color: var(--muted); font-style: italic; margin: 2px 0 14px; }
-
-/* Tap-to-roll damage */
-.attack { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 8px 0 2px; }
-.attack .what { font-weight: 700; }
-.dmg {
-  font: 700 1.2rem var(--body); padding: 3px 22px 3px 20px; background: var(--bar-dark);
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
-}
-.dmg::before { content: "⚅ "; font-weight: 400; }
-.dmg:hover { background: var(--ink); color: var(--parchment-hi); }
-.attack .roll { margin: 0; min-height: 0; font-size: 1rem; }
-.attack .roll b { font-family: var(--head); font-weight: 900; font-size: 1.15rem; }
-
-/* HP chips */
-.hp { gap: 6px; }
-.hp label { gap: 0; background: var(--parchment-hi); border: 1px solid var(--rule); padding: 0 0 0 6px; font-variant: normal; }
-.hp label span { color: var(--muted); font-size: .8rem; margin-right: 2px; }
-.hp input { border: 0; background: transparent; width: 46px; font: 900 1.05rem var(--head); }
-.hp label.bloodied { border-color: var(--blood); }
-
-/* Reward line */
-.loot { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
-.loot .num { font-family: var(--head); font-weight: 900; font-size: 1.9rem; }
-.loot .lbl { font-style: italic; color: var(--ink-soft); }
-.loot details { flex-basis: 100%; font-size: .95rem; }
-.setup .check { grid-column: 1 / -1; padding-top: 2px; }
-.hp input { -moz-appearance: textfield; appearance: textfield; }
-.hp input::-webkit-outer-spin-button, .hp input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-main a:not(.block):not(.back) { color: var(--ink-soft); text-decoration-color: var(--rule); }
-main a:not(.block):not(.back):hover { color: var(--blood); }
+@media print { .setup, .toolbar { display: none !important; } body { background: #fff; } }

@@ -17,11 +17,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Minion waves (0–4 per hero), die size by party level — p.25, p.27
 - [x] Legendary solo boss (HP, Bloodied, Last Stand, small/big attack, DC) — p.44
 - [x] Expected gold reward per hero + party, patron wealth shift — p.22, p.26, p.75
-- [x] Roll button (miss on 1, exploding crit on max, minions can't crit)
-- [x] HP tracker boxes, editable monster names, copy-as-text
+- [x] Editable monster names, copy-as-text
 - [x] UI restyled to match the GM Guide (parchment, stat-block frames, ability bars, heart/shield icons)
-- [x] Friendlier UI: −/+ steppers, tap-to-pick difficulty and fight type, extra settings under More options, auto-regenerate, tap dice to roll, shorter text
-- [x] New Dice keeps typed names and HP
+- [x] Simple UI: −/+ steppers, boxed toggles for fight type and difficulty, More options, auto-regenerate, HP / Damage / Save DC stat boxes, one toolbar (New Encounter · New Dice · Copy)
+- [x] Removed: dice rolling, HP trackers, helper and explainer text (not wanted)
 - [x] Tests: dice averages, difficulty bands, HP table lookup, reward table
 
 ### 📋 Next up

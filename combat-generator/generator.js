@@ -79,26 +79,6 @@
     throw new Error(`No dice expression for average ${target}`);
   }
 
-  // Nimble attack roll: the first (primary) die rolling 1 is a miss; rolling max is a crit,
-  // which explodes (roll another die and add, repeatedly). Minions/flunkies can't crit.
-  function rollAttack(e, { canCrit = true } = {}) {
-    const rolls = [];
-    let total = 0, miss = false, crit = false;
-    for (let i = 0; i < e.count; i++) {
-      const r = randInt(1, e.die);
-      rolls.push(r);
-      total += r;
-      if (i === 0 && r === 1) miss = true;
-      if (i === 0 && r === e.die && canCrit) crit = true;
-    }
-    if (crit) {
-      let r;
-      do { r = randInt(1, e.die); rolls.push(r); total += r; } while (r === e.die);
-    }
-    if (miss) return { miss: true, crit: false, total: 0, rolls };
-    return { miss: false, crit, total: total + e.mod, rolls };
-  }
-
   // --- Encounter building -------------------------------------------------
   const ROWS = NIMBLE.monsterBuilder;
   const rowIndexForLevel = (lvl) => ROWS.findIndex((r) => Math.abs(r.level - lvl) < 1e-9);
@@ -266,7 +246,7 @@
     };
   }
 
-  const api = { ALL_DICE, dieAvg, exprAvg, formatExpr, dicePool, randomDice, rollAttack, splitBudget, rewardFor, generate, rowIndexForLevel };
+  const api = { ALL_DICE, dieAvg, exprAvg, formatExpr, dicePool, randomDice, splitBudget, rewardFor, generate, rowIndexForLevel };
   if (typeof module !== 'undefined') module.exports = api;
   else root.Gen = api;
 })(this);

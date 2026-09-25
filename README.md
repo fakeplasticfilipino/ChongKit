@@ -15,17 +15,15 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 **To use:** open the site on GitHub Pages and click **Combat Generator**, or open `combat-generator/index.html` in any browser. No install needed. It loads the book-style fonts from Google Fonts when online and falls back to system fonts offline.
 
 1. Use **−/+** to set the number of heroes and their level.
-2. Tap **Monster Group** or **Boss**, then tap a difficulty. The fight appears right away.
-3. Armor, dice style, extra minions, who's paying, and special abilities are under **More options**.
-4. Tap **New Encounter** for a different fight with the same settings.
+2. Pick **Monsters** or **Boss**, then a difficulty. The fight updates right away.
+3. Armor, dice, minions, who's paying, and special abilities are under **More options**.
 
-In the fight:
-- **Tap the dice** on a monster to roll its damage.
-- **Type in the HP boxes** to track damage. A box turns red at half HP and is crossed out at 0.
-- **Tap a monster's name** to rename it.
-- **New Dice** gives new dice to the same monsters and keeps your names and HP.
-- **Copy as Text** copies the whole fight, ready to paste into your notes or Discord.
-- **Loot** shows the expected gold per hero and for the whole party.
+Each monster shows its **HP**, **Damage** (with the average) and **Save DC**. The **Loot** box shows gold for each hero and for the whole party.
+
+- **New Encounter:** a different fight with the same settings.
+- **New Dice:** the same monsters with new dice (same averages).
+- **Copy as Text:** copies the whole fight, ready to paste into notes or Discord.
+- Click a monster's name to rename it.
 
 ### Randomized dice (same average)
 
@@ -42,10 +40,6 @@ Each time you generate, the tool picks a random mix of dice whose average is **e
 | 6d4+6 | 15 + 6 = 21 |
 
 The only exception is level ¼ (3 damage). No real dice average exactly 3, so it uses the closest option (±0.5), just like the guide's own `1d4+1`. The card marks these with **≈**.
-
-**Re-randomize dice only** keeps the same monsters and rolls new dice expressions.
-
-The **Roll** button follows the Nimble attack rules. If the first die rolls a 1, the attack misses. If it rolls its maximum, the attack crits and explodes (you roll again and add). Minions can't crit.
 
 ### How encounters are built
 

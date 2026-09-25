@@ -78,13 +78,3 @@ test('gold reward scales from the p.22 table', () => {
   assert.strictEqual(rich.goldPerLevel, 80); // level 3 row
   assert.ok(rich.perHero > r.perHero);
 });
-
-test('rollAttack: primary die 1 misses, max crits and explodes', () => {
-  for (let i = 0; i < 2000; i++) {
-    const r = G.rollAttack({ count: 2, die: 6, mod: 3 });
-    if (r.rolls[0] === 1) assert.ok(r.miss && r.total === 0);
-    if (r.rolls[0] === 6) assert.ok(r.crit && r.rolls.length >= 3);
-    const m = G.rollAttack({ count: 1, die: 4, mod: 0 }, { canCrit: false });
-    assert.ok(!m.crit);
-  }
-});

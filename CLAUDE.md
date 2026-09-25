@@ -25,6 +25,11 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    small-caps names, grey arrow-tipped ability bars, heart/shield icons for HP/armor, dark red
    (`--blood`) for Bloodied numbers. Reuse the classes and tokens in `assets/css/nimble.css`.
 5. **Keep it simple.** This is for use mid-session at the table; favor big readable numbers over features.
+   - No helper or explainer text in the UI (no "tap here to…" tips, no difficulty descriptions, no
+     "how this is worked out"). Labels and numbers only; explanations belong in the README.
+   - No dice rolling or HP tracking. The tool shows stats; the table rolls real dice.
+   - Controls must look clickable: squared, bordered buttons and toggles (`.btn`, `.seg`, `.stepper`).
+     Arrow-tipped ribbons (`.bar`) are for ability text only, never for buttons.
 6. **Always commit and push straight to `main`.** Don't create branches or pull requests.
 7. **The repo is a GitHub Pages site** (served from `main`, root folder). Keep it organized:
    - Each tool lives in its own folder with an `index.html` (so its URL is `/<tool-name>/`).
@@ -43,7 +48,7 @@ assets/css/nimble.css        Shared GM-Guide look for every page
 combat-generator/            → /combat-generator/
   index.html                 UI
   nimble-data.js             All rules data from the guide (single source of numbers)
-  generator.js               Pure logic: dice, encounter building, rewards, attack rolls
+  generator.js               Pure logic: dice, encounter building, rewards
   tests/generator.test.js    node:test suite (not published)
 docs/rules-reference.md      Rules tables with page numbers → /docs/rules-reference.html
 source/                      The GM Guide PDF (not published)
