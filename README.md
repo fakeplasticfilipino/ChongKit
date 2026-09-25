@@ -6,13 +6,13 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 
 | Tool | Status | What it does |
 |------|--------|--------------|
-| [Combat Generator](combat-generator/index.html) | ✅ v1 | Builds an encounter for your party: monster HP, damage dice, Save DC, and the expected gold reward. |
+| [Combat Generator](combat-generator/) | ✅ v1 | Builds an encounter for your party: monster HP, damage dice, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
 
 ## Combat Generator
 
-**To use:** open `combat-generator/index.html` in any browser. No install needed. It loads the book-style fonts from Google Fonts when online and falls back to system fonts offline.
+**To use:** open the site on GitHub Pages and click **Combat Generator**, or open `combat-generator/index.html` in any browser. No install needed. It loads the book-style fonts from Google Fonts when online and falls back to system fonts offline.
 
 1. Set the number of heroes, their level, and the difficulty.
 2. Pick **Group of monsters** or **Legendary solo boss**.
@@ -69,6 +69,22 @@ encounter gold per hero = gold per level (p.22)
 - Sessions per level: 1 for levels 1–3 (one per starter adventure), 2.5 for levels 4–5, 3 for levels 6–12, and 4 for level 13+.
 - A typical session is 1.5 easy, 1.5 medium and 1 hard fight. That adds up to about 2.8 hard fights' worth.
 - **Who's paying?** moves the gold table 1–2 levels down or up, as p.22 describes for poor or wealthy patrons.
+
+## Hosting (GitHub Pages)
+
+The repo root is the website:
+
+| Path | Page |
+|---|---|
+| `index.html` | Landing page with a card for each tool |
+| `combat-generator/` | The combat generator |
+| `docs/rules-reference.md` | Rules tables from the guide |
+| `assets/css/nimble.css` | Shared book-style look |
+
+To turn it on: in the repo's GitHub settings, go to **Pages**, choose **Deploy from a branch**, then pick **main** and **/ (root)**.
+`_config.yml` keeps the PDF (`source/`), tests, `CLAUDE.md` and `TRACKER.md` off the published site.
+
+To preview locally, run `python3 -m http.server` in the repo root and open http://localhost:8000/.
 
 ## Development
 

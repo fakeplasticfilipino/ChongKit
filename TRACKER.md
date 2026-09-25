@@ -34,6 +34,12 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [ ] Save/load encounters for session prep
 - [ ] Initiative tracker
 
+## Site (GitHub Pages)
+- [x] Landing page (`index.html`) with a card per tool
+- [x] Shared stylesheet `assets/css/nimble.css`
+- [x] `_config.yml` keeps the PDF, tests and notes off the public site
+- [ ] Turn on Pages in the GitHub settings: Deploy from a branch → `main` → `/ (root)`
+
 ## Other tools (future)
 - 💡 Treasure / Boon generator (p.19–23: Minor/Major/EPIC boons, lodging boons)
 - 💡 Skill challenge runner (p.15)

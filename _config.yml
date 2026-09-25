@@ -1,0 +1,8 @@
+# GitHub Pages (Jekyll) config. The site is plain static HTML; this file only
+# keeps repo-only files off the public site.
+title: ChongKit
+exclude:
+  - source/          # the GM Guide PDF (copyrighted: never publish it)
+  - CLAUDE.md
+  - TRACKER.md
+  - combat-generator/tests/
