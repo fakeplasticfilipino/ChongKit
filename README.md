@@ -12,7 +12,7 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 
 ## Combat Generator
 
-**To use:** open `combat-generator/index.html` in any browser. No install and no internet needed.
+**To use:** open `combat-generator/index.html` in any browser. No install needed. It loads the book-style fonts from Google Fonts when online and falls back to system fonts offline.
 
 1. Set the number of heroes, their level, and the difficulty.
 2. Pick **Group of monsters** or **Legendary solo boss**.

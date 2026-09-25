@@ -17,8 +17,14 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    guide's damage-per-round (only level-1/4's 3 dmg may be ±0.5 — no exact dice exist). Never change
    this without updating `tests/generator.test.js`.
 3. **Keep tools zero-install.** Plain HTML + vanilla JS that opens from `file://`. No build step, no
-   CDN dependencies, no frameworks.
-4. **Keep it simple.** This is for use mid-session at the table; favor big readable numbers over features.
+   frameworks, no CDN scripts. The only external request allowed is Google Fonts, and every page
+   must still work offline on its fallback fonts.
+4. **Match the GM Guide's look.** Parchment background, thin brown corner flourishes, heavy
+   wedge-serif headings (Merriweather 900 standing in for Beaufort Pro Heavy), condensed sans body
+   (Barlow Semi Condensed for Avenir Next Condensed), notched-corner stat blocks with italic
+   small-caps names, grey arrow-tipped ability bars, heart/shield icons for HP/armor, dark red
+   (`--blood`) for Bloodied numbers. Reuse the CSS tokens in `combat-generator/index.html`.
+5. **Keep it simple.** This is for use mid-session at the table; favor big readable numbers over features.
 
 ## Layout
 
