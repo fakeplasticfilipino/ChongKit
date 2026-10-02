@@ -109,6 +109,7 @@
   // --- Batch command ----------------------------------------------------------
   //   Goblin x4 15
   //   Ogre 59 ac:M max:70 extra:5
+  //   Kobold Minion x10    (a name with "minion" in it: ONE entry whose HP is the number of minions)
   // or paste the ChongKit combat generator's text: every "Name xN / HP: n / Armor: X" block.
   const ARMOR_AC = { none: '', medium: 'M', heavy: 'H' };
 
@@ -154,6 +155,12 @@
       }
     }
     row.name = rest.join(' ');
+    // Minions die to any damage, so a group shares one entry: HP = how many are left.
+    if (rest.some((w) => /^minions?$/i.test(w))) {
+      if (row.count > 1 || row.hp === null) row.hp = row.count;
+      row.count = 1;
+      row.max = row.hp;
+    }
     if (!row.name || row.hp === null) return null;
     if (row.max === undefined) row.max = row.hp;
     return row;
@@ -169,25 +176,26 @@
       const name = (head ? head[1] : lines[0]).replace(/\s*\(.*\)\s*$/, '').trim();
       const count = head ? parseInt(head[2], 10) : 1;
       const hpText = hpLine.replace(/^HP:\s*/i, '');
-      const hp = /^minion/i.test(hpText) ? 1 : parseInt(hpText, 10);
+      const minion = /^minion/i.test(hpText);
+      const hp = minion ? count : parseInt(hpText, 10);
       if (!name || !Number.isFinite(hp)) continue;
       const armorLine = lines.find((l) => /^Armor:/i.test(l));
       const armor = armorLine ? armorLine.replace(/^Armor:\s*/i, '').trim() : '';
       const ac = armor.toLowerCase() in ARMOR_AC ? ARMOR_AC[armor.toLowerCase()] : armor;
-      rows.push({ name, count, hp, max: hp, extra: 0, ac });
+      rows.push({ name, count: minion ? 1 : count, hp, max: hp, extra: 0, ac });
     }
     return { rows, errors: [] };
   }
 
   // One row "Goblin x3" -> entries "Goblin 1", "Goblin 2", "Goblin 3".
-  function rowsToEntries(rows, { tab, order = 0 }) {
+  function rowsToEntries(rows, { tab, order = 0, hidden }) {
     const out = [];
     for (const r of rows) {
       for (let i = 1; i <= r.count; i++) {
         out.push(newEntry({
           name: r.count > 1 ? `${r.name} ${i}` : r.name,
           hp: r.hp, max: r.max, extra: r.extra, ac: r.ac,
-          tab, order: order + out.length,
+          tab, order: order + out.length, hidden,
         }));
       }
     }
@@ -195,13 +203,28 @@
   }
 
   // --- Entries ----------------------------------------------------------------
-  function newEntry({ name = 'New', hp = 0, max = null, extra = 0, ac = '', tab = PLAYERS_TAB, order = 0, token = null } = {}) {
+  // hidden = the stats are hidden from players: they see the entry, its AC, and H or B instead of
+  // its HP. New entries start hidden, except on the Players tab (or another players' tab).
+  function newEntry({ name = 'New', hp = 0, max = null, extra = 0, ac = '', tab = PLAYERS_TAB, order = 0, token = null, hidden } = {}) {
     return {
       id: uid(), tab, order, name, hp, max, extra, ac, token,
-      // Entries start hidden from players, except on the Players tab.
-      hidden: tab !== PLAYERS_TAB,
+      hidden: hidden === undefined ? tab !== PLAYERS_TAB : !!hidden,
     };
   }
+
+  // H (healthy) or B (Bloodied: at or below half Max HP, or at 0 or less).
+  function hpStatus(entry) {
+    const hp = entry.hp || 0;
+    if (hp <= 0) return 'B';
+    return entry.max != null && entry.max > 0 && hp <= entry.max / 2 ? 'B' : 'H';
+  }
+
+  // "/clear" (every entry in the tab) or "/clear Goblin" (names starting with Goblin). GM only.
+  function parseClear(text) {
+    const m = /^\/(clear|delete)(?:\s+(.*))?$/i.exec(String(text).trim());
+    return m ? { match: (m[2] || '').trim() } : null;
+  }
+  const clearMatches = (entry, clear) => !clear.match || String(entry.name).toLowerCase().startsWith(clear.match.toLowerCase());
 
   // How full the HP bar is, 0..1. Without Max HP the bar is full.
   function hpFraction(entry) {
@@ -228,16 +251,18 @@
   const entryPatch = (entry) => ({ [entryKey(entry.id)]: entry });
   const deletePatch = (id) => ({ [entryKey(id)]: null });
 
-  // Who can see / change what.
-  const canSee = (entry, role) => role === 'GM' || !entry.hidden;
-  const canEdit = (entry, role) => role === 'GM' || entry.tab === PLAYERS_TAB;
+  // Who can see / change what. Everyone sees every entry; players see H/B for hidden stats.
+  // Players' tabs (the Players tab, and any tab a player made) can be edited by players.
+  const isPlayerTab = (tab) => !!tab && (tab.id === PLAYERS_TAB || !!tab.players);
+  const masked = (entry, role) => role !== 'GM' && !!entry.hidden;
+  const canEdit = (entry, role, tabs) => role === 'GM' || (!masked(entry, role) && isPlayerTab((tabs || DEFAULT_TABS).find((t) => t.id === entry.tab)));
 
   const api = {
     NS, KEYS, PLAYERS_TAB, uid,
     evalExpr, readInput, applyHp,
     parseCommand, rowsToEntries,
-    newEntry, hpFraction,
-    readState, entryKey, tabsPatch, entryPatch, deletePatch, canSee, canEdit,
+    newEntry, hpFraction, hpStatus, parseClear, clearMatches,
+    readState, entryKey, tabsPatch, entryPatch, deletePatch, isPlayerTab, masked, canEdit,
   };
   if (typeof module !== 'undefined') module.exports = api;
   else root.ChongCore = api;

@@ -1,14 +1,15 @@
 // Chong's Tracker: background page (always running while the extension is on).
 // 1. Draws the badges on attached tokens: HP in the lower-left corner with Extra HP beside it, and
 //    AC on a shield in the lower-right corner. They are LOCAL items (only on this screen), built
-//    from the scene metadata, so hidden entries draw nothing for players and nothing extra is saved.
+//    from the scene metadata, so nothing extra is saved. When an entry's stats are hidden, players
+//    see H (healthy) or B (Bloodied) instead of the HP number, no Extra HP, and the AC as usual.
 // 2. Adds a right-click "Track" item for tokens.
 import OBR, { buildShape, buildCurve, buildText } from './vendor/obr-sdk.js';
 
 const C = window.ChongCore;
 const TAG = `${C.NS}/badge`;
 const TAB_STORE = `${C.NS}/tab`;
-const RED = '#e53935', BLUE = '#1e88e5', SLATE = '#546e7a', WHITE = '#ffffff', EDGE = '#111111';
+const RED = '#e53935', BLOOD = '#b71c1c', GREEN = '#43a047', BLUE = '#1e88e5', SLATE = '#546e7a', WHITE = '#ffffff', EDGE = '#111111';
 // Dark outline on every badge, so they read on any map.
 const outline = (d) => Math.max(1, d * 0.05);
 
@@ -70,7 +71,7 @@ function shield(id, token, sig, center, d, color, text) {
 // when its signature changes. Position isn't in it: attached items follow their token.
 async function desiredBadges() {
   const { entries } = C.readState(metadata);
-  const shown = entries.filter((e) => e.token && C.canSee(e, role));
+  const shown = entries.filter((e) => e.token);
   if (!shown.length) return new Map();
   const tokens = new Map((await OBR.scene.items.getItems([...new Set(shown.map((e) => e.token))])).map((t) => [t.id, t]));
   const out = new Map();
@@ -84,10 +85,14 @@ async function desiredBadges() {
     const y = b.max.y - d * 0.4;
 
     const hpCenter = { x: b.min.x + d * 0.4, y };
-    const hpSig = JSON.stringify(['hp', e.hp, d, token.visible]);
-    add(circle(`${base}.hp`, token, hpSig, hpCenter, d, RED, String(e.hp)), hpSig);
+    const mask = C.masked(e, role);
+    const st = mask ? C.hpStatus(e) : null;
+    const hpText = mask ? st : String(e.hp);
+    const hpColor = mask ? (st === 'B' ? BLOOD : GREEN) : RED;
+    const hpSig = JSON.stringify(['hp', hpText, hpColor, d, token.visible]);
+    add(circle(`${base}.hp`, token, hpSig, hpCenter, d, hpColor, hpText), hpSig);
 
-    if (e.extra > 0) {
+    if (e.extra > 0 && !mask) {
       const dx = d * 0.72;
       const xpSig = JSON.stringify(['xp', e.extra, d, token.visible]);
       add(circle(`${base}.xp`, token, xpSig, { x: hpCenter.x + d * 0.5 + dx * 0.4, y: y + (d - dx) / 2 }, dx, BLUE, `+${e.extra}`), xpSig);

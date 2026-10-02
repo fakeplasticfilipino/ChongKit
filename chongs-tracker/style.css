@@ -4,7 +4,7 @@
   --text: #ffffff; --text2: rgba(255, 255, 255, .7); --muted: rgba(255, 255, 255, .45);
   --primary: #bb99ff; --paper: #222639;
   --card: rgba(255, 255, 255, .07); --field: rgba(255, 255, 255, .08); --hover: rgba(255, 255, 255, .14);
-  --hp: rgba(255, 255, 255, .24); --hp-track: rgba(255, 255, 255, .08); --extra: #1e88e5; --danger: #ff6b6b;
+  --hp: rgba(255, 255, 255, .24); --hp-track: rgba(255, 255, 255, .08); --extra: #1e88e5; --blood: #c62828; --danger: #ff6b6b;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -52,6 +52,7 @@ select option { background: var(--paper); color: var(--text); }
 .help[hidden] { display: none; }
 .help dt { font-weight: 500; }
 .help dd { margin: 0; color: var(--text2); }
+.help:not(.gm) .gm-only { display: none; }
 
 /* Entries: one flat card each */
 .list { padding: 0 12px 12px; display: grid; gap: 6px; }
@@ -89,6 +90,13 @@ select option { background: var(--paper); color: var(--text); }
 .hp input:hover { background: transparent; }
 .hp input:focus { background: transparent; box-shadow: inset 0 0 0 2px #fff; }
 .hp input:disabled { opacity: 1; }
+.hp.status { display: grid; place-items: center; font-weight: 700; font-size: 15px; background: var(--hp); }
+.hp.status.bloodied { background: var(--blood); }
+.ac {
+  flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 5px; border-radius: 8px; background: var(--field);
+  color: var(--text2); font-size: 12px; font-weight: 700; text-align: center; line-height: 16px;
+}
+.ac svg { width: 12px; height: 12px; opacity: .7; }
 .xp {
   flex: none; background: var(--extra); color: #fff; border-radius: 10px; padding: 2px 7px;
   font-size: 12px; font-weight: 700; line-height: 16px;

@@ -26,6 +26,7 @@ const ICON = {
   add: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
   close: 'M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
   more: 'M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z',
+  shield: 'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z',
   info: 'M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z',
 };
 const svg = (name) => `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${ICON[name]}"/></svg>`;
@@ -88,9 +89,15 @@ function setTab(id) {
   render();
 }
 
+const tabById = (id) => tabs.find((t) => t.id === id);
+// GMs manage every tab; players manage the tabs players made. Nobody deletes the Players tab.
+const canManageTab = (t) => t.id !== C.PLAYERS_TAB && (role === 'GM' || !!t.players);
+
 function addTab() {
   const id = C.uid();
-  saveTabs([...tabs, { id, name: `Tab ${tabs.length}` }]);
+  const tab = { id, name: `Tab ${tabs.length}` };
+  if (role !== 'GM') tab.players = true;
+  saveTabs([...tabs, tab]);
   renamingTab = id;
   setTab(id);
 }
@@ -104,11 +111,25 @@ function removeTab(tab) {
 }
 
 function runCommand(text) {
+  const clear = C.parseClear(text);
+  if (clear) return runClear(clear);
   const { rows, errors } = C.parseCommand(text);
   if (errors.length) OBR.notification.show(`Couldn't read: ${errors.join(' / ')}`, 'WARNING');
   if (!rows.length) return false;
   const order = Math.max(0, ...entries.filter((e) => e.tab === current).map((e) => e.order + 1));
-  saveEntries(C.rowsToEntries(rows, { tab: current, order }));
+  const hidden = C.isPlayerTab(tabById(current)) ? false : undefined;
+  saveEntries(C.rowsToEntries(rows, { tab: current, order, hidden }));
+  return true;
+}
+
+// /clear: delete every entry in this tab (or those whose names start with the given text). GM only.
+function runClear(clear) {
+  if (role !== 'GM') { OBR.notification.show('Only the GM can clear entries', 'WARNING'); return false; }
+  const hit = entries.filter((e) => e.tab === current && C.clearMatches(e, clear));
+  if (!hit.length) { OBR.notification.show('Nothing to clear'); return true; }
+  if (!confirm(`Delete ${hit.length} entr${hit.length === 1 ? 'y' : 'ies'} from this tab?`)) return false;
+  hit.forEach((e) => open.delete(e.id));
+  deleteEntries(hit.map((e) => e.id));
   return true;
 }
 
@@ -140,7 +161,7 @@ async function finishPick(sel) {
   }
   const list = entries.filter((e) => e.tab === entry.tab);
   const start = list.indexOf(entry);
-  const targets = [entry, ...list.slice(start + 1).filter((e) => !tokenOf(e) && C.canEdit(e, role))];
+  const targets = [entry, ...list.slice(start + 1).filter((e) => !tokenOf(e) && C.canEdit(e, role, tabs))];
   saveEntries(free.slice(0, targets.length).map((token, i) => ({ ...targets[i], token })));
 }
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && picking) { picking = null; render(); } });
@@ -197,11 +218,13 @@ function mathInput(cls, value, onCommit, disabled) {
 }
 
 // --- Rendering ------------------------------------------------------------------------
-const visibleEntries = () => entries.filter((e) => C.canSee(e, role));
+// Everyone sees every entry (players see H/B for hidden stats). Players see their own tabs and
+// any GM tab with something in it.
+const visibleEntries = () => entries;
 function visibleTabs() {
   if (role === 'GM') return tabs;
-  const seen = new Set(visibleEntries().map((e) => e.tab));
-  return tabs.filter((t) => t.id === C.PLAYERS_TAB || seen.has(t.id));
+  const seen = new Set(entries.map((e) => e.tab));
+  return tabs.filter((t) => C.isPlayerTab(t) || seen.has(t.id));
 }
 
 function render() {
@@ -259,7 +282,7 @@ function renderTabs() {
     }
     b.append(t.name);
     b.addEventListener('click', () => setTab(t.id));
-    if (role === 'GM' && t.id !== C.PLAYERS_TAB) {
+    if (canManageTab(t)) {
       b.addEventListener('dblclick', () => { renamingTab = t.id; render(); });
       if (active) {
         const x = iconButton('close', 'Delete tab', (ev) => { ev.stopPropagation(); removeTab(t); });
@@ -269,14 +292,15 @@ function renderTabs() {
     }
     nav.append(b);
   }
-  if (role === 'GM') nav.append(iconButton('add', 'New tab', addTab));
+  nav.append(iconButton('add', 'New tab', addTab));
 }
 
 function renderBar() {
   const bar = $('bar');
   bar.replaceChildren();
-  const canAdd = role === 'GM' || current === C.PLAYERS_TAB;
+  const canAdd = role === 'GM' || C.isPlayerTab(tabById(current));
   $('help').hidden = !(canAdd && helpOpen);
+  $('help').classList.toggle('gm', role === 'GM');
   if (!canAdd) return;
   const box = el('textarea', { rows: 1, placeholder: 'Goblin x4 15', spellcheck: false });
   const grow = () => { box.style.height = 'auto'; box.style.height = Math.min(120, Math.max(32, box.scrollHeight + 2)) + 'px'; };
@@ -292,7 +316,7 @@ function renderBar() {
   if (role === 'GM' && current !== C.PLAYERS_TAB) {
     const inTab = entries.filter((e) => e.tab === current);
     const anyHidden = inTab.some((e) => e.hidden);
-    bar.append(iconButton(anyHidden ? 'eyeOff' : 'eye', anyHidden ? 'Show all to players' : 'Hide all from players',
+    bar.append(iconButton(anyHidden ? 'eyeOff' : 'eye', anyHidden ? 'Show all stats to players' : 'Hide all stats from players',
       () => saveEntries(inTab.map((e) => ({ ...e, hidden: !anyHidden }))), !anyHidden));
   }
 }
@@ -309,9 +333,10 @@ function renderList() {
 }
 
 function renderEntry(e) {
-  const edit = C.canEdit(e, role);
+  const edit = C.canEdit(e, role, tabs);
+  const mask = C.masked(e, role);
   const isOpen = open.has(e.id) && edit;
-  const wrap = el('div', { className: 'entry' + (isOpen ? ' open' : '') + (e.hidden ? ' hidden-entry' : '') + (focus.includes(e.id) ? ' focus' : '') });
+  const wrap = el('div', { className: 'entry' + (isOpen ? ' open' : '') + (e.hidden && role === 'GM' ? ' hidden-entry' : '') + (focus.includes(e.id) ? ' focus' : '') });
   const row = el('div', { className: 'row' });
 
   row.append(renderAvatar(e, edit));
@@ -319,8 +344,16 @@ function renderEntry(e) {
   name.addEventListener('change', () => updateEntry(e, { name: name.value.trim() || e.name }));
   name.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') name.blur(); });
   row.append(name);
-  if (role === 'GM' && e.hidden) row.append(el('span', { className: 'flag', title: 'Hidden from players', innerHTML: svg('eyeOff') }));
+  if (role === 'GM' && e.hidden) row.append(el('span', { className: 'flag', title: 'Stats hidden from players', innerHTML: svg('eyeOff') }));
 
+  // Players can't open the menu on others' entries, so their AC shows in the row.
+  if (!edit && e.ac) row.append(el('span', { className: 'ac', title: 'AC', innerHTML: svg('shield') }, e.ac));
+  if (mask) {
+    const st = C.hpStatus(e);
+    row.append(el('div', { className: 'hp status' + (st === 'B' ? ' bloodied' : ''), title: st === 'B' ? 'Bloodied' : 'Healthy', textContent: st }));
+    wrap.append(row);
+    return wrap;
+  }
   if (e.extra > 0) row.append(el('span', { className: 'xp', title: 'Extra HP', textContent: `+${e.extra}` }));
   const hp = el('div', { className: 'hp' }, el('span', { className: 'fill', style: `width:${C.hpFraction(e) * 100}%` }));
   hp.append(mathInput('', e.hp, (text) => {
@@ -384,8 +417,8 @@ function renderMore(e) {
   const actions = el('div', { className: 'actions' });
   if (role === 'GM') {
     const vis = el('button', { type: 'button', className: 'btn' + (e.hidden ? '' : ' on'), innerHTML: svg(e.hidden ? 'eyeOff' : 'eye') });
-    vis.append(e.hidden ? 'Hidden' : 'Shown');
-    vis.title = e.hidden ? 'Hidden from players: click to show' : 'Shown to players: click to hide';
+    vis.append(e.hidden ? 'Stats hidden' : 'Stats shown');
+    vis.title = e.hidden ? 'Players see H/B and AC: click to show everything' : 'Players see everything: click to hide the stats';
     vis.addEventListener('click', () => updateEntry(e, { hidden: !e.hidden }));
     actions.append(vis);
   }
@@ -396,7 +429,7 @@ function renderMore(e) {
   }
   if (role === 'GM') {
     const move = el('select', { title: 'Move to tab' }, ...tabs.map((t) => el('option', { value: t.id, textContent: t.name, selected: t.id === e.tab })));
-    move.addEventListener('change', () => updateEntry(e, { tab: move.value, hidden: move.value === C.PLAYERS_TAB ? false : e.hidden }));
+    move.addEventListener('change', () => updateEntry(e, { tab: move.value, hidden: C.isPlayerTab(tabById(move.value)) ? false : e.hidden }));
     actions.append(move);
   }
   actions.append(el('span', { className: 'grow' }));

@@ -88,7 +88,7 @@ Loot: 40 gp each (160 gp for the party)`;
   assert.deepStrictEqual(rows, [
     { name: 'Monster A', count: 1, hp: 119, max: 119, extra: 0, ac: 'M' },
     { name: 'Kobold Sneak', count: 2, hp: 15, max: 15, extra: 0, ac: '' },
-    { name: 'Kobold Minion', count: 3, hp: 1, max: 1, extra: 0, ac: '' },
+    { name: 'Kobold Minion', count: 1, hp: 3, max: 3, extra: 0, ac: '' },
   ]);
   const boss = C.parseCommand('The Boss (Legendary, level 3)\nHP: 100\nArmor: Heavy').rows;
   assert.deepStrictEqual(boss, [{ name: 'The Boss', count: 1, hp: 100, max: 100, extra: 0, ac: 'H' }]);
@@ -104,12 +104,39 @@ test('scene metadata round trip: Players tab always exists, deleted entries vani
   assert.deepStrictEqual(C.readState({}).tabs.map((t) => t.id), ['players']);
 });
 
-test('visibility and permissions', () => {
+test('hidden stats and permissions', () => {
+  const tabs = [{ id: C.PLAYERS_TAB, name: 'Players' }, { id: 'x', name: 'Fight' }, { id: 'p', name: 'Pets', players: true }];
   const monster = C.newEntry({ tab: 'x' });
   const hero = C.newEntry({ tab: C.PLAYERS_TAB });
-  assert.ok(C.canSee(monster, 'GM') && !C.canSee(monster, 'PLAYER'));
-  assert.ok(C.canSee({ ...monster, hidden: false }, 'PLAYER'));
-  assert.ok(C.canEdit(hero, 'PLAYER') && !C.canEdit({ ...monster, hidden: false }, 'PLAYER'));
+  const pet = C.newEntry({ tab: 'p', hidden: false });
+  assert.ok(monster.hidden && !hero.hidden, 'GM tabs start with stats hidden');
+  assert.ok(C.masked(monster, 'PLAYER') && !C.masked(monster, 'GM'));
+  assert.ok(!C.masked({ ...monster, hidden: false }, 'PLAYER'));
+  assert.ok(C.canEdit(hero, 'PLAYER', tabs) && C.canEdit(pet, 'PLAYER', tabs));
+  assert.ok(!C.canEdit({ ...monster, hidden: false }, 'PLAYER', tabs));
+  assert.ok(C.canEdit(monster, 'GM', tabs));
+});
+
+test('H or B for hidden stats', () => {
+  assert.strictEqual(C.hpStatus({ hp: 11, max: 20 }), 'H');
+  assert.strictEqual(C.hpStatus({ hp: 10, max: 20 }), 'B');
+  assert.strictEqual(C.hpStatus({ hp: 0, max: null }), 'B');
+  assert.strictEqual(C.hpStatus({ hp: 5, max: null }), 'H');
+});
+
+test('minions share one entry', () => {
+  assert.deepStrictEqual(C.parseCommand('Kobold Minion x10').rows, [{ name: 'Kobold Minion', count: 1, hp: 10, max: 10, extra: 0, ac: '' }]);
+  assert.deepStrictEqual(C.parseCommand('Rat minions x6 ac:M').rows[0], { name: 'Rat minions', count: 1, hp: 6, max: 6, extra: 0, ac: 'M' });
+  assert.strictEqual(C.parseCommand('Kobold Minion 4').rows[0].hp, 4);
+});
+
+test('/clear command', () => {
+  assert.deepStrictEqual(C.parseClear('/clear'), { match: '' });
+  assert.deepStrictEqual(C.parseClear('/clear Goblin'), { match: 'Goblin' });
+  assert.strictEqual(C.parseClear('Clear 5'), null);
+  assert.ok(C.clearMatches({ name: 'Goblin 3' }, { match: 'goblin' }));
+  assert.ok(!C.clearMatches({ name: 'Ogre' }, { match: 'goblin' }));
+  assert.ok(C.clearMatches({ name: 'Ogre' }, { match: '' }));
 });
 
 test('HP bar fill', () => {

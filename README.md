@@ -94,11 +94,15 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 
 **Using it**
 - **Tabs** organize entries. Click **+** to add one, double-click to rename, **×** to delete. The
-  **Players** tab is always there and can't be deleted.
+  **Players** tab is always there and can't be deleted. Players can make their own tabs too (and
+  rename or delete those).
 - **Add entries** in the box at the top: `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
   `max:70` or `extra:5` if you like. Or paste a fight from the Combat Generator: every
-  `Name xN / HP / Armor` block becomes entries (minions get 1 HP; Armor None/Medium/Heavy becomes AC
-  blank/M/H).
+  `Name xN / HP / Armor` block becomes entries (Armor None/Medium/Heavy becomes AC blank/M/H).
+- **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
+  "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
+- **Mass delete (GM only):** `/clear` deletes every entry in the current tab; `/clear Goblin`
+  deletes only names starting with "Goblin". It asks first.
 - **Change HP** by typing math in the HP box and pressing Enter: `20-3` → 17, `-3` takes 3 off,
   `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
   - Damage uses up **Extra HP** first.
@@ -113,12 +117,14 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **On the token:** HP in a red circle in the lower-left corner, Extra HP in a blue one beside it,
   and AC on a shield in the lower-right corner.
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
-  e.g. `M`, `H`, `15`), show/hide, detach, move to another tab, and delete.
-- **Hidden by default:** new entries are hidden from players (except on the Players tab). Show or
-  hide one entry from its ⋯ menu; the eye next to the add box does the whole tab. Hidden entries are
-  dimmed with a crossed-out eye.
-- **Players** see the Players tab and anything you reveal (read-only), and can add and edit their
-  own entries in the Players tab.
+  e.g. `M`, `H`, `15`), stats shown/hidden, detach, move to another tab, and delete.
+- **Hidden stats:** players see every entry, but when its stats are hidden they only see **H**
+  (healthy) or **B** (Bloodied: at or below half Max HP, or at 0) and the AC, in the panel and on the
+  token. New entries start with hidden stats (except in players' tabs). Toggle one entry from its ⋯
+  menu; the eye next to the add box does the whole tab. For you, hidden entries are dimmed with a
+  crossed-out eye.
+- **Players** can add and edit entries in the Players tab and in tabs they made; everything else is
+  read-only for them.
 
 **Where it's saved:** in the current scene only (not the room), so each scene has its own tracker.
 Hidden entries are hidden in the panel and on the map, but technically every player's browser
