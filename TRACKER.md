@@ -39,9 +39,6 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ### 📋 Next up
 - (nothing queued)
 
-### 💡 Ideas
-- [ ] Initiative tracker
-
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool
 - [x] Shared stylesheet `assets/css/nimble.css`
