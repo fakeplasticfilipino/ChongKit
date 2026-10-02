@@ -39,6 +39,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ### 📋 Next up
 - (nothing queued)
 
+## ✅ Nimble 3rd Party Creator License
+- [x] Attribution word for word in every Nimble page footer (landing page, combat generator, rules reference)
+- [x] Free-to-use notice as a banner at the top of each Nimble page, linking nimbleRPG.com
+
 ## Chong's Tracker (`chongs-tracker/`)
 Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chongs-tracker/TRACKER.md).
 

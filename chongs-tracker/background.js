@@ -71,7 +71,8 @@ function shield(id, token, sig, center, d, color, text) {
 // when its signature changes. Position isn't in it: attached items follow their token.
 async function desiredBadges() {
   const { entries } = C.readState(metadata);
-  const shown = entries.filter((e) => e.token);
+  // Minion groups get no badges: their HP is shared, so it lives in the panel only.
+  const shown = entries.filter((e) => e.token && !e.group);
   if (!shown.length) return new Map();
   const tokens = new Map((await OBR.scene.items.getItems([...new Set(shown.map((e) => e.token))])).map((t) => [t.id, t]));
   const out = new Map();

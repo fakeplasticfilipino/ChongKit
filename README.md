@@ -114,8 +114,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   Tracker**. The circle then shows the token's picture; click it to select the token on the map.
 - **Minions on several tokens:** a minion entry takes every token you pick (box-select the 10
   kobolds, click its **+**), shown as ×10. Click any of them on the map to bring the entry to the top
-  and take HP off. Badges only go on the first token. Any entry can take more tokens with
-  **+ Token** in its ⋯ menu.
+  and take HP off. Minion tokens get no badges (their HP is shared, so it lives in the panel). Any
+  entry can take more tokens with **+ Token** in its ⋯ menu; other entries badge their first token.
 - **Reorder** by dragging a card (grab it anywhere but its buttons and boxes; a quick click on the
   name still edits it).
 - **Select a token on the map** and its entry jumps to the top of the list (outlined, switching tabs

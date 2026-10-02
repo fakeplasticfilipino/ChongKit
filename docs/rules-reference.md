@@ -1,5 +1,7 @@
 # Rules Reference
 
+> This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at [nimbleRPG.com](https://nimbleRPG.com).
+
 Transcribed from the **Nimble 5e v2 GM Guide v2.0.1**. Printed page numbers are cited. These are the
 tables the combat generator uses. The data lives in `combat-generator/nimble-data.js`. This file was generated from it, so update both together.
 
@@ -165,3 +167,7 @@ Lodging boons: Minor about 10 gp, Major about 100 gp, EPIC about 1,000 gp.
 
 - **Gold per encounter.** This is the p.22 gold-per-level, split across the fights in a level. The number of fights comes from sessions per level (p.75) and a typical session mix of 1–2 easy, 1–2 medium and 1 hard fight (p.26). Each fight is weighted by its monster levels ÷ party levels.
 - **Band edges** the generator aims for: Easy 30–50%, Medium 65–85%, Hard 95–105%, Deadly 110–125%, Very Deadly 150–170%.
+
+---
+
+*ChongKit is an independent product published under the Nimble 3rd Party Creator License. Nimble © Nimble Co.*

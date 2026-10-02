@@ -14,7 +14,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Batch command: `Goblin x4 15`, `Ogre 59 ac:M max:70 extra:5`, or paste the combat generator's text
 - [x] Minions: one shared entry, HP = number of minions (`Kobold Minion x10` → 10 HP)
 - [x] `/clear` and `/clear Goblin`: GM-only mass delete in the current tab, with a confirm
-- [x] Several tokens per entry: minion groups take every picked token (×N in the row), + Token in the ⋯ menu adds more; badges on the first token only
+- [x] Several tokens per entry: minion groups take every picked token (×N in the row), + Token in the ⋯ menu adds more; minion tokens get no badges, other entries badge their first token
 - [x] Drag a card to reorder (anywhere but buttons/boxes; a short press on the name still edits)
 - [x] Tabs saved one key each (`com.chongkit.tracker/t/<id>`), so players and the GM adding tabs at once don't clash; the old single key migrates itself
 - [x] Asset links carry `?v=<version>` so Owlbear never mixes old and new files

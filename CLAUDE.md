@@ -40,7 +40,12 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    - Shared styles go in `assets/css/nimble.css`. Link it with a relative path (`../assets/css/nimble.css`).
    - Use relative links only. Never start a link with `/`: the site is served under `/<repo-name>/`.
    - Anything that must not be public (the PDF, tests, notes) goes in `_config.yml` → `exclude`.
-   - Keep the Nimble 3rd Party Creator License attribution in every page footer.
+   - Keep the Nimble 3rd Party Creator License attribution in every page footer, word for word:
+     "ChongKit is an independent product published under the Nimble 3rd Party Creator License.
+     Nimble © Nimble Co."
+   - Every Nimble page also needs the license's free-to-use notice as a banner at the top
+     (`.notice`), linking nimbleRPG.com. This is the one exception to "no explainer text".
+     Chong's Tracker uses no Nimble text, so it doesn't need either.
 
 ## Chong's Tracker (Owlbear Rodeo extension)
 
