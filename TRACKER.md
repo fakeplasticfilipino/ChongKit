@@ -23,15 +23,21 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Removed: dice rolling, HP trackers, helper and explainer text (not wanted)
 - [x] Tests: dice averages, difficulty bands, HP table lookup, reward table
 
+### ✅ v2 — done
+- [x] Bestiary picker (p.33–41): Creatures = Generic or one of 10 families (Kobolds, Goblins, Bandits, Snakemen, Dungeon Denizens, Hill & Field, Undead, Forest Denizens, Cultists/Horrors, Underground). Every stat block transcribed and checked against page images.
+- [x] Exact level-mix search so named fights land inside the p.26 band with 1–4 per hero; families that can't are greyed out
+- [x] Save DC for bestiary monsters **derived** from the p.30 row by level (marked "(by level)")
+- [x] Faction loot tables shown with the reward (Kobold, Goblin, Bandit, Dungeon Denizen, Undead, Briarbane, Horrible, Underground)
+- [x] Output is one plain, editable textbox (Name xN / HP / Armor / Damage / Save DC), with New Encounter · New Dice · Copy
+
 ### 📋 Next up
-- [ ] Bestiary picker (p.33–41): generate with named monsters (Kobolds, Goblins, Bandits, Snakemen, Oozes, Mimics, Undead…) instead of generic "Monster A". *Needs careful transcription — HP values extract out of order from the PDF; verify against page images.*
-- [ ] Faction loot tables (e.g. "Goblin Loot", "Bandit Loot") shown with the reward
 - [ ] Glass-cannon / tank variants (p.30: shift damage rows up and HP rows down, or vice versa)
 - [ ] Mixed-level parties (enter each hero's level instead of one level for all)
 
 ### 💡 Ideas
 - [ ] "Unique Encounter" twist roller (p.28–29: Ambush, Defend the Fort, Waves Upon Waves…)
 - [ ] Legendary Bloodied / Last Stand ability suggestions (p.43 optional actions)
+- [ ] Mix families, or let generic monsters fill in when a family can't reach the budget
 - [ ] Save/load encounters for session prep
 - [ ] Initiative tracker
 

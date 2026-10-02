@@ -46,6 +46,10 @@
       </div>
     </div>
 
+    <label class="field"><span class="label">Creatures</span>
+      <select id="family"><option value="generic">Generic</option></select>
+    </label>
+
     <details class="more">
       <summary>More options</summary>
       <div class="grid">
@@ -91,7 +95,14 @@
     </details>
   </section>
 
-  <div id="out"></div>
+  <div class="rhead">
+    <div class="toolbar">
+      <button type="button" class="btn primary" id="new">New Encounter</button>
+      <button type="button" class="btn" id="dice">New Dice</button>
+      <button type="button" class="btn" id="copy">Copy</button>
+    </div>
+  </div>
+  <textarea id="out" class="out" spellcheck="false" aria-label="Encounter"></textarea>
 
   <p class="foot"><a href="../docs/rules-reference.html">Rules reference</a><br>ChongKit is an independent product published under the Nimble 3rd Party Creator License and is not affiliated with Nimble Co. Nimble © 2025 Nimble Co.</p>
 </main>
@@ -104,9 +115,11 @@
   const out = $('out');
   let current = null;
 
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const gp = (n) => n.toLocaleString() + ' gp';
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const ARMOR = { none: 'None', medium: 'Medium', heavy: 'Heavy' };
+
+  NIMBLE.bestiary.forEach((f) => $('family').add(new Option(f.name, f.key)));
 
   // --- Setup controls -------------------------------------------------------
   const segValue = (id) => $(id).querySelector('[aria-pressed="true"]').dataset.value;
@@ -118,6 +131,7 @@
       level: clamp($('level').value, 1, 20),
       difficulty: segValue('difficulty'),
       mode: segValue('mode'),
+      family: $('family').value,
       armor: $('armor').value,
       die: $('die').value,
       minionsPerHero: parseInt($('minions').value, 10),
@@ -126,12 +140,27 @@
     };
   }
 
+  // Grey out creature families that can't fill this fight (1–4 per hero, inside the p.26 band).
+  function syncControls() {
+    const o = readOpts();
+    for (const opt of $('family').options) {
+      opt.disabled = opt.value !== 'generic' && !Gen.familyFits(opt.value, o);
+    }
+    if ($('family').selectedOptions[0].disabled) $('family').value = 'generic';
+    const boss = o.mode === 'legendary';
+    const named = !boss && $('family').value !== 'generic';
+    $('family').disabled = boss;
+    $('minions').disabled = boss;
+    $('abilities').disabled = boss || named;
+    $('armor').disabled = named;
+    $('die').disabled = named;
+    $('dice').disabled = named;
+  }
+
   document.querySelectorAll('.seg').forEach((seg) => seg.addEventListener('click', (ev) => {
     const b = ev.target.closest('button');
     if (!b) return;
     seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    const boss = segValue('mode') === 'legendary';
-    $('minions').disabled = boss; $('abilities').disabled = boss;
     generate();
   }));
 
@@ -145,128 +174,89 @@
     });
     inp.addEventListener('change', generate);
   });
-  ['armor', 'die', 'minions', 'patron', 'abilities'].forEach((id) => $(id).addEventListener('change', generate));
+  ['family', 'armor', 'die', 'minions', 'patron', 'abilities'].forEach((id) => $(id).addEventListener('change', generate));
 
-  // --- Rendering ------------------------------------------------------------
-  const stat = (label, val, sub) => `<div class="stat"><span class="label">${label}</span><div class="val">${val}</div>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
-  const dmg = (a) => stat('Damage', esc(a.text), `avg ${a.average}${a.exact ? '' : ' ≈'}`);
-  const armorSub = (key) => (key === 'medium' ? 'Medium armor' : key === 'heavy' ? 'Heavy armor' : '');
+  // --- Text output ------------------------------------------------------------
+  function asText(e) {
+    const blocks = [];
+    const head = `${e.difficulty.name} ${e.mode === 'legendary' ? 'Boss Fight' : 'Fight'} · ${e.heroes} heroes, level ${e.level}`;
 
-  function render(e) {
-    let h;
     if (e.mode === 'legendary') {
       const L = e.legendary;
-      h = header(`${esc(e.difficulty.name)} Boss Fight`, `${e.heroes} heroes, level ${e.level}`) +
-      `<section class="block big">
-        <div class="kicker">Legendary · Level ${L.statLevel} · acts after each hero's turn</div>
-        <h3 class="legend-name bname" style="font-variant:normal;font-style:normal;font-size:2rem"><span contenteditable="true" spellcheck="false">The Boss</span></h3>
-        <div class="stats" style="--n: 4">
-          ${stat('HP', L.hp, L.armor.replace(' Armor', ' armor'))}
-          ${stat('Move &amp; Hit', esc(L.small.attack.text), `avg ${L.small.attack.average}`)}
-          ${stat('Big Hit', esc(L.big.attack.text), `avg ${L.big.attack.average}`)}
-          ${stat('Save DC', L.dc)}
-        </div>
-        <div class="bar"><b>Bloodied</b> at <span class="red">${L.bloodied} HP</span></div>
-        <div class="bar"><b>Last Stand</b> at 0 HP: dies after <span class="red">${L.lastStand}</span> more damage</div>
-      </section>`;
+      blocks.push([
+        `The Boss (Legendary, level ${L.statLevel})`,
+        `HP: ${L.hp}`,
+        `Armor: ${L.armor.replace(' Armor', '')}`,
+        `Damage: ${L.small.attack.text} (move & hit) or ${L.big.attack.text} (big hit)`,
+        `Save DC: ${L.dc}`,
+        `Bloodied: ${L.bloodied} HP`,
+        `Last Stand: ${L.lastStand} more damage`,
+        `Acts after each hero's turn.`,
+      ]);
     } else {
-      const total = e.groups.reduce((s, g) => s + g.count, 0);
-      const foes = `${total} monster${total === 1 ? '' : 's'}${e.minions ? ` + ${e.minions.count} minions` : ''}`;
-      const blocks = e.groups.map((g, gi) => {
+      const f = e.family;
+      if (f && f.traits.length) blocks.push([`${f.name}`, ...f.traits]);
+      e.groups.forEach((g, i) => {
         const m = g.monster;
-        const [abName, ...abRest] = m.ability ? m.ability.split('. ') : [];
-        return `<section class="block">
-          <div class="bhead">
-            <div class="bname"><span contenteditable="true" spellcheck="false">Monster ${letters[gi]}</span><span class="count">×${g.count}</span></div>
-            <span class="lvl">lvl ${m.label}</span>
-          </div>
-          <div class="stats">${stat('HP', m.hp, armorSub(m.armor.key))}${dmg(m.attack)}${stat('Save DC', m.dc)}</div>
-          ${m.ability ? `<div class="bar"><b>${esc(abName)}.</b> ${esc(abRest.join('. '))}</div>` : ''}
-        </section>`;
+        const lines = [`${f ? m.name : `Monster ${letters[i]}`} x${g.count}`, `HP: ${m.hp}`, `Armor: ${ARMOR[f ? m.armor : m.armor.key]}`];
+        if (m.speed) lines.push(`Move: ${m.speed}`);
+        lines.push(`Damage: ${f ? (m.attacks.join(' ') || '—') : m.attack.text}`);
+        lines.push(`Save DC: ${m.dc}${m.dcDerived ? ' (by level)' : ''}`);
+        if (f) lines.push(...m.abilities);
+        else if (m.ability) lines.push(m.ability);
+        blocks.push(lines);
       });
       if (e.minions) {
-        blocks.push(`<section class="block">
-          <div class="bhead">
-            <div class="bname"><span contenteditable="true" spellcheck="false">Minions</span><span class="count">×${e.minions.count}</span></div>
-          </div>
-          <div class="stats" style="--n: 2">${stat('HP', '—', 'dies in one hit')}${stat('Damage', `1d${e.minions.die}`, 'no crits, miss on 1')}</div>
-        </section>`);
+        const n = e.minions.named;
+        blocks.push([
+          `${n ? n.name : 'Minion'} x${e.minions.count}`,
+          `HP: Minion (any damage kills)`,
+          `Damage: ${n ? n.attack : `1d${e.minions.die}`} (no crits, miss on a 1)`,
+        ]);
       }
-      // Two columns, filled left then right, like the bestiary pages.
-      const half = Math.ceil(blocks.length / 2);
-      h = header(`${esc(e.difficulty.name)} Fight`, `${foes} vs ${e.heroes} heroes, level ${e.level}`) +
-        `<div class="cols"><div>${blocks.slice(0, half).join('')}</div><div>${blocks.slice(half).join('')}</div></div>`;
     }
-    const r = e.reward;
-    h += `<section class="block"><div class="bname">Loot</div>
-      <div class="stats" style="--n: 2">${stat('Each hero', gp(r.perHero))}${stat(`Whole party (${e.heroes})`, gp(r.party))}</div></section>`;
-    out.innerHTML = h;
+
+    const loot = [`Loot: ${gp(e.reward.perHero)} each (${gp(e.reward.party)} for the party)`];
+    if (e.family && e.family.loot) loot.push(`${e.family.loot.name}: ${e.family.loot.text}`);
+    blocks.push(loot);
+    return [head, ...blocks.map((b) => b.join('\n'))].join('\n\n');
   }
 
-  function header(title, sub) {
-    return `<div class="rhead">
-        <div><h2>${title}</h2><div class="sub">${sub}</div></div>
-        <div class="toolbar">
-          <button class="btn primary" data-act="new">New Encounter</button>
-          <button class="btn" data-act="dice">New Dice</button>
-          <button class="btn" data-act="copy">Copy as Text</button>
-        </div>
-      </div>`;
+  function show(e) {
+    out.value = asText(e);
+    fit();
   }
+  // Grow the box to fit the text so the whole fight is visible without scrolling inside it.
+  function fit() { out.style.height = 'auto'; out.style.height = out.scrollHeight + 4 + 'px'; }
+  out.addEventListener('input', fit);
+  window.addEventListener('resize', fit);
 
   // --- Actions ----------------------------------------------------------------
-  out.addEventListener('click', async (ev) => {
-    const b = ev.target.closest('button[data-act]');
-    if (!b) return;
-    if (b.dataset.act === 'new') return generate();
-    if (b.dataset.act === 'dice') return newDice();
-    const t = asText();
-    try { await navigator.clipboard.writeText(t); b.textContent = 'Copied!'; }
-    catch { window.prompt('Copy this:', t); }
-    setTimeout(() => (b.textContent = 'Copy as Text'), 1500);
-  });
+  function generate() { syncControls(); current = Gen.generate(readOpts()); show(current); }
 
-  function generate() { current = Gen.generate(readOpts()); render(current); }
-
-  // Same monsters, new dice (same averages). Keeps any names the GM typed.
+  // Same monsters, new dice (same averages). Generic monsters and the boss only:
+  // bestiary monsters keep their printed attacks.
   function newDice() {
     const d = $('die').value === 'any' ? Gen.ALL_DICE : [Number($('die').value)];
     if (current.mode === 'legendary') {
       const L = current.legendary;
       L.small.attack = Gen.randomDice(L.small.avg, { dice: d, attackOptions: [1] });
       L.big.attack = Gen.randomDice(L.big.avg, { dice: d, attackOptions: [1] });
-    } else {
+    } else if (!current.family) {
       current.groups.forEach((g) => { g.monster.attack = Gen.randomDice(g.monster.dpr, { dice: d }); });
     }
-    const names = [...out.querySelectorAll('[contenteditable]')].map((n) => n.textContent);
-    render(current);
-    out.querySelectorAll('[contenteditable]').forEach((n, i) => { if (names[i] !== undefined) n.textContent = names[i]; });
+    show(current);
   }
 
-  function asText() {
-    const e = current;
-    const names = [...out.querySelectorAll('[contenteditable]')].map((n) => n.textContent.trim());
-    const lines = [];
-    if (e.mode === 'legendary') {
-      const L = e.legendary;
-      lines.push(`${e.difficulty.name} boss fight: ${e.heroes} heroes, level ${e.level}`,
-        `${names[0]} (legendary, level ${L.statLevel}): HP ${L.hp}, ${L.armor}, Save DC ${L.dc}`,
-        `  Acts after each hero's turn.`,
-        `  Move & hit: ${L.small.attack.text} (avg ${L.small.attack.average})`,
-        `  Big hit: ${L.big.attack.text} (avg ${L.big.attack.average})`,
-        `  Bloodied at ${L.bloodied} HP. Last Stand: dies after ${L.lastStand} more damage.`);
-    } else {
-      lines.push(`${e.difficulty.name} fight: ${e.heroes} heroes, level ${e.level}`);
-      e.groups.forEach((g, i) => {
-        const m = g.monster;
-        const armor = m.armor.key === 'none' ? '' : `, ${m.armor.name}`;
-        lines.push(`- ${g.count}× ${names[i]}: HP ${m.hp}${armor}, ${m.attack.text} (avg ${m.attack.average}), Save DC ${m.dc}${m.ability ? `. ${m.ability}` : ''}`);
-      });
-      if (e.minions) lines.push(`- ${e.minions.count}× ${names[e.groups.length]}: 1d${e.minions.die} each, one hit kills, miss on a 1`);
-    }
-    lines.push(`Loot: ${gp(e.reward.perHero)} each (${gp(e.reward.party)} total)`);
-    return lines.join('\n');
-  }
+  $('new').addEventListener('click', generate);
+  $('dice').addEventListener('click', newDice);
+  $('copy').addEventListener('click', async (ev) => {
+    const b = ev.currentTarget;
+    try { await navigator.clipboard.writeText(out.value); }
+    catch { out.select(); document.execCommand('copy'); }
+    b.textContent = 'Copied!';
+    setTimeout(() => (b.textContent = 'Copy'), 1500);
+  });
 
   generate();
 })();

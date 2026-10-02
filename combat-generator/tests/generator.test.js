@@ -78,3 +78,54 @@ test('gold reward scales from the p.22 table', () => {
   assert.strictEqual(rich.goldPerLevel, 80); // level 3 row
   assert.ok(rich.perHero > r.perHero);
 });
+
+test('bestiary entries are complete (p.33–41)', () => {
+  const armors = ['none', 'medium', 'heavy'];
+  for (const f of N.bestiary) {
+    assert.ok(f.page >= 33 && f.page <= 41, f.name);
+    for (const m of f.monsters) {
+      assert.ok(m.name && m.level > 0 && m.hp > 0, `${f.name}: ${m.name}`);
+      assert.ok(armors.includes(m.armor), `${m.name} armor ${m.armor}`);
+      assert.ok(Array.isArray(m.attacks), m.name);
+    }
+  }
+});
+
+test('bestiary encounters land exactly in the difficulty bands, using only that family', () => {
+  let built = 0;
+  for (const f of N.bestiary) {
+    for (const [key, d] of Object.entries(N.difficulties)) {
+      for (const heroes of [2, 3, 4, 5, 6]) {
+        for (const level of [1, 2, 3, 4, 5, 8, 12, 20]) {
+          const opts = { heroes, level, difficulty: key, family: f.key };
+          if (!G.familyFits(f.key, opts)) continue;
+          const e = G.generate(opts);
+          built++;
+          const n = e.groups.reduce((s, g) => s + g.count, 0);
+          assert.ok(n >= heroes && n <= heroes * 4, `${f.key} ${key} ${heroes}x${level}: ${n} monsters`);
+          assert.ok(e.ratio >= d.min - 1e-9 && e.ratio <= d.max + 1e-9, `${f.key} ${key} ${heroes}x${level}: ratio ${e.ratio}`);
+          for (const { monster: m } of e.groups) {
+            assert.ok(f.monsters.some((x) => x.name === m.name), `${m.name} not in ${f.name}`);
+            assert.strictEqual(m.dc, G.dcForLevel(m.level));
+          }
+        }
+      }
+    }
+  }
+  assert.ok(built > 500, `only ${built} feasible combos`);
+});
+
+test('families that cannot fill a fight are reported, not faked', () => {
+  // Kobolds top out at level 1: 4 heroes at level 10 need 40 levels from at most 16 kobolds.
+  assert.strictEqual(G.familyFits('kobolds', { heroes: 4, level: 10, difficulty: 'hard' }), false);
+  assert.strictEqual(G.familyFits('kobolds', { heroes: 4, level: 1, difficulty: 'hard' }), true);
+  // Underground starts at level 2: 4 level-1 heroes can't have an Easy fight with 4+ of them.
+  assert.strictEqual(G.familyFits('underground', { heroes: 4, level: 1, difficulty: 'easy' }), false);
+  assert.throws(() => G.generate({ heroes: 4, level: 10, difficulty: 'hard', family: 'kobolds' }));
+});
+
+test('derived bestiary Save DC follows the p.30 row', () => {
+  assert.strictEqual(G.dcForLevel(1 / 3), 9);
+  assert.strictEqual(G.dcForLevel(4), 12);
+  assert.strictEqual(G.dcForLevel(21), 20);
+});

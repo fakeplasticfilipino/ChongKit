@@ -6,7 +6,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 
 | Tool | Status | What it does |
 |------|--------|--------------|
-| [Combat Generator](combat-generator/) | ✅ v1 | Builds an encounter for your party: monster HP, damage dice, Save DC, and the expected gold reward. |
+| [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
 
@@ -16,14 +16,24 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 
 1. Use **−/+** to set the number of heroes and their level.
 2. Pick **Monsters** or **Boss**, then a difficulty. The fight updates right away.
-3. Armor, dice, minions, who's paying, and special abilities are under **More options**.
+3. Pick **Creatures**: **Generic** (Monster Builder stats) or a bestiary family such as Kobolds, Goblins, Bandits or Undead.
+4. Armor, dice, minions, who's paying, and special abilities are under **More options**.
 
-Each monster shows its **HP**, **Damage** (with the average) and **Save DC**. The **Loot** box shows gold for each hero and for the whole party.
+The fight is written as plain text in one box, one block per monster:
+
+```
+Kobold Trapper x3
+HP: 26
+Armor: None
+Damage: Throw Scorpion (2×). (Range 8) 1d4+2.
+Save DC: 10 (by level)
+```
+
+followed by any abilities, then the gold for each hero and the whole party (plus the family's loot table, if it has one). The box is editable, so rename monsters or add notes right there.
 
 - **New Encounter:** a different fight with the same settings.
-- **New Dice:** the same monsters with new dice (same averages).
-- **Copy as Text:** copies the whole fight, ready to paste into notes or Discord.
-- Click a monster's name to rename it.
+- **New Dice:** the same generic monsters (or boss) with new dice (same averages).
+- **Copy:** copies the text, ready to paste into notes or Discord.
 
 ### Randomized dice (same average)
 
@@ -39,7 +49,9 @@ Each time you generate, the tool picks a random mix of dice whose average is **e
 | (2×) 1d12+4 | 2 × 10.5 = 21 |
 | 6d4+6 | 15 + 6 = 21 |
 
-The only exception is level ¼ (3 damage). No real dice average exactly 3, so it uses the closest option (±0.5), just like the guide's own `1d4+1`. The card marks these with **≈**.
+The only exception is level ¼ (3 damage). No real dice average exactly 3, so it uses the closest option (±0.5), just like the guide's own `1d4+1`.
+
+Named bestiary monsters keep the attacks printed in the guide. Their dice are not randomized.
 
 ### How encounters are built
 
@@ -49,6 +61,9 @@ The only exception is level ¼ (3 damage). No real dice average exactly 3, so it
 - **Armor** (p.26): the default mix is about 60% unarmored, 30% Medium and 10% Heavy.
 - **Flavor abilities** (p.31): each ability drops the monster's HP one row, as the guide says to.
 - **Minions** (p.25, p.27): the die size comes from party level. They have no HP and can't crit.
+- **Bestiary** (p.33–41): with a creature family picked, monsters come only from that family's stat blocks (HP, armor, movement, attacks and abilities as printed). The tool finds a mix of their levels that lands inside the difficulty band with 1–4 monsters per hero. A family that can't do that for your party (e.g. Kobolds, which top out at level 1, for level-10 heroes) is greyed out. Family minions (Kobold Minion, etc.) are used when the family has one.
+  - **Save DC is derived.** The bestiary doesn't print a Save DC, so the tool uses the p.30 Monster Builder DC for the monster's level and marks it **(by level)**. The Mummy Lord (level 21) uses the level-20 row.
+  - The Oozes' red **X** is filled in with each ooze's number (Gray Ooze 2, Ochre Jelly 3, Black Pudding 5, Elder Ooze 6).
 - **Legendary** (p.44): stats come from party level. Easy uses the row 2 levels lower and Very Deadly the row 2 levels higher.
 
 ### Rewards
@@ -87,4 +102,4 @@ To preview locally, run `python3 -m http.server` in the repo root and open http:
 node --test combat-generator/tests/*.test.js
 ```
 
-The tests check that every generated damage expression averages exactly the guide's value, and that encounters land inside the difficulty bands.
+The tests check that every generated damage expression averages exactly the guide's value, that encounters (generic and bestiary) land inside the difficulty bands, and that bestiary fights only use their own family.

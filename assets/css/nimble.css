@@ -132,6 +132,17 @@ details.more .grid { display: grid; grid-template-columns: repeat(auto-fit, minm
 .rhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; margin: 30px 0 14px; }
 .rhead .sub { font-style: italic; color: var(--ink-soft); }
 
+/* Plain-text output box: the result is just editable text. */
+textarea.out {
+  display: block; width: 100%; min-height: 240px; resize: vertical; overflow: hidden;
+  font: 500 1.1rem/1.45 var(--body); color: var(--ink);
+  background: var(--parchment-hi); border: 1.5px solid var(--ink); border-radius: 0;
+  padding: 14px 16px; white-space: pre-wrap;
+}
+textarea.out:focus { outline: 2px solid var(--rule); outline-offset: 2px; }
+.setup > .field > select { align-self: flex-start; min-width: 220px; }
+select:disabled, .btn:disabled { opacity: .45; cursor: default; }
+
 .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 22px; align-items: start; }
 .kicker { font-family: var(--head); font-weight: 900; color: var(--muted); font-size: .95rem; }
 
@@ -155,4 +166,4 @@ a.block:hover .bname { color: var(--blood); }
   .stats[style*="--n: 4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat .val { font-size: 1.25rem; white-space: normal; }
 }
-@media print { .setup, .toolbar { display: none !important; } body { background: #fff; } }
+@media print { .setup, .toolbar { display: none !important; } body { background: #fff; } textarea.out { border: 0; } }

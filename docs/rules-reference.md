@@ -79,6 +79,25 @@ The guide's level ranges overlap at 3, 5, 10, 13 and 17. At those levels the gen
 - 3 per hero: Noticeably more difficult.
 - 4 per hero: Much more challenging.
 
+## Bestiary (p.33–41)
+
+Ten creature families, each with stat blocks giving level, HP, armor, attacks and abilities. The combat generator uses them as printed (see `combat-generator/nimble-data.js` → `bestiary`).
+
+| Family | Page | Levels | Minion | Loot table |
+|---|---|---|---|---|
+| Kobolds | 33 | 1/3, 1/2, 1 | Kobold Minion | Kobold Loot |
+| Goblins | 34 | 1/3, 2 | Goblin Minion | Goblin Loot |
+| Bandits | 35 | 1/3, 1, 2, 4 | Bandit Minion | Bandit Loot |
+| Snakemen | 35 | 1, 4, 8 | Snakeman Minion | — |
+| Dungeon Denizens | 36 | 1/2, 1, 2, 4, 6, 8, 12 | — | Dungeon Denizen Loot |
+| Hill & Field | 37 | 1, 2, 4, 10, 12, 17 | — | — |
+| Undead | 38 | 1/3, 1/2, 1, 3, 5, 6, 8, 10, 21 | — | Undead Loot |
+| Forest Denizens | 39 | 1/2, 1, 2, 5, 6, 7, 8, 14 | — | Briarbane Loot |
+| Cultists/Horrors | 40 | 1/2, 1, 3, 4, 5, 14 | — | Horrible Loot |
+| Underground | 41 | 2, 4, 6, 10, 13, 16 | — | Underground Loot |
+
+The bestiary prints **no Save DC**. The generator **derives** one from the Monster Builder (p.30) row for the monster's level.
+
 ## Legendary Monster Builder (p.44)
 
 These stats are based on **party level** and don't change with party size. For an easier fight use stats 1–2 levels lower. For a harder one, 1–2 levels higher. The monster acts after **each hero's turn**. It gets a new ability when Bloodied (half HP). At 0 HP it enters its **Last Stand** and dies after the listed amount of extra damage.
