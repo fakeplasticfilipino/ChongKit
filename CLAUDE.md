@@ -4,11 +4,13 @@ Guidance for Claude (and humans) working in this repo.
 
 ## What this is
 
-ChongKit is a set of TTRPG tools for one table running **Nimble 5e (v2)**. The rules source is
+ChongKit is a set of TTRPG tools for one table running **Nimble 5e (v2)**, plus **Chong's Tracker**, a
+system-agnostic Owlbear Rodeo extension (see its own section below; the Nimble ground rules don't
+apply to it). The rules source is
 `source/nimble-gm-guide-v2.0.1.pdf` (Nimble 5e v2 GM Guide v2.0.1, 115 pages).
 Page numbers in code and docs are the **printed** page numbers (PDF page index = printed + 1).
 
-## Ground rules
+## Ground rules (Nimble tools: the combat generator, rules reference)
 
 1. **The guide is the source of truth.** Every number (HP, damage, DCs, gold, difficulty bands) must
    come from the PDF and cite its page in a comment. If a value is derived (not printed in the guide),
@@ -39,6 +41,26 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    - Anything that must not be public (the PDF, tests, notes) goes in `_config.yml` → `exclude`.
    - Keep the Nimble 3rd Party Creator License attribution in every page footer.
 
+## Chong's Tracker (Owlbear Rodeo extension)
+
+A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, no GM Guide numbers.
+
+1. **Owlbear's look**, not the GM Guide's: colors come from `OBR.theme`, Roboto/system fonts, no
+   parchment. Don't use `assets/css/nimble.css` there.
+2. **It tracks HP on purpose.** The "no HP tracking" rule above is for the combat generator only.
+   Still no dice: HP boxes do arithmetic (`20-3`), the table rolls real dice.
+3. **State lives in the scene's metadata only** (never room metadata): one key per entry
+   (`com.chongkit.tracker/e/<id>`, deleted = `null`) plus `com.chongkit.tracker/tabs`. Token badges
+   are local items drawn by `background.js`, never saved.
+4. **The Owlbear SDK is the one install exception**: `vendor/obr-sdk.js` is `@owlbear-rodeo/sdk`
+   bundled once with esbuild into a single ESM file and committed. Everything else stays plain
+   HTML + vanilla JS with no build step. To update the SDK, rebuild that one file (see README).
+5. **Manifest paths are absolute** (`/ChongKit/chongs-tracker/...`): the site is served under
+   `/ChongKit/`. This is the only place a path starts with `/`.
+6. Keep the logic that can be tested (math, HP rules, parsing, metadata) in `core.js`, which works as
+   a browser script (`window.ChongCore`) and a CommonJS module, and cover it in `tests/core.test.js`.
+7. Its status and backlog live in `chongs-tracker/TRACKER.md`.
+
 ## Layout
 
 ```
@@ -50,6 +72,15 @@ combat-generator/            → /combat-generator/
   nimble-data.js             All rules data from the guide (single source of numbers)
   generator.js               Pure logic: dice, encounter building, rewards
   tests/generator.test.js    node:test suite (not published)
+chongs-tracker/              Owlbear extension → /chongs-tracker/ (install: manifest.json)
+  manifest.json              Owlbear extension manifest
+  index.html, app.js         The panel (action popover)
+  background.html/.js        Token badges + right-click "Track"
+  core.js                    Pure logic: math, HP rules, command parser, metadata
+  style.css                  Owlbear-style look
+  vendor/obr-sdk.js          Bundled @owlbear-rodeo/sdk (don't edit)
+  tests/core.test.js         node:test suite (not published)
+  TRACKER.md                 The tracker's own status and backlog (not published)
 docs/rules-reference.md      Rules tables with page numbers → /docs/rules-reference.html
 source/                      The GM Guide PDF (not published)
 README.md                    What the tools are and how to use them
@@ -62,7 +93,7 @@ CommonJS modules for Node tests.
 
 ## Commands
 
-- Test: `node --test combat-generator/tests/*.test.js` (Node 18+, no dependencies)
+- Test: `node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js` (Node 18+, no dependencies)
 - Run: `python3 -m http.server` in the repo root, then open http://localhost:8000/ (this matches how GitHub Pages serves it). Opening a tool's `index.html` directly also works.
 
 ## Reading the PDF
@@ -75,5 +106,5 @@ against a rendered page image before transcribing.
 
 ## Workflow
 
-- Update `TRACKER.md` when a task starts/finishes.
+- Update `TRACKER.md` (or `chongs-tracker/TRACKER.md` for the tracker) when a task starts/finishes.
 - Run the tests before committing, then push to `main`.

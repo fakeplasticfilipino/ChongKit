@@ -39,11 +39,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ### 📋 Next up
 - (nothing queued)
 
+## Chong's Tracker (`chongs-tracker/`)
+Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chongs-tracker/TRACKER.md).
+
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool
 - [x] Shared stylesheet `assets/css/nimble.css`
 - [x] `_config.yml` keeps the PDF, tests and notes off the public site
-- [ ] Turn on Pages in the GitHub settings: Deploy from a branch → `main` → `/ (root)`
+- [x] Pages is on (https://fakeplasticfilipino.github.io/ChongKit/)
 
 ## Other tools (future)
 - 💡 Skill challenge runner (p.15)

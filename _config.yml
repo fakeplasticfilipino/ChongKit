@@ -6,3 +6,5 @@ exclude:
   - CLAUDE.md
   - TRACKER.md
   - combat-generator/tests/
+  - chongs-tracker/tests/
+  - chongs-tracker/TRACKER.md

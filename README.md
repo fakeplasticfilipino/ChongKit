@@ -6,6 +6,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 
 | Tool | Status | What it does |
 |------|--------|--------------|
+| [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health and counters, any system. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
@@ -84,6 +85,44 @@ encounter gold per hero = gold per level (p.22)
 - A typical session is 1.5 easy, 1.5 medium and 1 hard fight. That adds up to about 2.8 hard fights' worth.
 - **Who's paying?** moves the gold table 1–2 levels down or up, as p.22 describes for poor or wealthy patrons.
 
+## Chong's Tracker (Owlbear Rodeo)
+
+A system-agnostic health and counter tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/).
+
+**To install:** in Owlbear, open your profile → **Extensions** → **Add Extension**, paste
+`https://fakeplasticfilipino.github.io/ChongKit/chongs-tracker/manifest.json`, then turn it on in your room.
+
+**Using it**
+- **Tabs** organize entries. Click **+** to add one, double-click to rename, **×** to delete. The
+  **Players** tab is always there and can't be deleted.
+- **Add entries** in the box at the top: `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
+  `max:70` or `extra:5` if you like. Or paste a fight from the Combat Generator: every
+  `Name xN / HP / Armor` block becomes entries (minions get 1 HP; Armor None/Medium/Heavy becomes AC
+  blank/M/H).
+- **Change HP** by typing math in the red box and pressing Enter: `20-3` → 17, `-3` takes 3 off,
+  `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
+  - Damage uses up **Extra HP** first.
+  - With **Max HP** set, healing can't go above it. HP can go below 0.
+- **Attach to a token:** select the token, then click the link icon on the entry. Select several
+  tokens to attach them to that entry and the next ones in order (select 4 goblins, click Goblin 1).
+  Or right-click tokens → **Track in Chong's Tracker**. Attached tokens show a red HP circle (and a
+  blue one for Extra HP).
+- **Expand** an entry (the arrow) for **Max HP**, **Extra HP**, **AC** (any text, e.g. `M`, `H`,
+  `15`) and your own **counters**: number, slider or checkbox. The pin shows a counter on the token.
+- **Hidden by default:** new entries are hidden from players (except on the Players tab). The eye
+  shows or hides one entry; the eye next to the add box does the whole tab.
+- **Players** see the Players tab and anything you reveal (read-only), and can add and edit their
+  own entries in the Players tab.
+
+**Where it's saved:** in the current scene only (not the room), so each scene has its own tracker.
+Hidden entries are hidden in the panel and on the map, but technically every player's browser
+receives the scene data.
+
+**Updating the Owlbear SDK** (`chongs-tracker/vendor/obr-sdk.js`): in a scratch folder run
+`npm i @owlbear-rodeo/sdk esbuild`, write `entry.js` containing
+`export { default } from "@owlbear-rodeo/sdk"; export * from "@owlbear-rodeo/sdk";`, then
+`npx esbuild entry.js --bundle --format=esm --minify --outfile=obr-sdk.js` and copy the result over.
+
 ## Hosting (GitHub Pages)
 
 The repo root is the website:
@@ -103,7 +142,7 @@ To preview locally, run `python3 -m http.server` in the repo root and open http:
 ## Development
 
 ```
-node --test combat-generator/tests/*.test.js
+node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js
 ```
 
 The tests check that every generated damage expression averages exactly the guide's value, that encounters (generic and bestiary) land inside the difficulty bands, and that bestiary fights only use their own family.
