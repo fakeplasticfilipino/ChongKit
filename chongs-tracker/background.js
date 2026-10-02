@@ -147,7 +147,7 @@ async function track(items) {
   if (role === 'GM') {
     try { const t = localStorage.getItem(TAB_STORE); if (tabs.some((x) => x.id === t)) tab = t; } catch {}
   }
-  const tracked = new Set(entries.map((e) => e.token));
+  const tracked = new Set(entries.flatMap(C.tokensOf));
   let order = Math.max(0, ...entries.filter((e) => e.tab === tab).map((e) => e.order + 1));
   const patch = {};
   for (const item of items) {

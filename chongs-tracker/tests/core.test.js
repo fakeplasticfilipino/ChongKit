@@ -88,7 +88,7 @@ Loot: 40 gp each (160 gp for the party)`;
   assert.deepStrictEqual(rows, [
     { name: 'Monster A', count: 1, hp: 119, max: 119, extra: 0, ac: 'M' },
     { name: 'Kobold Sneak', count: 2, hp: 15, max: 15, extra: 0, ac: '' },
-    { name: 'Kobold Minion', count: 1, hp: 3, max: 3, extra: 0, ac: '' },
+    { name: 'Kobold Minion', count: 1, hp: 3, max: 3, extra: 0, ac: '', group: true },
   ]);
   const boss = C.parseCommand('The Boss (Legendary, level 3)\nHP: 100\nArmor: Heavy').rows;
   assert.deepStrictEqual(boss, [{ name: 'The Boss', count: 1, hp: 100, max: 100, extra: 0, ac: 'H' }]);
@@ -97,11 +97,37 @@ Loot: 40 gp each (160 gp for the party)`;
 test('scene metadata round trip: Players tab always exists, deleted entries vanish', () => {
   const a = C.newEntry({ name: 'A', tab: 'x', order: 1 });
   const b = C.newEntry({ name: 'B', tab: 'x', order: 0 });
-  const md = { ...C.tabsPatch([{ id: 'players', name: 'Players' }, { id: 'x', name: 'Fight' }]), ...C.entryPatch(a), ...C.entryPatch(b), ...C.deletePatch('gone'), other: 1 };
+  const md = { ...C.tabPatch({ id: 'x', name: 'Fight', order: 1 }), ...C.tabDeletePatch('old'), ...C.entryPatch(a), ...C.entryPatch(b), ...C.deletePatch('gone'), other: 1 };
   const s = C.readState(md);
   assert.deepStrictEqual(s.tabs.map((t) => t.id), ['players', 'x']);
   assert.deepStrictEqual(s.entries.map((e) => e.name), ['B', 'A']);
   assert.deepStrictEqual(C.readState({}).tabs.map((t) => t.id), ['players']);
+});
+
+test('tabs: one key each, old single key migrates', () => {
+  const md = { [C.KEYS.tabs]: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], ...C.tabDeletePatch('b'), ...C.tabPatch({ id: 'c', name: 'C', order: 9, players: true }) };
+  assert.deepStrictEqual(C.readState(md).tabs.map((t) => t.id), ['players', 'a', 'c']);
+  const patch = C.migrateTabsPatch(md);
+  assert.strictEqual(patch[C.KEYS.tabs], null);
+  assert.deepStrictEqual(Object.keys(patch).filter((k) => k.startsWith(C.KEYS.tabPrefix)), [C.KEYS.tabPrefix + 'a']);
+  assert.deepStrictEqual(C.readState({ ...md, ...patch }).tabs.map((t) => t.id), ['players', 'a', 'c']);
+  assert.strictEqual(C.migrateTabsPatch({ ...md, ...patch }), null);
+});
+
+test('several tokens per entry; minion rows are groups', () => {
+  assert.deepStrictEqual(C.tokensOf({ token: 't1' }), ['t1']);
+  assert.deepStrictEqual(C.tokensOf({ token: null }), []);
+  const e = C.withTokens({ id: 'e' }, ['t1', 't2', 't1']);
+  assert.deepStrictEqual([e.token, e.tokens], ['t1', ['t1', 't2']]);
+  assert.strictEqual(C.withTokens(e, []).token, null);
+  assert.ok(C.rowsToEntries(C.parseCommand('Kobold Minion x5').rows, { tab: 'x' })[0].group);
+  assert.ok(!C.rowsToEntries(C.parseCommand('Goblin 7').rows, { tab: 'x' })[0].group);
+});
+
+test('reorder', () => {
+  assert.deepStrictEqual(C.reorder(['a', 'b', 'c'], 'a', 'c', true), ['b', 'c', 'a']);
+  assert.deepStrictEqual(C.reorder(['a', 'b', 'c'], 'c', 'a', false), ['c', 'a', 'b']);
+  assert.deepStrictEqual(C.reorder(['a', 'b', 'c'], 'b', 'b', false), ['a', 'b', 'c']);
 });
 
 test('hidden stats and permissions', () => {
@@ -125,8 +151,8 @@ test('H or B for hidden stats', () => {
 });
 
 test('minions share one entry', () => {
-  assert.deepStrictEqual(C.parseCommand('Kobold Minion x10').rows, [{ name: 'Kobold Minion', count: 1, hp: 10, max: 10, extra: 0, ac: '' }]);
-  assert.deepStrictEqual(C.parseCommand('Rat minions x6 ac:M').rows[0], { name: 'Rat minions', count: 1, hp: 6, max: 6, extra: 0, ac: 'M' });
+  assert.deepStrictEqual(C.parseCommand('Kobold Minion x10').rows, [{ name: 'Kobold Minion', count: 1, hp: 10, max: 10, extra: 0, ac: '', group: true }]);
+  assert.deepStrictEqual(C.parseCommand('Rat minions x6 ac:M').rows[0], { name: 'Rat minions', count: 1, hp: 6, max: 6, extra: 0, ac: 'M', group: true });
   assert.strictEqual(C.parseCommand('Kobold Minion 4').rows[0].hp, 4);
 });
 

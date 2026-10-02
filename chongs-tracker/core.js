@@ -5,7 +5,8 @@
 (function (root) {
   const NS = 'com.chongkit.tracker';
   const KEYS = {
-    tabs: `${NS}/tabs`,
+    tabs: `${NS}/tabs`, // old: every tab in one key (read once, then moved to tabPrefix keys)
+    tabPrefix: `${NS}/t/`, // one key per tab, so a player and the GM adding tabs don't clash
     entryPrefix: `${NS}/e/`, // one scene-metadata key per entry, so two people editing
                              // different entries never overwrite each other
   };
@@ -159,6 +160,7 @@
     if (rest.some((w) => /^minions?$/i.test(w))) {
       if (row.count > 1 || row.hp === null) row.hp = row.count;
       row.count = 1;
+      row.group = true;
       row.max = row.hp;
     }
     if (!row.name || row.hp === null) return null;
@@ -182,7 +184,9 @@
       const armorLine = lines.find((l) => /^Armor:/i.test(l));
       const armor = armorLine ? armorLine.replace(/^Armor:\s*/i, '').trim() : '';
       const ac = armor.toLowerCase() in ARMOR_AC ? ARMOR_AC[armor.toLowerCase()] : armor;
-      rows.push({ name, count: minion ? 1 : count, hp, max: hp, extra: 0, ac });
+      const row = { name, count: minion ? 1 : count, hp, max: hp, extra: 0, ac };
+      if (minion) row.group = true;
+      rows.push(row);
     }
     return { rows, errors: [] };
   }
@@ -195,7 +199,7 @@
         out.push(newEntry({
           name: r.count > 1 ? `${r.name} ${i}` : r.name,
           hp: r.hp, max: r.max, extra: r.extra, ac: r.ac,
-          tab, order: order + out.length, hidden,
+          tab, order: order + out.length, hidden, group: !!r.group,
         }));
       }
     }
@@ -205,11 +209,30 @@
   // --- Entries ----------------------------------------------------------------
   // hidden = the stats are hidden from players: they see the entry, its AC, and H or B instead of
   // its HP. New entries start hidden, except on the Players tab (or another players' tab).
-  function newEntry({ name = 'New', hp = 0, max = null, extra = 0, ac = '', tab = PLAYERS_TAB, order = 0, token = null, hidden } = {}) {
-    return {
-      id: uid(), tab, order, name, hp, max, extra, ac, token,
+  // group = minions sharing this entry: picking tokens attaches all of them to it.
+  function newEntry({ name = 'New', hp = 0, max = null, extra = 0, ac = '', tab = PLAYERS_TAB, order = 0, token = null, hidden, group = false } = {}) {
+    const e = {
+      id: uid(), tab, order, name, hp, max, extra, ac, token, tokens: token ? [token] : [],
       hidden: hidden === undefined ? tab !== PLAYERS_TAB : !!hidden,
     };
+    if (group) e.group = true;
+    return e;
+  }
+
+  // An entry can hold several tokens (minions). `token` stays the first one: it gets the badges.
+  const tokensOf = (e) => (Array.isArray(e.tokens) ? e.tokens : e.token ? [e.token] : []);
+  const withTokens = (e, list) => {
+    const tokens = [...new Set(list)];
+    return { ...e, tokens, token: tokens[0] || null };
+  };
+
+  // Move one id before or after another: the new order of ids.
+  function reorder(ids, fromId, toId, after) {
+    const out = ids.filter((id) => id !== fromId);
+    const at = out.indexOf(toId);
+    if (at < 0 || fromId === toId) return ids.slice();
+    out.splice(after ? at + 1 : at, 0, fromId);
+    return out;
   }
 
   // H (healthy) or B (Bloodied: at or below half Max HP, or at 0 or less).
@@ -235,18 +258,32 @@
   // --- Scene metadata <-> state --------------------------------------------------
   function readState(metadata) {
     const md = metadata || {};
-    const stored = Array.isArray(md[KEYS.tabs]) ? md[KEYS.tabs].filter((t) => t && t.id && t.id !== PLAYERS_TAB) : [];
-    const tabs = [...DEFAULT_TABS, ...stored];
+    const byId = new Map();
+    const legacy = Array.isArray(md[KEYS.tabs]) ? md[KEYS.tabs] : [];
+    legacy.forEach((t, i) => { if (t && t.id && t.id !== PLAYERS_TAB) byId.set(t.id, { order: i + 1, ...t }); });
     const entries = [];
     for (const [k, v] of Object.entries(md)) {
       if (k.startsWith(KEYS.entryPrefix) && v && typeof v === 'object') entries.push(v);
+      if (k.startsWith(KEYS.tabPrefix)) {
+        const id = k.slice(KEYS.tabPrefix.length);
+        if (v && typeof v === 'object' && id !== PLAYERS_TAB) byId.set(id, { ...v, id }); else byId.delete(id);
+      }
     }
+    const tabs = [...DEFAULT_TABS, ...[...byId.values()].sort((a, b) => (a.order || 0) - (b.order || 0))];
     entries.sort((a, b) => (a.order - b.order) || String(a.name).localeCompare(String(b.name)));
     return { tabs, entries };
   }
 
   const entryKey = (id) => KEYS.entryPrefix + id;
-  const tabsPatch = (tabs) => ({ [KEYS.tabs]: tabs.filter((t) => t.id !== PLAYERS_TAB) });
+  const tabPatch = (tab) => ({ [KEYS.tabPrefix + tab.id]: tab });
+  const tabDeletePatch = (id) => ({ [KEYS.tabPrefix + id]: null });
+  // Moves tabs from the old single key to one key per tab (null when there's nothing to move).
+  function migrateTabsPatch(md) {
+    if (!md || md[KEYS.tabs] == null) return null;
+    const patch = { [KEYS.tabs]: null };
+    for (const t of readState(md).tabs) if (t.id !== PLAYERS_TAB && !((KEYS.tabPrefix + t.id) in md)) Object.assign(patch, tabPatch(t));
+    return patch;
+  }
   // Deleted entries are written as null (scene metadata is merged key by key).
   const entryPatch = (entry) => ({ [entryKey(entry.id)]: entry });
   const deletePatch = (id) => ({ [entryKey(id)]: null });
@@ -261,8 +298,8 @@
     NS, KEYS, PLAYERS_TAB, uid,
     evalExpr, readInput, applyHp,
     parseCommand, rowsToEntries,
-    newEntry, hpFraction, hpStatus, parseClear, clearMatches,
-    readState, entryKey, tabsPatch, entryPatch, deletePatch, isPlayerTab, masked, canEdit,
+    newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,
+    readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, isPlayerTab, masked, canEdit,
   };
   if (typeof module !== 'undefined') module.exports = api;
   else root.ChongCore = api;

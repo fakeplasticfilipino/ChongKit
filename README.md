@@ -112,12 +112,18 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
   (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's
   Tracker**. The circle then shows the token's picture; click it to select the token on the map.
+- **Minions on several tokens:** a minion entry takes every token you pick (box-select the 10
+  kobolds, click its **+**), shown as ×10. Click any of them on the map to bring the entry to the top
+  and take HP off. Badges only go on the first token. Any entry can take more tokens with
+  **+ Token** in its ⋯ menu.
+- **Reorder** by dragging a card (grab it anywhere but its buttons and boxes; a quick click on the
+  name still edits it).
 - **Select a token on the map** and its entry jumps to the top of the list (outlined, switching tabs
   if needed) until you deselect it, so you can change its HP without scrolling.
 - **On the token:** HP in a red circle in the lower-left corner, Extra HP in a blue one beside it,
   and AC on a shield in the lower-right corner.
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
-  e.g. `M`, `H`, `15`), stats shown/hidden, detach, move to another tab, and delete.
+  e.g. `M`, `H`, `15`), stats shown/hidden, + Token, detach, move to another tab, and delete.
 - **Hidden stats:** players see every entry, but when its stats are hidden they only see **H**
   (healthy) or **B** (Bloodied: at or below half Max HP, or at 0) and the AC, in the panel and on the
   token. New entries start with hidden stats (except in players' tabs). Toggle one entry from its ⋯
