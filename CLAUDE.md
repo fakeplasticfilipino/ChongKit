@@ -32,7 +32,8 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    - No dice rolling or HP tracking. The tool shows stats; the table rolls real dice.
    - Controls must look clickable: squared, bordered buttons and toggles (`.btn`, `.seg`, `.stepper`).
      Arrow-tipped ribbons (`.bar`) are for ability text only, never for buttons.
-6. **Always commit and push straight to `main`.** Don't create branches or pull requests.
+6. **Always pull, then commit and push straight to `main`.** Pull (`git pull --rebase origin main`) before
+   starting work and before pushing; work happens on several devices. Don't create branches or pull requests.
 7. **The repo is a GitHub Pages site** (served from `main`, root folder). Keep it organized:
    - Each tool lives in its own folder with an `index.html` (so its URL is `/<tool-name>/`).
    - Add every new tool as a card on the root `index.html`.
@@ -106,5 +107,7 @@ against a rendered page image before transcribing.
 
 ## Workflow
 
+- **Always pull first.** Run `git pull --rebase origin main` at the start of every session and again before
+  committing: work happens on several devices, so the local copy may be behind.
 - Update `TRACKER.md` (or `chongs-tracker/TRACKER.md` for the tracker) when a task starts/finishes.
 - Run the tests before committing, then push to `main`.
