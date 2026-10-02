@@ -2,12 +2,12 @@
    the values below are Owlbear's dark-theme defaults, used until the theme loads. */
 :root {
   --text: #ffffff; --text2: rgba(255, 255, 255, .7); --muted: rgba(255, 255, 255, .45);
-  --primary: #bb99ff; --paper: #3d4051; --line: rgba(255, 255, 255, .12); --field: rgba(255, 255, 255, .06);
+  --primary: #bb99ff; --paper: #3d4051; --line: rgba(255, 255, 255, .12); --field: rgba(255, 255, 255, .06); --card: rgba(0, 0, 0, .22);
   --hp: #c62828; --extra: #1e88e5;
   color-scheme: dark;
 }
 :root[data-mode="LIGHT"] {
-  --line: rgba(0, 0, 0, .12); --field: rgba(0, 0, 0, .05); --muted: rgba(0, 0, 0, .45);
+  --line: rgba(0, 0, 0, .12); --field: rgba(0, 0, 0, .05); --card: rgba(255, 255, 255, .55); --muted: rgba(0, 0, 0, .45);
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -43,47 +43,71 @@ select option { background: var(--paper); color: var(--text); }
 .tab input { width: 110px; padding: 0 4px; background: transparent; border: 0; color: inherit; }
 
 /* Command bar */
-.bar { display: flex; gap: 6px; align-items: flex-start; padding: 0 10px 8px; }
-.bar textarea { flex: 1; resize: none; height: 32px; max-height: 120px; line-height: 20px; }
-
-/* Entries */
-.list { padding: 0 6px 12px; }
-.entry { border-radius: 10px; }
-.entry + .entry { border-top: 1px solid var(--line); }
-.entry.open { background: var(--field); border-top-color: transparent; }
-.entry.open + .entry { border-top-color: transparent; }
-.row { display: flex; align-items: center; gap: 4px; padding: 4px; }
-.row .name { flex: 1; width: 0; background: transparent; font-weight: 500; }
-.row .name:disabled { opacity: 1; }
-.hidden-entry .name { color: var(--muted); }
-.hpbox { display: flex; align-items: center; gap: 4px; flex: none; }
-.hp {
-  width: 64px; text-align: center; font-weight: 700; font-size: 16px;
-  background: var(--hp); color: #fff; border-radius: 16px;
+.bar { display: flex; gap: 4px; align-items: flex-start; padding: 0 10px 8px; }
+.bar textarea { flex: 1; resize: none; height: 32px; max-height: 120px; line-height: 20px; border-radius: 16px; padding: 5px 12px; }
+.help {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0 10px 8px; padding: 10px 12px;
+  background: var(--card); border-radius: 12px; font-size: 12px;
 }
-.hp:focus { border-color: #fff; }
-.max { color: var(--muted); font-size: 13px; min-width: 28px; }
-.xp { background: var(--extra); color: #fff; border-radius: 10px; padding: 0 6px; font-size: 12px; font-weight: 700; }
+.help[hidden] { display: none; }
+.help dt { font-family: 'Roboto Mono', ui-monospace, Consolas, monospace; color: var(--text); white-space: nowrap; }
+.help dd { margin: 0; color: var(--text2); }
+
+/* Entries: one card each */
+.list { padding: 0 10px 12px; display: grid; gap: 6px; }
+.entry { background: var(--card); border-radius: 12px; }
+.row { display: flex; align-items: center; gap: 6px; padding: 6px 4px 6px 6px; }
+.row .name { flex: 1; width: 0; background: transparent; font-weight: 500; padding-left: 4px; }
+.row .name:disabled { opacity: 1; }
+.hidden-entry .name, .hidden-entry .avatar { opacity: .5; }
+.flag { display: grid; color: var(--muted); }
+.flag svg { width: 16px; height: 16px; }
+
+.avatar {
+  flex: none; width: 36px; height: 36px; padding: 0; border-radius: 50%; overflow: hidden;
+  display: grid; place-items: center; background: var(--field); border: 2px solid var(--line); color: var(--text2);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.avatar svg { width: 18px; height: 18px; }
+.avatar.blank { border-style: dashed; }
+.avatar:not(:disabled):hover { border-color: var(--primary); color: var(--text); }
+.avatar:disabled { cursor: default; }
+.avatar.picking { border: 2px solid var(--primary); color: var(--primary); animation: pick 1s ease-in-out infinite alternate; }
+@keyframes pick { to { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent); } }
+
+.hp {
+  position: relative; flex: none; width: 76px; height: 30px; border-radius: 15px; overflow: hidden;
+  background: color-mix(in srgb, var(--hp) 30%, transparent);
+}
+.hp .fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(180deg, #e0504a, var(--hp)); transition: width .2s; }
+.hp input {
+  position: relative; width: 100%; height: 100%; padding: 0 8px; border: 0; border-radius: 15px;
+  background: transparent; color: #fff; text-align: center; font-weight: 700; font-size: 16px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+}
+.hp input:focus { box-shadow: inset 0 0 0 2px #fff; }
+.hp input:disabled { opacity: 1; }
+.xp {
+  flex: none; background: var(--extra); color: #fff; border-radius: 10px; padding: 1px 7px;
+  font-size: 12px; font-weight: 700;
+}
 
 /* Expanded entry */
-.more { padding: 2px 10px 10px 38px; display: grid; gap: 8px; min-width: 0; }
+.more { padding: 2px 10px 10px 10px; display: grid; gap: 10px; min-width: 0; }
 .fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .field input { width: 100%; }
 .field { display: grid; gap: 2px; }
 .field span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.counter { display: flex; align-items: center; gap: 4px; }
-.counter .cname { flex: 1; width: 0; }
-.counter .cval { width: 56px; text-align: center; }
-.counter input[type=range] { width: 90px; padding: 0; background: none; accent-color: var(--primary); }
-.counter input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); }
-.counter .cmax { width: 44px; text-align: center; }
-.counter .out { width: 40px; text-align: center; color: var(--text2); }
 .actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.actions select { border-radius: 16px; }
 .actions .grow { flex: 1; }
 .btn {
+  display: inline-flex; align-items: center; gap: 4px;
   border: 1px solid var(--line); background: transparent; border-radius: 16px; padding: 4px 12px; color: var(--text);
 }
+.btn svg { width: 16px; height: 16px; }
 .btn:hover { background: var(--field); }
+.btn.on { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
 .btn.danger { color: #ef5350; }
 
 .empty { color: var(--muted); text-align: center; padding: 24px 12px; margin: 0; }

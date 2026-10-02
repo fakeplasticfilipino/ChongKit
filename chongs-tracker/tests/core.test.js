@@ -112,9 +112,9 @@ test('visibility and permissions', () => {
   assert.ok(C.canEdit(hero, 'PLAYER') && !C.canEdit({ ...monster, hidden: false }, 'PLAYER'));
 });
 
-test('counter text on tokens', () => {
-  assert.strictEqual(C.counterText({ type: 'number', name: 'Rage', value: 2 }), 'Rage 2');
-  assert.strictEqual(C.counterText({ type: 'slider', name: 'Ki', value: 3, max: 5 }), 'Ki 3/5');
-  assert.strictEqual(C.counterText({ type: 'check', name: 'Prone', value: true }), 'Prone');
-  assert.strictEqual(C.counterText({ type: 'check', name: 'Prone', value: false }), null);
+test('HP bar fill', () => {
+  assert.strictEqual(C.hpFraction({ hp: 10, max: 20 }), 0.5);
+  assert.strictEqual(C.hpFraction({ hp: 25, max: 20 }), 1);
+  assert.strictEqual(C.hpFraction({ hp: -5, max: 20 }), 0);
+  assert.strictEqual(C.hpFraction({ hp: 7, max: null }), 1);
 });

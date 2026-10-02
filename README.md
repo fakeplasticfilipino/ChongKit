@@ -6,7 +6,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 
 | Tool | Status | What it does |
 |------|--------|--------------|
-| [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health and counters, any system. |
+| [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
@@ -87,7 +87,7 @@ encounter gold per hero = gold per level (p.22)
 
 ## Chong's Tracker (Owlbear Rodeo)
 
-A system-agnostic health and counter tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/).
+A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/).
 
 **To install:** in Owlbear, open your profile → **Extensions** → **Add Extension**, paste
 `https://fakeplasticfilipino.github.io/ChongKit/chongs-tracker/manifest.json`, then turn it on in your room.
@@ -103,14 +103,18 @@ A system-agnostic health and counter tracker for [Owlbear Rodeo](https://www.owl
   `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
   - Damage uses up **Extra HP** first.
   - With **Max HP** set, healing can't go above it. HP can go below 0.
-- **Attach to a token:** select the token, then click the link icon on the entry. Select several
-  tokens to attach them to that entry and the next ones in order (select 4 goblins, click Goblin 1).
-  Or right-click tokens → **Track in Chong's Tracker**. Attached tokens show a red HP circle (and a
-  blue one for Extra HP).
-- **Expand** an entry (the arrow) for **Max HP**, **Extra HP**, **AC** (any text, e.g. `M`, `H`,
-  `15`) and your own **counters**: number, slider or checkbox. The pin shows a counter on the token.
-- **Hidden by default:** new entries are hidden from players (except on the Players tab). The eye
-  shows or hides one entry; the eye next to the add box does the whole tab.
+- **The ⓘ button** next to the add box lists these commands.
+- **Attach to a token:** click the empty **+** circle on an entry, then click a token on the map
+  (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
+  (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's
+  Tracker**. The circle then shows the token's picture; click it to select the token on the map.
+- **On the token:** HP in a red circle in the lower-left corner, Extra HP in a blue one beside it,
+  and AC on a shield in the lower-right corner.
+- **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
+  e.g. `M`, `H`, `15`), show/hide, detach, move to another tab, and delete.
+- **Hidden by default:** new entries are hidden from players (except on the Players tab). Show or
+  hide one entry from its ⋯ menu; the eye next to the add box does the whole tab. Hidden entries are
+  dimmed with a crossed-out eye.
 - **Players** see the Players tab and anything you reveal (read-only), and can add and edit their
   own entries in the Players tab.
 

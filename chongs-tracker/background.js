@@ -1,14 +1,14 @@
 // Chong's Tracker: background page (always running while the extension is on).
-// 1. Draws the badges on attached tokens: red HP circle, blue Extra HP circle, and one label for
-//    the counters marked "show on token". They are LOCAL items (only on this screen), built from
-//    the scene metadata, so hidden entries draw nothing for players and nothing extra is saved.
+// 1. Draws the badges on attached tokens: HP in the lower-left corner with Extra HP beside it, and
+//    AC on a shield in the lower-right corner. They are LOCAL items (only on this screen), built
+//    from the scene metadata, so hidden entries draw nothing for players and nothing extra is saved.
 // 2. Adds a right-click "Track" item for tokens.
-import OBR, { buildShape, buildText, buildLabel } from './vendor/obr-sdk.js';
+import OBR, { buildShape, buildCurve, buildText } from './vendor/obr-sdk.js';
 
 const C = window.ChongCore;
 const TAG = `${C.NS}/badge`;
 const TAB_STORE = `${C.NS}/tab`;
-const RED = '#c62828', BLUE = '#1e88e5', WHITE = '#ffffff';
+const RED = '#d32f2f', BLUE = '#1e88e5', SLATE = '#455a64', WHITE = '#ffffff', EDGE = '#1b1b1f';
 
 let role = 'PLAYER';
 let metadata = {};
@@ -26,19 +26,41 @@ function attachedTo(builder, token, sig) {
     .metadata({ [TAG]: { sig } });
 }
 
+// Centered white label over a badge.
+function label(id, token, sig, center, d, text) {
+  const fontSize = d * (text.length <= 2 ? 0.5 : text.length === 3 ? 0.4 : 0.32);
+  return attachedTo(buildText().id(id).name("Chong's Tracker"), token, sig)
+    .textType('PLAIN').plainText(text)
+    .width(d * 1.6).height(d).position({ x: center.x - d * 0.8, y: center.y - d / 2 })
+    .textAlign('CENTER').textAlignVertical('MIDDLE')
+    .fontFamily('Roboto').fontWeight(700).fontSize(fontSize).fillColor(WHITE)
+    .strokeColor(EDGE).strokeOpacity(0.35).strokeWidth(Math.max(0.5, d * 0.03))
+    .zIndex(3).build();
+}
+
 function circle(id, token, sig, center, d, color, text) {
-  const fontSize = d * (text.length <= 2 ? 0.52 : text.length === 3 ? 0.42 : 0.34);
   return [
     attachedTo(buildShape().id(id).name("Chong's Tracker").shapeType('CIRCLE'), token, sig)
       .width(d).height(d).position(center)
-      .fillColor(color).fillOpacity(1).strokeColor(WHITE).strokeOpacity(0.9).strokeWidth(Math.max(1, d * 0.06))
+      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(0.6).strokeWidth(Math.max(1, d * 0.07))
       .zIndex(1).build(),
-    attachedTo(buildText().id(`${id}.t`).name("Chong's Tracker"), token, sig)
-      .textType('PLAIN').plainText(text)
-      .width(d * 1.6).height(d).position({ x: center.x - d * 0.8, y: center.y - d / 2 })
-      .textAlign('CENTER').textAlignVertical('MIDDLE')
-      .fontFamily('Roboto').fontWeight(700).fontSize(fontSize).fillColor(WHITE).strokeWidth(0)
-      .zIndex(2).build(),
+    label(`${id}.t`, token, sig, center, d, text),
+  ];
+}
+
+// A heater shield, points relative to its center.
+function shield(id, token, sig, center, d, color, text) {
+  const w = d * 0.86, h = d;
+  const pts = [
+    { x: -w / 2, y: -h / 2 }, { x: w / 2, y: -h / 2 }, { x: w / 2, y: h * 0.08 },
+    { x: 0, y: h / 2 }, { x: -w / 2, y: h * 0.08 },
+  ];
+  return [
+    attachedTo(buildCurve().id(id).name("Chong's Tracker"), token, sig)
+      .points(pts).position(center).closed(true).tension(0.12)
+      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(0.6).strokeWidth(Math.max(1, d * 0.07))
+      .zIndex(1).build(),
+    label(`${id}.t`, token, sig, { x: center.x, y: center.y - h * 0.08 }, d * 0.9, text),
   ];
 }
 
@@ -54,31 +76,25 @@ async function desiredBadges() {
     const token = tokens.get(e.token);
     if (!token) continue;
     const b = await OBR.scene.items.getItemBounds([token.id]);
-    const d = Math.max(20, Math.min(b.width, b.height) * 0.34);
+    const d = Math.max(20, Math.min(b.width, b.height) * 0.32);
     const base = `${C.NS}.${e.id}`;
-    const hpCenter = { x: b.max.x - d * 0.3, y: b.min.y + d * 0.3 };
     const add = (items, sig) => items.forEach((item) => out.set(item.id, { sig, item }));
+    const y = b.max.y - d * 0.4;
 
+    const hpCenter = { x: b.min.x + d * 0.4, y };
     const hpSig = JSON.stringify(['hp', e.hp, d, token.visible]);
     add(circle(`${base}.hp`, token, hpSig, hpCenter, d, RED, String(e.hp)), hpSig);
 
     if (e.extra > 0) {
       const dx = d * 0.72;
       const xpSig = JSON.stringify(['xp', e.extra, d, token.visible]);
-      add(circle(`${base}.xp`, token, xpSig, { x: hpCenter.x - d * 0.85, y: hpCenter.y }, dx, BLUE, `+${e.extra}`), xpSig);
+      add(circle(`${base}.xp`, token, xpSig, { x: hpCenter.x + d * 0.5 + dx * 0.4, y: y + (d - dx) / 2 }, dx, BLUE, `+${e.extra}`), xpSig);
     }
 
-    const texts = (e.counters || []).filter((c) => c.show).map(C.counterText).filter(Boolean);
-    if (texts.length) {
-      const text = texts.join(' · ');
-      const sig = JSON.stringify(['c', text, d, token.visible]);
-      const label = attachedTo(buildLabel().id(`${base}.c`).name("Chong's Tracker"), token, sig)
-        .plainText(text).fontFamily('Roboto').fontWeight(500).fontSize(d * 0.36).fillColor(WHITE)
-        .backgroundColor('#222222').backgroundOpacity(0.85).cornerRadius(d * 0.2).padding(d * 0.12)
-        .pointerDirection('UP').pointerWidth(0).pointerHeight(0)
-        .position({ x: b.center.x, y: b.max.y + d * 0.1 })
-        .zIndex(3).build();
-      out.set(label.id, { sig, item: label });
+    const ac = String(e.ac || '').trim();
+    if (ac) {
+      const acSig = JSON.stringify(['ac', ac, d, token.visible]);
+      add(shield(`${base}.ac`, token, acSig, { x: b.max.x - d * 0.4, y }, d, SLATE, ac), acSig);
     }
   }
   return out;

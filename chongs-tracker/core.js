@@ -11,7 +11,6 @@
   };
   const PLAYERS_TAB = 'players';
   const DEFAULT_TABS = [{ id: PLAYERS_TAB, name: 'Players' }];
-  const COUNTER_TYPES = ['number', 'slider', 'check'];
 
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
@@ -201,23 +200,13 @@
       id: uid(), tab, order, name, hp, max, extra, ac, token,
       // Entries start hidden from players, except on the Players tab.
       hidden: tab !== PLAYERS_TAB,
-      counters: [],
     };
   }
 
-  function newCounter(type) {
-    const base = { id: uid(), type: COUNTER_TYPES.includes(type) ? type : 'number', name: '', show: false };
-    if (base.type === 'slider') return { ...base, value: 0, min: 0, max: 10 };
-    if (base.type === 'check') return { ...base, value: false };
-    return { ...base, value: 0 };
-  }
-
-  // Short text for a counter shown on a token (null = nothing to show).
-  function counterText(c) {
-    const name = c.name || '';
-    if (c.type === 'check') return c.value ? (name || '✓') : null;
-    if (c.type === 'slider') return `${name} ${c.value}/${c.max}`.trim();
-    return `${name} ${c.value}`.trim();
+  // How full the HP bar is, 0..1. Without Max HP the bar is full.
+  function hpFraction(entry) {
+    if (entry.max == null || entry.max <= 0) return 1;
+    return Math.max(0, Math.min(1, (entry.hp || 0) / entry.max));
   }
 
   // --- Scene metadata <-> state --------------------------------------------------
@@ -244,10 +233,10 @@
   const canEdit = (entry, role) => role === 'GM' || entry.tab === PLAYERS_TAB;
 
   const api = {
-    NS, KEYS, PLAYERS_TAB, COUNTER_TYPES, uid,
+    NS, KEYS, PLAYERS_TAB, uid,
     evalExpr, readInput, applyHp,
     parseCommand, rowsToEntries,
-    newEntry, newCounter, counterText,
+    newEntry, hpFraction,
     readState, entryKey, tabsPatch, entryPatch, deletePatch, canSee, canEdit,
   };
   if (typeof module !== 'undefined') module.exports = api;
