@@ -62,6 +62,10 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 6. Keep the logic that can be tested (math, HP rules, parsing, metadata) in `core.js`, which works as
    a browser script (`window.ChongCore`) and a CommonJS module, and cover it in `tests/core.test.js`.
 7. Its status and backlog live in `chongs-tracker/TRACKER.md`.
+8. **Bump the version on every change**: `manifest.json` → `version`, and the matching `?v=` on every
+   script/stylesheet link in `index.html` and `background.html`. GitHub Pages lets browsers cache each
+   file for 10 minutes, so without it Owlbear can mix old and new files (e.g. a new `app.js` with an
+   old `core.js`) and the panel breaks.
 
 ## Layout
 
