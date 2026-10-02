@@ -229,8 +229,11 @@ function visibleTabs() {
 
 function render() {
   // Don't rebuild under someone's cursor; catch up when they leave the field.
+  // The add box is the exception: the list redraws right away while you keep typing there.
   const a = document.activeElement;
-  if (document.hasFocus() && a && a !== document.body && document.body.contains(a) && a.matches('input, textarea, select') && !a.closest('#tabs')) {
+  const typing = document.hasFocus() && a && a !== document.body && document.body.contains(a) && a.matches('input, textarea, select');
+  const inBar = typing && !!a.closest('#bar');
+  if (typing && !inBar && !a.closest('#tabs')) {
     dirty = true;
     a.addEventListener('blur', catchUp, { once: true });
     return;
@@ -245,13 +248,18 @@ function render() {
   }
   if (!visibleTabs().some((t) => t.id === current)) current = C.PLAYERS_TAB;
   renderTabs();
-  renderBar();
+  if (inBar) { // keep the add box (and what's typed in it); refresh its buttons once it's left
+    dirty = true;
+    a.addEventListener('blur', catchUp, { once: true });
+  } else renderBar();
   renderList();
 }
 let pointerDown = false;
 function catchUp() { setTimeout(() => { if (dirty && !pointerDown) render(); }, 0); }
 document.addEventListener('pointerdown', () => { pointerDown = true; }, true);
 document.addEventListener('pointerup', () => { pointerDown = false; catchUp(); }, true);
+// A press that ends outside the panel never sends pointerup here: don't stay stuck waiting for it.
+for (const ev of ['pointercancel', 'blur']) window.addEventListener(ev, () => { pointerDown = false; catchUp(); });
 document.addEventListener('focusout', catchUp);
 
 function renderTabs() {

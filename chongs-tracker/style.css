@@ -1,11 +1,12 @@
 /* Chong's Tracker: one flat look that matches Owlbear Rodeo's own panels (translucent white
-   surfaces on Owlbear's glass popover, Roboto, Owlbear's purple accent). No light/dark switching. */
+   surfaces on Owlbear's glass popover, Roboto, Owlbear's purple accent). No light/dark switching.
+   Never set color-scheme here: when it differs from Owlbear's page, the browser paints an opaque
+   (black) backdrop behind the panel instead of letting Owlbear's glass show through. */
 :root {
   --text: #ffffff; --text2: rgba(255, 255, 255, .7); --muted: rgba(255, 255, 255, .45);
   --primary: #bb99ff; --paper: #222639;
   --card: rgba(255, 255, 255, .07); --field: rgba(255, 255, 255, .08); --hover: rgba(255, 255, 255, .14);
   --hp: rgba(255, 255, 255, .24); --hp-track: rgba(255, 255, 255, .08); --extra: #1e88e5; --blood: #c62828; --danger: #ff6b6b;
-  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: transparent; }
