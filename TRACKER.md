@@ -30,15 +30,16 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Faction loot tables shown with the reward (Kobold, Goblin, Bandit, Dungeon Denizen, Undead, Briarbane, Horrible, Underground)
 - [x] Output is one plain, editable textbox (Name xN / HP / Armor / Damage / Save DC), with New Encounter · New Dice · Copy
 
+### ✅ v3 — done
+- [x] Build: Normal / Mixed / Glass cannon / Tank (p.30: damage and HP shift 1–5 rows in opposite directions; tank mirror is the tool's reading)
+- [x] Unique encounter twist (p.28–29, all 37), off by default
+- [x] Generic monsters fill in when a family can't reach the budget (shown with their level for reskinning)
+- [x] Setup choices remembered in localStorage (never the generated fight)
+
 ### 📋 Next up
-- [ ] Glass-cannon / tank variants (p.30: shift damage rows up and HP rows down, or vice versa)
-- [ ] Mixed-level parties (enter each hero's level instead of one level for all)
+- (nothing queued)
 
 ### 💡 Ideas
-- [ ] "Unique Encounter" twist roller (p.28–29: Ambush, Defend the Fort, Waves Upon Waves…)
-- [ ] Legendary Bloodied / Last Stand ability suggestions (p.43 optional actions)
-- [ ] Mix families, or let generic monsters fill in when a family can't reach the budget
-- [ ] Save/load encounters for session prep
 - [ ] Initiative tracker
 
 ## Site (GitHub Pages)
@@ -48,7 +49,6 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [ ] Turn on Pages in the GitHub settings: Deploy from a branch → `main` → `/ (root)`
 
 ## Other tools (future)
-- 💡 Treasure / Boon generator (p.19–23: Minor/Major/EPIC boons, lodging boons)
 - 💡 Skill challenge runner (p.15)
 
 ## Open questions

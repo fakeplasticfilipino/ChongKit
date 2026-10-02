@@ -79,6 +79,16 @@ The guide's level ranges overlap at 3, 5, 10, 13 and 17. At those levels the gen
 - 3 per hero: Noticeably more difficult.
 - 4 per hero: Much more challenging.
 
+## Unique Encounters (p.28–29)
+
+Twists that change up a standard fight. The guide calls them "dessert, not main course": use them sparingly. The combat generator can add one at random:
+
+Ambush (Bad Guys) · Ambush (Heroes) · Backdraft · Betrayal · Can’t Reach Me · Capture the Flag · Charmed Allies · Defend the Fort · Divided Loyalties · Environmental Ally · Environmental Catastrophe · Enraged Baddies · Ethereal Enemies · Grudge Match · Illusory Enemies · Impending Doom · Interlopers · Manastorm · Mid-air Combat · Mounted Combat · Moving Hazard · Non-combatants · Oops, All Minions · Pitch Black · Poor Tactics (Dumb Enemies) · Push ‘em Off · Puzzle Combat · Reinforce · Split the Party · Stealthy Take Down · Thorns · Tight Quarters · Traps Abound · Turncoats · Vehicular Combat · Waves Upon Waves · We Give Up
+
+## Glass Cannon & Tank (p.30)
+
+"Use damage from 1-5 rows higher, and the HP from an equal number of rows lower." The guide's example is a level 5 mage with 34 HP (the level 2 row) and 26 damage (the level 8 row). For a tank, the guide says to lower the damage and increase the HP/Armor. The generator mirrors the same 1–5 row shift (**derived**).
+
 ## Bestiary (p.33–41)
 
 Ten creature families, each with stat blocks giving level, HP, armor, attacks and abilities. The combat generator uses them as printed (see `combat-generator/nimble-data.js` → `bestiary`).

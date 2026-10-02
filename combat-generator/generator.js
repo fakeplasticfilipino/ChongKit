@@ -131,22 +131,40 @@
     }
   }
 
-  function buildMonster(rowIdx, { armor, useAbility, dieChoice }) {
+  // p.30 glass cannon: damage from n rows higher, HP from n rows lower (n = 1–5). Tank: the mirror.
+  // Returns the row shift for damage (+n glass, −n tank), or 0 when the table has no room.
+  function shapeShift(shape, rowIdx, hpStep) {
+    const { min, max } = NIMBLE.shapeShift;
+    const room = shape === 'glass'
+      ? Math.min(max, ROWS.length - 1 - rowIdx, rowIdx - hpStep)
+      : shape === 'tank' ? Math.min(max, rowIdx, ROWS.length - 1 - rowIdx + hpStep) : 0;
+    if (room < min) return 0;
+    const n = randInt(min, room);
+    return shape === 'glass' ? n : -n;
+  }
+
+  function buildMonster(rowIdx, { armor, useAbility, dieChoice, shape = 'normal' }) {
     const row = ROWS[rowIdx];
     const armorInfo = armor === 'random'
       ? weightedPick(NIMBLE.armorMix)
       : NIMBLE.armorMix.find((a) => a.key === armor) || NIMBLE.armorMix[0];
     // p.30: each special ability lowers HP one step (use the row below).
     const ability = useAbility && rowIdx > 0 ? pick(NIMBLE.abilities) : null;
-    const hpRow = ability ? ROWS[rowIdx - 1] : row;
+    const hpStep = ability ? 1 : 0;
+    if (shape === 'mixed') shape = pick(['normal', 'glass', 'tank']);
+    const shift = shapeShift(shape, rowIdx, hpStep);
+    const dmgRow = ROWS[rowIdx + shift];
+    const hpRow = ROWS[rowIdx - shift - hpStep];
     const dice = dieChoice === 'any' ? ALL_DICE : [Number(dieChoice)];
-    const attack = randomDice(row.dpr, { dice });
+    const attack = randomDice(dmgRow.dpr, { dice });
     return {
       level: row.level,
       label: row.label,
       hp: hpRow.hp[armorInfo.hpIndex],
       armor: armorInfo,
-      dpr: row.dpr,
+      dpr: dmgRow.dpr,
+      shape: shift > 0 ? 'glass' : shift < 0 ? 'tank' : 'normal',
+      shift,
       attack,
       dc: row.dc,
       cr: row.cr,
@@ -188,12 +206,17 @@
   // (levels above 20, i.e. the Mummy Lord, use the level-20 row).
   const dcForLevel = (lvl) => ROWS.reduce((best, r) => (r.level <= lvl + 1e-9 ? r : best), ROWS[0]).dc;
 
-  // Pick monster levels (from `levels`) for n in [nMin, nMax] monsters whose total lands in
-  // [lo, hi], as close to `target` as possible. Exact search in twelfths of a level
-  // (1/4, 1/3 and 1/2 are all whole twelfths). Returns null when no combination fits.
-  function pickLevels(levels, { nMin, nMax, lo, hi, target }) {
-    const units = [...new Set(levels.map((l) => Math.round(l * 12)))];
+  // Pick monster levels for n in [nMin, nMax] monsters whose total lands in [lo, hi], as close
+  // to `target` as possible. Exact search in twelfths of a level (1/4, 1/3 and 1/2 are all whole
+  // twelfths). `levels` are the preferred levels (a family's); `fill` levels (the p.30 rows) are
+  // only used where the preferred ones can't reach the band, and at least one preferred level is
+  // always included. Returns null when no combination fits.
+  function pickLevels(levels, { nMin, nMax, lo, hi, target, fill = [] }) {
+    const toU = (ls) => [...new Set(ls.map((l) => Math.round(l * 12)))];
+    const pref = toU(levels);
+    const units = toU([...levels, ...fill]);
     const loU = Math.ceil(lo * 12 - 1e-9), hiU = Math.floor(hi * 12 + 1e-9);
+    if (hiU < 0) return null;
     // reach[c][s] = 1 when some c monsters total exactly s twelfths.
     const reach = [new Uint8Array(hiU + 1)];
     reach[0][0] = 1;
@@ -201,38 +224,52 @@
       reach[c] = new Uint8Array(hiU + 1);
       for (let s = 0; s <= hiU; s++) if (reach[c - 1][s]) for (const u of units) if (s + u <= hiU) reach[c][s + u] = 1;
     }
-    const inBand = (c) => { const r = []; for (let s = Math.max(0, loU); s <= hiU; s++) if (reach[c][s]) r.push(s); return r; };
+    // Valid end states: c monsters totalling s in the band, with at least one preferred level.
+    const valid = (c) => {
+      const r = [];
+      for (let s = Math.max(0, loU); s <= hiU; s++) {
+        if (reach[c][s] && pref.some((u) => s - u >= 0 && reach[c - 1][s - u])) r.push(s);
+      }
+      return r;
+    };
     const counts = [];
-    for (let c = nMin; c <= nMax; c++) if (inBand(c).length) counts.push(c);
+    for (let c = Math.max(1, nMin); c <= nMax; c++) if (valid(c).length) counts.push(c);
     if (!counts.length) return null;
-    // Bias toward fewer, meatier monsters: roll twice, keep the lower count.
-    const c = Math.min(pick(counts), pick(counts));
-    const sums = inBand(c);
+    // Bias toward fewer, meatier monsters (roll twice, keep the lower count). When filling,
+    // bias the other way so as many family monsters as possible fit.
+    const c = fill.length ? Math.max(pick(counts), pick(counts)) : Math.min(pick(counts), pick(counts));
+    const sums = valid(c);
     const best = Math.min(...sums.map((s) => Math.abs(s - target * 12)));
     let cur = pick(sums.filter((s) => Math.abs(s - target * 12) === best));
-    // Walk back down, preferring levels already used so the fight has few distinct stat blocks.
+    // Walk back down: preferred levels first, then levels already used, so the fight has few
+    // distinct stat blocks.
     const out = [];
     for (let k = c; k >= 1; k--) {
       const ok = units.filter((u) => cur - u >= 0 && reach[k - 1][cur - u]);
-      const reuse = ok.filter((u) => out.includes(u));
-      const u = reuse.length && rand() < 0.8 ? pick(reuse) : pick(ok);
+      const okPref = ok.filter((u) => pref.includes(u));
+      const from = okPref.length ? okPref : ok;
+      const reuse = from.filter((u) => out.includes(u));
+      const u = reuse.length && rand() < 0.8 ? pick(reuse) : pick(from);
       out.push(u);
       cur -= u;
     }
     return out.map((u) => u / 12);
   }
 
+  // Family monsters only if they can fill the fight alone; otherwise generic p.30 monsters fill the gap.
   function familyPlan(family, { heroes, level, difficulty }) {
     const diff = NIMBLE.difficulties[difficulty];
     const partyLevels = heroes * level;
-    return pickLevels(family.monsters.map((m) => m.level), {
+    const band = {
       nMin: heroes * NIMBLE.monstersPerHero.min,
       nMax: heroes * NIMBLE.monstersPerHero.max,
       lo: partyLevels * diff.min, hi: partyLevels * diff.max, target: partyLevels * diff.target,
-    });
+    };
+    const levels = family.monsters.map((m) => m.level);
+    return pickLevels(levels, band) || pickLevels(levels, { ...band, fill: ROWS.map((r) => r.level) });
   }
 
-  // Can this family fill the fight inside the p.26 band with 1–4 monsters per hero?
+  // Can at least one of this family's monsters be in the fight (inside the p.26 band, 1–4 per hero)?
   const familyFits = (key, opts) => !!familyPlan(familyByKey(key), opts);
 
   function buildFamilyGroups(family, levels) {
@@ -241,16 +278,28 @@
     return [...counts.entries()]
       .sort((a, b) => b[0] - a[0])
       .map(([lvl, count]) => {
-        const m = pick(family.monsters.filter((x) => Math.abs(x.level - lvl) < 1e-9));
-        return { count, monster: { ...m, abilities: m.abilities || [], dc: dcForLevel(m.level), dcDerived: true } };
+        const options = family.monsters.filter((x) => Math.abs(x.level - lvl) < 1e-9);
+        if (!options.length) {
+          // A generic filler (p.30 row), default settings.
+          return { count, monster: buildMonster(rowIndexForLevel(lvl), { armor: 'random', useAbility: false, dieChoice: 'any' }) };
+        }
+        const m = pick(options);
+        return { count, monster: { ...m, bestiary: true, abilities: m.abilities || [], dc: dcForLevel(m.level), dcDerived: true } };
       });
   }
 
+  // Optional p.28–29 Unique Encounter twist on top of any fight.
   function generate(opts) {
+    const e = buildFight(opts);
+    e.twist = opts.twist ? pick(NIMBLE.twists) : null;
+    return e;
+  }
+
+  function buildFight(opts) {
     const {
       heroes = 4, level = 1, difficulty = 'hard', mode = 'standard',
       armor = 'random', die = 'any', abilities = false, minionsPerHero = 0, patron = 'standard',
-      family: familyKey = 'generic',
+      family: familyKey = 'generic', shape = 'normal',
     } = opts;
     const diff = NIMBLE.difficulties[difficulty];
     const partyLevels = heroes * level;
@@ -258,7 +307,7 @@
 
     if (family) {
       const levels = familyPlan(family, { heroes, level, difficulty });
-      if (!levels) throw new Error(`${family.name} can't fill a ${diff.name} fight for ${heroes} heroes at level ${level}`);
+      if (!levels) throw new Error(`No ${family.name} fit a ${diff.name} fight for ${heroes} heroes at level ${level}`);
       const monsterLevels = levels.reduce((s, l) => s + l, 0);
       const ratio = monsterLevels / partyLevels;
       const minions = minionsPerHero > 0
@@ -311,7 +360,7 @@
     idx.forEach((j) => counts.set(j, (counts.get(j) || 0) + 1));
     const groups = [...counts.entries()]
       .sort((a, b) => b[0] - a[0])
-      .map(([j, count]) => ({ count, monster: buildMonster(j, { armor, useAbility: abilities, dieChoice: die }) }));
+      .map(([j, count]) => ({ count, monster: buildMonster(j, { armor, useAbility: abilities, dieChoice: die, shape }) }));
 
     const monsterLevels = idx.reduce((s, j) => s + ROWS[j].level, 0);
     const ratio = monsterLevels / partyLevels;
@@ -327,7 +376,7 @@
     };
   }
 
-  const api = { ALL_DICE, dieAvg, exprAvg, formatExpr, dicePool, randomDice, splitBudget, rewardFor, generate, rowIndexForLevel, pickLevels, familyFits, dcForLevel };
+  const api = { buildMonster, ALL_DICE, dieAvg, exprAvg, formatExpr, dicePool, randomDice, splitBudget, rewardFor, generate, rowIndexForLevel, pickLevels, familyFits, dcForLevel };
   if (typeof module !== 'undefined') module.exports = api;
   else root.Gen = api;
 })(this);

@@ -17,7 +17,9 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 1. Use **−/+** to set the number of heroes and their level.
 2. Pick **Monsters** or **Boss**, then a difficulty. The fight updates right away.
 3. Pick **Creatures**: **Generic** (Monster Builder stats) or a bestiary family such as Kobolds, Goblins, Bandits or Undead.
-4. Armor, dice, minions, who's paying, and special abilities are under **More options**.
+4. Armor, dice, build, minions, who's paying, special abilities and the encounter twist are under **More options**.
+
+Your choices are remembered in this browser, so the page opens the way you left it. Only the settings are saved, never the generated fight.
 
 The fight is written as plain text in one box, one block per monster:
 
@@ -32,7 +34,7 @@ Save DC: 10 (by level)
 followed by any abilities, then the gold for each hero and the whole party (plus the family's loot table, if it has one). The box is editable, so rename monsters or add notes right there.
 
 - **New Encounter:** a different fight with the same settings.
-- **New Dice:** the same generic monsters (or boss) with new dice (same averages).
+- **New Dice:** the same generic monsters (or boss) with new dice (same averages). Bestiary monsters keep their printed attacks.
 - **Copy:** copies the text, ready to paste into notes or Discord.
 
 ### Randomized dice (same average)
@@ -59,9 +61,11 @@ Named bestiary monsters keep the attacks printed in the guide. Their dice are no
 - **Monster count** (p.26): 1–4 monsters per hero, not counting minions.
 - **Stats** (p.30): HP by armor type, damage per round, and Save DC all come from the Monster Builder table.
 - **Armor** (p.26): the default mix is about 60% unarmored, 30% Medium and 10% Heavy.
+- **Build** (p.30): *Glass cannon* uses damage from 1–5 rows higher and HP from the same number of rows lower, like the guide's level 5 mage (34 HP, 26 damage). *Tank* is the mirror: HP from 1–5 rows higher, damage from 1–5 rows lower. The guide only says to "lower the damage and increase the HP/Armor", so the tank's matching shift is the tool's reading. *Mixed* picks normal, glass cannon or tank for each monster. The monster's level, and so the budget and Save DC, stay the same. Generic monsters only.
+- **Unique encounter twist** (p.28–29): adds one of the guide's 37 twists (Ambush, Defend the Fort, Waves Upon Waves…) to the top of the fight. The guide calls these "dessert, not main course", so it's off by default.
 - **Flavor abilities** (p.31): each ability drops the monster's HP one row, as the guide says to.
 - **Minions** (p.25, p.27): the die size comes from party level. They have no HP and can't crit.
-- **Bestiary** (p.33–41): with a creature family picked, monsters come only from that family's stat blocks (HP, armor, movement, attacks and abilities as printed). The tool finds a mix of their levels that lands inside the difficulty band with 1–4 monsters per hero. A family that can't do that for your party (e.g. Kobolds, which top out at level 1, for level-10 heroes) is greyed out. Family minions (Kobold Minion, etc.) are used when the family has one.
+- **Bestiary** (p.33–41): with a creature family picked, monsters come only from that family's stat blocks (HP, armor, movement, attacks and abilities as printed). The tool finds a mix of their levels that lands inside the difficulty band with 1–4 monsters per hero. If the family can't reach the budget alone (e.g. Kobolds, which top out at level 1, for level-10 heroes), generic Monster Builder monsters fill the gap. They're listed with their level, e.g. `Monster A x1 (level 12)`, so you can reskin them as a kobold war-beast or similar. A family is greyed out only when none of its monsters can fit at all. Family minions (Kobold Minion, etc.) are used when the family has one.
   - **Save DC is derived.** The bestiary doesn't print a Save DC, so the tool uses the p.30 Monster Builder DC for the monster's level and marks it **(by level)**. The Mummy Lord (level 21) uses the level-20 row.
   - The Oozes' red **X** is filled in with each ooze's number (Gray Ooze 2, Ochre Jelly 3, Black Pudding 5, Elder Ooze 6).
 - **Legendary** (p.44): stats come from party level. Easy uses the row 2 levels lower and Very Deadly the row 2 levels higher.
