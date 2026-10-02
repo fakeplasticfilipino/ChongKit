@@ -14,9 +14,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Batch command: `Goblin x4 15`, `Ogre 59 ac:M max:70 extra:5`, or paste the combat generator's text
 - [x] Attach both ways: click an entry's empty + circle then a token on the map, or select first then click +; box-select several = next entries in order
 - [x] Token badges (local, per screen): red HP circle lower-left, blue Extra HP circle beside it, AC shield lower-right; dark outlines
-- [x] Entry row: token picture (click = select on map), name, HP bar (fills against Max HP), Extra HP chip
+- [x] Entry row: token picture (click = select on map), name, neutral HP bar (fills against Max HP), Extra HP chip
 - [x] ⋯ menu: Max HP, Extra HP, AC (free text: `M`, `H`, `15`…), show/hide, detach, move to tab, delete
 - [x] ⓘ button lists the add-box commands
+- [x] Selecting a tracked token on the map puts its entry at the top of the list (outlined) until deselected
 - [x] Hidden by default (except Players tab); GM show/hide per entry (⋯ menu) and per tab
 - [x] Players: see Players tab + revealed entries (read-only); add and edit entries in the Players tab
 - [x] Right-click a token → "Track in Chong's Tracker"

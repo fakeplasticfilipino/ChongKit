@@ -99,7 +99,7 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   `max:70` or `extra:5` if you like. Or paste a fight from the Combat Generator: every
   `Name xN / HP / Armor` block becomes entries (minions get 1 HP; Armor None/Medium/Heavy becomes AC
   blank/M/H).
-- **Change HP** by typing math in the red box and pressing Enter: `20-3` → 17, `-3` takes 3 off,
+- **Change HP** by typing math in the HP box and pressing Enter: `20-3` → 17, `-3` takes 3 off,
   `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
   - Damage uses up **Extra HP** first.
   - With **Max HP** set, healing can't go above it. HP can go below 0.
@@ -108,6 +108,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
   (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's
   Tracker**. The circle then shows the token's picture; click it to select the token on the map.
+- **Select a token on the map** and its entry jumps to the top of the list (outlined, switching tabs
+  if needed) until you deselect it, so you can change its HP without scrolling.
 - **On the token:** HP in a red circle in the lower-left corner, Extra HP in a blue one beside it,
   and AC on a shield in the lower-right corner.
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,

@@ -10,7 +10,7 @@ const TAG = `${C.NS}/badge`;
 const TAB_STORE = `${C.NS}/tab`;
 const RED = '#e53935', BLUE = '#1e88e5', SLATE = '#546e7a', WHITE = '#ffffff', EDGE = '#111111';
 // Dark outline on every badge, so they read on any map.
-const outline = (d) => Math.max(1.5, d * 0.1);
+const outline = (d) => Math.max(1, d * 0.05);
 
 let role = 'PLAYER';
 let metadata = {};
@@ -36,7 +36,7 @@ function label(id, token, sig, center, d, text) {
     .width(d * 1.6).height(d).position({ x: center.x - d * 0.8, y: center.y - d / 2 })
     .textAlign('CENTER').textAlignVertical('MIDDLE')
     .fontFamily('Roboto').fontWeight(700).fontSize(fontSize).fillColor(WHITE)
-    .strokeColor(EDGE).strokeOpacity(1).strokeWidth(Math.max(0.75, d * 0.045))
+    .strokeColor(EDGE).strokeOpacity(1).strokeWidth(Math.max(0.5, d * 0.025))
     .zIndex(3).build();
 }
 

@@ -17,6 +17,7 @@ let sceneReady = false;
 let picking = null; // entry waiting for a token click on the map
 let tokens = new Map();
 let helpOpen = false;
+let focus = []; // entries whose tokens are selected on the map: shown first while selected
 
 // --- Icons (Material Symbols paths) ------------------------------------------------
 const ICON = {
@@ -143,6 +144,21 @@ async function finishPick(sel) {
   saveEntries(free.slice(0, targets.length).map((token, i) => ({ ...targets[i], token })));
 }
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && picking) { picking = null; render(); } });
+
+// Selecting tracked tokens on the map brings their entries to the top of the list (switching to
+// their tab if needed) until the selection changes.
+function focusSelected(sel) {
+  const next = visibleEntries()
+    .filter((e) => e.token && sel.includes(e.token))
+    .sort((a, b) => sel.indexOf(a.token) - sel.indexOf(b.token))
+    .map((e) => e.id);
+  if (next.join() === focus.join()) return;
+  focus = next;
+  if (!focus.length) { render(); return; }
+  const tabsOf = focus.map((id) => byId(id).tab);
+  if (tabsOf.includes(current)) render(); else setTab(tabsOf[0]);
+  document.scrollingElement.scrollTop = 0;
+}
 
 // Attached tokens that still exist on the map (id -> { url, name }).
 const tokenOf = (e) => (e.token && tokens.get(e.token)) || null;
@@ -283,7 +299,9 @@ function renderBar() {
 
 function renderList() {
   const list = $('list');
-  const shown = visibleEntries().filter((e) => e.tab === current);
+  let shown = visibleEntries().filter((e) => e.tab === current);
+  const first = focus.map(byId).filter((e) => shown.includes(e));
+  shown = [...first, ...shown.filter((e) => !first.includes(e))];
   list.replaceChildren(...shown.map(renderEntry));
   const empty = $('empty');
   empty.hidden = shown.length > 0;
@@ -293,7 +311,7 @@ function renderList() {
 function renderEntry(e) {
   const edit = C.canEdit(e, role);
   const isOpen = open.has(e.id) && edit;
-  const wrap = el('div', { className: 'entry' + (isOpen ? ' open' : '') + (e.hidden ? ' hidden-entry' : '') });
+  const wrap = el('div', { className: 'entry' + (isOpen ? ' open' : '') + (e.hidden ? ' hidden-entry' : '') + (focus.includes(e.id) ? ' focus' : '') });
   const row = el('div', { className: 'row' });
 
   row.append(renderAvatar(e, edit));
@@ -408,9 +426,13 @@ if (!OBR.isAvailable) {
     OBR.player.onChange((p) => {
       if (p.role !== role) { role = p.role; render(); }
       if (picking && p.selection && p.selection.length) finishPick(p.selection);
+      else focusSelected(p.selection || []);
     });
 
-    const start = async () => loadScene(await OBR.scene.getMetadata());
+    const start = async () => {
+      loadScene(await OBR.scene.getMetadata());
+      focusSelected((await OBR.player.getSelection()) || []);
+    };
     OBR.scene.onMetadataChange(loadScene);
     OBR.scene.items.onChange(readTokens);
     OBR.scene.onReadyChange((ready) => { if (ready) start(); else { sceneReady = false; entries = []; tokens = new Map(); picking = null; render(); } });
