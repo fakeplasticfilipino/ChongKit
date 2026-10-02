@@ -104,7 +104,7 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   - Damage uses up **Extra HP** first.
   - With **Max HP** set, healing can't go above it. HP can go below 0.
 - **The ⓘ button** next to the add box lists these commands.
-- **Attach to a token:** click the empty **+** circle on an entry, then click a token on the map
+- **Attach to a token:** click the empty **+** circle on an entry, then click a token on the map, or select the token first and then click the **+**
   (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
   (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's
   Tracker**. The circle then shows the token's picture; click it to select the token on the map.

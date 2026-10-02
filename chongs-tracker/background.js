@@ -8,7 +8,9 @@ import OBR, { buildShape, buildCurve, buildText } from './vendor/obr-sdk.js';
 const C = window.ChongCore;
 const TAG = `${C.NS}/badge`;
 const TAB_STORE = `${C.NS}/tab`;
-const RED = '#d32f2f', BLUE = '#1e88e5', SLATE = '#455a64', WHITE = '#ffffff', EDGE = '#1b1b1f';
+const RED = '#e53935', BLUE = '#1e88e5', SLATE = '#546e7a', WHITE = '#ffffff', EDGE = '#111111';
+// Dark outline on every badge, so they read on any map.
+const outline = (d) => Math.max(1.5, d * 0.1);
 
 let role = 'PLAYER';
 let metadata = {};
@@ -34,7 +36,7 @@ function label(id, token, sig, center, d, text) {
     .width(d * 1.6).height(d).position({ x: center.x - d * 0.8, y: center.y - d / 2 })
     .textAlign('CENTER').textAlignVertical('MIDDLE')
     .fontFamily('Roboto').fontWeight(700).fontSize(fontSize).fillColor(WHITE)
-    .strokeColor(EDGE).strokeOpacity(0.35).strokeWidth(Math.max(0.5, d * 0.03))
+    .strokeColor(EDGE).strokeOpacity(1).strokeWidth(Math.max(0.75, d * 0.045))
     .zIndex(3).build();
 }
 
@@ -42,7 +44,7 @@ function circle(id, token, sig, center, d, color, text) {
   return [
     attachedTo(buildShape().id(id).name("Chong's Tracker").shapeType('CIRCLE'), token, sig)
       .width(d).height(d).position(center)
-      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(0.6).strokeWidth(Math.max(1, d * 0.07))
+      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(1).strokeWidth(outline(d))
       .zIndex(1).build(),
     label(`${id}.t`, token, sig, center, d, text),
   ];
@@ -58,7 +60,7 @@ function shield(id, token, sig, center, d, color, text) {
   return [
     attachedTo(buildCurve().id(id).name("Chong's Tracker"), token, sig)
       .points(pts).position(center).closed(true).tension(0.12)
-      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(0.6).strokeWidth(Math.max(1, d * 0.07))
+      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(1).strokeWidth(outline(d))
       .zIndex(1).build(),
     label(`${id}.t`, token, sig, { x: center.x, y: center.y - h * 0.08 }, d * 0.9, text),
   ];
@@ -76,7 +78,7 @@ async function desiredBadges() {
     const token = tokens.get(e.token);
     if (!token) continue;
     const b = await OBR.scene.items.getItemBounds([token.id]);
-    const d = Math.max(20, Math.min(b.width, b.height) * 0.32);
+    const d = Math.max(16, Math.min(b.width, b.height) * 0.27);
     const base = `${C.NS}.${e.id}`;
     const add = (items, sig) => items.forEach((item) => out.set(item.id, { sig, item }));
     const y = b.max.y - d * 0.4;

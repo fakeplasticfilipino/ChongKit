@@ -111,12 +111,17 @@ function runCommand(text) {
   return true;
 }
 
-// Attaching: click an entry's empty token circle, then click a token on the map.
-// Box-select several tokens and the next unattached entries in this tab (starting at this one)
-// are attached in order: click "Goblin 1", then box-select 4 goblins.
+// Attaching works both ways: select token(s) then click an entry's empty circle, or click the
+// circle then click a token on the map. Several tokens attach to this entry and the next
+// unattached ones in this tab, in order: box-select 4 goblins, click "Goblin 1".
 async function startPick(entry) {
   if (picking === entry.id) { picking = null; render(); return; }
   picking = entry.id;
+  const sel = (await OBR.player.getSelection()) || [];
+  if (sel.length && (await OBR.scene.items.getItems(sel)).some((i) => i.type === 'IMAGE')) {
+    finishPick(sel);
+    return;
+  }
   render();
   try { await OBR.player.deselect(); } catch {}
 }
@@ -385,16 +390,6 @@ function renderMore(e) {
 }
 
 // --- Owlbear wiring ---------------------------------------------------------------------
-function applyTheme(theme) {
-  const r = document.documentElement.style;
-  document.documentElement.dataset.mode = theme.mode;
-  r.setProperty('--text', theme.text.primary);
-  r.setProperty('--text2', theme.text.secondary);
-  r.setProperty('--muted', theme.text.disabled);
-  r.setProperty('--primary', theme.primary.main);
-  r.setProperty('--paper', theme.background.paper);
-}
-
 function loadScene(metadata) {
   sceneReady = true;
   ({ tabs, entries } = C.readState(metadata));
@@ -410,8 +405,6 @@ if (!OBR.isAvailable) {
   OBR.onReady(async () => {
     try { current = localStorage.getItem(TAB_STORE) || C.PLAYERS_TAB; } catch {}
     role = await OBR.player.getRole();
-    applyTheme(await OBR.theme.getTheme());
-    OBR.theme.onChange(applyTheme);
     OBR.player.onChange((p) => {
       if (p.role !== role) { role = p.role; render(); }
       if (picking && p.selection && p.selection.length) finishPick(p.selection);

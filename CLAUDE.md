@@ -46,7 +46,8 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 
 A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, no GM Guide numbers.
 
-1. **Owlbear's look**, not the GM Guide's: colors come from `OBR.theme`, Roboto/system fonts, no
+1. **Owlbear's look**, not the GM Guide's: one flat look matching Owlbear's panels (translucent white
+   surfaces, Owlbear's purple accent, no light/dark switching), Roboto/system fonts, no
    parchment. Don't use `assets/css/nimble.css` there.
 2. **It tracks HP on purpose.** The "no HP tracking" rule above is for the combat generator only.
    Still no dice: HP boxes do arithmetic (`20-3`), the table rolls real dice.
