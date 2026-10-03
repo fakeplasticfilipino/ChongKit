@@ -4,6 +4,21 @@ Status of ChongKit tools. Update this when work starts or finishes.
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
+## Character Sheet (`character-sheet/`)
+
+### ✅ v1 — done
+- [x] Layout of the official Nimble sheet: details row, Hit Points shield with Temp HP, STR/DEX/INT/WIL with key-stat box and save ▲/▼, Armor, Initiative, Wounds track with skull and 5 mark boxes, 10-skill band, two notes panels
+- [x] Skills = stat + points (type a total, the difference is kept); Initiative = DEX + bonus
+- [x] Calculator boxes for HP / Temp HP / Current-Max (`-4`, `+3`, `13-4`); Bloodied HP in dark red
+- [x] Per-section + popover: add Number / Text / Current-Max / Skill boxes, remove and restore default boxes, drag to reorder; Mana, Gold, Inventory and Max Wounds waiting under Defense
+- [x] Notes: free text left, collapsible entries right (click a bar to open, drag to reorder, delete)
+- [x] Several characters in localStorage; New / Copy / Delete / Export / Import (.json) / Print
+- [x] Phone layout (one column, skills 5 × 2); landing-page card
+- [x] Tests: skill math, wounds, saves, Bloodied, calculator, normalize, storage, import/export
+
+### 💡 Ideas
+- Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
+
 ## Combat Generator (`combat-generator/`)
 
 ### ✅ v1 — done

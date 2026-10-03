@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Sheet</title>
+<!-- Stand-ins for the guide's fonts: Beaufort Pro Heavy → Merriweather Black, Avenir Next Condensed → Barlow Semi Condensed.
+     Offline, the page falls back to Georgia / Arial Narrow and still works. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Merriweather:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/nimble.css">
+<link rel="stylesheet" href="sheet.css">
+</head>
+<body>
+<main class="wide">
+  <p class="notice">This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p>
+  <a class="back" href="../">← All tools</a>
+  <h1>Character Sheet</h1>
+
+  <div class="toolbar cs-tools">
+    <select id="who" aria-label="Character"></select>
+    <button class="btn" type="button" id="new">New</button>
+    <button class="btn" type="button" id="copy">Copy</button>
+    <button class="btn" type="button" id="export">Export</button>
+    <button class="btn" type="button" id="import">Import</button>
+    <button class="btn" type="button" id="print">Print</button>
+    <button class="btn danger" type="button" id="delete">Delete</button>
+    <input type="file" id="import-file" accept=".json,application/json" hidden>
+  </div>
+
+  <div id="sheet" class="cs"></div>
+
+  <p class="foot">ChongKit is an independent product published under the Nimble 3rd Party Creator License. Nimble © Nimble Co.</p>
+</main>
+<script src="sheet.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

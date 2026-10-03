@@ -47,6 +47,21 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
      (`.notice`), linking nimbleRPG.com. This is the one exception to "no explainer text".
      Chong's Tracker uses no Nimble text, so it doesn't need either.
 
+## Character Sheet
+
+`character-sheet/`: the Nimble character sheet. The Nimble ground rules apply, with these differences:
+
+1. **The sheet looks like the official Nimble character sheet** (dark grey frames, periwinkle fields,
+   condensed caps labels), set on the usual parchment page with the notice and footer. Its own styles
+   live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
+2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
+3. **No GM Guide numbers:** the layout, skill/stat pairs and the six-wound track come from the official
+   sheet; call them derived. Don't add class or ancestry data that isn't in the PDF.
+4. **Configurable:** each section's + opens a popover with its extra boxes and restore buttons; the sheet
+   itself never grows. Default boxes are removed via `removed` (`section:id`), extras live in `extras`.
+5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
+   `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
+
 ## Chong's Tracker (Owlbear Rodeo extension)
 
 A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, no GM Guide numbers.
@@ -81,6 +96,12 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 index.html                   Site landing page: a card for each tool   → /
 _config.yml                  GitHub Pages config (excludes repo-only files)
 assets/css/nimble.css        Shared GM-Guide look for every page
+character-sheet/             → /character-sheet/
+  index.html                 Page + toolbar
+  sheet.js                   Pure logic: defaults, skill math, calculator, saving, import/export
+  ui.js                      Draws the sheet, popovers, notes entries
+  sheet.css                  The official-sheet look
+  tests/sheet.test.js        node:test suite (not published)
 combat-generator/            → /combat-generator/
   index.html                 UI
   nimble-data.js             All rules data from the guide (single source of numbers)
@@ -107,7 +128,7 @@ CommonJS modules for Node tests.
 
 ## Commands
 
-- Test: `node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js` (Node 18+, no dependencies)
+- Test: `node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js` (Node 18+, no dependencies)
 - Run: `python3 -m http.server` in the repo root, then open http://localhost:8000/ (this matches how GitHub Pages serves it). Opening a tool's `index.html` directly also works.
 
 ## Reading the PDF

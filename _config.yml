@@ -7,4 +7,5 @@ exclude:
   - TRACKER.md
   - combat-generator/tests/
   - chongs-tracker/tests/
+  - character-sheet/tests/
   - chongs-tracker/TRACKER.md

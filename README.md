@@ -7,9 +7,40 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | Tool | Status | What it does |
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
+| [Character Sheet](character-sheet/) | ✅ v1 | The Nimble character sheet in the browser, with boxes you can add and remove; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
+
+## Character Sheet
+
+**To use:** open the site and click **Character Sheet**, or open `character-sheet/index.html` in any
+browser. It's laid out like the official Nimble character sheet. Everything saves in this browser as
+you type (localStorage), so it's there next time; **Export** saves a character as a `.json` file and
+**Import** loads one back (handy for moving to another device). The list at the top switches between
+characters; **New**, **Copy** and **Delete** manage them, and **Print** prints just the sheet.
+
+- **Stats:** type each stat. The checkbox marks a key stat. ▲ / ▼ mark save advantage / disadvantage
+  (click again to clear).
+- **Skills** show their stat plus any skill points, so they follow the stat. Type a skill's total and
+  the difference is kept as points (shown small in the corner, e.g. +1). Initiative works the same
+  way from DEX.
+- **Hit Points, Temp HP and Current/Max boxes do math:** `-4` takes 4 off, `+3` adds 3, `13-4` or
+  `10` sets it (Enter or click away). HP turns dark red when Bloodied (at or below half max).
+- **Wounds:** click a circle to fill up to it; click the last filled one to clear it. The skull is the
+  last wound.
+- **The + on each section** (Details, Stats, Defense, Skills) opens a small panel instead of growing the
+  sheet. It holds that section's extra boxes (add a Number, Text or Current/Max box, or a Skill tied to
+  a stat), lets you take default boxes off the sheet (the × that appears on them) and put them back
+  (↺). Drag boxes in the panel to reorder them. Defense starts with Mana, Gold and Inventory waiting
+  there, plus the Max Wounds setting. The small number on a + is how many extra boxes it holds.
+- **Notes:** the left panel is free text. The right one holds entries (abilities, items, story notes):
+  each is one bar, click it to open and write; drag bars to reorder, × to delete.
+
+**Derived, not from the GM Guide:** the sheet's layout, its skill-to-stat pairs, skill = stat +
+points, Initiative = DEX + bonus and the six-wound track come from the official character sheet, not
+the GM Guide (which has no character rules). Ancestry and Class are free text: there's no "Apply"
+that fills in stats, because that data isn't in the GM Guide.
 
 ## Combat Generator
 
@@ -170,7 +201,7 @@ To preview locally, run `python3 -m http.server` in the repo root and open http:
 ## Development
 
 ```
-node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js
+node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js
 ```
 
 The tests check that every generated damage expression averages exactly the guide's value, that encounters (generic and bestiary) land inside the difficulty bands, and that bestiary fights only use their own family.
