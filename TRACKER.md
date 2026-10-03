@@ -70,7 +70,7 @@ Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chong
 - [x] Pages is on (https://fakeplasticfilipino.github.io/ChongKit/)
 
 ## Other tools (future)
-- 💡 Skill challenge runner (p.15)
+- 💡 Skill challenge runner (p.15): on hold. Checked the guide: p.15 is advice only (no numbers); the one mechanic is the p.72 example ("starting DC is 10 and increases by 1 for each check"). No success/failure counts or difficulty table, so a tool would mostly be invented rules
 
 ## Open questions
 - Gold per encounter is **derived**, not printed in the guide (see README → Rewards). Adjust the
