@@ -35,6 +35,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] One flat look matching Owlbear's panels (no light/dark switching)
 - [x] Tab strip scrolls sideways: + pinned right, wheel scrolls, edges fade, thin faint scrollbar from 5 tabs, open tab scrolls into view, dragging an entry near an end scrolls it
 - [x] Tests: math, HP rules, command parser, generator paste, metadata round trip, permissions
+- [x] Browser smoke test against a fake Owlbear SDK (add, math, Extra/Max HP, AC, attach/detach, focus, hide all, rename, room tab, /clear, help, delete tab, phone width): all pass. Fixed two typing bugs it found: text typed into the add box right after making a tab was wiped, and a change from another player mid-rename wiped the tab name (v1.4.1)
 
 ## 📋 Next up
 - [ ] Install in a real Owlbear room and check: drag onto a tab, the × detach, a room tab across two scenes, badge size/position on different token sizes, the AC shield shape, click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view

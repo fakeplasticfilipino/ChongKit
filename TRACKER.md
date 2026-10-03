@@ -14,6 +14,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Notes: free text left, collapsible entries right (click a bar to open, drag to reorder, delete)
 - [x] Several characters in localStorage; New / Copy / Delete / Export / Import (.json) / Print
 - [x] Phone layout (one column, skills 5 × 2); landing-page card
+- [x] Long skill names (Examination, Naturecraft) fit on narrow phones; Android's condensed font added to the fallbacks
 - [x] Tests: skill math, wounds, saves, Bloodied, calculator, normalize, storage, import/export, undo
 - [x] Clearer editing: playing vs **Edit layout** mode, + N tabs for extras, red × to remove, Undo toast + Ctrl+Z (keeps typing done since), grips for dragging, ↑/↓ steps numbers, outlined white fields, entry previews + expand/collapse all, More menu, Saved indicator
 

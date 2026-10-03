@@ -8,7 +8,7 @@
   --rule: #8f877b; --bar: #d8d1c4; --bar-dark: #c9c1b2;
   --blood: #962d1f;
   --head: "Merriweather", "Beaufort Pro", Georgia, "Times New Roman", serif;
-  --body: "Barlow Semi Condensed", "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Barlow Semi Condensed", "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", sans-serif-condensed, sans-serif;
   color-scheme: light;
 }
 * { box-sizing: border-box; }

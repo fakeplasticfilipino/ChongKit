@@ -308,7 +308,10 @@ function render() {
   }
   $('help-btn').hidden = false;
   if (!visibleTabs().some((t) => t.id === current)) current = C.PLAYERS_TAB;
-  renderTabs();
+  if (renamingTab && typing && a.closest('#tabs')) { // keep the name being typed; redraw when it's done
+    dirty = true;
+    a.addEventListener('blur', catchUp, { once: true });
+  } else renderTabs();
   if (inBar) { // keep the add box (and what's typed in it); refresh its buttons once it's left
     dirty = true;
     a.addEventListener('blur', catchUp, { once: true });
@@ -365,7 +368,8 @@ function renderTabs() {
         if (ev.key === 'Escape') inp.value = t.name;
         if (ev.key === 'Enter' || ev.key === 'Escape') done();
       });
-      inp.addEventListener('blur', done);
+      // After focus has moved: saving redraws, and must not rebuild the box being clicked into.
+      inp.addEventListener('blur', () => setTimeout(done, 0));
       b.append(inp);
       nav.append(b);
       setTimeout(() => { inp.focus(); inp.select(); }, 0);

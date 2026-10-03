@@ -305,7 +305,7 @@ input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
   .cs-statname { font-size: 18px; gap: 4px; }
   .cs-stat > .cs-in { width: 76%; }
   .cs-skill > .cs-in { width: 82%; font-size: 21px; }
-  .cs-snm { font-size: 10px; letter-spacing: -.02em; text-overflow: clip; }
+  .cs-snm { font-size: 9px; letter-spacing: -.04em; padding: 3px 0; text-overflow: clip; }
   .cs-saved { display: none; }
 }
 
