@@ -255,27 +255,50 @@
     return Math.max(0, Math.min(1, (entry.hp || 0) / entry.max));
   }
 
-  // --- Scene metadata <-> state --------------------------------------------------
-  function readState(metadata) {
-    const md = metadata || {};
-    const byId = new Map();
-    const legacy = Array.isArray(md[KEYS.tabs]) ? md[KEYS.tabs] : [];
-    legacy.forEach((t, i) => { if (t && t.id && t.id !== PLAYERS_TAB) byId.set(t.id, { order: i + 1, ...t }); });
-    const entries = [];
+  // --- Metadata <-> state ----------------------------------------------------------
+  // Tabs live in the scene's metadata, except tabs saved to the room (room: true), which live in the
+  // room's metadata with their entries so they show in every scene. The Players tab is always there;
+  // a `t/players` key in the room's metadata only marks it as saved to the room.
+  function readTabs(md, byId, room) {
+    if (!room) {
+      const legacy = Array.isArray(md[KEYS.tabs]) ? md[KEYS.tabs] : [];
+      legacy.forEach((t, i) => { if (t && t.id && t.id !== PLAYERS_TAB) byId.set(t.id, { order: i + 1, ...t }); });
+    }
     for (const [k, v] of Object.entries(md)) {
-      if (k.startsWith(KEYS.entryPrefix) && v && typeof v === 'object') entries.push(v);
-      if (k.startsWith(KEYS.tabPrefix)) {
-        const id = k.slice(KEYS.tabPrefix.length);
-        if (v && typeof v === 'object' && id !== PLAYERS_TAB) byId.set(id, { ...v, id }); else byId.delete(id);
+      if (!k.startsWith(KEYS.tabPrefix)) continue;
+      const id = k.slice(KEYS.tabPrefix.length);
+      if (v && typeof v === 'object' && id !== PLAYERS_TAB) byId.set(id, room ? { ...v, id, room: true } : { ...v, id });
+      else if (!room) byId.delete(id); // a deleted room key leaves the scene's copy alone
+    }
+  }
+  function readState(sceneMetadata, roomMetadata) {
+    const md = sceneMetadata || {}, rmd = roomMetadata || {};
+    const byId = new Map();
+    readTabs(md, byId, false);
+    readTabs(rmd, byId, true); // a room tab wins over a scene copy left behind mid-move
+    const players = { ...DEFAULT_TABS[0] };
+    const pk = rmd[KEYS.tabPrefix + PLAYERS_TAB];
+    if (pk && typeof pk === 'object') players.room = true;
+    const tabs = [players, ...[...byId.values()].sort((a, b) => (a.order || 0) - (b.order || 0))];
+    const roomTab = new Set(tabs.filter((t) => t.room).map((t) => t.id));
+    // An entry is read from both places; mid-move it can be in both: keep the copy that sits where
+    // its tab is saved.
+    const found = new Map();
+    for (const [src, room] of [[md, false], [rmd, true]]) {
+      for (const [k, v] of Object.entries(src)) {
+        if (!k.startsWith(KEYS.entryPrefix) || !v || typeof v !== 'object') continue;
+        const had = found.get(v.id);
+        if (!had || roomTab.has(v.tab) === room) found.set(v.id, v);
       }
     }
-    const tabs = [...DEFAULT_TABS, ...[...byId.values()].sort((a, b) => (a.order || 0) - (b.order || 0))];
+    const entries = [...found.values()];
     entries.sort((a, b) => (a.order - b.order) || String(a.name).localeCompare(String(b.name)));
     return { tabs, entries };
   }
 
   const entryKey = (id) => KEYS.entryPrefix + id;
-  const tabPatch = (tab) => ({ [KEYS.tabPrefix + tab.id]: tab });
+  // `room` isn't saved: it's where the tab is saved.
+  const tabPatch = (tab) => { const { room, ...t } = tab; return { [KEYS.tabPrefix + tab.id]: t }; };
   const tabDeletePatch = (id) => ({ [KEYS.tabPrefix + id]: null });
   // Moves tabs from the old single key to one key per tab (null when there's nothing to move).
   function migrateTabsPatch(md) {
@@ -284,9 +307,22 @@
     for (const t of readState(md).tabs) if (t.id !== PLAYERS_TAB && !((KEYS.tabPrefix + t.id) in md)) Object.assign(patch, tabPatch(t));
     return patch;
   }
-  // Deleted entries are written as null (scene metadata is merged key by key).
+  // Deleted entries are written as null (metadata is merged key by key).
   const entryPatch = (entry) => ({ [entryKey(entry.id)]: entry });
   const deletePatch = (id) => ({ [entryKey(id)]: null });
+
+  // Saving a tab to the room (or back to the scene): the patch to write where it goes and the one
+  // that clears where it was. Back in the scene, it's only in the current scene.
+  function moveTabPatches(tab, entries, toRoom) {
+    const to = {}, from = {};
+    if (tab.id !== PLAYERS_TAB || toRoom) Object.assign(to, tabPatch(tab));
+    Object.assign(from, tabDeletePatch(tab.id));
+    for (const e of entries) if (e.tab === tab.id) { Object.assign(to, entryPatch(e)); Object.assign(from, deletePatch(e.id)); }
+    return { to, from };
+  }
+  // Owlbear's room metadata holds 16 kB in all, shared with every extension.
+  const ROOM_LIMIT = 16 * 1024;
+  const metadataSize = (md) => new TextEncoder().encode(JSON.stringify(md || {})).length;
 
   // Who can see / change what. Everyone sees every entry; players see H/B for hidden stats.
   // Players' tabs (the Players tab, and any tab a player made) can be edited by players.
@@ -299,7 +335,8 @@
     evalExpr, readInput, applyHp,
     parseCommand, rowsToEntries,
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,
-    readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, isPlayerTab, masked, canEdit,
+    readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, moveTabPatches,
+    ROOM_LIMIT, metadataSize, isPlayerTab, masked, canEdit,
   };
   if (typeof module !== 'undefined') module.exports = api;
   else root.ChongCore = api;

@@ -112,18 +112,21 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
   (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's
   Tracker**. The circle then shows the token's picture; click it to select the token on the map.
+- **Detach a token:** while its token is selected, an **×** shows over the picture in the entry;
+  click it to take the selected token(s) off the entry.
 - **Minions on several tokens:** a minion entry takes every token you pick (box-select the 10
   kobolds, click its **+**), shown as ×10. Click any of them on the map to bring the entry to the top
-  and take HP off. Minion tokens get no badges (their HP is shared, so it lives in the panel). Any
-  entry can take more tokens with **+ Token** in its ⋯ menu; other entries badge their first token.
+  and take HP off. Minion tokens get no badges (their HP is shared, so it lives in the panel). To
+  change a group's tokens, detach them and pick them again.
 - **Reorder** by dragging a card (grab it anywhere but its buttons and boxes; a quick click on the
-  name still edits it).
+  name still edits it). **Move it to another tab** by dropping it on that tab (players: onto
+  players' tabs only).
 - **Select a token on the map** and its entry jumps to the top of the list (outlined, switching tabs
   if needed) until you deselect it, so you can change its HP without scrolling.
 - **On the token:** HP in a red circle in the lower-left corner, Extra HP in a blue one beside it,
   and AC on a shield in the lower-right corner.
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
-  e.g. `M`, `H`, `15`), stats shown/hidden, + Token, detach, move to another tab, and delete.
+  e.g. `M`, `H`, `15`), stats shown/hidden (GM), and delete.
 - **Hidden stats:** players see every entry, but when its stats are hidden they only see **H**
   (healthy) or **B** (Bloodied: at or below half Max HP, or at 0) and the AC, in the panel and on the
   token. New entries start with hidden stats (except in players' tabs). Toggle one entry from its ⋯
@@ -132,7 +135,12 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **Players** can add and edit entries in the Players tab and in tabs they made; everything else is
   read-only for them.
 
-**Where it's saved:** in the current scene only (not the room), so each scene has its own tracker.
+**Where it's saved:** in the current scene, so each scene has its own tracker. A tab can instead be
+**saved to the room** (the door button next to the add box; GMs for any tab, Players included,
+players for tabs they made), so it shows in every scene of the room, e.g. the party's HP. A door
+icon marks those tabs. It asks first, because room storage is small (16 kB in all, shared with other
+extensions; a warning shows past 12 kB) and token links are per scene (attach the tokens again in
+each scene). Clicking the door again keeps the tab in the current scene only.
 Hidden entries are hidden in the panel and on the map, but technically every player's browser
 receives the scene data.
 

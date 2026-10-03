@@ -15,6 +15,7 @@ const outline = (d) => Math.max(1, d * 0.05);
 
 let role = 'PLAYER';
 let metadata = {};
+let roomMetadata = {};
 let ready = false;
 
 // --- Badges -----------------------------------------------------------------------
@@ -70,14 +71,15 @@ function shield(id, token, sig, center, d, color, text) {
 // Every badge item this screen should show, keyed by id, with a signature: an item is rebuilt only
 // when its signature changes. Position isn't in it: attached items follow their token.
 async function desiredBadges() {
-  const { entries } = C.readState(metadata);
+  const { entries } = C.readState(metadata, roomMetadata);
   // Minion groups get no badges: their HP is shared, so it lives in the panel only.
-  const shown = entries.filter((e) => e.token && !e.group);
+  const shown = entries.filter((e) => C.tokensOf(e).length && !e.group);
   if (!shown.length) return new Map();
-  const tokens = new Map((await OBR.scene.items.getItems([...new Set(shown.map((e) => e.token))])).map((t) => [t.id, t]));
+  const tokens = new Map((await OBR.scene.items.getItems([...new Set(shown.flatMap(C.tokensOf))])).map((t) => [t.id, t]));
   const out = new Map();
   for (const e of shown) {
-    const token = tokens.get(e.token);
+    // The first of its tokens on this map (a room entry can hold tokens from other scenes).
+    const token = tokens.get(C.tokensOf(e).find((id) => tokens.has(id)));
     if (!token) continue;
     const b = await OBR.scene.items.getItemBounds([token.id]);
     const d = Math.max(16, Math.min(b.width, b.height) * 0.27);
@@ -90,18 +92,18 @@ async function desiredBadges() {
     const st = mask ? C.hpStatus(e) : null;
     const hpText = mask ? st : String(e.hp);
     const hpColor = mask ? (st === 'B' ? BLOOD : GREEN) : RED;
-    const hpSig = JSON.stringify(['hp', hpText, hpColor, d, token.visible]);
+    const hpSig = JSON.stringify([token.id, 'hp', hpText, hpColor, d, token.visible]);
     add(circle(`${base}.hp`, token, hpSig, hpCenter, d, hpColor, hpText), hpSig);
 
     if (e.extra > 0 && !mask) {
       const dx = d * 0.72;
-      const xpSig = JSON.stringify(['xp', e.extra, d, token.visible]);
+      const xpSig = JSON.stringify([token.id, 'xp', e.extra, d, token.visible]);
       add(circle(`${base}.xp`, token, xpSig, { x: hpCenter.x + d * 0.5 + dx * 0.4, y: y + (d - dx) / 2 }, dx, BLUE, `+${e.extra}`), xpSig);
     }
 
     const ac = String(e.ac || '').trim();
     if (ac) {
-      const acSig = JSON.stringify(['ac', ac, d, token.visible]);
+      const acSig = JSON.stringify([token.id, 'ac', ac, d, token.visible]);
       add(shield(`${base}.ac`, token, acSig, { x: b.max.x - d * 0.4, y }, d, SLATE, ac), acSig);
     }
   }
@@ -143,7 +145,7 @@ async function sync() {
 // panel (hidden, like every new GM entry). Players: in the Players tab.
 async function track(items) {
   const md = await OBR.scene.getMetadata();
-  const { tabs, entries } = C.readState(md);
+  const { tabs, entries } = C.readState(md, await OBR.room.getMetadata());
   let tab = C.PLAYERS_TAB;
   if (role === 'GM') {
     try { const t = localStorage.getItem(TAB_STORE); if (tabs.some((x) => x.id === t)) tab = t; } catch {}
@@ -156,7 +158,10 @@ async function track(items) {
     const name = (item.text && item.text.plainText) || item.name || 'Token';
     Object.assign(patch, C.entryPatch(C.newEntry({ name, hp: 0, max: null, tab, order: order++, token: item.id })));
   }
-  if (Object.keys(patch).length) await OBR.scene.setMetadata(patch);
+  if (Object.keys(patch).length) {
+    if (tabs.find((t) => t.id === tab).room) await OBR.room.setMetadata(patch);
+    else await OBR.scene.setMetadata(patch);
+  }
   OBR.action.open();
 }
 
@@ -174,6 +179,8 @@ OBR.onReady(async () => {
     onClick: (context) => track(context.items),
   });
 
+  roomMetadata = await OBR.room.getMetadata();
+  OBR.room.onMetadataChange((md) => { roomMetadata = md; schedule(); });
   OBR.scene.onMetadataChange((md) => { metadata = md; schedule(); });
   OBR.scene.items.onChange(schedule);
   const start = async () => { ready = true; metadata = await OBR.scene.getMetadata(); schedule(); };

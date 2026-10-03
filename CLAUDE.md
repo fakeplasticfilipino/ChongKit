@@ -56,8 +56,10 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
    parchment. Don't use `assets/css/nimble.css` there.
 2. **It tracks HP on purpose.** The "no HP tracking" rule above is for the combat generator only.
    Still no dice: HP boxes do arithmetic (`20-3`), the table rolls real dice.
-3. **State lives in the scene's metadata only** (never room metadata): one key per entry
-   (`com.chongkit.tracker/e/<id>`) and one key per tab (`com.chongkit.tracker/t/<id>`), deleted = `null`.
+3. **State lives in the scene's metadata**: one key per entry (`com.chongkit.tracker/e/<id>`) and one
+   key per tab (`com.chongkit.tracker/t/<id>`), deleted = `null`. The one exception: a tab the user
+   saves to the room lives, with its entries, in the room's metadata under the same keys (the room
+   holds only 16 kB, so it warns); `t/players` there only marks the Players tab as a room tab.
    The old single `com.chongkit.tracker/tabs` key is only read to migrate it. Token badges
    are local items drawn by `background.js`, never saved.
 4. **The Owlbear SDK is the one install exception**: `vendor/obr-sdk.js` is `@owlbear-rodeo/sdk`

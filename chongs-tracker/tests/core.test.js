@@ -114,6 +114,35 @@ test('tabs: one key each, old single key migrates', () => {
   assert.strictEqual(C.migrateTabsPatch({ ...md, ...patch }), null);
 });
 
+test('tabs saved to the room: read from both, moved both ways', () => {
+  const a = C.newEntry({ name: 'A', tab: 'r' });
+  const b = C.newEntry({ name: 'B', tab: 's' });
+  const hero = C.newEntry({ name: 'Hero', tab: C.PLAYERS_TAB });
+  const scene = { ...C.tabPatch({ id: 's', name: 'Scene', order: 1 }), ...C.entryPatch(b) };
+  const room = { ...C.tabPatch({ id: 'r', name: 'Room', order: 2, room: true }), ...C.tabPatch({ id: C.PLAYERS_TAB, name: 'Players' }), ...C.entryPatch(a), ...C.entryPatch(hero), ...C.tabDeletePatch('s') };
+  assert.ok(!('room' in room[C.KEYS.tabPrefix + 'r']), 'room flag is not saved');
+  const s = C.readState(scene, room);
+  assert.deepStrictEqual(s.tabs.map((t) => [t.id, !!t.room]), [['players', true], ['s', false], ['r', true]], 'a deleted room key leaves the scene tab');
+  assert.deepStrictEqual(s.entries.map((e) => e.name).sort(), ['A', 'B', 'Hero']);
+  assert.ok(!C.readState(scene).tabs[0].room);
+
+  // Mid-move an entry can be in both: keep the copy where its tab is saved.
+  const both = C.readState({ ...scene, ...C.entryPatch({ ...a, name: 'old' }) }, room);
+  assert.deepStrictEqual(both.entries.filter((e) => e.id === a.id).map((e) => e.name), ['A']);
+
+  const { to, from } = C.moveTabPatches({ id: 's', name: 'Scene', room: true }, s.entries, true);
+  assert.deepStrictEqual(Object.keys(to).sort(), [C.KEYS.tabPrefix + 's', C.entryKey(b.id)].sort());
+  assert.ok(Object.values(from).every((v) => v === null) && C.entryKey(b.id) in from);
+  const moved = C.readState({ ...scene, ...from }, { ...room, ...to });
+  assert.ok(moved.tabs.find((t) => t.id === 's').room);
+  assert.strictEqual(moved.entries.length, 3);
+  // The Players tab back to the scene: only the room's marker is cleared.
+  const back = C.moveTabPatches({ id: C.PLAYERS_TAB, name: 'Players' }, s.entries, false);
+  assert.deepStrictEqual(Object.keys(back.to), [C.entryKey(hero.id)]);
+  assert.ok(!C.readState({ ...scene, ...back.to }, { ...room, ...back.from }).tabs[0].room);
+  assert.strictEqual(C.metadataSize({ a: 'é' }), 10, 'bytes, not characters');
+});
+
 test('several tokens per entry; minion rows are groups', () => {
   assert.deepStrictEqual(C.tokensOf({ token: 't1' }), ['t1']);
   assert.deepStrictEqual(C.tokensOf({ token: null }), []);

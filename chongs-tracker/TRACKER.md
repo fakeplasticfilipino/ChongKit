@@ -14,7 +14,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Batch command: `Goblin x4 15`, `Ogre 59 ac:M max:70 extra:5`, or paste the combat generator's text
 - [x] Minions: one shared entry, HP = number of minions (`Kobold Minion x10` → 10 HP)
 - [x] `/clear` and `/clear Goblin`: GM-only mass delete in the current tab, with a confirm
-- [x] Several tokens per entry: minion groups take every picked token (×N in the row), + Token in the ⋯ menu adds more; minion tokens get no badges, other entries badge their first token
+- [x] Several tokens per entry: minion groups take every picked token (×N in the row); minion tokens get no badges, other entries badge their first token on the map
 - [x] Drag a card to reorder (anywhere but buttons/boxes; a short press on the name still edits)
 - [x] Tabs saved one key each (`com.chongkit.tracker/t/<id>`), so players and the GM adding tabs at once don't clash; the old single key migrates itself
 - [x] Asset links carry `?v=<version>` so Owlbear never mixes old and new files
@@ -22,7 +22,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Attach both ways: click an entry's empty + circle then a token on the map, or select first then click +; box-select several = next entries in order
 - [x] Token badges (local, per screen): red HP circle lower-left, blue Extra HP circle beside it, AC shield lower-right; dark outlines
 - [x] Entry row: token picture (click = select on map), name, neutral HP bar (fills against Max HP), Extra HP chip
-- [x] ⋯ menu: Max HP, Extra HP, AC (free text: `M`, `H`, `15`…), show/hide, detach, move to tab, delete
+- [x] ⋯ menu: Max HP, Extra HP, AC (free text: `M`, `H`, `15`…), show/hide, delete
+- [x] Move an entry to another tab by dragging it onto the tab (the ⋯ menu's tab picker and + Token are gone)
+- [x] Detach: with the token selected, an × shows over its picture in the entry; click it (the Detach button is gone)
+- [x] Save a tab to the room (door button, confirm with a 16 kB warning): the tab and its entries live in room metadata and show in every scene; per tab, not per player
 - [x] ⓘ button lists the add-box commands
 - [x] Selecting a tracked token on the map puts its entry at the top of the list (outlined) until deselected
 - [x] Hidden stats by default (except players' tabs): players see the entry with H/B (Bloodied ≤ half) and AC, in the panel and on tokens; GM toggles per entry (⋯ menu) and per tab
@@ -32,7 +35,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Tests: math, HP rules, command parser, generator paste, metadata round trip, permissions
 
 ## 📋 Next up
-- [ ] Install in a real Owlbear room and check: badge size/position on different token sizes, the AC shield shape, click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
+- [ ] Install in a real Owlbear room and check: drag onto a tab, the × detach, a room tab across two scenes, badge size/position on different token sizes, the AC shield shape, click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
 - [ ] Fix whatever that test turns up
 
 ## Dropped
@@ -43,5 +46,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
 ## Notes
 - Hidden stats are hidden in the UI only: scene metadata is readable by every client.
+- Room tabs: token ids are per scene, so a room entry keeps tokens from several scenes and shows the
+  ones on the current map. Tokens deleted without detaching stay in the list (a few bytes each).
 - Manifest paths are absolute (`/ChongKit/chongs-tracker/...`) because the site is served under
   `/ChongKit/`. If the repo is renamed, update `manifest.json`.

@@ -15,8 +15,9 @@ const open = new Set(); // expanded entries
 let dirty = false; // a render was skipped while the user was typing
 let sceneReady = false;
 let picking = null; // entry waiting for a token click on the map
-let pickAdd = false; // ...adding to its tokens rather than replacing them
 let tokens = new Map();
+let selection = []; // what this player has selected on the map
+let sceneMd = {}, roomMd = {};
 let helpOpen = false;
 let focus = []; // entries whose tokens are selected on the map: shown first while selected
 
@@ -29,6 +30,7 @@ const ICON = {
   more: 'M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z',
   shield: 'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z',
   info: 'M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z',
+  room: 'M14 6v15H3v-2h2V3h9v1h5v15h2v2h-4V6h-3zm-4 5v2h2v-2h-2z',
 };
 const svg = (name) => `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${ICON[name]}"/></svg>`;
 function iconButton(name, title, onClick, on = false) {
@@ -48,21 +50,36 @@ const el = (tag, props = {}, ...kids) => {
 };
 
 // --- Writing ------------------------------------------------------------------------
+// Scene metadata by default; tabs saved to the room (and their entries) go to the room's metadata.
 const byId = (id) => entries.find((e) => e.id === id);
-async function write(patch) {
-  try { await OBR.scene.setMetadata(patch); }
-  catch (err) { OBR.notification.show(`Chong's Tracker couldn't save: ${err.message || err}`, 'ERROR'); }
+const inRoom = (tabId) => !!(tabById(tabId) || {}).room;
+async function write(patch, room = false) {
+  if (!Object.keys(patch).length) return true;
+  try {
+    if (!room) { await OBR.scene.setMetadata(patch); return true; }
+    await OBR.room.setMetadata(patch);
+    roomMd = { ...roomMd, ...patch };
+    const size = C.metadataSize(roomMd);
+    if (size > C.ROOM_LIMIT * 0.75) OBR.notification.show(`Room storage is ${Math.round(size / 1024)} of 16 kB full`, 'WARNING');
+    return true;
+  } catch (err) {
+    OBR.notification.show(`Chong's Tracker couldn't save: ${err.message || err}`, 'ERROR');
+    return false;
+  }
 }
 function saveEntries(list) {
-  const patch = {};
+  const scene = {}, room = {};
   for (const e of list) {
-    Object.assign(patch, C.entryPatch(e));
+    const old = byId(e.id);
+    const to = inRoom(e.tab);
+    Object.assign(to ? room : scene, C.entryPatch(e));
+    if (old && inRoom(old.tab) !== to) Object.assign(to ? scene : room, C.deletePatch(e.id));
     const i = entries.findIndex((x) => x.id === e.id);
     if (i >= 0) entries[i] = e; else entries.push(e);
   }
   entries.sort((a, b) => (a.order - b.order) || String(a.name).localeCompare(String(b.name)));
   render();
-  return write(patch);
+  return Promise.all([write(room, true), write(scene)]);
 }
 const saveEntry = (e) => saveEntries([e]);
 // Merge a change into the LATEST copy of an entry (it may have changed since it was drawn).
@@ -72,18 +89,18 @@ function updateEntry(e, patch) {
   return saveEntry({ ...cur, ...(typeof patch === 'function' ? patch(cur) : patch) });
 }
 function deleteEntries(ids) {
-  const patch = {};
-  ids.forEach((id) => Object.assign(patch, C.deletePatch(id)));
+  const scene = {}, room = {};
+  ids.forEach((id) => Object.assign(inRoom((byId(id) || {}).tab) ? room : scene, C.deletePatch(id)));
   entries = entries.filter((e) => !ids.includes(e.id));
   render();
-  return write(patch);
+  return Promise.all([write(room, true), write(scene)]);
 }
 // Each tab is its own metadata key, so tabs changed by different people never overwrite each other.
 function saveTab(tab) {
   const i = tabs.findIndex((t) => t.id === tab.id);
   tabs = i >= 0 ? tabs.map((t, k) => (k === i ? tab : t)) : [...tabs, tab];
   render();
-  return write(C.tabPatch(tab));
+  return write(C.tabPatch(tab), !!tab.room);
 }
 
 // --- Actions ------------------------------------------------------------------------
@@ -111,8 +128,26 @@ function removeTab(tab) {
   if (inTab.length && !confirm(`Delete "${tab.name}" and its ${inTab.length} entr${inTab.length === 1 ? 'y' : 'ies'}?`)) return;
   if (inTab.length) deleteEntries(inTab.map((e) => e.id));
   tabs = tabs.filter((t) => t.id !== tab.id);
-  write(C.tabDeletePatch(tab.id));
+  write(C.tabDeletePatch(tab.id), !!tab.room);
   setTab(C.PLAYERS_TAB);
+}
+
+// Save a tab to the room (every scene in it) or back to this scene only.
+// GMs: any tab, Players included. Players: the tabs players made.
+const canRoom = (t) => !!t && (role === 'GM' || canManageTab(t));
+async function toggleRoom(tab) {
+  const toRoom = !tab.room;
+  const ask = toRoom
+    ? `Save "${tab.name}" to the room?\n\nIt will show in every scene in this room. Room storage is small (16 kB in all, shared with other extensions): keep room tabs to a few entries. Token links are per scene: attach tokens again in each scene.`
+    : `Keep "${tab.name}" in this scene only?\n\nIt will be removed from every other scene in this room.`;
+  if (!confirm(ask)) return;
+  const moved = { ...tab, room: toRoom };
+  if (!toRoom) delete moved.room;
+  const { to, from } = C.moveTabPatches(moved, entries, toRoom);
+  tabs = tabs.map((t) => (t.id === tab.id ? moved : t));
+  render();
+  if (await write(to, toRoom)) await write(from, !toRoom);
+  else reload(); // nothing moved: back to what's saved
 }
 
 function runCommand(text) {
@@ -141,10 +176,9 @@ function runClear(clear) {
 // Attaching works both ways: select token(s) then click an entry's empty circle, or click the
 // circle then click a token on the map. Several tokens attach to this entry and the next
 // unattached ones in this tab, in order: box-select 4 goblins, click "Goblin 1".
-async function startPick(entry, add = false) {
+async function startPick(entry) {
   if (picking === entry.id) { picking = null; render(); return; }
   picking = entry.id;
-  pickAdd = add;
   const sel = (await OBR.player.getSelection()) || [];
   if (sel.length && (await OBR.scene.items.getItems(sel)).some((i) => i.type === 'IMAGE')) {
     finishPick(sel);
@@ -165,22 +199,29 @@ async function finishPick(sel) {
     render();
     return;
   }
-  // Minion groups (and "Add token" in the menu) take every picked token; other entries take one
-  // each, filling the next unattached entries in order.
-  if (entry.group || pickAdd) {
-    saveEntry(C.withTokens(entry, [...(pickAdd ? C.tokensOf(entry) : []), ...free]));
+  // Minion groups take every picked token; other entries take one each, filling the next
+  // unattached entries in order.
+  if (entry.group) {
+    saveEntry(C.withTokens(entry, [...elsewhere(entry), ...free]));
     return;
   }
   const list = entries.filter((e) => e.tab === entry.tab);
   const start = list.indexOf(entry);
   const targets = [entry, ...list.slice(start + 1).filter((e) => !tokenOf(e) && C.canEdit(e, role, tabs))];
-  saveEntries(free.slice(0, targets.length).map((token, i) => C.withTokens(targets[i], [token])));
+  saveEntries(free.slice(0, targets.length).map((token, i) => C.withTokens(targets[i], [...elsewhere(targets[i]), token])));
+}
+// A room entry keeps the tokens it has in other scenes (they aren't on this map).
+const elsewhere = (e) => (inRoom(e.tab) ? C.tokensOf(e).filter((id) => !tokens.has(id)) : []);
+// Clicking a selected token's picture takes the selected tokens off the entry.
+function detachSelected(e) {
+  updateEntry(e, (x) => C.withTokens(x, C.tokensOf(x).filter((id) => !selection.includes(id))));
 }
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && picking) { picking = null; render(); } });
 
 // Selecting tracked tokens on the map brings their entries to the top of the list (switching to
 // their tab if needed) until the selection changes.
 function focusSelected(sel) {
+  selection = sel;
   const firstPick = (e) => Math.min(...C.tokensOf(e).map((t) => sel.indexOf(t)).filter((i) => i >= 0));
   const next = visibleEntries()
     .filter((e) => C.tokensOf(e).some((t) => sel.includes(t)))
@@ -284,6 +325,8 @@ function renderTabs() {
   for (const t of visibleTabs()) {
     const active = t.id === current;
     const b = el('button', { type: 'button', className: 'tab' + (active ? ' active' : '') });
+    b.dataset.tab = t.id;
+    if (t.room) b.append(el('span', { className: 'in-room', title: 'Saved to the room (every scene)', innerHTML: svg('room') }));
     if (renamingTab === t.id) {
       const inp = el('input', { value: t.name });
       let finished = false;
@@ -342,6 +385,11 @@ function renderBar() {
     const anyHidden = inTab.some((e) => e.hidden);
     bar.append(iconButton(anyHidden ? 'eyeOff' : 'eye', anyHidden ? 'Show all stats to players' : 'Hide all stats from players',
       () => saveEntries(inTab.map((e) => ({ ...e, hidden: !anyHidden }))), !anyHidden));
+  }
+  const tab = tabById(current);
+  if (canRoom(tab)) {
+    bar.append(iconButton('room', tab.room ? 'Saved to the room (every scene): click to keep in this scene only' : 'Save to the room (every scene)',
+      () => toggleRoom(tab), !!tab.room));
   }
 }
 
@@ -414,7 +462,7 @@ function movable(wrap, e, name) {
     if (!onName && ev.target.closest('button, input, select, textarea, label')) return;
     const y0 = ev.clientY;
     let started = false, target = null;
-    const marks = () => wrap.parentElement.querySelectorAll('.drop-before, .drop-after').forEach((n) => n.classList.remove('drop-before', 'drop-after'));
+    const marks = () => document.querySelectorAll('.drop-before, .drop-after, .drop-tab').forEach((n) => n.classList.remove('drop-before', 'drop-after', 'drop-tab'));
     const move = (mv) => {
       if (!started) {
         if (Math.abs(mv.clientY - y0) < 6) return;
@@ -424,6 +472,14 @@ function movable(wrap, e, name) {
         wrap.classList.add('dragging');
       }
       wrap.style.transform = `translateY(${mv.clientY - y0}px)`;
+      // Over another tab: drop moves the entry there.
+      const tab = tabUnder(mv.clientX, mv.clientY);
+      if (tab) {
+        marks();
+        tab.classList.add('drop-tab');
+        target = { tab: tab.dataset.tab };
+        return;
+      }
       const others = [...wrap.parentElement.children].filter((n) => n !== wrap);
       const below = others.find((n) => { const r = n.getBoundingClientRect(); return mv.clientY < r.top + r.height / 2; });
       marks();
@@ -439,12 +495,31 @@ function movable(wrap, e, name) {
       marks();
       wrap.classList.remove('dragging');
       wrap.style.transform = '';
-      if (target) moveEntry(e.id, target.id, target.after); else render();
+      if (target && target.tab) moveToTab(e.id, target.tab);
+      else if (target) moveEntry(e.id, target.id, target.after);
+      else render();
     };
     wrap.addEventListener('pointermove', move);
     wrap.addEventListener('pointerup', up);
     wrap.addEventListener('pointercancel', up);
   });
+}
+// The tab button under the pointer that this entry can be dropped on: not the open tab, and for
+// players only players' tabs.
+function tabUnder(x, y) {
+  for (const b of document.querySelectorAll('#tabs .tab[data-tab]')) {
+    const r = b.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+    const t = tabById(b.dataset.tab);
+    return t && t.id !== current && (role === 'GM' || C.isPlayerTab(t)) ? b : null;
+  }
+  return null;
+}
+function moveToTab(id, tabId) {
+  const e = byId(id), tab = tabById(tabId);
+  if (!e || !tab) { render(); return; }
+  const order = Math.max(0, ...entries.filter((x) => x.tab === tabId).map((x) => x.order + 1));
+  saveEntry({ ...e, tab: tabId, order, hidden: C.isPlayerTab(tab) ? false : e.hidden });
 }
 function moveEntry(fromId, toId, after) {
   const ids = C.reorder(entries.filter((x) => x.tab === current).map((x) => x.id), fromId, toId, after);
@@ -452,18 +527,23 @@ function moveEntry(fromId, toId, after) {
   if (changed.length) saveEntries(changed); else render();
 }
 
-// The token's picture; an empty circle with + when nothing is attached.
+// The token's picture; an empty circle with + when nothing is attached. Click the picture to select
+// the token on the map; while it's selected an × shows over it, and clicking again detaches it.
 function renderAvatar(e, edit) {
   const t = tokenOf(e);
   const pick = picking === e.id;
-  const b = el('button', { type: 'button', className: 'avatar' + (t ? '' : ' blank') + (pick ? ' picking' : ''), disabled: !edit && !t });
+  const armed = !!t && edit && focus.includes(e.id);
+  const b = el('button', { type: 'button', className: 'avatar' + (t ? '' : ' blank') + (pick ? ' picking' : '') + (armed ? ' armed' : ''), disabled: !edit && !t });
   if (t && t.url) b.append(el('img', { src: t.url, alt: '', draggable: false }));
   else if (!t && edit) b.innerHTML = svg('add');
+  if (armed) b.append(el('span', { className: 'unhook', innerHTML: svg('close') }));
   if (pick) b.title = 'Click a token on the map (Esc to cancel)';
+  else if (armed) b.title = 'Detach the selected token' + (liveTokens(e).filter((id) => selection.includes(id)).length > 1 ? 's' : '');
   else if (t) b.title = liveTokens(e).length > 1 ? 'Select them on the map' : 'Select on map';
   else if (edit) b.title = 'Attach a token';
   b.addEventListener('click', () => {
-    if (t) OBR.player.select(liveTokens(e), true);
+    if (armed) detachSelected(e);
+    else if (t) OBR.player.select(liveTokens(e), true);
     else if (edit) startPick(e);
   });
   return b;
@@ -500,19 +580,6 @@ function renderMore(e) {
     vis.addEventListener('click', () => updateEntry(e, { hidden: !e.hidden }));
     actions.append(vis);
   }
-  if (C.tokensOf(e).length) {
-    const more = el('button', { type: 'button', className: 'btn' + (picking === e.id ? ' on' : ''), textContent: '+ Token' });
-    more.title = 'Attach more tokens to this entry';
-    more.addEventListener('click', () => startPick(e, true));
-    const detach = el('button', { type: 'button', className: 'btn', textContent: 'Detach' });
-    detach.addEventListener('click', () => updateEntry(e, (x) => C.withTokens(x, [])));
-    actions.append(more, detach);
-  }
-  if (role === 'GM') {
-    const move = el('select', { title: 'Move to tab' }, ...tabs.map((t) => el('option', { value: t.id, textContent: t.name, selected: t.id === e.tab })));
-    move.addEventListener('change', () => updateEntry(e, { tab: move.value, hidden: C.isPlayerTab(tabById(move.value)) ? false : e.hidden }));
-    actions.append(move);
-  }
   actions.append(el('span', { className: 'grow' }));
   const del = el('button', { type: 'button', className: 'btn danger', textContent: 'Delete' });
   del.addEventListener('click', () => { open.delete(e.id); deleteEntries([e.id]); });
@@ -522,11 +589,16 @@ function renderMore(e) {
 }
 
 // --- Owlbear wiring ---------------------------------------------------------------------
-function loadScene(metadata) {
-  sceneReady = true;
-  ({ tabs, entries } = C.readState(metadata));
+function reload() {
+  if (!sceneReady) return;
+  ({ tabs, entries } = C.readState(sceneMd, roomMd));
   render();
   refreshTokens().catch(() => {});
+}
+function loadScene(metadata) {
+  sceneReady = true;
+  sceneMd = metadata;
+  reload();
   const migrate = C.migrateTabsPatch(metadata);
   if (migrate) write(migrate);
 }
@@ -545,6 +617,8 @@ if (!OBR.isAvailable) {
       else focusSelected(p.selection || []);
     });
 
+    roomMd = await OBR.room.getMetadata();
+    OBR.room.onMetadataChange((md) => { roomMd = md; reload(); });
     const start = async () => {
       loadScene(await OBR.scene.getMetadata());
       focusSelected((await OBR.player.getSelection()) || []);
