@@ -18,7 +18,8 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 browser. It's laid out like the official Nimble character sheet. Everything saves in this browser as
 you type (localStorage), so it's there next time; **Export** saves a character as a `.json` file and
 **Import** loads one back (handy for moving to another device). The list at the top switches between
-characters; **New**, **Copy** and **Delete** manage them, and **Print** prints just the sheet.
+characters and **New** starts one; **More** has Copy, Export, Import, Print and Delete. Every number box
+steps with the ↑ / ↓ keys (Shift: by 5).
 
 - **Stats:** type each stat. The checkbox marks a key stat. ▲ / ▼ mark save advantage / disadvantage
   (click again to clear).
@@ -29,13 +30,16 @@ characters; **New**, **Copy** and **Delete** manage them, and **Print** prints j
   `10` sets it (Enter or click away). HP turns dark red when Bloodied (at or below half max).
 - **Wounds:** click a circle to fill up to it; click the last filled one to clear it. The skull is the
   last wound.
-- **The + on each section** (Details, Stats, Defense, Skills) opens a small panel instead of growing the
-  sheet. It holds that section's extra boxes (add a Number, Text or Current/Max box, or a Skill tied to
-  a stat), lets you take default boxes off the sheet (the × that appears on them) and put them back
-  (↺). Drag boxes in the panel to reorder them. Defense starts with Mana, Gold and Inventory waiting
-  there, plus the Max Wounds setting. The small number on a + is how many extra boxes it holds.
+- **Extra boxes:** a section with extra boxes shows a small **+ N** tab on its top edge; click it to open
+  them in a tray over the sheet (the sheet itself never grows). Defense starts with Mana, Gold and
+  Inventory there.
+- **Edit layout** (toolbar) is for changing the sheet: every box gets a red × to take it off, and each
+  section's + tray lets you add a Number, Text or Current/Max box (or a Skill tied to a stat), put
+  removed boxes back, drag boxes by their grip to reorder, and set Max Wounds. **Done** (or Esc) goes
+  back to playing. Removing or deleting anything shows **Undo** (Ctrl+Z works too).
 - **Notes:** the left panel is free text. The right one holds entries (abilities, items, story notes):
-  each is one bar, click it to open and write; drag bars to reorder, × to delete.
+  each is one bar showing its title and first line; click it to open and write. Drag the grip to
+  reorder, × to delete (with Undo), Expand all / Collapse all at the top.
 
 **Derived, not from the GM Guide:** the sheet's layout, its skill-to-stat pairs, skill = stat +
 points, Initiative = DEX + bonus and the six-wound track come from the official character sheet, not

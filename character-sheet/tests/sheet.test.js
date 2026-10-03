@@ -99,6 +99,22 @@ test('saving several characters; export and import', () => {
   assert.strictEqual(Object.keys(S.loadAll(storage).chars).length, 1);
 });
 
+test('undo brings back the layout but keeps what was typed since', () => {
+  const before = S.blank();
+  before.entries = [{ id: 'a', title: 'Aura', body: '' }, { id: 'b', title: 'Rope', body: '' }];
+  const now = JSON.parse(JSON.stringify(before));
+  now.entries = [{ id: 'a', title: 'Aura', body: 'typed later' }]; // Rope deleted, then Aura edited
+  now.removed = ['skills:lore'];
+  now.hp.cur = '9';
+  now.extras.defense = now.extras.defense.slice(1);
+  now.extras.defense[0].value = '30';
+  const u = S.undoLayout(before, now);
+  assert.deepStrictEqual(u.entries.map((e) => [e.title, e.body]), [['Aura', 'typed later'], ['Rope', '']]);
+  assert.deepStrictEqual(u.removed, []);
+  assert.strictEqual(u.hp.cur, '9');
+  assert.deepStrictEqual(u.extras.defense.map((b) => [b.label, b.value]), [['Mana', ''], ['Gold', '30'], ['Inventory', '']]);
+});
+
 test('move', () => {
   assert.deepStrictEqual(S.move(['a', 'b', 'c'], 0, 2), ['b', 'c', 'a']);
   assert.deepStrictEqual(S.move(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b']);

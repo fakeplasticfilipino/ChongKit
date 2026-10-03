@@ -57,8 +57,9 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
 3. **No GM Guide numbers:** the layout, skill/stat pairs and the six-wound track come from the official
    sheet; call them derived. Don't add class or ancestry data that isn't in the PDF.
-4. **Configurable:** each section's + opens a popover with its extra boxes and restore buttons; the sheet
-   itself never grows. Default boxes are removed via `removed` (`section:id`), extras live in `extras`.
+4. **Configurable:** playing vs Edit layout. A section's + tab opens a tray (floating, the sheet never
+   grows) with its extra boxes; in Edit layout the tray also adds, restores and reorders, and boxes
+   get a × to remove. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`.
 5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
    `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
 

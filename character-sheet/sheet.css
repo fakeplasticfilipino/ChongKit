@@ -1,29 +1,62 @@
 /* Character Sheet: the sheet itself follows the official Nimble character sheet (dark grey frames,
-   white fields, condensed caps labels; the blue fill on the PDF is only its form-field highlight, so not copied) sitting on the site's parchment page (nimble.css). */
+   white fields, condensed caps labels; the blue fill on the PDF is only its form-field highlight, so
+   not copied), sitting on the site's parchment page (nimble.css). */
 main.wide { max-width: 1140px; }
-.cs-tools { margin: 0 0 16px; align-items: center; }
-.cs-tools select { min-width: 200px; }
-.btn.danger { color: var(--blood); }
 
+/* Toolbar */
+.cs-tools { position: relative; margin: 0 0 18px; align-items: center; }
+.cs-tools select { min-width: 210px; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
+.cs-menu { position: relative; }
+.cs-menu > summary { list-style: none; cursor: pointer; }
+.cs-menu > summary::-webkit-details-marker { display: none; }
+.cs-menu > summary::after { content: " ▾"; font-size: .8em; }
+.cs-menu[open] > summary { background: var(--bar); }
+.cs-menu-list {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 190px; display: flex; flex-direction: column;
+  background: var(--parchment-hi); border: 1.5px solid var(--ink); box-shadow: 0 8px 20px rgba(40, 30, 20, .2);
+}
+.cs-menu-list button { padding: 9px 14px; border: 0; border-bottom: 1px solid var(--bar-dark); background: transparent; text-align: left; font: 500 1rem var(--body); color: var(--ink); cursor: pointer; }
+.cs-menu-list button:last-child { border-bottom: 0; }
+.cs-menu-list button:hover { background: var(--bar); }
+.cs-menu-list .danger { color: var(--blood); }
+.cs-saved { margin-left: auto; font-style: italic; color: var(--muted); opacity: 0; transition: opacity .3s; }
+.cs-saved.show { opacity: 1; }
+.cs-saved.bad { color: var(--blood); opacity: 1; }
+
+/* Undo toast */
+.cs-toast {
+  position: fixed; left: 50%; bottom: 22px; z-index: 50; transform: translateX(-50%); display: flex; align-items: center; gap: 14px;
+  padding: 8px 8px 8px 16px; background: #2e2f31; color: #fff; font: 500 16px var(--body); box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+}
+.cs-toast[hidden] { display: none; }
+.cs-undo {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1.5px solid rgba(255, 255, 255, .5);
+  background: transparent; color: #fff; font: 700 15px var(--body); text-transform: uppercase; cursor: pointer;
+}
+.cs-undo:hover { background: rgba(255, 255, 255, .12); }
+
+/* The sheet */
 .cs {
-  --f: #58595b; --f2: #808285; --fld: #fff; --fld2: #f1f1f2; --lab: #8a8b8e; --focus: #58595b;
-  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 14px;
-  padding: 22px 24px 26px; background: #fff; color: #231f20; font-family: var(--body);
+  --f: #58595b; --f2: #808285; --line: #d9dadc; --line2: #b3b4b7; --hover: #f5f5f6; --lab: #8a8b8e;
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 16px 14px;
+  padding: 26px 26px 28px; background: #fff; color: #231f20; font-family: var(--body);
   box-shadow: 0 1px 2px rgba(60, 40, 20, .12), 0 8px 28px rgba(60, 40, 20, .14);
 }
+.cs.editing { outline: 2px dashed var(--f2); outline-offset: -10px; }
 .cs input, .cs textarea, .cs select, .cs button { font-family: inherit; color: inherit; }
 .cs button { cursor: pointer; }
 .cs-ic { width: 18px; height: 18px; flex: none; }
 .cs-ic.sm { width: 14px; height: 14px; }
 .cs-ic.xs { width: 11px; height: 11px; }
 
-/* Fields */
+/* Fields: white boxes with a hairline edge, so it's always clear where to type */
 .cs-in {
-  width: 100%; min-width: 0; height: 30px; padding: 2px 8px; border: 0; border-radius: 0;
-  background: var(--fld); font-size: 15px; font-weight: 500;
+  width: 100%; min-width: 0; height: 32px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 2px;
+  background: #fff; font-size: 16px; font-weight: 500; transition: border-color .12s, box-shadow .12s;
 }
-.cs-in:hover { background: var(--fld2); }
-.cs-in:focus, .cs-free:focus, .cs-ebody:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+.cs-in:hover { border-color: var(--line2); }
+.cs-in:focus { border-color: var(--f); box-shadow: 0 0 0 1px var(--f); outline: 0; }
 .cs-big { height: 46px; padding: 0 4px; text-align: center; font-size: 25px; font-weight: 500; }
 .cs-big.bloodied { color: var(--blood); font-weight: 700; }
 .cs-cap {
@@ -33,64 +66,70 @@ main.wide { max-width: 1140px; }
 .cs-cap.sm { font-size: 14px; }
 .cs-pair { display: flex; align-items: center; gap: 4px; }
 .cs-pair .cs-in { flex: 1 1 0; }
-.cs-slash { flex: none; width: 2px; height: 40px; background: #c9c9c9; transform: rotate(18deg); margin: 0 3px; }
+.cs-slash { flex: none; width: 2px; height: 40px; background: var(--line2); transform: rotate(18deg); margin: 0 3px; }
 .cs-check {
-  appearance: none; -webkit-appearance: none; flex: none; width: 17px; height: 17px; margin: 0;
-  background: #fff; border: 2px solid var(--f2); display: inline-grid; place-items: center; cursor: pointer;
+  appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 0;
+  background: #fff; border: 0; display: inline-grid; place-items: center; cursor: pointer;
 }
-.cs-check:checked::after { content: "✓"; color: #231f20; font-weight: 700; font-size: 14px; line-height: 1; }
-.cs-check:focus-visible { outline: 2px solid var(--focus); }
+.cs-check:checked::after { content: "✓"; color: #231f20; font-weight: 700; font-size: 15px; line-height: 1; }
+.cs-check:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
-/* Sections and their + (shows the extra boxes in a popover, so the sheet itself never grows) */
+/* Sections: the + tab (extra boxes) and Edit layout */
 .cs-sec { position: relative; min-width: 0; }
-.cs-peek {
-  position: absolute; top: -12px; right: -12px; z-index: 6; display: grid; place-items: center;
-  width: 22px; height: 22px; padding: 0; border: 2px solid #fff; border-radius: 0;
-  background: var(--f); color: #fff; font-size: 17px; font-weight: 700; line-height: 1;
-  opacity: .5; transition: opacity .15s;
+.cs-more {
+  position: absolute; top: -19px; right: 0; z-index: 6; display: inline-flex; align-items: center; gap: 3px;
+  height: 19px; padding: 0 8px; border: 0; border-radius: 6px 6px 0 0; background: var(--f); color: #fff;
+  font-size: 13px; font-weight: 700; line-height: 1;
 }
-.cs-sec:hover > .cs-peek, .cs-peek:focus-visible, .cs-peek.on { opacity: 1; }
-.cs-peek .cs-n {
-  position: absolute; top: -8px; right: -8px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px;
-  background: var(--blood); color: #fff; font-size: 10px; line-height: 14px;
-}
+.cs-more .cs-plus { font-size: 17px; margin-top: -1px; }
+.cs-more:hover, .cs-more.on { background: #231f20; }
+.cs-more:focus-visible { outline: 2px solid var(--f); outline-offset: 2px; }
+.cs-box { position: relative; }
+.cs.editing .cs-box { outline: 1.5px dashed var(--f2); outline-offset: 3px; }
 .cs-x {
-  position: absolute; top: -9px; right: -9px; z-index: 5; display: grid; place-items: center;
-  width: 20px; height: 20px; padding: 0; border: 2px solid #fff; background: var(--blood); color: #fff;
+  position: absolute; top: -10px; left: -10px; z-index: 5; display: grid; place-items: center;
+  width: 22px; height: 22px; padding: 0; border: 2px solid #fff; border-radius: 50%; background: var(--blood); color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
-.cs-x.left { right: auto; left: -9px; }
-.cs-sec.editing .cs-hgroup, .cs-sec.editing .cs-statw, .cs-sec.editing .cs-dbox,
-.cs-sec.editing .cs-woundw, .cs-sec.editing .cs-skill { outline: 1.5px dashed var(--f2); outline-offset: 3px; }
-.cs-pop {
-  position: absolute; top: calc(100% + 10px); right: 0; z-index: 20; width: min(560px, calc(100vw - 32px));
-  padding: 0 12px 12px; background: #fff; border: 3px solid var(--f); box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
+.cs-x:hover { transform: scale(1.1); }
+
+/* The tray a + opens: it floats over the sheet, so the sheet never grows */
+.cs-tray {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 20; min-width: 320px;
+  padding: 0 12px 12px; background: #fff; border: 3px solid var(--f); box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
 }
-.cs-stats .cs-pop { left: 0; right: auto; }
-.cs-pop-title {
-  margin: 0 -12px 12px; padding: 4px 12px; background: var(--f); color: #fff;
+.cs-def .cs-tray { left: auto; width: max(100%, 380px); }
+.cs-stats .cs-tray { right: auto; width: max(100%, 380px); }
+.cs-tray-title {
+  margin: 0 -12px 12px; padding: 5px 12px; background: var(--f); color: #fff;
   font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
 }
-.cs-xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px; margin-bottom: 12px; }
-.cs-xgrid:has(.t-pair, .t-text) { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-.cs-xbox { position: relative; display: flex; flex-direction: column; border: 3px solid var(--f); background: #fff; cursor: grab; }
-.cs-xbox.drop { box-shadow: -4px 0 0 var(--focus); }
-.cs-xbox > .cs-in, .cs-xbox > .cs-pair, .cs-xbox > .cs-xskill { margin: 6px; width: auto; }
+.cs-xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 14px; margin: 4px 0 12px; }
+.cs-xgrid:has(.t-pair, .t-text) { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
+.cs-xbox { position: relative; display: flex; flex-direction: column; border: 3px solid var(--f); background: #fff; }
+.cs-xbox.drop { box-shadow: -5px 0 0 var(--f); }
+.cs-xbox.dragging, .cs-entry.dragging { opacity: .4; }
+.cs-xbox > .cs-in, .cs-xbox > .cs-pair, .cs-xbox > .cs-xskill { margin: 8px; width: auto; }
 .cs-xlabel {
-  order: 2; width: 100%; min-width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 0;
+  display: block; width: 100%; min-width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 0; line-height: 26px;
   background: var(--f); color: #fff; text-align: center; font-size: 15px; font-weight: 700; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.cs-xlabel::placeholder { color: rgba(255, 255, 255, .55); }
-.cs-xlabel:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
+input.cs-xlabel::placeholder { color: rgba(255, 255, 255, .55); }
+input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 .cs-xskill { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.cs-xstat { border: 0; background: transparent; color: var(--lab); font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-.cs-adds { display: flex; flex-wrap: wrap; gap: 8px; }
+.cs-xstat { border: 1px solid var(--line); background: #fff; color: var(--lab); font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.cs-grip { position: absolute; top: -10px; right: -10px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--f); color: #fff; cursor: grab; border: 2px solid #fff; }
+.cs-adds, .cs-gone { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cs-gone { margin-top: 12px; padding-top: 10px; border-top: 1.5px solid var(--line); }
+.cs-gone-label { color: var(--lab); font-size: 14px; font-weight: 700; text-transform: uppercase; }
 .cs-addb {
-  padding: 6px 12px; border: 2px dashed var(--f2); background: transparent; color: var(--f);
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: 2px dashed var(--f2); background: transparent; color: var(--f);
   font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
 }
-.cs-addb:hover { border-style: solid; background: var(--fld2); }
-.cs-addb.restore { border-color: #c9cacc; color: var(--f2); }
-.cs-addb.wide { width: 100%; margin-top: auto; }
+.cs-addb:hover { border-style: solid; background: var(--hover); }
+.cs-addb.restore { border-style: solid; border-width: 1.5px; border-color: var(--line2); text-transform: none; font-size: 15px; }
+.cs-addb.wide { justify-content: center; width: 100%; margin-top: auto; }
 .cs-setting { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .cs-setlabel { font-size: 15px; font-weight: 700; text-transform: uppercase; color: var(--f); }
 .cs-setting .stepper { border-color: var(--f); background: #fff; }
@@ -98,33 +137,33 @@ main.wide { max-width: 1140px; }
 
 /* Top row: Name, Ancestry/Class/Level | (Hit Points) | Size/Speed, Height/Weight, Hit Dice */
 .cs-head { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 14px; }
-.cs-hl, .cs-hr { display: flex; gap: 10px; min-width: 0; }
-.cs-hgroup { position: relative; flex: var(--g, 1) 1 0; min-width: 0; }
+.cs-hl, .cs-hr { display: flex; gap: 12px; min-width: 0; }
+.cs-hgroup { flex: var(--g, 1) 1 0; min-width: 0; }
 .cs-hin { display: flex; align-items: center; gap: 4px; }
-.cs-hin .narrow { flex: 0 0 38px; text-align: center; padding: 2px 4px; }
-.cs-hslash { color: #b5b5b5; font-size: 22px; }
+.cs-hin .narrow { flex: 0 0 40px; text-align: center; padding: 2px 4px; }
+.cs-hslash { color: var(--line2); font-size: 22px; }
 .cs-hlabel {
-  margin-top: 6px; padding-top: 3px; border-top: 2px solid #d4d4d4; color: var(--lab);
-  font-size: 15px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 5px; padding-top: 3px; border-top: 2px solid var(--line); color: var(--lab);
+  font-size: 14.5px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* Hit Points: a shield (roof on top, point at the bottom), Temp HP in its lower half */
 .cs-hp {
-  grid-column: 2; grid-row: 1 / 3; align-self: start; position: relative; z-index: 1; margin-top: 30px;
+  grid-column: 2; grid-row: 1 / 3; align-self: start; position: relative; z-index: 1; margin-top: 34px;
   display: flex; flex-direction: column; gap: 5px; padding: 5px; background: var(--f);
   clip-path: polygon(50% 0, 100% 20px, 100% calc(100% - 20px), 50% 100%, 0 calc(100% - 20px), 0 20px);
 }
-.cs-hp-a { background: #fff; padding: 22px 8px 10px; text-align: center; clip-path: polygon(50% 0, 100% 17px, 100% 100%, 0 100%, 0 17px); }
+.cs-hp-a { background: #fff; padding: 24px 8px 10px; text-align: center; clip-path: polygon(50% 0, 100% 17px, 100% 100%, 0 100%, 0 17px); }
 .cs-hp-b { background: #fff; padding: 6px 8px 26px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 17px), 50% 100%, 0 calc(100% - 17px)); }
 .cs-heart { position: absolute; top: 8px; left: 50%; width: 20px; height: 20px; margin-left: -10px; color: var(--f); }
 .cs-hp .cs-cap { margin-bottom: 6px; }
-.cs-hp .cs-slash { height: 46px; background: #c9c9c9; }
+.cs-hp .cs-slash { height: 46px; }
 .cs-hp-b .cs-big { height: 42px; }
 
 /* Stats: ▲ save advantage, value, key-stat box + name, ▼ save disadvantage */
-.cs-stats { grid-column: 1; grid-row: 2; align-self: end; }
-.cs-statrow { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 8px; }
-.cs-statw { position: relative; display: flex; flex-direction: column; align-items: center; }
+.cs-stats { grid-column: 1; grid-row: 2; align-self: start; margin-top: 10px; }
+.cs-statrow { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 10px; }
+.cs-statw { display: flex; flex-direction: column; align-items: center; }
 .cs-stat {
   align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 6px;
   border: 3px solid var(--f); border-bottom: 0; border-radius: 3px 3px 0 0; background: #fff;
@@ -132,27 +171,27 @@ main.wide { max-width: 1140px; }
 .cs-stat > .cs-in { width: 64%; height: 56px; font-size: 28px; }
 .cs-statname {
   align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px; margin: 0 -3px;
-  border-radius: 0 0 16px 16px; background: var(--f); color: #fff; font-size: 23px; font-weight: 700; text-transform: uppercase;
+  border-radius: 0 0 16px 16px; background: var(--f); color: #fff; font-size: 23px; font-weight: 700; text-transform: uppercase; cursor: pointer;
 }
-.cs-save { position: relative; width: 30px; height: 20px; padding: 0; border: 0; background: transparent; }
-.cs-save:hover { background: var(--fld2); }
-.cs-save::before { content: ""; position: absolute; inset: 4px 7px; background: #c4c5c7; }
+.cs-save { position: relative; width: 34px; height: 20px; padding: 0; border: 0; background: transparent; }
+.cs-save::before { content: ""; position: absolute; inset: 4px 9px; background: #c4c5c7; transition: background .12s; }
+.cs-save:hover::before { background: var(--f2); }
 .cs-save.adv::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .cs-save.dis::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
-.cs-save.on::before { inset: 3px 8px; background: #231f20; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.cs-save.on::before { inset: 2px 9px; background: #231f20; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
 .cs-statw > .cs-save.dis { margin-top: 4px; }
 
 /* Armor, Initiative, Wounds */
-.cs-def { grid-column: 3; grid-row: 2; display: flex; gap: 8px; align-items: flex-start; align-self: end; }
+.cs-def { grid-column: 3; grid-row: 2; display: flex; gap: 10px; align-items: flex-start; align-self: start; margin-top: 10px; }
 .cs-dbox {
-  position: relative; flex: 0 0 76px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 6px 10px;
+  flex: 0 0 80px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px 10px;
   border: 3px solid var(--f); border-bottom-width: 9px; background: #fff;
 }
 .cs-dbox .cs-cap { font-size: 15px; }
-.cs-dbox .cs-in { width: 52px; }
-.cs-woundw { position: relative; flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.cs-dbox .cs-in { width: 56px; }
+.cs-woundw { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: center; }
 .cs-wounds {
-  position: relative; align-self: stretch; margin-top: 10px; padding: 18px 8px 12px;
+  position: relative; align-self: stretch; margin-top: 10px; padding: 18px 10px 12px;
   border: 3px solid var(--f); border-bottom-width: 9px; border-radius: 12px; background: #fff;
 }
 .cs-wcap {
@@ -162,20 +201,19 @@ main.wide { max-width: 1140px; }
 .cs-wcap .cs-ic { width: 15px; height: 15px; color: var(--f); }
 .cs-track { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
 .cs-track::before { content: ""; position: absolute; left: 10px; right: 14px; top: 50%; height: 4px; margin-top: -2px; background: var(--f); }
-.cs-dot {
-  position: relative; flex: none; width: 22px; height: 22px; padding: 0; border: 3px solid var(--f); border-radius: 50%; background: #fff;
-}
-.cs-dot.on { background: radial-gradient(circle, #231f20 0 4.5px, #fff 5px); }
-.cs-dot.skull { width: 28px; height: 28px; border: 0; background: transparent; color: var(--f); display: grid; place-items: center; }
-.cs-dot.skull .cs-ic { width: 26px; height: 26px; }
+.cs-dot { position: relative; flex: none; width: 24px; height: 24px; padding: 0; border: 3px solid var(--f); border-radius: 50%; background: #fff; transition: transform .1s; }
+.cs-dot:hover { transform: scale(1.12); }
+.cs-dot.on { background: radial-gradient(circle, #231f20 0 5px, #fff 5.5px); }
+.cs-dot.skull { width: 30px; height: 30px; border: 0; background: transparent; color: var(--f); display: grid; place-items: center; }
+.cs-dot.skull .cs-ic { width: 28px; height: 28px; }
 .cs-dot.skull.on, .cs-wounds.dead .cs-dot.skull { color: var(--blood); }
 .cs-marks { display: flex; gap: 5px; margin-top: 6px; }
 .cs-mark { appearance: none; -webkit-appearance: none; width: 19px; height: 19px; margin: 0; border: 1.5px dashed var(--f2); background: #fff; cursor: pointer; }
 .cs-mark:checked { border-style: solid; border-color: var(--f); background: var(--f); }
-.cs-mark:focus-visible { outline: 2px solid var(--focus); }
+.cs-mark:focus-visible { outline: 2px solid var(--f); }
 
 /* Skills: one band with notched end caps; stat on top, total in the middle, name below */
-.cs-skills { grid-column: 1 / -1; grid-row: 3; margin: 0 26px; }
+.cs-skills { grid-column: 1 / -1; grid-row: 3; margin: 6px 26px 0; }
 .cs-skills::before, .cs-skills::after {
   content: ""; position: absolute; top: 18px; width: 26px; height: 46px; background: var(--f);
   clip-path: polygon(0 18%, 45% 18%, 45% 0, 100% 0, 100% 100%, 45% 100%, 45% 82%, 0 82%);
@@ -184,8 +222,8 @@ main.wide { max-width: 1140px; }
 .cs-skills::after { right: -26px; transform: scaleX(-1); }
 .cs-band { display: flex; border: 3px solid var(--f); border-bottom: 0; background: #fff; }
 .cs-skill {
-  position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding-top: 3px; border-right: 3px solid var(--f);
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding-top: 4px; border-right: 3px solid var(--f);
 }
 .cs-skill:last-child { border-right: 0; }
 .cs-sst { color: #a7a8aa; font-size: 13px; font-weight: 700; text-transform: uppercase; line-height: 1.1; }
@@ -194,46 +232,62 @@ main.wide { max-width: 1140px; }
   align-self: stretch; margin-top: 5px; padding: 4px 2px; background: var(--f); color: #fff; text-align: center;
   font-size: 14.5px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.cs-pts { position: absolute; top: 3px; right: 5px; color: var(--f2); font-size: 12px; font-weight: 700; }
+.cs-pts { position: absolute; top: 4px; right: 6px; color: var(--f2); font-size: 12px; font-weight: 700; }
+.cs.editing .cs-skill.cs-box { outline-offset: -4px; }
 
 /* Notes: free text on the left, collapsible entries on the right */
-.cs-notes { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
-.cs-panel { min-width: 0; min-height: 290px; background: #fff; border: 3px solid var(--f); }
-.cs-free {
-  display: block; width: 100%; height: 100%; min-height: 290px; padding: 6px 8px; border: 0; border-radius: 0;
-  background: transparent; font-size: 17px; line-height: 1.35; resize: vertical;
+.cs-notes { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.cs-panel { display: flex; flex-direction: column; min-width: 0; min-height: 300px; background: #fff; border: 3px solid var(--f); }
+.cs-ptitle {
+  display: flex; align-items: center; justify-content: space-between; min-height: 28px; padding: 0 6px 0 10px;
+  background: var(--f); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
 }
-.cs-entries { display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+.cs-fold { padding: 2px 8px; border: 1px solid rgba(255, 255, 255, .45); background: transparent; color: #fff; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.cs-fold:hover { background: rgba(255, 255, 255, .14); }
+.cs-free {
+  flex: 1; display: block; width: 100%; min-height: 270px; padding: 10px 12px; border: 0; border-radius: 0;
+  background: #fff; font-size: 17px; line-height: 1.4; resize: vertical;
+}
+.cs-free:focus, .cs-ebody:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--f); }
+.cs-entries { gap: 0; }
+.cs-elist { display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 8px; }
+.cs-entries .cs-addb.wide { width: auto; margin: auto 10px 10px; }
 .cs-entry { background: #fff; border: 2px solid var(--f); }
-.cs-entry.drop { box-shadow: 0 -4px 0 var(--focus); }
+.cs-entry.drop { box-shadow: 0 -5px 0 var(--f); }
 .cs-ebar {
-  display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 6px 0 4px;
+  display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 6px 0 2px;
   background: var(--f); color: #fff; cursor: pointer; user-select: none;
 }
-.cs-ebar:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.cs-ebar:hover { background: #4b4c4e; }
+.cs-ebar:focus-visible { outline: 2px solid #231f20; outline-offset: 2px; }
+.cs-ebar .cs-grip { position: static; width: 20px; height: 26px; border: 0; border-radius: 0; background: transparent; opacity: .45; }
+.cs-ebar .cs-grip:hover { opacity: 1; }
 .cs-chev { transition: transform .15s; }
 .cs-entry.open .cs-chev { transform: rotate(90deg); }
-.cs-etitle { flex: 1; min-width: 0; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-etext { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 10px; overflow: hidden; }
+.cs-etitle { flex: none; max-width: 100%; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cs-etitle.none { font-weight: 500; opacity: .6; }
-input.cs-etitle { height: 26px; padding: 0 6px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .14); color: #fff; }
+.cs-epeek { flex: 1; min-width: 0; font-size: 15px; opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+input.cs-etitle { flex: 1; height: 28px; padding: 0 8px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .14); color: #fff; }
 input.cs-etitle::placeholder { color: rgba(255, 255, 255, .55); }
-input.cs-etitle:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
-.cs-edel { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 1.5px solid rgba(255, 255, 255, .5); background: transparent; color: #fff; }
-.cs-edel:hover { background: var(--blood); border-color: var(--blood); }
+input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
+.cs-edel { flex: none; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: #fff; opacity: 0; transition: opacity .12s; }
+.cs-ebar:hover .cs-edel, .cs-entry.open .cs-edel, .cs-edel:focus-visible { opacity: .75; }
+.cs-edel:hover { opacity: 1; background: var(--blood); }
 .cs-ebody {
-  display: block; width: 100%; min-height: 90px; padding: 8px 10px; border: 0; border-radius: 0; resize: none; overflow: hidden;
-  background: #fff; font-size: 16px; line-height: 1.35;
+  display: block; width: 100%; min-height: 96px; padding: 10px 12px; border: 0; border-radius: 0; resize: none; overflow: hidden;
+  background: #fff; font-size: 16px; line-height: 1.4;
 }
 
 /* Phones and narrow windows: one column, the shield under the details. */
 @media (max-width: 860px) {
-  .cs { grid-template-columns: minmax(0, 1fr); padding: 18px 14px 20px; gap: 16px; }
-  .cs-head { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .cs { grid-template-columns: minmax(0, 1fr); padding: 26px 14px 20px; gap: 22px; }
+  .cs-head { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .cs-hgap { display: none; }
   .cs-hl, .cs-hr { flex-wrap: wrap; }
   .cs-hgroup { flex-basis: 40%; }
-  .cs-hp { grid-column: 1; grid-row: auto; justify-self: center; width: 170px; margin-top: 0; }
-  .cs-stats, .cs-def, .cs-skills, .cs-notes { grid-column: 1; grid-row: auto; }
+  .cs-hp { grid-column: 1; grid-row: auto; justify-self: center; width: 180px; margin-top: 0; }
+  .cs-stats, .cs-def, .cs-skills, .cs-notes { grid-column: 1; grid-row: auto; margin-top: 0; }
   .cs-def { flex-wrap: wrap; }
   .cs-woundw { flex-basis: 100%; }
   .cs-dbox { flex: 1 1 0; }
@@ -244,19 +298,22 @@ input.cs-etitle:focus { outline: 2px solid var(--focus); outline-offset: -2px; }
   .cs-skill:nth-child(5n) { border-right: 0; }
   .cs-snm { font-size: 11.5px; padding: 3px 1px; }
   .cs-notes { grid-template-columns: minmax(0, 1fr); }
-  .cs-pop, .cs-stats .cs-pop { left: 0; right: 0; width: auto; }
+  .cs-tray, .cs-def .cs-tray, .cs-stats .cs-tray { left: 0; right: 0; width: auto; min-width: 0; }
+  .cs-edel { opacity: .75; }
 }
 @media (max-width: 420px) {
   .cs-statname { font-size: 18px; gap: 4px; }
   .cs-stat > .cs-in { width: 76%; }
-  .cs-skill > .cs-in { width: 80%; font-size: 21px; }
+  .cs-skill > .cs-in { width: 82%; font-size: 21px; }
   .cs-snm { font-size: 10px; letter-spacing: -.02em; text-overflow: clip; }
+  .cs-saved { display: none; }
 }
 
 @media print {
-  .cs-tools, .back, .cs-peek, .cs-pop, .cs-x, .cs-addb { display: none !important; }
+  .cs-tools, .back, .cs-more, .cs-tray, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold { display: none !important; }
   main::before, main::after { display: none; }
   body { background: #fff; }
-  .cs { box-shadow: none; padding: 0; }
+  .cs { box-shadow: none; padding: 0; outline: 0; }
+  .cs-in { border-color: transparent; }
   .cs-panel, .cs-free { min-height: 220px; }
 }

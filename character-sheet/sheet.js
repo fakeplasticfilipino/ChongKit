@@ -168,6 +168,17 @@
     return { ...s, removed };
   }
 
+  // Undo a layout change (remove, delete, add, move): bring back the earlier layout, but keep
+  // everything typed since then (boxes and entries that still exist keep their current text).
+  function undoLayout(prev, cur) {
+    const pick = (before, now) => before.map((b) => now.find((c) => c.id === b.id) || b);
+    const out = { ...cur, removed: prev.removed.slice(), woundsMax: prev.woundsMax };
+    out.wounds = Math.min(cur.wounds, out.woundsMax);
+    out.extras = Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, pick(prev.extras[k] || [], cur.extras[k] || [])]));
+    out.entries = pick(prev.entries, cur.entries);
+    return out;
+  }
+
   // Move an item in a list to another position.
   function move(list, from, to) {
     const out = list.slice();
@@ -205,7 +216,7 @@
   const api = {
     VERSION, STORE, STATS, SKILLS, SECTIONS, BOX_TYPES, WOUNDS, uid,
     blank, normalize, newBox, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
-    setWounds, toggleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, move,
+    setWounds, toggleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
     loadAll, saveAll, exportJson, importJson,
   };
   if (typeof module !== 'undefined') module.exports = api;
