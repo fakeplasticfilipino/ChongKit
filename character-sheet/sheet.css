@@ -1,12 +1,12 @@
 /* Character Sheet: the sheet itself follows the official Nimble character sheet (dark grey frames,
-   periwinkle fields, condensed caps labels) sitting on the site's parchment page (nimble.css). */
+   white fields, condensed caps labels; the blue fill on the PDF is only its form-field highlight, so not copied) sitting on the site's parchment page (nimble.css). */
 main.wide { max-width: 1140px; }
 .cs-tools { margin: 0 0 16px; align-items: center; }
 .cs-tools select { min-width: 200px; }
 .btn.danger { color: var(--blood); }
 
 .cs {
-  --f: #58595b; --f2: #808285; --fld: #d3dbf6; --fld2: #bfcaf1; --lab: #8a8b8e; --focus: #3d63dd;
+  --f: #58595b; --f2: #808285; --fld: #fff; --fld2: #f1f1f2; --lab: #8a8b8e; --focus: #58595b;
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 14px;
   padding: 22px 24px 26px; background: #fff; color: #231f20; font-family: var(--body);
   box-shadow: 0 1px 2px rgba(60, 40, 20, .12), 0 8px 28px rgba(60, 40, 20, .14);
@@ -36,7 +36,7 @@ main.wide { max-width: 1140px; }
 .cs-slash { flex: none; width: 2px; height: 40px; background: #c9c9c9; transform: rotate(18deg); margin: 0 3px; }
 .cs-check {
   appearance: none; -webkit-appearance: none; flex: none; width: 17px; height: 17px; margin: 0;
-  background: var(--fld); border: 0; display: inline-grid; place-items: center; cursor: pointer;
+  background: #fff; border: 2px solid var(--f2); display: inline-grid; place-items: center; cursor: pointer;
 }
 .cs-check:checked::after { content: "✓"; color: #231f20; font-weight: 700; font-size: 14px; line-height: 1; }
 .cs-check:focus-visible { outline: 2px solid var(--focus); }
@@ -52,7 +52,7 @@ main.wide { max-width: 1140px; }
 .cs-sec:hover > .cs-peek, .cs-peek:focus-visible, .cs-peek.on { opacity: 1; }
 .cs-peek .cs-n {
   position: absolute; top: -8px; right: -8px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px;
-  background: var(--focus); color: #fff; font-size: 10px; line-height: 14px;
+  background: var(--blood); color: #fff; font-size: 10px; line-height: 14px;
 }
 .cs-x {
   position: absolute; top: -9px; right: -9px; z-index: 5; display: grid; place-items: center;
@@ -88,8 +88,8 @@ main.wide { max-width: 1140px; }
   padding: 6px 12px; border: 2px dashed var(--f2); background: transparent; color: var(--f);
   font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
 }
-.cs-addb:hover { border-style: solid; background: var(--fld); }
-.cs-addb.restore { border-color: var(--fld2); color: var(--f2); }
+.cs-addb:hover { border-style: solid; background: var(--fld2); }
+.cs-addb.restore { border-color: #c9cacc; color: var(--f2); }
 .cs-addb.wide { width: 100%; margin-top: auto; }
 .cs-setting { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .cs-setlabel { font-size: 15px; font-weight: 700; text-transform: uppercase; color: var(--f); }
@@ -134,9 +134,9 @@ main.wide { max-width: 1140px; }
   align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px; margin: 0 -3px;
   border-radius: 0 0 16px 16px; background: var(--f); color: #fff; font-size: 23px; font-weight: 700; text-transform: uppercase;
 }
-.cs-save { position: relative; width: 30px; height: 20px; padding: 0; border: 0; background: var(--fld); }
+.cs-save { position: relative; width: 30px; height: 20px; padding: 0; border: 0; background: transparent; }
 .cs-save:hover { background: var(--fld2); }
-.cs-save::before { content: ""; position: absolute; inset: 4px 7px; background: #fff; }
+.cs-save::before { content: ""; position: absolute; inset: 4px 7px; background: #c4c5c7; }
 .cs-save.adv::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .cs-save.dis::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
 .cs-save.on::before { inset: 3px 8px; background: #231f20; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
@@ -163,14 +163,14 @@ main.wide { max-width: 1140px; }
 .cs-track { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
 .cs-track::before { content: ""; position: absolute; left: 10px; right: 14px; top: 50%; height: 4px; margin-top: -2px; background: var(--f); }
 .cs-dot {
-  position: relative; flex: none; width: 22px; height: 22px; padding: 0; border: 3px solid var(--f); border-radius: 50%; background: var(--fld);
+  position: relative; flex: none; width: 22px; height: 22px; padding: 0; border: 3px solid var(--f); border-radius: 50%; background: #fff;
 }
 .cs-dot.on { background: radial-gradient(circle, #231f20 0 4.5px, #fff 5px); }
 .cs-dot.skull { width: 28px; height: 28px; border: 0; background: transparent; color: var(--f); display: grid; place-items: center; }
 .cs-dot.skull .cs-ic { width: 26px; height: 26px; }
 .cs-dot.skull.on, .cs-wounds.dead .cs-dot.skull { color: var(--blood); }
 .cs-marks { display: flex; gap: 5px; margin-top: 6px; }
-.cs-mark { appearance: none; -webkit-appearance: none; width: 19px; height: 19px; margin: 0; border: 1.5px dashed var(--fld2); background: var(--fld); cursor: pointer; }
+.cs-mark { appearance: none; -webkit-appearance: none; width: 19px; height: 19px; margin: 0; border: 1.5px dashed var(--f2); background: #fff; cursor: pointer; }
 .cs-mark:checked { border-style: solid; border-color: var(--f); background: var(--f); }
 .cs-mark:focus-visible { outline: 2px solid var(--focus); }
 
@@ -194,11 +194,11 @@ main.wide { max-width: 1140px; }
   align-self: stretch; margin-top: 5px; padding: 4px 2px; background: var(--f); color: #fff; text-align: center;
   font-size: 14.5px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.cs-pts { position: absolute; top: 3px; right: 5px; color: var(--focus); font-size: 12px; font-weight: 700; }
+.cs-pts { position: absolute; top: 3px; right: 5px; color: var(--f2); font-size: 12px; font-weight: 700; }
 
 /* Notes: free text on the left, collapsible entries on the right */
 .cs-notes { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
-.cs-panel { min-width: 0; min-height: 290px; background: var(--fld); }
+.cs-panel { min-width: 0; min-height: 290px; background: #fff; border: 3px solid var(--f); }
 .cs-free {
   display: block; width: 100%; height: 100%; min-height: 290px; padding: 6px 8px; border: 0; border-radius: 0;
   background: transparent; font-size: 17px; line-height: 1.35; resize: vertical;

@@ -51,7 +51,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 
 `character-sheet/`: the Nimble character sheet. The Nimble ground rules apply, with these differences:
 
-1. **The sheet looks like the official Nimble character sheet** (dark grey frames, periwinkle fields,
+1. **The sheet looks like the official Nimble character sheet** (dark grey frames, white fields (never the PDF's blue form-field fill),
    condensed caps labels), set on the usual parchment page with the notice and footer. Its own styles
    live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
 2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
