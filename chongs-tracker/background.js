@@ -1,8 +1,8 @@
 // Chong's Tracker: background page (always running while the extension is on).
 // 1. Draws the badges on attached tokens: HP in the lower-left corner with Extra HP beside it, and
 //    AC on a shield in the lower-right corner. They are LOCAL items (only on this screen), built
-//    from the scene metadata, so nothing extra is saved. When an entry's stats are hidden, players
-//    see H (healthy) or B (Bloodied) instead of the HP number, no Extra HP, and the AC as usual.
+//    from the scene metadata, so nothing extra is saved. When an entry's stats are hidden, everyone
+//    (GM too) sees H (healthy) or B (Bloodied) instead of the HP number, no Extra HP, and the AC.
 // 2. Adds a right-click "Track" item for tokens.
 import OBR, { buildShape, buildCurve, buildText } from './vendor/obr-sdk.js';
 
@@ -88,7 +88,7 @@ async function desiredBadges() {
     const y = b.max.y - d * 0.4;
 
     const hpCenter = { x: b.min.x + d * 0.4, y };
-    const mask = C.masked(e, role);
+    const mask = !!e.hidden; // the same for GM and players: the map is what the table sees
     const st = mask ? C.hpStatus(e) : null;
     const hpText = mask ? st : String(e.hp);
     const hpColor = mask ? (st === 'B' ? BLOOD : GREEN) : RED;

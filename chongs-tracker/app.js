@@ -296,13 +296,16 @@ function render() {
     return;
   }
   dirty = false;
+  $('help').classList.toggle('gm', role === 'GM');
   if (!sceneReady) {
     $('tabs').replaceChildren();
     $('bar').replaceChildren();
-    $('help').hidden = true;
+    setHelp(false);
+    $('help-btn').hidden = true;
     renderList();
     return;
   }
+  $('help-btn').hidden = false;
   if (!visibleTabs().some((t) => t.id === current)) current = C.PLAYERS_TAB;
   renderTabs();
   if (inBar) { // keep the add box (and what's typed in it); refresh its buttons once it's left
@@ -362,12 +365,23 @@ function renderTabs() {
   nav.append(iconButton('add', 'New tab', addTab));
 }
 
+// The help sheet: the ⓘ button in the lower-right corner opens it over the whole panel.
+function setHelp(on) {
+  helpOpen = on;
+  $('help').hidden = !on;
+  const b = $('help-btn');
+  b.innerHTML = svg(on ? 'close' : 'info');
+  b.title = on ? 'Close help' : 'Help';
+  b.setAttribute('aria-label', b.title);
+  b.classList.toggle('on', on);
+}
+$('help-btn').addEventListener('click', () => setHelp(!helpOpen));
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && helpOpen) setHelp(false); });
+
 function renderBar() {
   const bar = $('bar');
   bar.replaceChildren();
   const canAdd = role === 'GM' || C.isPlayerTab(tabById(current));
-  $('help').hidden = !(canAdd && helpOpen);
-  $('help').classList.toggle('gm', role === 'GM');
   if (!canAdd) return;
   const box = el('textarea', { rows: 1, placeholder: 'Goblin x4 15', spellcheck: false });
   const grow = () => { box.style.height = 'auto'; box.style.height = Math.min(120, Math.max(32, box.scrollHeight + 2)) + 'px'; };
@@ -378,8 +392,7 @@ function renderBar() {
       if (runCommand(box.value)) { box.value = ''; grow(); }
     }
   });
-  bar.append(box, iconButton('add', 'Add', () => { if (runCommand(box.value)) { box.value = ''; grow(); } }));
-  bar.append(iconButton('info', 'Commands', () => { helpOpen = !helpOpen; render(); }, helpOpen));
+  bar.append(box);
   if (role === 'GM' && current !== C.PLAYERS_TAB) {
     const inTab = entries.filter((e) => e.tab === current);
     const anyHidden = inTab.some((e) => e.hidden);
@@ -419,7 +432,6 @@ function renderEntry(e) {
   row.append(name);
   const many = liveTokens(e).length;
   if (many > 1) row.append(el('span', { className: 'count', title: `${many} tokens`, textContent: `×${many}` }));
-  if (role === 'GM' && e.hidden) row.append(el('span', { className: 'flag', title: 'Stats hidden from players', innerHTML: svg('eyeOff') }));
 
   // Players can't open the menu on others' entries, so their AC shows in the row.
   if (!edit && e.ac) row.append(el('span', { className: 'ac', title: 'AC', innerHTML: svg('shield') }, e.ac));

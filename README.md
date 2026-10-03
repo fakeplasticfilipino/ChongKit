@@ -96,7 +96,7 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **Tabs** organize entries. Click **+** to add one, double-click to rename, **×** to delete. The
   **Players** tab is always there and can't be deleted. Players can make their own tabs too (and
   rename or delete those).
-- **Add entries** in the box at the top: `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
+- **Add entries** in the box at the top (press Enter): `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
   `max:70` or `extra:5` if you like. Or paste a fight from the Combat Generator: every
   `Name xN / HP / Armor` block becomes entries (Armor None/Medium/Heavy becomes AC blank/M/H).
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
@@ -107,7 +107,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
   - Damage uses up **Extra HP** first.
   - With **Max HP** set, healing can't go above it. HP can go below 0.
-- **The ⓘ button** next to the add box lists these commands.
+- **Help:** the ⓘ button in the panel's lower-right corner opens a sheet with every command and
+  feature (× or Esc closes it).
 - **Attach to a token:** click the empty **+** circle on an entry, then click a token on the map, or select the token first and then click the **+**
   (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
   (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's
@@ -128,10 +129,10 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
   e.g. `M`, `H`, `15`), stats shown/hidden (GM), and delete.
 - **Hidden stats:** players see every entry, but when its stats are hidden they only see **H**
-  (healthy) or **B** (Bloodied: at or below half Max HP, or at 0) and the AC, in the panel and on the
-  token. New entries start with hidden stats (except in players' tabs). Toggle one entry from its ⋯
-  menu; the eye next to the add box does the whole tab. For you, hidden entries are dimmed with a
-  crossed-out eye.
+  (healthy) or **B** (Bloodied: at or below half Max HP, or at 0) and the AC, in the panel. On the map
+  everyone, GM included, sees just H/B and AC for those entries; the GM still sees the real HP in
+  the panel. New entries start with hidden stats (except in players' tabs). Toggle one entry from its ⋯
+  menu; the eye next to the add box does the whole tab. For you, hidden entries are dimmed.
 - **Players** can add and edit entries in the Players tab and in tabs they made; everything else is
   read-only for them.
 

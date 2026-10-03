@@ -26,7 +26,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Move an entry to another tab by dragging it onto the tab (the ⋯ menu's tab picker and + Token are gone)
 - [x] Detach: with the token selected, an × shows over its picture in the entry; click it (the Detach button is gone)
 - [x] Save a tab to the room (door button, confirm with a 16 kB warning): the tab and its entries live in room metadata and show in every scene; per tab, not per player
-- [x] ⓘ button lists the add-box commands
+- [x] Help sheet: ⓘ in the lower-right corner opens commands + feature list over the whole panel; no + button by the add box (Enter adds)
+- [x] Hidden stats look the same on the map for GM and players (H/B + AC); GM sees real HP in the panel; hidden entries are just dimmed (no eye icon)
 - [x] Selecting a tracked token on the map puts its entry at the top of the list (outlined) until deselected
 - [x] Hidden stats by default (except players' tabs): players see the entry with H/B (Bloodied ≤ half) and AC, in the panel and on tokens; GM toggles per entry (⋯ menu) and per tab
 - [x] Players: see every entry; add and edit entries in the Players tab and in tabs they made
