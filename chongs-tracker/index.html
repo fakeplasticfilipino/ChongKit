@@ -4,46 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chong's Tracker</title>
-<link rel="stylesheet" href="style.css?v=1.3.1">
+<link rel="stylesheet" href="style.css?v=1.4.0">
 </head>
 <body>
-<nav id="tabs" class="tabs"></nav>
+<div class="tabbar">
+  <nav id="tabs" class="tabs"></nav>
+  <span id="tab-add"></span>
+</div>
 <div id="bar" class="bar"></div>
 <main id="list" class="list"></main>
 <p id="empty" class="empty" hidden></p>
 <section id="help" class="help" hidden>
-  <h2>Add box <span>Enter to add</span></h2>
-  <dl>
-    <dt>Goblin x4 15</dt><dd>4 entries, 15 HP each</dd>
-    <dt>Ogre 59 ac:M max:70 extra:5</dt><dd>HP, AC, Max HP, Extra HP</dd>
-    <dt>Kobold Minion x10</dt><dd>One entry, 10 HP (1 per minion)</dd>
-    <dt>Shift+Enter</dt><dd>Several lines at once</dd>
-    <dt>Paste</dt><dd>Combat generator text</dd>
-    <dt class="gm-only">/clear</dt><dd class="gm-only">Delete everything in this tab</dd>
-    <dt class="gm-only">/clear Goblin</dt><dd class="gm-only">Delete names starting with Goblin</dd>
-  </dl>
-  <h2>HP box</h2>
-  <dl>
-    <dt>20-3 &nbsp; -3</dt><dd>Damage (Extra HP goes first)</dd>
-    <dt>+5</dt><dd>Heal (up to Max HP)</dd>
-    <dt>12</dt><dd>Set HP</dd>
-  </dl>
+  <h2>Adding</h2>
+  <p>Type a name and its HP, then press Enter. <code>Goblin x4 15</code> makes four goblins with 15 HP
+    each. Tack on <code>ac:M</code>, <code>max:70</code> or <code>extra:5</code> if you need them, or paste a
+    whole fight from the combat generator.</p>
+  <p>Anything called a minion becomes one shared entry: <code>Kobold Minion x10</code> has 10 HP, one per
+    kobold, and can hold all ten tokens.</p>
+
+  <h2>HP</h2>
+  <p>The HP box works like a calculator. <code>-3</code> is 3 damage, <code>+5</code> heals 5, and a plain
+    number sets it. Extra HP soaks damage first; healing stops at Max HP.</p>
+
   <h2>Tokens</h2>
-  <ul>
-    <li><b>+ circle</b>, then a token: attach. Select first works too.</li>
-    <li><b>Box-select</b> several: fills this entry and the next ones. Minions take them all.</li>
-    <li><b>Right-click</b> a token → Track in Chong's Tracker.</li>
-    <li><b>Picture</b>: select the token. Click the <b>×</b> on it to detach.</li>
-    <li><b>Select a token</b> on the map: its entry jumps to the top.</li>
-  </ul>
-  <h2>Entries &amp; tabs</h2>
-  <ul>
-    <li><b>Drag</b> a card to reorder. Drop it on a tab to move it.</li>
-    <li><b>⋯</b> on an entry: Max HP, Extra HP, AC, delete.</li>
-    <li><b>+</b> next to the tabs: new tab. <b>Double-click</b> a tab to rename it.</li>
-    <li class="gm-only"><b>Hidden stats</b> (dimmed): players and the map show only H/B and AC. Toggle in ⋯, or the whole tab with the eye.</li>
-    <li><b>Door</b>: save the tab to the room, so it's in every scene.</li>
-  </ul>
+  <p>Click an entry's empty circle, then a token on the map. Box-select a group to fill several entries at
+    once, or right-click a token and pick Track. Click a picture to find its token; click the × on it to
+    let go.</p>
+
+  <h2>Tabs</h2>
+  <p>Drag a card to reorder it, or drop it on a tab to move it there. Double-click a tab to rename it.
+    The door saves a tab to the room, so it follows you into every scene.</p>
+
+  <h2 class="gm-only">Hiding stats</h2>
+  <p class="gm-only">New monsters keep their HP secret: players and the map only see <b>H</b> (healthy) or
+    <b>B</b> (bloodied), plus AC. Flip it per entry in ⋯, or for the whole tab with the eye.
+    <code>/clear</code> empties the tab; <code>/clear Goblin</code> just the goblins.</p>
 </section>
 <button id="help-btn" class="icon fab" type="button" title="Help" aria-label="Help" hidden></button>
 <!-- Outside Owlbear this page only shows how to install it. -->
@@ -53,7 +48,7 @@
   <code id="manifest-url"></code>
 </div>
 
-<script src="core.js?v=1.3.1"></script>
-<script type="module" src="app.js?v=1.3.1"></script>
+<script src="core.js?v=1.4.0"></script>
+<script type="module" src="app.js?v=1.4.0"></script>
 </body>
 </html>

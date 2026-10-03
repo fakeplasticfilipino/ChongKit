@@ -31,7 +31,26 @@ select option { background: var(--paper); color: var(--text); }
 .icon svg { width: 20px; height: 20px; }
 
 /* Tabs */
-.tabs { display: flex; gap: 4px; padding: 12px 12px 8px; overflow-x: auto; scrollbar-width: none; }
+/* The tab strip scrolls sideways (wheel or drag the bar); + stays put on the right. The scrollbar
+   only shows from 5 tabs on (.many), thin and faint until hovered. Edges fade when there's more. */
+.tabbar { display: flex; align-items: flex-start; gap: 2px; padding: 12px 8px 4px 12px; }
+.tabs {
+  flex: 1; min-width: 0; display: flex; gap: 4px; padding-bottom: 6px;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { height: 0; }
+.tabs.many { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .12) transparent; padding-bottom: 4px; }
+.tabs.many:hover { scrollbar-color: rgba(255, 255, 255, .35) transparent; }
+.tabs.many::-webkit-scrollbar { height: 4px; }
+.tabs.many::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .12); border-radius: 2px; }
+.tabs.many:hover::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .35); }
+.tabs.fade-l { -webkit-mask-image: linear-gradient(to right, transparent, #000 24px); mask-image: linear-gradient(to right, transparent, #000 24px); }
+.tabs.fade-r { -webkit-mask-image: linear-gradient(to left, transparent, #000 24px); mask-image: linear-gradient(to left, transparent, #000 24px); }
+.tabs.fade-l.fade-r {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+#tab-add { flex: none; display: flex; }
 .tab {
   flex: none; display: inline-flex; align-items: center; gap: 2px;
   padding: 6px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text2);
@@ -55,14 +74,15 @@ select option { background: var(--paper); color: var(--text); }
   background: rgba(34, 38, 57, .97); font-size: 13px;
 }
 .help[hidden] { display: none; }
-.help h2 { margin: 14px 0 6px; font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .04em; }
-.help h2:first-child { margin-top: 0; }
-.help h2 span { margin-left: 6px; color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
-.help dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; margin: 0; }
-.help dt { font-weight: 500; font-family: "Roboto Mono", Consolas, monospace; font-size: 12px; }
-.help dd { margin: 0; color: var(--text2); }
-.help ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--text2); }
-.help b { color: var(--text); font-weight: 500; }
+.help.inline { position: static; padding: 8px 0 0; background: none; font-size: 14px; }
+.help h2 { margin: 18px 0 4px; font-size: 15px; font-weight: 500; color: var(--text); }
+.help h2:first-child { margin-top: 2px; }
+.help p { margin: 0 0 8px; color: var(--text2); line-height: 1.5; }
+.help code {
+  padding: 1px 6px; border-radius: 6px; background: var(--field); color: var(--text);
+  font: 12px "Roboto Mono", Consolas, monospace; white-space: nowrap;
+}
+.help b { color: var(--text); font-weight: 700; }
 .help:not(.gm) .gm-only { display: none; }
 .fab {
   position: fixed; right: 10px; bottom: 10px; z-index: 11; width: 36px; height: 36px;
@@ -147,7 +167,8 @@ select option { background: var(--paper); color: var(--text); }
 
 /* Opened directly (outside Owlbear): a plain install page. */
 html.page, html.page body { background: var(--paper); }
+html.page .tabbar, html.page .bar, html.page .list { display: none; }
 .standalone { max-width: 560px; margin: 48px auto; padding: 0 16px; }
 .standalone h1 { font-size: 24px; margin: 0 0 8px; }
 .standalone p { color: var(--text2); }
-.standalone code { display: block; padding: 10px 12px; border-radius: 8px; background: var(--field); user-select: all; overflow-wrap: anywhere; }
+.standalone #manifest-url { display: block; padding: 10px 12px; border-radius: 8px; background: var(--field); user-select: all; overflow-wrap: anywhere; }

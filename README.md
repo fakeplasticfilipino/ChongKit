@@ -93,7 +93,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 `https://fakeplasticfilipino.github.io/ChongKit/chongs-tracker/manifest.json`, then turn it on in your room.
 
 **Using it**
-- **Tabs** organize entries. Click **+** to add one, double-click to rename, **×** to delete. The
+- **Tabs** organize entries. Click **+** to add one, double-click to rename, **×** to delete. Many
+  tabs scroll sideways (mouse wheel works; a thin scrollbar shows from 5 tabs on). The
   **Players** tab is always there and can't be deleted. Players can make their own tabs too (and
   rename or delete those).
 - **Add entries** in the box at the top (press Enter): `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
@@ -107,8 +108,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
   - Damage uses up **Extra HP** first.
   - With **Max HP** set, healing can't go above it. HP can go below 0.
-- **Help:** the ⓘ button in the panel's lower-right corner opens a sheet with every command and
-  feature (× or Esc closes it).
+- **Help:** the ⓘ button in the panel's lower-right corner opens a short plain-language guide
+  (× or Esc closes it). The same guide is on the extension's own page (its link in Owlbear).
 - **Attach to a token:** click the empty **+** circle on an entry, then click a token on the map, or select the token first and then click the **+**
   (Esc cancels). Box-select several tokens to attach them to that entry and the next ones in order
   (click Goblin 1's circle, then box-select 4 goblins). Or right-click tokens → **Track in Chong's

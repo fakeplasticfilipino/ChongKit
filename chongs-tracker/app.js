@@ -299,6 +299,7 @@ function render() {
   $('help').classList.toggle('gm', role === 'GM');
   if (!sceneReady) {
     $('tabs').replaceChildren();
+    $('tab-add').replaceChildren();
     $('bar').replaceChildren();
     setHelp(false);
     $('help-btn').hidden = true;
@@ -322,10 +323,30 @@ document.addEventListener('pointerup', () => { pointerDown = false; catchUp(); }
 for (const ev of ['pointercancel', 'blur']) window.addEventListener(ev, () => { pointerDown = false; catchUp(); });
 document.addEventListener('focusout', catchUp);
 
+// Tab strip: fades at an edge with more tabs past it, scrolls sideways with the wheel, and brings
+// the open tab into view when it changes.
+let shownTab = null;
+function tabFades() {
+  const nav = $('tabs');
+  nav.classList.toggle('fade-l', nav.scrollLeft > 1);
+  nav.classList.toggle('fade-r', nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 1);
+}
+$('tabs').addEventListener('scroll', tabFades, { passive: true });
+$('tabs').addEventListener('wheel', (ev) => {
+  const nav = $('tabs');
+  if (nav.scrollWidth <= nav.clientWidth || Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) return;
+  ev.preventDefault();
+  nav.scrollLeft += ev.deltaY;
+}, { passive: false });
+window.addEventListener('resize', tabFades);
+
 function renderTabs() {
   const nav = $('tabs');
+  const x = nav.scrollLeft;
   nav.replaceChildren();
-  for (const t of visibleTabs()) {
+  const list = visibleTabs();
+  nav.classList.toggle('many', list.length >= 5);
+  for (const t of list) {
     const active = t.id === current;
     const b = el('button', { type: 'button', className: 'tab' + (active ? ' active' : '') });
     b.dataset.tab = t.id;
@@ -362,7 +383,14 @@ function renderTabs() {
     }
     nav.append(b);
   }
-  nav.append(iconButton('add', 'New tab', addTab));
+  nav.scrollLeft = x;
+  if (shownTab !== current) {
+    shownTab = current;
+    const b = nav.querySelector('.tab.active');
+    if (b) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }
+  tabFades();
+  $('tab-add').replaceChildren(iconButton('add', 'New tab', addTab));
 }
 
 // The help sheet: the ⓘ button in the lower-right corner opens it over the whole panel.
@@ -484,7 +512,12 @@ function movable(wrap, e, name) {
         wrap.classList.add('dragging');
       }
       wrap.style.transform = `translateY(${mv.clientY - y0}px)`;
-      // Over another tab: drop moves the entry there.
+      // Over another tab: drop moves the entry there. Near the strip's ends it scrolls.
+      const nav = $('tabs'), r = nav.getBoundingClientRect();
+      if (mv.clientY >= r.top && mv.clientY <= r.bottom) {
+        if (mv.clientX < r.left + 28) nav.scrollLeft -= 12;
+        else if (mv.clientX > r.right - 28) nav.scrollLeft += 12;
+      }
       const tab = tabUnder(mv.clientX, mv.clientY);
       if (tab) {
         marks();
@@ -519,6 +552,8 @@ function movable(wrap, e, name) {
 // The tab button under the pointer that this entry can be dropped on: not the open tab, and for
 // players only players' tabs.
 function tabUnder(x, y) {
+  const strip = $('tabs').getBoundingClientRect();
+  if (x < strip.left || x > strip.right) return null; // scrolled out of sight
   for (const b of document.querySelectorAll('#tabs .tab[data-tab]')) {
     const r = b.getBoundingClientRect();
     if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
@@ -619,6 +654,11 @@ if (!OBR.isAvailable) {
   document.documentElement.classList.add('page');
   $('standalone').hidden = false;
   $('manifest-url').textContent = new URL('manifest.json', location.href).href;
+  // The extension's own page doubles as its guide: the help sheet, all of it, in the page.
+  const help = $('help');
+  help.classList.add('gm', 'inline');
+  help.hidden = false;
+  $('standalone').append(help);
 } else {
   OBR.onReady(async () => {
     try { current = localStorage.getItem(TAB_STORE) || C.PLAYERS_TAB; } catch {}
