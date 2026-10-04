@@ -20,7 +20,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Asset links carry `?v=<version>` so Owlbear never mixes old and new files
 - [x] Panel background lets Owlbear's glass show through (no `color-scheme`); add box updates the list immediately
 - [x] Attach both ways: click an entry's empty + circle then a token on the map, or select first then click +; box-select several = next entries in order
-- [x] Token badges (local, per screen): red HP circle lower-left, blue Extra HP circle beside it, AC shield lower-right; dark outlines
+- [x] Token badges (local, per screen): small dark pills with a thin colored edge (v1.6.0, were big outlined circles): HP lower-left (red edge; hidden: green H / dark-red B), Extra HP beside it (blue), AC lower-right with a shield mark; what doesn't fit beside HP moves up a row (never overlaps); layout in `core.js` `badgeSpecs` (tested)
 - [x] Entry row: token picture (click = select on map), name, neutral HP bar (fills against Max HP), Extra HP chip
 - [x] ⋯ menu: Max HP, Extra HP, AC (free text: `M`, `H`, `15`…), show/hide, delete
 - [x] Move an entry to another tab by dragging it onto the tab (the ⋯ menu's tab picker and + Token are gone)
@@ -46,7 +46,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Browser smoke test (fake SDK): paste → tab note + entry notes, edit both, saved to metadata
 
 ## 📋 Next up
-- [ ] Install in a real Owlbear room and check: notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge size/position on different token sizes, the AC shield shape, click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
+- [ ] Install in a real Owlbear room and check: notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge pills on different token sizes and maps (v1.6.0), click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
 - [ ] Fix whatever that test turns up
 
 ## Dropped

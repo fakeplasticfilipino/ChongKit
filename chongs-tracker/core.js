@@ -355,6 +355,87 @@
   const masked = (entry, role) => role !== 'GM' && !!entry.hidden;
   const canEdit = (entry, role, tabs) => role === 'GM' || (!masked(entry, role) && isPlayerTab((tabs || DEFAULT_TABS).find((t) => t.id === entry.tab)));
 
+  // --- Token badges -----------------------------------------------------------------
+  // Small dark pills in the token's lower corners: HP (and Extra HP beside it) on the left, AC on
+  // the right. Laid out against a token box of w x h with its top-left at 0,0; the background page
+  // offsets them to the token. Shapes are closed polygons (points relative to `at`); text sits in a
+  // box. `part` groups each pill's pieces (hp, xp, ac).
+  const BADGE = {
+    fill: '#161821', fillOpacity: 0.86, text: '#ffffff',
+    hp: '#ef5350', healthy: '#66bb6a', bloodied: '#ef5350', bloodiedFill: '#6d1414', extra: '#42a5f5', ac: '#b0bec5',
+  };
+
+  // A rounded rectangle centered on 0,0, as polygon points (a few per corner).
+  function roundRect(w, h, r, steps = 4) {
+    r = Math.min(r, w / 2, h / 2);
+    const pts = [];
+    const corners = [[w / 2 - r, -h / 2 + r, -90], [w / 2 - r, h / 2 - r, 0], [-w / 2 + r, h / 2 - r, 90], [-w / 2 + r, -h / 2 + r, 180]];
+    for (const [cx, cy, start] of corners) {
+      for (let i = 0; i <= steps; i++) {
+        const a = (start + (90 * i) / steps) * Math.PI / 180;
+        pts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+      }
+    }
+    return pts;
+  }
+  // A small heater shield centered on 0,0, s tall.
+  function shieldPoints(s) {
+    const w = s * 0.82;
+    return [{ x: -w / 2, y: -s / 2 }, { x: w / 2, y: -s / 2 }, { x: w / 2, y: s * 0.05 },
+      { x: w * 0.28, y: s * 0.34 }, { x: 0, y: s / 2 }, { x: -w * 0.28, y: s * 0.34 }, { x: -w / 2, y: s * 0.05 }];
+  }
+
+  function badgeSpecs(entry, w, h) {
+    const H = Math.max(14, Math.min(28, Math.min(w, h) * 0.17)); // pill height: grows with the token, within limits
+    const font = H * 0.6;
+    const pad = H * 0.38, inset = H * 0.12, gap = H * 0.18;
+    const stroke = Math.max(1, H * 0.07);
+    const textW = (t) => String(t).length * font * 0.58;
+    const rowY = (row) => h - inset - H / 2 - row * (H + gap); // pill centers; row 0 is the bottom
+    const out = [];
+    function pill(part, left, width, row, edge, fill = BADGE.fill) {
+      out.push({ part, key: part, type: 'shape', at: { x: left + width / 2, y: rowY(row) }, points: roundRect(width, H, H / 2),
+        fill, fillOpacity: fill === BADGE.fill ? BADGE.fillOpacity : 0.94, stroke: edge, strokeWidth: stroke });
+    }
+    function text(part, left, width, row, t) {
+      out.push({ part, key: `${part}.t`, type: 'text', box: { x: left, y: rowY(row) - H / 2, w: width, h: H }, text: String(t), fontSize: font, color: BADGE.text });
+    }
+
+    const mask = !!entry.hidden;
+    const st = mask ? hpStatus(entry) : null;
+    const hpText = mask ? st : String(entry.hp || 0);
+    const hpW = Math.max(H * 1.5, textW(hpText) + pad * 2);
+    const xpText = entry.extra > 0 && !mask ? `+${entry.extra}` : '';
+    const xpW = xpText ? Math.max(H * 1.5, textW(xpText) + pad * 2) : 0;
+    const ac = String(entry.ac || '').trim();
+    const g = H * 0.5; // shield mark
+    const acW = ac ? Math.max(H * 1.5, pad * 0.8 + g + gap + textW(ac) + pad) : 0;
+    const acLeft = w - inset - acW;
+
+    // Everything on the bottom row when it fits; otherwise Extra HP goes above HP, and AC goes up a
+    // row too if even HP alone would run into it.
+    const fits = (right) => !ac || right + gap <= acLeft;
+    const xpRow = fits(inset + hpW + gap + xpW) ? 0 : 1;
+    const acRow = fits(inset + hpW) ? 0 : xpRow + 1;
+
+    pill('hp', inset, hpW, 0, mask ? (st === 'B' ? BADGE.bloodied : BADGE.healthy) : BADGE.hp, st === 'B' ? BADGE.bloodiedFill : BADGE.fill);
+    text('hp', inset, hpW, 0, hpText);
+    if (xpText) {
+      const left = xpRow ? inset : inset + hpW + gap;
+      pill('xp', left, xpW, xpRow, BADGE.extra);
+      text('xp', left, xpW, xpRow, xpText);
+    }
+    if (ac) {
+      const left = acRow ? Math.max(inset, acLeft) : acLeft;
+      pill('ac', left, acW, acRow, BADGE.ac);
+      out.push({ part: 'ac', key: 'ac.g', type: 'shape', at: { x: left + pad * 0.8 + g * 0.41, y: rowY(acRow) }, points: shieldPoints(g),
+        fill: BADGE.ac, fillOpacity: 1, stroke: BADGE.ac, strokeWidth: 0 });
+      const tl = left + pad * 0.8 + g * 0.82;
+      text('ac', tl, acW - (tl - left) - pad * 0.4, acRow, ac);
+    }
+    return out;
+  }
+
   const api = {
     NS, KEYS, PLAYERS_TAB, uid,
     evalExpr, readInput, applyHp,
@@ -362,6 +443,7 @@
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,
     readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, moveTabPatches,
     ROOM_LIMIT, metadataSize, isPlayerTab, masked, canEdit,
+    BADGE, badgeSpecs,
   };
   if (typeof module !== 'undefined') module.exports = api;
   else root.ChongCore = api;

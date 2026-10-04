@@ -1,17 +1,14 @@
 // Chong's Tracker: background page (always running while the extension is on).
-// 1. Draws the badges on attached tokens: HP in the lower-left corner with Extra HP beside it, and
-//    AC on a shield in the lower-right corner. They are LOCAL items (only on this screen), built
+// 1. Draws the badges on attached tokens: small dark pills, HP in the lower-left corner with Extra HP
+//    beside it, and AC (with a shield mark) in the lower-right corner. They are LOCAL items (only on this screen), built
 //    from the scene metadata, so nothing extra is saved. When an entry's stats are hidden, everyone
 //    (GM too) sees H (healthy) or B (Bloodied) instead of the HP number, no Extra HP, and the AC.
 // 2. Adds a right-click "Track" item for tokens.
-import OBR, { buildShape, buildCurve, buildText } from './vendor/obr-sdk.js';
+import OBR, { buildCurve, buildText } from './vendor/obr-sdk.js';
 
 const C = window.ChongCore;
 const TAG = `${C.NS}/badge`;
 const TAB_STORE = `${C.NS}/tab`;
-const RED = '#e53935', BLOOD = '#b71c1c', GREEN = '#43a047', BLUE = '#1e88e5', SLATE = '#546e7a', WHITE = '#ffffff', EDGE = '#111111';
-// Dark outline on every badge, so they read on any map.
-const outline = (d) => Math.max(1, d * 0.05);
 
 let role = 'PLAYER';
 let metadata = {};
@@ -19,6 +16,7 @@ let roomMetadata = {};
 let ready = false;
 
 // --- Badges -----------------------------------------------------------------------
+// The layout (small dark pills) comes from ChongCore.badgeSpecs; this only turns it into Owlbear items.
 function attachedTo(builder, token, sig) {
   return builder
     .attachedTo(token.id)
@@ -30,46 +28,26 @@ function attachedTo(builder, token, sig) {
     .metadata({ [TAG]: { sig } });
 }
 
-// Centered white label over a badge.
-function label(id, token, sig, center, d, text) {
-  const fontSize = d * (text.length <= 2 ? 0.5 : text.length === 3 ? 0.4 : 0.32);
+function buildBadge(id, spec, origin, token, sig, z) {
+  if (spec.type === 'shape') {
+    return attachedTo(buildCurve().id(id).name("Chong's Tracker"), token, sig)
+      .points(spec.points).position({ x: origin.x + spec.at.x, y: origin.y + spec.at.y }).closed(true).tension(0)
+      .fillColor(spec.fill).fillOpacity(spec.fillOpacity)
+      .strokeColor(spec.stroke).strokeOpacity(spec.strokeWidth ? 1 : 0).strokeWidth(spec.strokeWidth)
+      .zIndex(z).build();
+  }
   return attachedTo(buildText().id(id).name("Chong's Tracker"), token, sig)
-    .textType('PLAIN').plainText(text)
-    .width(d * 1.6).height(d).position({ x: center.x - d * 0.8, y: center.y - d / 2 })
+    .textType('PLAIN').plainText(spec.text)
+    .width(spec.box.w).height(spec.box.h).position({ x: origin.x + spec.box.x, y: origin.y + spec.box.y })
     .textAlign('CENTER').textAlignVertical('MIDDLE')
-    .fontFamily('Roboto').fontWeight(700).fontSize(fontSize).fillColor(WHITE)
-    .strokeColor(EDGE).strokeOpacity(1).strokeWidth(Math.max(0.5, d * 0.025))
-    .zIndex(3).build();
-}
-
-function circle(id, token, sig, center, d, color, text) {
-  return [
-    attachedTo(buildShape().id(id).name("Chong's Tracker").shapeType('CIRCLE'), token, sig)
-      .width(d).height(d).position(center)
-      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(1).strokeWidth(outline(d))
-      .zIndex(1).build(),
-    label(`${id}.t`, token, sig, center, d, text),
-  ];
-}
-
-// A heater shield, points relative to its center.
-function shield(id, token, sig, center, d, color, text) {
-  const w = d * 0.86, h = d;
-  const pts = [
-    { x: -w / 2, y: -h / 2 }, { x: w / 2, y: -h / 2 }, { x: w / 2, y: h * 0.08 },
-    { x: 0, y: h / 2 }, { x: -w / 2, y: h * 0.08 },
-  ];
-  return [
-    attachedTo(buildCurve().id(id).name("Chong's Tracker"), token, sig)
-      .points(pts).position(center).closed(true).tension(0.12)
-      .fillColor(color).fillOpacity(1).strokeColor(EDGE).strokeOpacity(1).strokeWidth(outline(d))
-      .zIndex(1).build(),
-    label(`${id}.t`, token, sig, { x: center.x, y: center.y - h * 0.08 }, d * 0.9, text),
-  ];
+    .fontFamily('Roboto').fontWeight(700).fontSize(spec.fontSize).fillColor(spec.color)
+    .strokeWidth(0).strokeOpacity(0)
+    .zIndex(z).build();
 }
 
 // Every badge item this screen should show, keyed by id, with a signature: an item is rebuilt only
-// when its signature changes. Position isn't in it: attached items follow their token.
+// when its pill changes. Position isn't in it (the specs are relative to the token's box):
+// attached items follow their token.
 async function desiredBadges() {
   const { entries } = C.readState(metadata, roomMetadata);
   // Minion groups get no badges: their HP is shared, so it lives in the panel only.
@@ -82,29 +60,12 @@ async function desiredBadges() {
     const token = tokens.get(C.tokensOf(e).find((id) => tokens.has(id)));
     if (!token) continue;
     const b = await OBR.scene.items.getItemBounds([token.id]);
-    const d = Math.max(16, Math.min(b.width, b.height) * 0.27);
+    const specs = C.badgeSpecs(e, b.width, b.height);
     const base = `${C.NS}.${e.id}`;
-    const add = (items, sig) => items.forEach((item) => out.set(item.id, { sig, item }));
-    const y = b.max.y - d * 0.4;
-
-    const hpCenter = { x: b.min.x + d * 0.4, y };
-    const mask = !!e.hidden; // the same for GM and players: the map is what the table sees
-    const st = mask ? C.hpStatus(e) : null;
-    const hpText = mask ? st : String(e.hp);
-    const hpColor = mask ? (st === 'B' ? BLOOD : GREEN) : RED;
-    const hpSig = JSON.stringify([token.id, 'hp', hpText, hpColor, d, token.visible]);
-    add(circle(`${base}.hp`, token, hpSig, hpCenter, d, hpColor, hpText), hpSig);
-
-    if (e.extra > 0 && !mask) {
-      const dx = d * 0.72;
-      const xpSig = JSON.stringify([token.id, 'xp', e.extra, d, token.visible]);
-      add(circle(`${base}.xp`, token, xpSig, { x: hpCenter.x + d * 0.5 + dx * 0.4, y: y + (d - dx) / 2 }, dx, BLUE, `+${e.extra}`), xpSig);
-    }
-
-    const ac = String(e.ac || '').trim();
-    if (ac) {
-      const acSig = JSON.stringify([token.id, 'ac', ac, d, token.visible]);
-      add(shield(`${base}.ac`, token, acSig, { x: b.max.x - d * 0.4, y }, d, SLATE, ac), acSig);
+    for (const part of new Set(specs.map((x) => x.part))) {
+      const mine = specs.filter((x) => x.part === part);
+      const sig = JSON.stringify([token.id, token.visible, mine]);
+      mine.forEach((spec, i) => out.set(`${base}.${spec.key}`, { sig, item: buildBadge(`${base}.${spec.key}`, spec, b.min, token, sig, i + 1) }));
     }
   }
   return out;

@@ -109,6 +109,35 @@ test('armor keeps its first letter (None: no AC); tab notes add up', () => {
   assert.strictEqual(C.addNote('Fight\n\nLoot', 'Loot'), 'Fight\n\nLoot', 'pasting twice adds nothing');
 });
 
+test('token badges: small pills in the lower corners', () => {
+  const parts = (e, s = 150) => C.badgeSpecs(e, s, s);
+  const all = parts({ hp: 17, max: 30, extra: 5, ac: 'M' });
+  assert.deepStrictEqual(all.map((x) => x.key), ['hp', 'hp.t', 'xp', 'xp.t', 'ac', 'ac.g', 'ac.t']);
+  assert.deepStrictEqual(all.filter((x) => x.type === 'text').map((x) => x.text), ['17', '+5', 'M']);
+  for (const x of all) { // inside the token's box, in its bottom quarter
+    const pts = x.type === 'text' ? [{ x: x.box.x, y: x.box.y }, { x: x.box.x + x.box.w, y: x.box.y + x.box.h }] : x.points.map((q) => ({ x: q.x + x.at.x, y: q.y + x.at.y }));
+    assert.ok(pts.every((q) => q.x >= 0 && q.x <= 150 && q.y >= 150 * 0.75 && q.y <= 150), x.key);
+  }
+  const hpBox = all.find((x) => x.key === 'hp.t').box, xpBox = all.find((x) => x.key === 'xp.t').box;
+  assert.ok(xpBox.x > hpBox.x + hpBox.w, 'Extra HP sits beside HP');
+  const hidden = parts({ hidden: true, hp: 8, max: 30, extra: 5, ac: '' });
+  assert.deepStrictEqual(hidden.map((x) => x.key), ['hp', 'hp.t'], 'hidden: H/B only, no Extra HP; no AC, no pill');
+  assert.strictEqual(hidden[1].text, 'B');
+  assert.strictEqual(hidden[0].fill, C.BADGE.bloodiedFill);
+  // Pills never overlap: what doesn't fit beside HP moves up a row.
+  const rect = (x) => { const xs = x.points.map((q) => q.x + x.at.x), ys = x.points.map((q) => q.y + x.at.y); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
+  for (const s of [40, 75, 150, 300]) {
+    for (const e of [{ hp: 7, ac: 'M' }, { hp: 119, extra: 12, ac: '15' }, { hp: 1000, extra: 100, ac: '18' }]) {
+      const r = parts(e, s).filter((x) => x.key === x.part).map(rect);
+      for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
+        assert.ok(!(r[i][0] < r[j][2] && r[j][0] < r[i][2] && r[i][1] < r[j][3] && r[j][1] < r[i][3]), `${s}px ${JSON.stringify(e)}`);
+      }
+    }
+  }
+  const h = (s) => C.badgeSpecs({ hp: 1 }, s, s)[1].box.h;
+  assert.deepStrictEqual([h(40), h(150), h(1000)], [14, 150 * 0.17, 28], 'size grows with the token, within limits');
+});
+
 test('tab notes are saved, the Players tab too', () => {
   const md = { ...C.tabPatch({ id: 'x', name: 'Fight', order: 1, note: 'Loot: 40 gp' }), ...C.tabPatch({ id: C.PLAYERS_TAB, name: 'Players', note: 'Party gold' }) };
   const s = C.readState(md);
