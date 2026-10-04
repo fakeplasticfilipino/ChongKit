@@ -112,7 +112,7 @@
   //   Ogre 59 ac:M max:70 extra:5
   //   Kobold Minion x10    (a name with "minion" in it: ONE entry whose HP is the number of minions)
   // or paste the ChongKit combat generator's text: every "Name xN / HP: n / Armor: X" block.
-  // ac: and Armor: keep a word's first letter (None -> N, Medium -> M, Heavy -> H).
+  // ac: and Armor: keep a word's first letter (Medium -> M, Heavy -> H; None -> no AC).
   function parseCommand(text) {
     const src = String(text).replace(/\r\n?/g, '\n').trim();
     if (!src) return { rows: [], errors: [] };
@@ -197,9 +197,10 @@
     return out;
   }
 
-  // Armor written as a word keeps its first letter ("None" -> N, "Medium" -> M); numbers stay as typed.
+  // Armor written as a word keeps its first letter ("Medium" -> M); "None" means no AC; numbers stay as typed.
   function acFrom(text) {
     const t = String(text).trim();
+    if (/^none$/i.test(t)) return '';
     return /^[a-z]/i.test(t) ? t[0].toUpperCase() : t;
   }
 

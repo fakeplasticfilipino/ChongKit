@@ -40,7 +40,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ## ✅ Notes (v1.5.0)
 - [x] Entry notes (⋯ menu): a pasted generator block keeps its Damage, Save DC, Move and ability lines there
 - [x] Tab general note (box under the add box): the fight's title, twist, family traits and loot from a paste; GM tabs: GM only. Works on the Players tab too (its `t/players` key carries the note)
-- [x] Armor keeps its first letter: `Armor: None` → N (was blank), Medium → M, Heavy → H; `ac:Medium` too
+- [x] Armor keeps its first letter: Medium → M, Heavy → H, `ac:Medium` too; None gives no AC (v1.5.1)
 - [x] Tests: notes from a paste, general note, armor letters, Players tab note round trip
 - [x] Browser smoke test (fake SDK): paste → tab note + entry notes, edit both, saved to metadata
 

@@ -164,8 +164,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   rename or delete those).
 - **Add entries** in the box at the top (press Enter): `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
   `max:70` or `extra:5` if you like. Or paste a fight from the Combat Generator: every
-  `Name xN / HP / Armor` block becomes entries. Armor keeps its first letter (None/Medium/Heavy
-  becomes AC N/M/H; `ac:Medium` works too). The block's other lines (Damage, Save DC, Move,
+  `Name xN / HP / Armor` block becomes entries. Armor keeps its first letter (Medium/Heavy becomes
+  AC M/H; `ac:Medium` works too); None gives no AC. The block's other lines (Damage, Save DC, Move,
   abilities) become each entry's **note**; everything not beside a monster (the fight's title,
   twist, family traits, loot) goes in the tab's **general note**.
 - **Notes:** the box under the add box is the tab's general note (GM tabs: GM only; players' tabs:

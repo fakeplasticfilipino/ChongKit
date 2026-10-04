@@ -87,7 +87,7 @@ Loot: 40 gp each (160 gp for the party)`;
   const { rows, note } = C.parseCommand(text);
   assert.deepStrictEqual(rows, [
     { name: 'Monster A', count: 1, hp: 119, max: 119, extra: 0, ac: 'M', note: 'Damage: (2×) 3d10+1\nSave DC: 16' },
-    { name: 'Kobold Sneak', count: 2, hp: 15, max: 15, extra: 0, ac: 'N', note: 'Damage: Stab. 1d4+2 (or Sling, Range 8).\nSave DC: 10 (by level)' },
+    { name: 'Kobold Sneak', count: 2, hp: 15, max: 15, extra: 0, ac: '', note: 'Damage: Stab. 1d4+2 (or Sling, Range 8).\nSave DC: 10 (by level)' },
     { name: 'Kobold Minion', count: 1, hp: 3, max: 3, extra: 0, ac: '', group: true, note: 'Damage: Stab. 1d4 (no crits, miss on a 1)' },
   ]);
   assert.strictEqual(note, 'Hard Fight · 4 heroes, level 5\n\nTwist: Defend the Fort. Heroes must defend a location.\n\n'
@@ -100,8 +100,9 @@ Loot: 40 gp each (160 gp for the party)`;
   assert.strictEqual(C.newEntry({ name: 'Plain' }).note, undefined);
 });
 
-test('armor keeps its first letter; tab notes add up', () => {
-  assert.deepStrictEqual(['None', 'medium', 'Heavy', '15', ''].map(C.acFrom), ['N', 'M', 'H', '15', '']);
+test('armor keeps its first letter (None: no AC); tab notes add up', () => {
+  assert.deepStrictEqual(['None', 'medium', 'Heavy', '15', ''].map(C.acFrom), ['', 'M', 'H', '15', '']);
+  assert.strictEqual(C.parseCommand('Rat 3 ac:none').rows[0].ac, '', 'None gives no AC');
   assert.strictEqual(C.parseCommand('Ogre 59 ac:Medium').rows[0].ac, 'M');
   assert.strictEqual(C.addNote('', 'Fight'), 'Fight');
   assert.strictEqual(C.addNote('Fight', 'Loot'), 'Fight\n\nLoot');
