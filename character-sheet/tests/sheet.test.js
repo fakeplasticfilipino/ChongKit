@@ -42,6 +42,16 @@ test('skills and Initiative follow their stat', () => {
   assert.deepStrictEqual(S.statList(s).map((x) => x.name), ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', 'LCK']);
   box.stat = luck.id;
   assert.strictEqual(S.boxSkillTotal(s, box), 5, 'a skill can follow an added stat');
+  box.stat = 'lck';
+  assert.strictEqual(S.boxSkillTotal(s, box), 5, 'by its name too, in any case');
+  box.stat = ' Dex ';
+  s.stats.dex.val = 4;
+  assert.strictEqual(S.boxSkillTotal(s, box), 6, 'typed stat names follow the stat');
+  box.stat = 'Lockpicks';
+  assert.strictEqual(S.boxSkillTotal(s, box), 2, 'not a stat: a plain number');
+  box.stat = '';
+  assert.strictEqual(S.skillStat(s, box.stat), null);
+  assert.strictEqual(S.boxSkillTotal(s, box), 2);
 });
 
 test('wounds, saves, Bloodied', () => {
@@ -99,7 +109,7 @@ test('normalize fills odd saves', () => {
   assert.deepStrictEqual(S.normalize({ v: 3, tabs: [] }).tabs, [], 'all tabs deleted stays deleted');
   const odd = S.normalize({ v: 3, extras: { stats: [{ type: 'stat', label: 'LCK', value: '2', slot: 4, key: 1 }], skills: [{ type: 'skill', stat: 'gone' }], saves: [{ type: 'save', mode: 'dis', value: 1 }] } });
   assert.deepStrictEqual([odd.extras.stats[0].value, odd.extras.stats[0].slot, odd.extras.stats[0].key], [2, '4', true]);
-  assert.strictEqual(odd.extras.skills[0].stat, 'str', 'an unknown stat falls back to STR');
+  assert.strictEqual(odd.extras.skills[0].stat, 'gone', 'the stat is free text, kept as typed');
   assert.deepStrictEqual([odd.extras.saves[0].value, odd.extras.saves[0].mode], ['1', 'dis']);
 });
 

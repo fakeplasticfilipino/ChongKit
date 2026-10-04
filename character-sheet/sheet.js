@@ -139,7 +139,7 @@
     const box = newBox(sec, b.type);
     box.id = str(b.id) || box.id;
     box.label = str(b.label);
-    if (box.type === 'skill') { box.stat = str(b.stat) || 'str'; box.points = int(b.points); }
+    if (box.type === 'skill') { box.stat = str(b.stat).slice(0, 24); box.points = int(b.points); } // free text, see skillStat
     else if (box.type === 'stat') { box.value = int(b.value); box.slot = str(b.slot); box.key = !!b.key; }
     else box.value = str(b.value);
     if (box.type === 'pair') box.max = str(b.max);
@@ -189,9 +189,6 @@
       const list = Array.isArray((raw.extras || {})[sec]) ? raw.extras[sec] : [];
       s.extras[sec] = list.filter((b) => b && typeof b === 'object').map((b) => normBox(sec, b));
     }
-    // A skill's stat is one of the six or an added stat; anything else falls back to STR.
-    const statIds = new Set(statList(s).map((x) => x.id));
-    for (const b of Object.values(s.extras).flat()) if (b.type === 'skill' && !statIds.has(b.stat)) b.stat = 'str';
     if (Array.isArray(raw.tabs)) {
       s.tabs = raw.tabs.filter((t) => t && typeof t === 'object')
         .map((t) => ({ id: str(t.id) || uid(), name: str(t.name), entries: normEntries(t.entries) }));
@@ -214,7 +211,15 @@
     return b ? int(b.value) : 0;
   }
   const skillTotal = (s, id) => statVal(s, (SKILLS.find((k) => k.id === id) || {}).stat) + (s.skills[id] || 0);
-  const boxSkillTotal = (s, box) => statVal(s, box.stat) + (box.points || 0);
+  // An added skill's stat is free text (some systems don't tie skills to stats). When it names a stat
+  // (an id like 'dex', or a stat's name like 'DEX' or an added stat's label) the skill follows it;
+  // otherwise the skill is a plain number.
+  function skillStat(s, text) {
+    const t = str(text).trim().toLowerCase();
+    if (!t) return null;
+    return statList(s).find((x) => x.id.toLowerCase() === t || x.name.toLowerCase() === t) || null;
+  }
+  const boxSkillTotal = (s, box) => { const st = skillStat(s, box.stat); return (st ? statVal(s, st.id) : 0) + (box.points || 0); };
   const initiative = (s) => statVal(s, 'dex') + (s.initBonus || 0);
   // Typing a total into a skill (or Initiative) keeps it tied to its stat: store the difference.
   const pointsFor = (total, stat) => int(total) - stat;
@@ -358,7 +363,7 @@
 
   const api = {
     VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, ADDS, WOUNDS, EXTRA_WOUNDS, uid,
-    blank, normalize, newBox, newEntry, newTab, newNote, statList, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
+    blank, normalize, newBox, newEntry, newTab, newNote, statList, statVal, skillStat, skillTotal, boxSkillTotal, initiative, pointsFor,
     setWounds, cycleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
     loadAll, saveAll, exportJson, importJson, mergeChars, content,
   };

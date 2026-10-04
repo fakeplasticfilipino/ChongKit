@@ -414,12 +414,19 @@
     } else if (b.type === 'skill') {
       const pts = h('span', { class: 'cs-pts' });
       derived.push(() => { const p = b.points || 0; pts.textContent = p ? (p > 0 ? `+${p}` : String(p)) : ''; });
-      const stat = h('select', { class: 'cs-xstat', 'aria-label': `${nm} stat`, onchange: (ev) => { b.stat = ev.target.value; commit(); refresh(); } },
-        S.statList(s).map((x) => h('option', { value: x.id, selected: x.id === b.stat }, x.name)));
+      // The stat under the skill is free text: naming a stat (DEX, or an added stat) makes the
+      // skill follow it; anything else leaves it a plain number.
+      const linked = () => S.skillStat(s, b.stat);
+      const base = () => { const st = linked(); return st ? S.statVal(s, st.id) : 0; };
+      const shown = S.statList(s).find((x) => x.id === b.stat); // older saves store the stat's id
+      const stat = h('input', { class: 'cs-xstat', value: shown ? shown.name : b.stat, maxLength: 24, size: 5, spellcheck: false,
+        'aria-label': `${nm} stat`, placeholder: '—',
+        oninput: (ev) => { b.stat = ev.target.value; commit(); refresh(); },
+        onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
       node = h('div', { class: 'cs-skill' },
         h('div', { class: 'cs-kbox cs-rbox' }, pts,
-          follows(() => S.boxSkillTotal(s, b), (v) => { b.points = S.pointsFor(v, S.statVal(s, b.stat)); }, nm, 'cs-num',
-            () => `${S.statList(s).find((x) => x.id === b.stat).name} ${S.statVal(s, b.stat)} + ${b.points || 0}`)),
+          follows(() => S.boxSkillTotal(s, b), (v) => { b.points = S.pointsFor(v, base()); }, nm, 'cs-num',
+            () => (linked() ? `${linked().name} ${base()} + ${b.points || 0}` : ''))),
         label(b, 'Skill', 'cs-cap'), stat);
     } else if (b.type === 'text') {
       const inp = h('input', { class: 'cs-in cs-line', value: b.value, 'aria-label': nm, spellcheck: false, oninput: (ev) => { b.value = ev.target.value; commit(); } });

@@ -62,7 +62,8 @@ before, only in this browser. Deleting a character while signed in deletes it fr
   all at the top.
 - **Edit layout** (toolbar) is for changing the sheet: every box gets a red × to take it off, and each
   section ends with buttons that add another box of its own kind: **+ Stat** (big box, oval, name),
-  **+ Save**, **+ Skill** (pick the stat it follows, including added stats), **+ Line** in the details,
+  **+ Save**, **+ Skill** (type its stat under it: a stat's name like DEX, or an added stat's, makes it
+  follow that stat; anything else, or nothing, leaves it a plain number for systems without stats), **+ Line** in the details,
   and in Combat **+ Number** (like Armor) or **+ Current / Max** (like HP). Added boxes sit in the
   section with the rest; type their name, drag the grip to reorder. Removed boxes come back from the
   same bar, and Combat's bar sets Max Wounds. **Done** (or Esc) goes back to playing. Removing or
