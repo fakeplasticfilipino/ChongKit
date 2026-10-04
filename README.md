@@ -23,6 +23,13 @@ Characters saved by v1 move over by themselves (WIL becomes WIS, level joins the
 Might points become extra skill boxes); v2 sheets drop the unused starter Mana / Gold / Inventory boxes
 and move note entries into a Notes tab.
 
+**Accounts (optional):** **Sign in** (toolbar) with Discord, or with an email and password
+(**Create account** sends a confirmation email first). Signed in, every character is also saved to
+your account, so it's there on any device; the toolbar shows **Synced**. Signing in on a browser
+that already has characters merges them with the account's (for a character on both, the newer
+edit wins). Coming back to the tab picks up edits made elsewhere. Signed out, the sheet works as
+before, only in this browser. Deleting a character while signed in deletes it from the account too.
+
 - **Details:** name on the banner; Class & Level, Ancestry, Height, Weight; Hit Dice (left / die).
 - **Stats:** STR, DEX, CON, INT, WIS, CHA. Type each stat in its box; the oval under it is a slot for a
   second number. Click a stat's name to mark it as a key stat (it turns dark).

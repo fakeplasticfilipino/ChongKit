@@ -20,7 +20,9 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    this without updating `tests/generator.test.js`.
 3. **Keep tools zero-install.** Plain HTML + vanilla JS that opens from `file://`. No build step, no
    frameworks, no CDN scripts. The only external request allowed is Google Fonts, and every page
-   must still work offline on its fallback fonts.
+   must still work offline on its fallback fonts. One exception: the Character Sheet's optional
+   sign-in and sync talk to Supabase with plain `fetch` (no client library); signed out, it works
+   fully offline on localStorage.
 4. **Match the GM Guide's look.** Parchment background (no corner flourishes: they distract), heavy
    wedge-serif headings (Merriweather 900 standing in for Beaufort Pro Heavy), condensed sans body
    (Barlow Semi Condensed for Avenir Next Condensed), notched-corner stat blocks with italic
@@ -75,6 +77,12 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    rename, ×, drag). Notes are one free-text panel. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs live in `tabs` (name + entries). Old saves are upgraded in `normalize` (`upgrade1` for v1, `upgrade2` for v2).
 5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
    `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
+6. **Accounts (optional):** `cloud.js` (browser global `Cloud`) signs in with Discord or email +
+   password against Supabase project `chong-nimble-sheet` (ref `fmkbvoukbrxjbzlexjhu`) and syncs
+   characters to `public.character_sheets` (`user_id`, `id`, `data` jsonb, `updated_at`; RLS: own
+   rows only). Each character carries `updated` (ms of its last edit); `Sheet.mergeChars` merges
+   account and browser (newer edit wins; tested). The publishable key in `cloud.js` is public by
+   design; never put a secret/service key in the repo. The session is in localStorage `chongkit.auth`.
 
 ## Chong's Tracker (Owlbear Rodeo extension)
 
@@ -113,7 +121,8 @@ assets/css/nimble.css        Shared GM-Guide look for every page
 character-sheet/             → /character-sheet/
   index.html                 Page + toolbar
   sheet.js                   Pure logic: defaults, skill math, calculator, saving, import/export
-  ui.js                      Draws the sheet, trays, tabs and entries
+  ui.js                      Draws the sheet, trays, tabs and entries; the sign-in dialog
+  cloud.js                   Optional sign-in (Discord / email) and sync via Supabase
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)
 combat-generator/            → /combat-generator/

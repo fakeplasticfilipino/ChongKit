@@ -64,7 +64,7 @@
 
   function blank(name = '') {
     const s = {
-      v: VERSION, id: uid(), name,
+      v: VERSION, id: uid(), name, updated: 0,
       cls: '', ancestry: '', height: '', weight: '', speed: '',
       hitDice: { cur: '1', die: '' },
       hp: { cur: '', max: '', temp: '' },
@@ -159,6 +159,9 @@
       if (raw[k] != null) s[k] = str(raw[k]);
     }
     if (!s.id) s.id = uid();
+    // Last edit (ms), for syncing; 0 = never edited. Saves from before syncing have none: they count
+    // as edited (so they're uploaded on first sign-in) but older than anything in the account.
+    s.updated = raw.updated == null ? 1 : Math.max(0, int(raw.updated));
     s.hitDice = { cur: str((raw.hitDice || {}).cur ?? '1'), die: str((raw.hitDice || {}).die) };
     s.hp = { cur: str((raw.hp || {}).cur), max: str((raw.hp || {}).max), temp: str((raw.hp || {}).temp) };
     s.initBonus = int(raw.initBonus);
@@ -301,6 +304,37 @@
     try { storage.setItem(STORE, JSON.stringify(all)); return true; } catch { return false; }
   }
 
+  // --- Syncing with an account ---------------------------------------------------------
+  // `remote` is the account's characters ([{ id, data }]); `synced` the ids this browser has seen
+  // in the account before. Returns the merged characters and the ids to upload:
+  // - in both: the newer edit wins (uploaded if it's the local one);
+  // - only remote: downloaded;
+  // - only local: uploaded if it was ever edited, or dropped if it was synced before (it was
+  //   deleted on another device).
+  function mergeChars(local, remote, synced = []) {
+    const chars = {};
+    const upload = [];
+    const seen = new Set(synced);
+    const inRemote = new Set();
+    for (const row of remote || []) {
+      if (!row || !row.data) continue;
+      const r = normalize({ ...row.data, id: row.id });
+      inRemote.add(r.id);
+      const l = local[r.id];
+      if (l && l.updated > r.updated) { chars[l.id] = l; upload.push(l.id); }
+      else chars[r.id] = r;
+    }
+    for (const l of Object.values(local)) {
+      if (inRemote.has(l.id)) continue;
+      if (seen.has(l.id)) continue; // deleted elsewhere
+      chars[l.id] = l;
+      if (l.updated) upload.push(l.id);
+    }
+    return { chars, upload };
+  }
+  // The character without its timestamp: two sheets with the same content compare equal.
+  const content = (s) => JSON.stringify({ ...s, updated: 0 });
+
   const exportJson = (s) => JSON.stringify({ chongkitSheet: VERSION, ...s }, null, 2);
   // An imported character always gets a new id, so it never overwrites one you have.
   function importJson(text) {
@@ -313,7 +347,7 @@
     VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, ADDS, WOUNDS, EXTRA_WOUNDS, uid,
     blank, normalize, newBox, newEntry, newTab, statList, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
     setWounds, cycleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
-    loadAll, saveAll, exportJson, importJson,
+    loadAll, saveAll, exportJson, importJson, mergeChars, content,
   };
   if (typeof module !== 'undefined') module.exports = api;
   else root.Sheet = api;

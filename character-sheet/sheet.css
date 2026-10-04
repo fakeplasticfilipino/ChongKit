@@ -362,6 +362,29 @@ input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
   .cs-saved { display: none; }
 }
 
+/* Sign-in dialog: a stat-block-like panel on parchment */
+.cs-dialog {
+  width: min(420px, calc(100vw - 32px)); padding: 26px 26px 22px; border: 1.5px solid var(--frame); border-radius: 4px;
+  background: var(--panel); color: var(--ink); font-family: var(--body); box-shadow: 0 18px 50px rgba(40, 30, 20, .35);
+}
+.cs-dialog::backdrop { background: rgba(43, 37, 32, .45); }
+.cs-dialog h2 { margin: 0 30px 16px 0; font-size: 1.6rem; overflow-wrap: anywhere; }
+.cs-dlg-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; background: transparent; color: var(--ink-soft); }
+.cs-dlg-x:hover { background: var(--bar); }
+.cs-discord { width: 100%; gap: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.cs-discord .cs-ic { width: 22px; height: 22px; }
+.cs-or { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; color: var(--muted); font-style: italic; }
+.cs-or::before, .cs-or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.cs-auth-form { display: flex; flex-direction: column; gap: 12px; }
+.cs-auth-form label { display: flex; flex-direction: column; gap: 3px; }
+.cs-auth-in { height: 40px; padding: 0 10px; border: 1.5px solid var(--frame); border-radius: 0; background: var(--parchment-hi); font: 500 17px var(--body); color: var(--ink); }
+.cs-auth-in:focus { outline: 2px solid var(--rule); outline-offset: 1px; }
+.cs-auth-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.cs-auth-row .btn { flex: 1 1 auto; }
+.cs-auth-sub { margin: -10px 0 14px; color: var(--muted); }
+.cs-auth-msg { min-height: 1.4em; margin: 12px 0 0; color: var(--ink-soft); }
+.cs-auth-msg.bad { color: var(--blood); font-weight: 600; }
+#account { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media print {
   .cs-tools, .notice, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold, .cs-tabadd, .cs-tdel, .cs-editbar { display: none !important; }
   main::before, main::after { display: none; }

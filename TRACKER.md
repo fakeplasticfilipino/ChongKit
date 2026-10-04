@@ -38,6 +38,12 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Sheet fills most of the screen: slim notice, back link in the toolbar, no title or flourishes
 - [x] v2 upgrade drops unused starter Mana / Gold / Inventory boxes
 
+### ✅ Accounts — done
+- [x] Optional sign-in: Discord or email + password (Supabase Auth via plain fetch, no library)
+- [x] Characters sync to the account (`character_sheets`, RLS: own rows only); merge on sign-in, newer edit wins; deletes sync; refresh on returning to the tab
+- [x] Tests: merge rules
+- [ ] Discord provider switched on in Supabase (needs the Discord app's client ID/secret: see the setup notes)
+
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 

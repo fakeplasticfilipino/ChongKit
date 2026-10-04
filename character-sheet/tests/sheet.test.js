@@ -178,6 +178,28 @@ test('undo brings back the layout but keeps what was typed since', () => {
   assert.deepStrictEqual(u.tabs[0].entries.map((e) => [e.title, e.sum]), [['Bow', ''], ['Axe', 'typed']]);
 });
 
+test('syncing with an account: newer edit wins, untouched blanks stay local', () => {
+  const mk = (id, name, updated) => ({ ...S.blank(name), id, updated });
+  const local = { a: mk('a', 'Local newer', 200), b: mk('b', 'Local older', 100), c: mk('c', 'Only here', 50), d: mk('d', '', 0), e: mk('e', 'Gone', 70) };
+  const remote = [
+    { id: 'a', data: mk('a', 'Remote older', 150) },
+    { id: 'b', data: mk('b', 'Remote newer', 300) },
+    { id: 'f', data: mk('f', 'Only there', 10) },
+    { id: 'x', data: null },
+  ];
+  const m = S.mergeChars(local, remote, ['e']); // e was in the account before: deleted on another device
+  assert.deepStrictEqual(Object.keys(m.chars).sort(), ['a', 'b', 'c', 'd', 'f']);
+  assert.strictEqual(m.chars.a.name, 'Local newer');
+  assert.strictEqual(m.chars.b.name, 'Remote newer');
+  assert.strictEqual(m.chars.f.name, 'Only there');
+  assert.deepStrictEqual(m.upload.sort(), ['a', 'c'], 'never-edited d is not uploaded');
+  assert.strictEqual(S.normalize({ v: 3, updated: 'x' }).updated, 0);
+  assert.strictEqual(S.normalize({ v: 3, name: 'Old save' }).updated, 1, 'saves from before syncing get uploaded');
+  assert.strictEqual(S.blank().updated, 0);
+  const s = S.blank('Same');
+  assert.strictEqual(S.content(s), S.content({ ...s, updated: 999 }), 'the timestamp is not content');
+});
+
 test('move', () => {
   assert.deepStrictEqual(S.move(['a', 'b', 'c'], 0, 2), ['b', 'c', 'a']);
   assert.deepStrictEqual(S.move(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b']);

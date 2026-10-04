@@ -69,15 +69,73 @@
   }
   function save() {
     clearTimeout(timer);
+    // A character whose content changed gets a new timestamp (and is queued for the account).
+    for (const c of Object.values(all.chars)) {
+      const now = S.content(c);
+      if (lastJson[c.id] !== now) { c.updated = Date.now(); lastJson[c.id] = now; dirty.add(c.id); }
+    }
     const ok = S.saveAll(store, all);
+    status(ok ? 'Saved' : 'Not saved', !ok);
+    if (C && C.signedIn && dirty.size) { clearTimeout(pushTimer); pushTimer = setTimeout(push, 1200); }
+  }
+  function status(text, bad) {
     const n = $('saved');
-    n.textContent = ok ? 'Saved' : 'Not saved';
-    n.classList.toggle('bad', !ok);
+    n.textContent = text;
+    n.classList.toggle('bad', !!bad);
     n.classList.add('show');
     clearTimeout(savedTimer);
-    savedTimer = setTimeout(() => n.classList.remove('show'), 1400);
+    if (!bad) savedTimer = setTimeout(() => n.classList.remove('show'), 1400);
   }
-  window.addEventListener('pagehide', () => S.saveAll(store, all));
+  window.addEventListener('pagehide', () => { save(); push(); });
+
+  // --- Account sync (cloud.js) -----------------------------------------------------------
+  // Signed in, every edited character is also saved to the account; signing in merges the
+  // account's characters with this browser's (the newer edit of each wins).
+  const C = window.Cloud;
+  const lastJson = {}; // content last saved, per character
+  const dirty = new Set(); // characters edited since they were last sent to the account
+  let pushTimer = null;
+  for (const c of Object.values(all.chars)) lastJson[c.id] = S.content(c);
+  async function push() {
+    clearTimeout(pushTimer);
+    if (!C || !C.signedIn || !dirty.size) return;
+    const ids = [...dirty];
+    dirty.clear();
+    const list = ids.map((id) => all.chars[id]).filter(Boolean);
+    try {
+      await C.push(list);
+      C.setSynced([...C.synced(), ...list.map((c) => c.id)]);
+      status('Synced');
+    } catch {
+      ids.forEach((id) => dirty.add(id));
+      status('Not synced', true);
+    }
+  }
+  async function syncAll() {
+    if (!C || !C.signedIn) return;
+    save();
+    status('Syncing…');
+    try {
+      const remote = await C.list();
+      const m = S.mergeChars(all.chars, remote, C.synced());
+      if (!Object.keys(m.chars).length) { const b = S.blank(); m.chars[b.id] = b; }
+      all.chars = m.chars;
+      for (const c of Object.values(all.chars)) lastJson[c.id] = S.content(c);
+      m.upload.forEach((id) => dirty.add(id));
+      C.setSynced(remote.map((r) => r.id));
+      if (!all.chars[all.current]) all.current = Object.keys(all.chars)[0];
+      if (s.id !== all.current || all.chars[s.id] !== s) { s = all.chars[all.current]; history = []; openEntries.clear(); }
+      S.saveAll(store, all);
+      names();
+      render();
+      if (dirty.size) await push(); else status('Synced');
+    } catch {
+      status('Not synced', true);
+    }
+  }
+  // Coming back to the tab picks up edits made on another device (not while typing).
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !typing()) syncAll(); });
+  window.addEventListener('online', () => { if (C && C.signedIn) syncAll(); });
   const refresh = () => derived.forEach((f) => f());
 
   // --- Undo -------------------------------------------------------------------------
@@ -609,6 +667,7 @@
     history = [];
     hideToast();
     openEntries.clear();
+    if (!(c.id in lastJson) && !c.updated) lastJson[c.id] = S.content(c); // a new blank sheet isn't an edit
     commit();
     names();
     render();
@@ -628,7 +687,13 @@
   $('delete').addEventListener('click', () => {
     closeMenu();
     if (!confirm(`Delete ${s.name || 'this character'}? This can't be undone.`)) return;
-    delete all.chars[s.id];
+    const id = s.id;
+    delete all.chars[id];
+    delete lastJson[id];
+    dirty.delete(id);
+    if (C && C.signedIn) {
+      C.remove(id).then(() => C.setSynced(C.synced().filter((x) => x !== id))).catch(() => status('Not synced', true));
+    }
     show(Object.values(all.chars)[0] || S.blank());
   });
   $('export').addEventListener('click', () => {
@@ -650,7 +715,72 @@
   });
   $('print').addEventListener('click', () => { closeMenu(); if (editing) setEditing(false); else render(); window.print(); });
 
+  // --- Sign in -------------------------------------------------------------------------
+  // The toolbar's account button opens a dialog: Discord, or email + password. Signed in, it
+  // shows the account's name and offers Sign out.
+  const DISCORD = 'M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.1 14.1 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z';
+  const dlg = $('signin');
+  function accountButton() {
+    const b = $('account');
+    if (!C) { b.hidden = true; return; }
+    b.textContent = C.signedIn ? C.name() : 'Sign in';
+    b.title = C.signedIn ? 'Account' : '';
+  }
+  function openAccount(msg) {
+    const close = h('button', { type: 'button', class: 'cs-dlg-x', 'aria-label': 'Close', onclick: () => dlg.close() }, icon('close', 'cs-ic'));
+    const note = h('p', { class: 'cs-auth-msg', 'aria-live': 'polite' }, msg || '');
+    const say = (t, bad) => { note.textContent = t; note.classList.toggle('bad', !!bad); };
+    let body;
+    if (C.signedIn) {
+      body = [h('h2', {}, C.name()),
+        C.user && C.user.email && C.user.email !== C.name() ? h('p', { class: 'cs-auth-sub' }, C.user.email) : null,
+        h('div', { class: 'cs-auth-row' },
+          h('button', { type: 'button', class: 'btn', onclick: () => { dlg.close(); syncAll(); } }, 'Sync now'),
+          h('button', { type: 'button', class: 'btn', onclick: async () => { await C.signOut(); dlg.close(); } }, 'Sign out')),
+        note];
+    } else {
+      const email = h('input', { type: 'email', class: 'cs-auth-in', autocomplete: 'email', required: true, 'aria-label': 'Email' });
+      const pass = h('input', { type: 'password', class: 'cs-auth-in', autocomplete: 'current-password', required: true, minLength: 6, 'aria-label': 'Password' });
+      const go = (fn) => async (ev) => {
+        ev.preventDefault();
+        if (!email.reportValidity() || !pass.reportValidity()) return;
+        say('…');
+        try { await fn(email.value.trim(), pass.value); } catch (e) { say(e.message, true); }
+      };
+      const discord = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      discord.setAttribute('viewBox', '0 0 24 24');
+      discord.setAttribute('class', 'cs-ic');
+      discord.setAttribute('aria-hidden', 'true');
+      discord.innerHTML = `<path fill="currentColor" d="${DISCORD}"/>`;
+      body = [h('h2', {}, 'Sign in'),
+        h('button', { type: 'button', class: 'btn cs-discord', onclick: () => C.discord() }, discord, 'Continue with Discord'),
+        h('div', { class: 'cs-or' }, h('span', {}, 'or')),
+        h('form', { class: 'cs-auth-form', onsubmit: go(async (e, p) => { await C.signIn(e, p); dlg.close(); syncAll(); }) },
+          h('label', {}, h('span', { class: 'label' }, 'Email'), email),
+          h('label', {}, h('span', { class: 'label' }, 'Password'), pass),
+          h('div', { class: 'cs-auth-row' },
+            h('button', { type: 'submit', class: 'btn primary' }, 'Sign in'),
+            h('button', { type: 'button', class: 'btn', onclick: go(async (e, p) => {
+              if (await C.signUp(e, p)) { dlg.close(); syncAll(); } else say('Check your email to confirm your account, then sign in.');
+            }) }, 'Create account'))),
+        note];
+    }
+    dlg.replaceChildren(close, ...body.filter(Boolean));
+    if (!dlg.open) dlg.showModal();
+  }
+  if (C) {
+    $('account').addEventListener('click', () => openAccount());
+    C.onChange(accountButton);
+  }
+  accountButton();
+
   names();
   render();
   commit();
+  if (C) {
+    // Back from Discord (or an email confirmation link): finish signing in, then sync.
+    C.finishRedirect()
+      .then((done) => { if (done || C.signedIn) syncAll(); })
+      .catch((e) => openAccount(e.message));
+  }
 })();
