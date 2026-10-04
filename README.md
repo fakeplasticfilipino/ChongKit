@@ -42,13 +42,13 @@ before, only in this browser. Deleting a character while signed in deletes it fr
   device's clock) wins.
 
 - **Details:** name on the banner; Class & Level, Ancestry, Height, Weight; Hit Dice (left / die).
-- **Stats:** STR, DEX, CON, INT, WIS, CHA. Type each stat in its box; the oval under it is a slot for a
-  second number. Click a stat's name to mark it as a key stat (it turns dark).
+- **Stats:** STR, DEX, CON, INT, WIS, CHA. Type each stat in its box (`3`, `+3` or `-1`; modifiers
+  show their sign); the oval under it is a slot for a second number. Click a stat's name to mark it
+  as a key stat (it turns dark).
 - **Saves:** STR, DEX and WIL each have a number box. The circle on the left cycles ▲ advantage /
   ▼ disadvantage / none.
-- **Skills** show their stat plus any skill points, so they follow the stat. Type a skill's total and
-  the difference is kept as points (shown small in the corner, e.g. +1). Initiative works the same
-  way from DEX.
+- **Skills** show their stat plus any skill points, so they follow the stat. Type a skill's total
+  (`+4`, `-1`…) and the difference is kept as points. Initiative works the same way from DEX.
 - **Combat:** Armor (shield), HP / Max HP / Temp, Initiative / Speed, Wounds.
 - **HP, Temp HP, saves, the ovals and Current/Max boxes do math:** `-4` takes 4 off, `+3` adds 3,
   `13-4` or `10` sets it (Enter or click away). HP turns dark red when Bloodied (at or below half max).

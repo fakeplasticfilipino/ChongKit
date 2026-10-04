@@ -75,6 +75,21 @@ test('calculator boxes', () => {
   assert.strictEqual(S.applyMath('-4', ''), '-4');
   assert.strictEqual(S.applyMath('', '5'), '');
   assert.strictEqual(S.applyMath('1d8', '5'), null, 'not math: kept as typed');
+  assert.strictEqual(S.applyMath('+2', ''), '+2', 'a signed number into an empty box keeps its sign');
+  assert.strictEqual(S.applyMath('−3', '5'), '2', 'the minus sign works too');
+});
+
+test('modifiers take + and - and show their sign', () => {
+  assert.strictEqual(S.parseModifier('3'), 3);
+  assert.strictEqual(S.parseModifier('+3'), 3);
+  assert.strictEqual(S.parseModifier(' -2 '), -2);
+  assert.strictEqual(S.parseModifier('−1'), -1);
+  assert.strictEqual(S.parseModifier('+'), null, 'half typed: wait');
+  assert.strictEqual(S.parseModifier('-'), null);
+  assert.strictEqual(S.parseModifier('2d6'), null);
+  assert.strictEqual(S.signed(3), '+3');
+  assert.strictEqual(S.signed(0), '0');
+  assert.strictEqual(S.signed(-1), '-1');
 });
 
 test('removing and restoring default boxes', () => {

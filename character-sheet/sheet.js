@@ -260,13 +260,23 @@
     try { const v = expr(); return i === src.length && Number.isFinite(v) ? v : null; } catch { return null; }
   }
   function applyMath(text, previous) {
-    const t = String(text).trim();
+    const t = String(text).trim().replace(/−/g, '-');
     if (t === '') return '';
     const v = evalExpr(t);
     if (v === null) return null;
     const prev = parseFloat(previous);
     if (/^[+-]/.test(t) && Number.isFinite(prev)) return String(Math.trunc(prev + v));
+    // A sign into an empty box is a modifier: keep it (+2 stays +2).
+    if (/^\+/.test(t)) return signed(Math.trunc(v));
     return String(Math.trunc(v));
+  }
+
+  // Modifiers: shown with their sign (+3, 0, -1); typed as 3, +3, -1 (or the − sign).
+  const signed = (n) => (n > 0 ? `+${n}` : String(n));
+  function parseModifier(text) {
+    const m = /^\s*([+\-−]?)\s*(\d{1,6})\s*$/.exec(String(text));
+    if (!m) return null;
+    return (m[1] && m[1] !== '+' ? -1 : 1) * parseInt(m[2], 10);
   }
 
   const isRemoved = (s, section, id) => s.removed.includes(`${section}:${id}`);
@@ -364,7 +374,7 @@
   const api = {
     VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, ADDS, WOUNDS, EXTRA_WOUNDS, uid,
     blank, normalize, newBox, newEntry, newTab, newNote, statList, statVal, skillStat, skillTotal, boxSkillTotal, initiative, pointsFor,
-    setWounds, cycleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
+    setWounds, cycleSave, bloodied, evalExpr, applyMath, signed, parseModifier, isRemoved, setRemoved, undoLayout, move,
     loadAll, saveAll, exportJson, importJson, mergeChars, content,
   };
   if (typeof module !== 'undefined') module.exports = api;

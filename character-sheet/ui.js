@@ -303,21 +303,22 @@
     inp.addEventListener('blur', apply);
     return inp;
   }
-  // Whole numbers (stats).
+  // Whole numbers that are modifiers (stats, skills, Initiative): type 3, +3 or -1; shown with
+  // their sign (+3, 0, -1). The text keyboard on phones, so + and - are there.
   function whole(getV, setV, label, cls = '') {
-    const inp = h('input', { class: 'cs-in ' + cls, value: String(getV()), 'aria-label': label, inputMode: 'numeric',
-      onkeydown: (ev) => { if (ev.key === 'Enter') inp.blur(); } });
-    const take = (v) => { const n = parseInt(v, 10); if (Number.isFinite(n)) { setV(n); commit(); refresh(); } };
+    const inp = h('input', { class: 'cs-in ' + cls, value: S.signed(getV()), 'aria-label': label, inputMode: 'text',
+      spellcheck: false, onkeydown: (ev) => { if (ev.key === 'Enter') inp.blur(); } });
+    const take = (v) => { const n = S.parseModifier(v); if (n !== null) { setV(n); commit(); refresh(); } };
     inp.addEventListener('input', () => take(inp.value));
-    stepper(inp, (v) => { inp.value = v; take(v); });
-    inp.addEventListener('blur', () => { inp.value = String(getV()); });
+    stepper(inp, (v) => { inp.value = S.signed(+v); take(v); });
+    inp.addEventListener('blur', () => { inp.value = S.signed(getV()); });
     return inp;
   }
   // A number that follows a stat (skills, Initiative): typing a total stores the difference.
   function follows(total, setTotal, label, cls = '', tip) {
     const inp = whole(total, setTotal, label, cls);
     derived.push(() => {
-      if (document.activeElement !== inp) inp.value = String(total());
+      if (document.activeElement !== inp) inp.value = S.signed(total());
       if (tip) inp.title = tip();
     });
     return inp;
@@ -412,8 +413,6 @@
       node = h('div', { class: 'cs-save cs-rbox' },
         pip(b, nm), calc(() => b.value, (v) => { b.value = v; }, `${nm} save`, 'cs-num'), label(b, 'Save', 'cs-cap'));
     } else if (b.type === 'skill') {
-      const pts = h('span', { class: 'cs-pts' });
-      derived.push(() => { const p = b.points || 0; pts.textContent = p ? (p > 0 ? `+${p}` : String(p)) : ''; });
       // The stat under the skill is free text: naming a stat (DEX, or an added stat) makes the
       // skill follow it; anything else leaves it a plain number.
       const linked = () => S.skillStat(s, b.stat);
@@ -424,7 +423,7 @@
         oninput: (ev) => { b.stat = ev.target.value; commit(); refresh(); },
         onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
       node = h('div', { class: 'cs-skill' },
-        h('div', { class: 'cs-kbox cs-rbox' }, pts,
+        h('div', { class: 'cs-kbox cs-rbox' },
           follows(() => S.boxSkillTotal(s, b), (v) => { b.points = S.pointsFor(v, base()); }, nm, 'cs-num',
             () => (linked() ? `${linked().name} ${base()} + ${b.points || 0}` : ''))),
         label(b, 'Skill', 'cs-cap'), stat);
@@ -596,10 +595,8 @@
     return section('skills', 'cs-pnl cs-skills', 'top', h('div', { class: 'cs-band' }, shown('skills').map((id) => {
       const sk = S.SKILLS.find((x) => x.id === id);
       const st = statName(sk.stat);
-      const pts = h('span', { class: 'cs-pts' });
-      derived.push(() => { const p = s.skills[id]; pts.textContent = p ? (p > 0 ? `+${p}` : String(p)) : ''; });
       return removable('skills', id, h('div', { class: 'cs-skill' },
-        h('div', { class: 'cs-kbox cs-rbox' }, pts,
+        h('div', { class: 'cs-kbox cs-rbox' },
           follows(() => S.skillTotal(s, id), (v) => { s.skills[id] = S.pointsFor(v, S.statVal(s, sk.stat)); }, sk.name, 'cs-num',
             () => `${st} ${S.statVal(s, sk.stat)} + ${s.skills[id] || 0}`)),
         h('span', { class: 'cs-cap' }, sk.name),
