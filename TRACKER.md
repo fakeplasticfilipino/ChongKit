@@ -41,6 +41,15 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 
+## Site look
+
+### ✅ Modernized — done
+- [x] `nimble.css` rewritten: flat warm paper, rounded cards, soft shadows, dark red accent; Merriweather + Barlow kept; flourishes, paper texture, notched blocks and arrow bars dropped
+- [x] Shared top bar on every Nimble page (ChongKit + tool links), notice as a strip under it, footer bar
+- [x] Landing page: hero + tool cards with icons
+- [x] Combat Generator: setup panel + results as monster cards (editable names); Copy keeps the tracker's text format and uses the edited names
+- [x] Character Sheet gets the top bar (sheet itself unchanged)
+
 ## Combat Generator (`combat-generator/`)
 
 ### ✅ v1 — done

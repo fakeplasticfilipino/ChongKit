@@ -1,15 +1,12 @@
 /* Character Sheet: our table's sheet (rounded heavy-outlined boxes, panels with sideways labels,
    white fields, condensed caps labels), sitting on the site's parchment page (nimble.css). */
-/* The sheet takes most of the screen: slim notice, one toolbar row, no corner flourishes. */
-main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
-main.cs-page::before, main.cs-page::after { display: none; }
-.cs-page .notice { margin-bottom: 10px; padding: 5px 12px; font-size: .8rem; }
-.cs-page .foot { margin-top: 14px; font-size: .78rem; }
-.cs-tools .back { margin: 0 6px 0 0; }
+/* The sheet takes most of the screen (the top bar and notice come from nimble.css). */
+main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 
 /* Toolbar */
 .cs-tools { position: relative; margin: 0 0 12px; align-items: center; }
 .cs-tools select { min-width: 210px; }
+.cs-menu-list { border-radius: var(--radius-sm); overflow: hidden; }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
 .cs-menu { position: relative; }
 .cs-menu > summary { list-style: none; cursor: pointer; }
