@@ -8,23 +8,16 @@
      Offline, the page falls back to Georgia / Arial Narrow and still works. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&family=Merriweather:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Merriweather:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/css/nimble.css">
 <link rel="stylesheet" href="sheet.css">
 </head>
-<body class="wide">
-<header class="kit-bar"><div class="kit-bar-in">
-  <a class="kit-mark" href="../">ChongKit</a>
-  <nav class="kit-nav" aria-label="Tools">
-    <a href="../combat-generator/">Combat Generator</a>
-    <a href="./" aria-current="page">Character Sheet</a>
-    <a href="../chongs-tracker/">Chong's Tracker</a>
-    <a href="../docs/rules-reference.html">Rules reference</a>
-  </nav>
-</div></header>
-<div class="notice"><p>This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p></div>
+<body>
 <main class="cs-page">
+  <p class="notice">This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p>
+
   <div class="toolbar cs-tools">
+    <a class="back" href="../">← All tools</a>
     <select id="who" aria-label="Character"></select>
     <button class="btn" type="button" id="new">New</button>
     <button class="btn" type="button" id="edit" aria-pressed="false">Edit layout</button>
@@ -45,8 +38,8 @@
   <div id="sheet" class="cs"></div>
   <div id="toast" class="cs-toast" role="status" hidden></div>
 
+  <p class="foot">ChongKit is an independent product published under the Nimble 3rd Party Creator License. Nimble © Nimble Co.</p>
 </main>
-<footer class="foot"><p>ChongKit is an independent product published under the Nimble 3rd Party Creator License. Nimble © Nimble Co.</p></footer>
 <script src="sheet.js"></script>
 <script src="ui.js"></script>
 </body>

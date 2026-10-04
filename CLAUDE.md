@@ -21,23 +21,24 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 3. **Keep tools zero-install.** Plain HTML + vanilla JS that opens from `file://`. No build step, no
    frameworks, no CDN scripts. The only external request allowed is Google Fonts, and every page
    must still work offline on its fallback fonts.
-4. **A modern take on the GM Guide's look.** Flat warm-paper background (no texture or corner
-   flourishes), heavy wedge-serif headings (Merriweather 900 standing in for Beaufort Pro Heavy),
-   condensed sans body (Barlow Semi Condensed for Avenir Next Condensed), rounded cards on light
-   surfaces with soft shadows, italic small-caps monster names, heart/shield icons for HP/armor, and
-   dark red (`--blood`) as the one accent (primary buttons, Deadly picks, Bloodied numbers). Every
-   Nimble page has the shared top bar (`.kit-bar`: ChongKit + a link to each tool, the current one
-   marked `aria-current="page"`), the notice strip under it and the footer. Reuse the classes and
-   tokens in `assets/css/nimble.css`; a tool's own styles go in its folder (`generator.css`, `sheet.css`).
+4. **Match the GM Guide's look.** Parchment background, thin brown corner flourishes, heavy
+   wedge-serif headings (Merriweather 900 standing in for Beaufort Pro Heavy), condensed sans body
+   (Barlow Semi Condensed for Avenir Next Condensed), notched-corner stat blocks with italic
+   small-caps names, grey arrow-tipped ability bars, heart/shield icons for HP/armor, dark red
+   (`--blood`) for Bloodied numbers. Reuse the classes and tokens in `assets/css/nimble.css`.
+   - **Easy on the eyes, like the printed page:** matte parchment everywhere, never white surfaces
+     or fields (`--panel`, `--parchment-hi`, the sheet's `--sheet`/`--fld`), and soft brown-black ink
+     (`--ink` #2b2520, outlines `--frame` #3a332c), never pure black. Red is for Bloodied and Deadly only.
+   - No site-wide top bar: each tool page has a "← All tools" link.
 5. **Keep it simple.** This is for use mid-session at the table; favor big readable numbers over features.
    - No helper or explainer text in the UI (no "tap here to…" tips, no difficulty descriptions, no
      "how this is worked out"). Labels and numbers only; explanations belong in the README.
    - No dice rolling or HP tracking. The tool shows stats; the table rolls real dice.
-   - Controls must look clickable: bordered buttons, segmented toggles and steppers (`.btn`, `.seg`,
-     `.stepper`), with `.btn.primary` (dark red) for the main action.
-   - The Combat Generator shows the fight as cards; **Copy** gives the plain-text format that Chong's
-     Tracker parses (`asText` in `combat-generator/index.html`). Don't change that text format
-     without updating the tracker's parser.
+   - Controls must look clickable: squared, bordered buttons and toggles (`.btn`, `.seg`, `.stepper`).
+     Arrow-tipped ribbons (`.bar`) are for ability text only, never for buttons.
+   - The Combat Generator's output is one editable plain-text box (the table prefers text). Chong's
+     Tracker parses that text when it's pasted (`asText` in `combat-generator/index.html`): don't
+     change the format without updating the tracker's parser.
 6. **Always pull, then commit and push straight to `main`.** Pull (`git pull --rebase origin main`) before
    starting work and before pushing; work happens on several devices. Don't create branches or pull requests.
 7. **The repo is a GitHub Pages site** (served from `main`, root folder). Keep it organized:
@@ -58,8 +59,8 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 `character-sheet/`: the Nimble character sheet. The Nimble ground rules apply, with these differences:
 
 1. **The sheet is our table's sheet** (v2): rounded heavy-outlined boxes, panels with sideways labels,
-   white fields, condensed caps labels, set on the usual page with the top bar, notice and footer.
-   The sheet fills most of the screen (`body.wide`, one toolbar row).
+   parchment fields (never white), condensed caps labels, set on the usual parchment page with the
+   notice and footer. The sheet fills most of the screen (slim notice, one toolbar row, no corner flourishes).
    Six stats (STR DEX CON INT WIS CHA, each with an oval number slot), three saves (STR DEX WIL),
    Combat (Armor, HP, Initiative/Speed, Wounds + optional 5 dashed extra circles; filled wounds are
    black), ten skills, tabs of collapsible entries, notes.
@@ -116,8 +117,7 @@ character-sheet/             → /character-sheet/
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)
 combat-generator/            → /combat-generator/
-  index.html                 UI (setup panel, fight as cards, Copy as text)
-  generator.css              The generator's own styles
+  index.html                 UI (setup panel, the fight as editable text)
   nimble-data.js             All rules data from the guide (single source of numbers)
   generator.js               Pure logic: dice, encounter building, rewards
   tests/generator.test.js    node:test suite (not published)

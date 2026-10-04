@@ -68,7 +68,7 @@ from the GM Guide (which has no character rules). Ancestry and Class are free te
 
 Your choices are remembered in this browser, so the page opens the way you left it. Only the settings are saved, never the generated fight.
 
-The fight shows as cards: a summary (difficulty, heroes and level, loot), the twist and family traits when there are any, then one card per monster with its count, HP, Armor, Damage and Save DC (plus movement and abilities for bestiary monsters). Click a monster's name to rename it. **Copy** puts the fight on the clipboard as plain text, one block per monster, using your names:
+The fight is written as plain text in one box, one block per monster:
 
 ```
 Kobold Trapper x3
@@ -78,11 +78,11 @@ Damage: Throw Scorpion (2×). (Range 8) 1d4+2.
 Save DC: 10 (by level)
 ```
 
-followed by any abilities, then the gold for each hero and the whole party (plus the family's loot table, if it has one). Chong's Tracker reads this text when you paste a fight into it.
+followed by any abilities, then the gold for each hero and the whole party (plus the family's loot table, if it has one). The box is editable, so rename monsters or add notes right there.
 
 - **New Encounter:** a different fight with the same settings.
 - **New Dice:** the same generic monsters (or boss) with new dice (same averages). Bestiary monsters keep their printed attacks.
-- **Copy:** copies the text, ready to paste into Chong's Tracker, notes or Discord.
+- **Copy:** copies the text, ready to paste into notes or Discord.
 
 ### Randomized dice (same average)
 

@@ -1,12 +1,17 @@
 /* Character Sheet: our table's sheet (rounded heavy-outlined boxes, panels with sideways labels,
-   white fields, condensed caps labels), sitting on the site's parchment page (nimble.css). */
-/* The sheet takes most of the screen (the top bar and notice come from nimble.css). */
-main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
+   condensed caps labels), sitting on the site's parchment page (nimble.css). Like the GM Guide it is
+   matte parchment throughout, never white, with soft brown-black ink. */
+:root { --sheet: #f1eadc; --fld: #f6f1e6; --fld2: #e8e0cf; }
+/* The sheet takes most of the screen: slim notice, one toolbar row, no corner flourishes. */
+main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
+main.cs-page::before, main.cs-page::after { display: none; }
+.cs-page .notice { margin-bottom: 10px; padding: 5px 12px; font-size: .8rem; }
+.cs-page .foot { margin-top: 14px; font-size: .78rem; }
+.cs-tools .back { margin: 0 6px 0 0; }
 
 /* Toolbar */
 .cs-tools { position: relative; margin: 0 0 12px; align-items: center; }
 .cs-tools select { min-width: 210px; }
-.cs-menu-list { border-radius: var(--radius-sm); overflow: hidden; }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
 .cs-menu { position: relative; }
 .cs-menu > summary { list-style: none; cursor: pointer; }
@@ -28,20 +33,20 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 /* Undo toast */
 .cs-toast {
   position: fixed; left: 50%; bottom: 22px; z-index: 50; transform: translateX(-50%); display: flex; align-items: center; gap: 14px;
-  padding: 8px 8px 8px 16px; background: #2e2f31; color: #fff; font: 500 16px var(--body); box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+  padding: 8px 8px 8px 16px; background: #2e2f31; color: var(--fld); font: 500 16px var(--body); box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
 }
 .cs-toast[hidden] { display: none; }
 .cs-undo {
   display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1.5px solid rgba(255, 255, 255, .5);
-  background: transparent; color: #fff; font: 700 15px var(--body); text-transform: uppercase; cursor: pointer;
+  background: transparent; color: var(--fld); font: 700 15px var(--body); text-transform: uppercase; cursor: pointer;
 }
 .cs-undo:hover { background: rgba(255, 255, 255, .12); }
 
 /* The sheet */
 .cs {
-  --f: #58595b; --f2: #808285; --line: #d9dadc; --line2: #b3b4b7; --hover: #f5f5f6; --lab: #8a8b8e;
+  --f: #5a5148; --f2: #8c8274; --line: #d8cfbf; --line2: #b8ad9c; --hover: #ece4d4; --lab: #7b7266;
   position: relative; display: flex; flex-direction: column; gap: 30px;
-  padding: 26px 26px 28px; background: #fff; color: #231f20; font-family: var(--body);
+  padding: 26px 26px 28px; background: var(--sheet); color: var(--ink); font-family: var(--body);
   box-shadow: 0 1px 2px rgba(60, 40, 20, .12), 0 8px 28px rgba(60, 40, 20, .14);
 }
 .cs.editing { outline: 2px dashed var(--f2); outline-offset: -10px; }
@@ -54,7 +59,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 /* Fields: white boxes with a hairline edge, so it's always clear where to type */
 .cs-in {
   width: 100%; min-width: 0; height: 32px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 2px;
-  background: #fff; font-size: 16px; font-weight: 500; transition: border-color .12s, box-shadow .12s;
+  background: var(--fld); font-size: 16px; font-weight: 500; transition: border-color .12s, box-shadow .12s;
 }
 .cs-in:hover { border-color: var(--line2); }
 .cs-in:focus { border-color: var(--f); box-shadow: 0 0 0 1px var(--f); outline: 0; }
@@ -70,9 +75,9 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-slash { flex: none; width: 2px; height: 40px; background: var(--line2); transform: rotate(18deg); margin: 0 3px; }
 .cs-check {
   appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 0;
-  background: #fff; border: 0; display: inline-grid; place-items: center; cursor: pointer;
+  background: var(--fld); border: 0; display: inline-grid; place-items: center; cursor: pointer;
 }
-.cs-check:checked::after { content: "✓"; color: #231f20; font-weight: 700; font-size: 15px; line-height: 1; }
+.cs-check:checked::after { content: "✓"; color: var(--ink); font-weight: 700; font-size: 15px; line-height: 1; }
 .cs-check:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
 /* Sections and Edit layout: × removes a box, a grip drags an added one, the edit bar adds more */
@@ -80,11 +85,11 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-box { position: relative; }
 .cs-x {
   position: absolute; top: -10px; left: -10px; z-index: 5; display: grid; place-items: center;
-  width: 22px; height: 22px; padding: 0; border: 2px solid #fff; border-radius: 50%; background: var(--blood); color: #fff;
+  width: 22px; height: 22px; padding: 0; border: 2px solid var(--sheet); border-radius: 50%; background: var(--blood); color: var(--fld);
   box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
 .cs-x:hover { transform: scale(1.1); }
-.cs-grip { position: absolute; top: -10px; right: -10px; z-index: 5; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--f); color: #fff; cursor: grab; border: 2px solid #fff; }
+.cs-grip { position: absolute; top: -10px; right: -10px; z-index: 5; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--f); color: var(--fld); cursor: grab; border: 2px solid var(--sheet); }
 .cs-box.drop { box-shadow: -5px 0 0 var(--f); }
 .cs-box.dragging, .cs-entry.dragging { opacity: .4; }
 .cs-editbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 12px; border-top: 1.5px dashed var(--line2); }
@@ -99,10 +104,10 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-addb.sm { padding: 2px 10px; font-size: 13px; }
 .cs-setting { display: flex; align-items: center; gap: 10px; }
 .cs-setlabel { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--f); }
-.cs-setting .stepper { border-color: var(--f); background: #fff; }
+.cs-setting .stepper { border-color: var(--f); background: var(--fld); }
 .cs-setting .stepper button, .cs-setting .stepper input { font-family: var(--body); font-size: 1.05rem; height: 30px; }
 /* An added box's name: typed in Edit layout */
-.cs-lbl-in { min-width: 0; max-width: 100%; padding: 1px 4px; border: 1px dashed var(--f2); border-radius: 3px; background: #fff; text-align: center; }
+.cs-lbl-in { min-width: 0; max-width: 100%; padding: 1px 4px; border: 1px dashed var(--f2); border-radius: 3px; background: var(--fld); text-align: center; }
 .cs-lbl-in:focus { outline: 2px solid var(--f); outline-offset: 0; border-style: solid; }
 .cs-lbl-in::placeholder { color: var(--line2); }
 .cs-sub.cs-lbl-in { text-align: left; }
@@ -113,8 +118,8 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 }
 
 /* Rounded boxes with a heavy outline, like the sheet's */
-.cs { --ink: #231f20; }
-.cs-rbox { position: relative; border: 2.5px solid var(--ink); border-radius: 16px; background: #fff; }
+.cs { --ink: #3a332c; }
+.cs-rbox { position: relative; border: 2.5px solid var(--ink); border-radius: 16px; background: var(--fld); }
 .cs-num {
   width: 100%; min-width: 0; height: auto; padding: 0 2px; border: 0; border-radius: 0; background: transparent;
   text-align: center; font-size: 32px; font-weight: 600;
@@ -133,7 +138,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 }
 .cs-vl span { writing-mode: vertical-rl; transform: rotate(180deg); color: var(--f); font-size: 14px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; }
 .cs-legend {
-  position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 0 14px; background: #fff;
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 0 14px; background: var(--sheet);
   color: var(--f); font-size: 14px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; white-space: nowrap;
 }
 
@@ -141,7 +146,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-head { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
 .cs-ribbon { flex: 1 1 300px; display: flex; flex-direction: column; gap: 4px; }
 .cs-banner { height: 66px; padding: 3px 4px; background: var(--ink); clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 50%, 100% 100%, 0 100%, 20px 50%); }
-.cs-banner-in { height: 100%; display: flex; align-items: center; padding: 0 30px; background: #fff; clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); }
+.cs-banner-in { height: 100%; display: flex; align-items: center; padding: 0 30px; background: var(--fld); clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); }
 .cs-name {
   height: 44px; padding: 0 6px; border: 0; font: italic 900 28px var(--head); font-variant: small-caps; letter-spacing: .01em;
 }
@@ -153,7 +158,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 }
 .cs-dgrid { flex: 1 1 300px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 22px; }
 .cs-lf { display: flex; flex-direction: column; gap: 1px; }
-.cs-line { height: 30px; padding: 0 2px; border: 0; border-bottom: 1.5px solid #8a8b8e; border-radius: 0; font-size: 18px; }
+.cs-line { height: 30px; padding: 0 2px; border: 0; border-bottom: 1.5px solid var(--f2); border-radius: 0; background: transparent; font-size: 18px; }
 .cs-line:hover { border-color: var(--f); }
 .cs-line:focus { box-shadow: none; border-color: var(--ink); background: var(--hover); }
 .cs-hd { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0 auto; }
@@ -171,7 +176,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 /* The oval: a slot for a small number */
 .cs-oval {
   position: absolute; left: 50%; bottom: -15px; z-index: 1; width: 50px; height: 28px; padding: 0 4px; transform: translateX(-50%);
-  border: 2.5px solid var(--ink); border-radius: 50%; background: #fff; text-align: center; font-size: 16px; font-weight: 700;
+  border: 2.5px solid var(--ink); border-radius: 50%; background: var(--fld); text-align: center; font-size: 16px; font-weight: 700;
 }
 .cs-oval:hover { border-color: var(--ink); background: var(--hover); }
 .cs-oval:focus { border-color: var(--ink); box-shadow: 0 0 0 2px var(--f2); }
@@ -180,22 +185,23 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
   font-size: 18px; font-weight: 800; text-transform: uppercase; line-height: 1.1;
 }
 .cs-sname:hover { border-color: var(--line2); }
-.cs-sname.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.cs-sname.on { background: var(--ink); border-color: var(--ink); color: var(--fld); }
 .cs-saverow { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 20px; }
 .cs-save { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 76px; padding: 4px 12px 6px 16px; }
 .cs-save > .cs-num { font-size: 28px; height: 38px; }
 .cs-pip {
   position: absolute; left: -14px; top: 50%; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; padding: 0;
-  transform: translateY(-50%); border: 2px solid var(--ink); border-radius: 50%; background: #fff; font-size: 11px; line-height: 1;
+  transform: translateY(-50%); border: 2px solid var(--ink); border-radius: 50%; background: var(--fld); font-size: 11px; line-height: 1;
 }
 .cs-pip:hover { background: var(--hover); }
-.cs-pip.on { background: var(--ink); color: #fff; }
+.cs-pip.on { background: var(--ink); color: var(--fld); }
 
 .cs-combat { flex: 1 1 400px; min-width: 0; }
 .cs-cmb { display: flex; gap: 18px; align-items: flex-start; }
 .cs-ac { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .cs-shield { position: relative; width: 100px; height: 116px; color: var(--ink); }
 .cs-shield svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cs-shield svg path:first-child { fill: var(--fld); }
 .cs-shield .cs-num { position: absolute; left: 18px; right: 18px; top: 32px; width: auto; height: 50px; font-size: 36px; }
 .cs-cmb-r { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 16px; }
 .cs-cell { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -204,7 +210,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-duo > div { flex: 1 1 0; min-width: 0; display: flex; align-items: center; }
 .cs-duo > div + div { border-left: 2px solid var(--ink); }
 .cs-duo .cs-num { height: 100%; }
-.cs-duo .cs-tmp { flex: 0 0 56px; background: #f3f3f4; }
+.cs-duo .cs-tmp { flex: 0 0 56px; background: var(--fld2); }
 .cs-duo .cs-tmp .cs-num { font-size: 22px; }
 .cs-labels { display: flex; padding: 0 2px; }
 .cs-labels > * { flex: 1 1 0; min-width: 0; }
@@ -216,7 +222,7 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
   position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; border: 0;
   background: transparent; color: var(--ink); font-size: 11px; font-weight: 600;
 }
-.cs-dot { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; background: #fff; transition: transform .1s; }
+.cs-dot { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; background: var(--fld); transition: transform .1s; }
 .cs-w:hover .cs-dot { transform: scale(1.12); }
 .cs-w.on .cs-dot { background: var(--ink); }
 .cs-wn { color: #646565; line-height: 1; }
@@ -224,10 +230,10 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-w.skull .cs-wn { margin-top: -3px; }
 /* Extra wounds: five smaller dashed circles under the track */
 .cs-wx { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 22px; }
-.cs-wxd { width: 17px; height: 17px; padding: 0; border: 2px dashed var(--ink); border-radius: 50%; background: #fff; }
+.cs-wxd { width: 17px; height: 17px; padding: 0; border: 2px dashed var(--ink); border-radius: 50%; background: var(--fld); }
 .cs-wxd:hover { transform: scale(1.12); }
 .cs-wxd.on { border-style: solid; background: var(--ink); }
-.cs-wxdel { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: var(--blood); color: #fff; }
+.cs-wxdel { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: var(--blood); color: var(--fld); }
 /* Added Combat boxes: a single number like Armor, or current / max like HP */
 .cs-single { flex: 0 1 130px; align-items: stretch; }
 .cs-one { display: flex; align-items: center; height: 76px; padding: 0 4px; }
@@ -251,22 +257,22 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-tabstrip { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px; padding-left: 12px; }
 .cs-tab {
   position: relative; display: inline-flex; align-items: center; height: 40px; padding: 0 6px 0 0;
-  border: 2px solid var(--ink); border-bottom: 0; border-radius: 10px 10px 0 0; background: #e6e4df; cursor: grab;
+  border: 2px solid var(--ink); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--fld2); cursor: grab;
 }
-.cs-tab:hover { background: #f0efeb; }
-.cs-tab.on { z-index: 1; height: 46px; margin-bottom: -2px; background: #fff; }
+.cs-tab:hover { background: var(--hover); }
+.cs-tab.on { z-index: 1; height: 46px; margin-bottom: -2px; background: var(--fld); }
 .cs-tabbtn {
   display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 6px 0 16px; border: 0; background: transparent;
   font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
 }
 .cs-tabn { color: var(--f2); font-weight: 600; }
 .cs-tname {
-  min-width: 0; height: 28px; margin-left: 10px; padding: 0 4px; border: 1px solid var(--f); border-radius: 2px; background: #fff;
+  min-width: 0; height: 28px; margin-left: 10px; padding: 0 4px; border: 1px solid var(--f); border-radius: 2px; background: var(--fld);
   font-size: 15px; font-weight: 700; text-transform: uppercase;
 }
 .cs-tname:focus { outline: 2px solid var(--f); outline-offset: -1px; }
 .cs-tdel { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--f2); }
-.cs-tdel:hover { background: var(--blood); color: #fff; }
+.cs-tdel:hover { background: var(--blood); color: var(--fld); }
 .cs-tab.drop { box-shadow: -4px 0 0 var(--f); }
 .cs-tab.dragging { opacity: .4; }
 .cs-tabadd {
@@ -282,22 +288,22 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 
 /* Notes: one free-text panel on ruled lines; entries (tabs) */
 .cs-notes { padding: 22px 18px 16px; }
-.cs-fold { padding: 2px 8px; border: 1px solid rgba(255, 255, 255, .45); background: transparent; color: #fff; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.cs-fold { padding: 2px 8px; border: 1px solid rgba(255, 255, 255, .45); background: transparent; color: var(--fld); font-size: 12px; font-weight: 700; text-transform: uppercase; }
 .cs-fold:hover { background: rgba(255, 255, 255, .14); }
 .cs-free {
   display: block; width: 100%; min-height: 288px; padding: 0 4px; border: 0; border-radius: 0; resize: vertical;
-  font-size: 18px; line-height: 32px; background: repeating-linear-gradient(#fff 0 31px, #d3d4d6 31px 32px);
+  font-size: 18px; line-height: 32px; background: repeating-linear-gradient(var(--sheet) 0 31px, #d3c9b8 31px 32px);
 }
 .cs-free:focus, .cs-ebody:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--f); }
 .cs-elist { display: flex; flex-direction: column; gap: 6px; }
-.cs-entry { background: #fff; border: 2px solid var(--f); }
+.cs-entry { background: var(--fld); border: 2px solid var(--f); }
 .cs-entry.drop { box-shadow: 0 -5px 0 var(--f); }
 .cs-ebar {
   display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 6px 0 2px;
-  background: var(--f); color: #fff; cursor: pointer; user-select: none;
+  background: var(--f); color: var(--fld); cursor: pointer; user-select: none;
 }
-.cs-ebar:hover { background: #4b4c4e; }
-.cs-ebar:focus-visible { outline: 2px solid #231f20; outline-offset: 2px; }
+.cs-ebar:hover { background: #4a423a; }
+.cs-ebar:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .cs-ebar .cs-grip { position: static; width: 20px; height: 26px; border: 0; border-radius: 0; background: transparent; opacity: .45; }
 .cs-ebar .cs-grip:hover { opacity: 1; }
 .cs-chev { transition: transform .15s; }
@@ -306,32 +312,32 @@ main.cs-page { max-width: 1760px; padding: 16px 20px 24px; }
 .cs-etitle { flex: none; max-width: 100%; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cs-etitle.none { font-weight: 500; opacity: .6; }
 .cs-epeek { flex: 1; min-width: 0; font-size: 15px; opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-input.cs-etitle { flex: 1; height: 28px; padding: 0 8px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .14); color: #fff; }
+input.cs-etitle { flex: 1; height: 28px; padding: 0 8px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .14); color: var(--fld); }
 input.cs-etitle::placeholder { color: rgba(255, 255, 255, .55); }
 input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
-.cs-edel { flex: none; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: #fff; opacity: 0; transition: opacity .12s; }
+.cs-edel { flex: none; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--fld); opacity: 0; transition: opacity .12s; }
 .cs-ebar:hover .cs-edel, .cs-entry.open .cs-edel, .cs-edel:focus-visible { opacity: .75; }
 .cs-edel:hover { opacity: 1; background: var(--blood); }
 .cs-ebody {
   display: block; width: 100%; min-height: 96px; padding: 10px 12px; border: 0; border-radius: 0; resize: none; overflow: hidden;
-  background: #fff; font-size: 16px; line-height: 1.4;
+  background: var(--fld); font-size: 16px; line-height: 1.4;
 }
 
 
 /* Tab entries: light bars, summary on the right */
 .cs-entry.lite { border: 1.5px solid var(--f); }
-.cs-entry.lite .cs-ebar { min-height: 46px; padding: 0 8px 0 4px; background: #efefef; color: var(--ink); }
-.cs-entry.lite .cs-ebar:hover { background: #e4e4e5; }
+.cs-entry.lite .cs-ebar { min-height: 46px; padding: 0 8px 0 4px; background: #e6dece; color: var(--ink); }
+.cs-entry.lite .cs-ebar:hover { background: #ddd4c3; }
 .cs-entry.lite .cs-etitle { font-size: 18px; }
 .cs-entry.lite .cs-epeek { margin-left: auto; flex: 0 1 auto; text-align: right; opacity: .75; font-size: 16px; }
-.cs-entry.lite input.cs-etitle { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+.cs-entry.lite input.cs-etitle { background: var(--fld); color: var(--ink); border: 1px solid var(--line); }
 .cs-entry.lite input.cs-etitle::placeholder { color: var(--f2); }
 .cs-entry.lite input.cs-etitle:focus { outline-color: var(--f); }
 .cs-entry.lite .cs-edel { color: var(--f); }
-.cs-entry.lite .cs-edel:hover { color: #fff; }
+.cs-entry.lite .cs-edel:hover { color: var(--fld); }
 .cs-esum {
   display: block; width: 100%; height: 34px; padding: 0 12px; border: 0; border-top: 1.5px solid var(--f); border-bottom: 1px solid var(--line);
-  border-radius: 0; background: #fafafa; font-size: 16px; font-weight: 600;
+  border-radius: 0; background: var(--fld); font-size: 16px; font-weight: 600;
 }
 .cs-esum:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--f); }
 .cs-entry.lite:not(:has(.cs-esum)) .cs-ebody { border-top: 1.5px solid var(--f); }

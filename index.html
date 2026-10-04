@@ -6,78 +6,38 @@
 <title>ChongKit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&family=Merriweather:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Merriweather:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/nimble.css">
-<style>
-  .hero h1 { margin: 10px 0 12px; font-size: 3.5rem; line-height: 1.05; letter-spacing: -.02em; }
-  .lede { margin: 0; font-size: 20px; color: var(--ink-soft); }
-  .tools { margin-top: 44px; display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; }
-  .tool { display: flex; flex-direction: column; gap: 14px; padding: 26px; text-decoration: none; color: var(--ink); transition: box-shadow .15s, transform .15s, border-color .15s; }
-  .tool:hover { border-color: var(--line-strong); box-shadow: var(--shadow-up); transform: translateY(-2px); color: var(--ink); }
-  .tool .top { display: flex; align-items: center; justify-content: space-between; }
-  .tool .ic { width: 48px; height: 48px; border-radius: 12px; background: var(--parchment); display: grid; place-items: center; color: var(--blood); }
-  .tool .ic svg { width: 26px; height: 26px; }
-  .tool h2 { font-size: 1.5rem; }
-  .tool .tag { font-weight: 700; }
-  .tool p { margin: 0; color: var(--ink-soft); }
-  .tool .open { margin-top: auto; padding-top: 6px; display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--blood); }
-  .tool .open svg { width: 18px; height: 18px; }
-  @media (max-width: 640px) { .hero h1 { font-size: 2.5rem; } .tools { margin-top: 32px; } }
-</style>
 </head>
 <body>
-<header class="kit-bar"><div class="kit-bar-in">
-  <a class="kit-mark" href="./" aria-current="page">ChongKit</a>
-  <nav class="kit-nav" aria-label="Tools">
-    <a href="combat-generator/">Combat Generator</a>
-    <a href="character-sheet/">Character Sheet</a>
-    <a href="chongs-tracker/">Chong's Tracker</a>
-    <a href="docs/rules-reference.html">Rules reference</a>
-  </nav>
-</div></header>
-<div class="notice"><p>This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p></div>
-
 <main>
-  <div class="hero">
-    <div class="eyebrow">Nimble 5e · v2</div>
-    <h1>ChongKit</h1>
-    <p class="lede">Tools for our Nimble table.</p>
-  </div>
+  <p class="notice">This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p>
+  <h1>ChongKit</h1>
+  <p class="tagline">Tools for our Nimble table.</p>
+  <div class="orn" aria-hidden="true"><svg viewBox="0 0 34 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 6h8M25 6h8"/><path d="M17 1l5 5-5 5-5-5z"/><path d="M9 6c2-3 4-3 4 0M25 6c-2-3-4-3-4 0"/></svg></div>
 
   <div class="tools">
-    <a class="card tool" href="combat-generator/">
-      <div class="top">
-        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/><path d="m5 14 4 4M7 17l-3 3M3 19l2 2"/></svg></span>
-        <span class="chip">v2</span>
-      </div>
-      <h2>Combat Generator</h2>
-      <div class="tag">By the Book.</div>
-      <p>Build an encounter for your party, Easy to Very Deadly, or a legendary solo boss, with generic monsters or named ones from the bestiary. Fresh dice that average exactly what the guide says, plus the gold reward.</p>
-      <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    <a class="block" href="combat-generator/">
+      <div class="bhead"><div class="bname">Combat Generator <span class="lvl">v2</span></div></div>
+      <div class="bar"><b>By the Book.</b> Monster HP, damage and Save DC from the Monster Builder.</div>
+      <div class="line">Build an encounter for your party, from Easy to Very Deadly, or a legendary solo boss, with generic monsters or named ones from the bestiary.
+        Fresh dice every time, each averaging exactly what the guide says, plus the expected gold reward.</div>
     </a>
-    <a class="card tool" href="character-sheet/">
-      <div class="top">
-        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
-        <span class="chip">v3</span>
-      </div>
-      <h2>Character Sheet</h2>
-      <div class="tag">Yours to Shape.</div>
-      <p>Six stats, saves, skills, Hit Points, Wounds, tabs of entries and notes. Add more of any box; skills follow their stat, HP boxes do the math, and everything saves in your browser.</p>
-      <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    <a class="block" href="chongs-tracker/">
+      <div class="bhead"><div class="bname">Chong's Tracker <span class="lvl">Owlbear</span></div></div>
+      <div class="bar"><b>Any System.</b> An Owlbear Rodeo extension.</div>
+      <div class="line">Track token health in tabs, with HP and AC badges on each token.
+        Paste a fight from the Combat Generator to add it in one go.</div>
     </a>
-    <a class="card tool" href="chongs-tracker/">
-      <div class="top">
-        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span>
-        <span class="chip">Owlbear</span>
-      </div>
-      <h2>Chong's Tracker</h2>
-      <div class="tag">Any System.</div>
-      <p>An Owlbear Rodeo extension: token health in tabs, with HP and AC badges on each token. Paste a fight from the Combat Generator to add it in one go.</p>
-      <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    <a class="block" href="character-sheet/">
+      <div class="bhead"><div class="bname">Character Sheet <span class="lvl">v3</span></div></div>
+      <div class="bar"><b>Yours to Shape.</b> The Nimble sheet, with boxes you can add and remove.</div>
+      <div class="line">Six stats, saves, skills, Hit Points, Wounds, tabs of entries and notes.
+        Skills follow their stat, HP boxes do the math, and everything saves in your browser.</div>
     </a>
   </div>
-</main>
 
-<footer class="foot"><p>ChongKit is an independent product published under the Nimble 3rd Party Creator License. Nimble © Nimble Co.</p></footer>
+  <p class="foot">ChongKit is an independent product published under the Nimble 3rd Party Creator License. Nimble © Nimble Co.</p>
+</main>
 </body>
 </html>

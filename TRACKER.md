@@ -43,12 +43,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
 ## Site look
 
-### ✅ Modernized — done
-- [x] `nimble.css` rewritten: flat warm paper, rounded cards, soft shadows, dark red accent; Merriweather + Barlow kept; flourishes, paper texture, notched blocks and arrow bars dropped
-- [x] Shared top bar on every Nimble page (ChongKit + tool links), notice as a strip under it, footer bar
-- [x] Landing page: hero + tool cards with icons
-- [x] Combat Generator: setup panel + results as monster cards (editable names); Copy keeps the tracker's text format and uses the edited names
-- [x] Character Sheet gets the top bar (sheet itself unchanged)
+### ✅ Back to the GM Guide look, easier on the eyes — done
+- [x] Tried a "modern" look (flat cards, top bar, monster cards); reverted: too bright, top bar distracting, the table prefers text output
+- [x] Palette resampled from the GM Guide: darker matte parchment (#e9e1d0), lighter parchment inside frames, soft brown-black ink (#2b2520), outlines #3a332c, no white surfaces anywhere
+- [x] Notched stat-block frames filled with panel parchment; flourishes, ribbon bars and squared controls kept
+- [x] Landing page: divider ornament under the title
+- [x] Combat Generator: setup and the text output side by side (stacked on phones); output box sits in a stat-block frame
+- [x] Character Sheet recoloured from white to parchment (fields, boxes, tabs, notes)
 
 ## Combat Generator (`combat-generator/`)
 
