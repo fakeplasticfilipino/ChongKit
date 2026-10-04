@@ -3,13 +3,17 @@ const test = require('node:test');
 const assert = require('node:assert');
 const S = require('../sheet.js');
 
-test('a blank sheet has the official layout', () => {
+test('a blank sheet has the default layout', () => {
   const s = S.blank();
-  assert.deepStrictEqual(Object.keys(s.stats), ['str', 'dex', 'int', 'wil']);
+  assert.deepStrictEqual(Object.keys(s.stats), ['str', 'dex', 'con', 'int', 'wis', 'cha']);
+  assert.deepStrictEqual(s.stats.con, { val: 0, slot: '', key: false });
+  assert.deepStrictEqual(Object.keys(s.saves), ['str', 'dex', 'wil']);
   assert.strictEqual(S.SKILLS.length, 10);
   assert.strictEqual(s.woundsMax, 6);
   assert.deepStrictEqual(s.removed, []);
-  assert.deepStrictEqual(s.extras.defense.map((b) => b.label), ['Mana', 'Gold', 'Inventory'], 'extras wait behind the +');
+  assert.deepStrictEqual(s.tabs.map((t) => t.name), ['Actions', 'Abilities', 'Inventory']);
+  assert.strictEqual(s.tab, s.tabs[0].id);
+  assert.deepStrictEqual(s.extras.combat.map((b) => b.label), ['Mana', 'Gold', 'Inventory'], 'extras wait behind the +');
 });
 
 test('skills and Initiative follow their stat', () => {
@@ -17,7 +21,7 @@ test('skills and Initiative follow their stat', () => {
   s.stats.int.val = 2;
   s.stats.dex.val = 2;
   assert.strictEqual(S.skillTotal(s, 'arcana'), 2);
-  assert.strictEqual(S.skillTotal(s, 'might'), 0);
+  assert.strictEqual(S.skillTotal(s, 'intimidation'), 0);
   s.skills.arcana = S.pointsFor(3, S.statVal(s, 'int')); // type 3 into Arcana
   assert.strictEqual(s.skills.arcana, 1);
   s.stats.int.val = 3;
@@ -25,8 +29,8 @@ test('skills and Initiative follow their stat', () => {
   assert.strictEqual(S.initiative(s), 2);
   s.initBonus = S.pointsFor(5, S.statVal(s, 'dex'));
   assert.strictEqual(S.initiative(s), 5);
-  const box = S.newBox('skills', 'skill', { stat: 'wil', points: 2 });
-  s.stats.wil.val = -1;
+  const box = S.newBox('skills', 'skill', { stat: 'cha', points: 2 });
+  s.stats.cha.val = -1;
   assert.strictEqual(S.boxSkillTotal(s, box), 1);
 });
 
@@ -34,9 +38,10 @@ test('wounds, saves, Bloodied', () => {
   assert.strictEqual(S.setWounds(0, 2), 3);
   assert.strictEqual(S.setWounds(3, 2), 2, 'clicking the last filled one clears it');
   assert.strictEqual(S.setWounds(3, 0), 1);
-  assert.strictEqual(S.toggleSave('', 'adv'), 'adv');
-  assert.strictEqual(S.toggleSave('adv', 'dis'), 'dis');
-  assert.strictEqual(S.toggleSave('dis', 'dis'), '');
+  assert.strictEqual(S.cycleSave(''), 'adv');
+  assert.strictEqual(S.cycleSave('adv'), 'dis');
+  assert.strictEqual(S.cycleSave('dis'), '');
+  assert.strictEqual(S.cycleSave('junk'), 'adv');
   assert.ok(S.bloodied({ cur: '6', max: '13' }));
   assert.ok(!S.bloodied({ cur: '7', max: '13' }));
   assert.ok(!S.bloodied({ cur: '', max: '13' }));
@@ -62,20 +67,48 @@ test('removing and restoring default boxes', () => {
   assert.ok(!S.isRemoved(s, 'skills', 'lore'));
 });
 
-test('normalize fills old or odd saves', () => {
-  const s = S.normalize({ name: 'Shroudstone', stats: { int: { val: '2', key: 1, save: 'adv' }, wil: { save: 'nope' } },
+test('normalize fills odd saves', () => {
+  const s = S.normalize({ v: 2, name: 'Shroudstone', stats: { int: { val: '2', key: 1, slot: 14 } },
+    saves: { dex: { val: 3, mode: 'adv' }, wil: { mode: 'nope' } },
     skills: { lore: '1' }, wounds: 99, removed: ['skills:lore', 'bogus:x'], extras: { stats: [{ type: 'pair', label: 'Luck', value: 3 }, null] },
+    tabs: [{ name: 'Spells', entries: [{ title: 'Light', sum: 'cantrip' }, 7] }, 'junk'], tab: 'missing',
     entries: [{ title: 'Reflective Aura', body: 'When you Defend…' }, 'junk'] });
   assert.strictEqual(s.name, 'Shroudstone');
-  assert.deepStrictEqual(s.stats.int, { val: 2, key: true, save: 'adv' });
-  assert.deepStrictEqual(s.stats.wil, { val: 0, key: false, save: '' });
+  assert.deepStrictEqual(s.stats.int, { val: 2, slot: '14', key: true });
+  assert.deepStrictEqual(s.saves.dex, { val: '3', mode: 'adv' });
+  assert.deepStrictEqual(s.saves.wil, { val: '', mode: '' });
   assert.strictEqual(s.skills.lore, 1);
   assert.strictEqual(s.wounds, 6);
   assert.deepStrictEqual(s.removed, ['skills:lore']);
   assert.deepStrictEqual(s.extras.stats.map((b) => [b.type, b.label, b.value, b.max]), [['pair', 'Luck', '3', '']]);
-  assert.deepStrictEqual(s.extras.defense, [], 'deleted extras stay deleted');
+  assert.deepStrictEqual(s.extras.combat, [], 'deleted extras stay deleted');
+  assert.deepStrictEqual(s.tabs.map((t) => [t.name, t.entries.map((e) => [e.title, e.sum])]), [['Spells', [['Light', 'cantrip']]]]);
+  assert.strictEqual(s.tab, s.tabs[0].id, 'a missing tab falls back to the first');
   assert.strictEqual(s.entries.length, 1);
   assert.ok(s.entries[0].id);
+  assert.deepStrictEqual(S.normalize({ v: 2, tabs: [] }).tabs, [], 'all tabs deleted stays deleted');
+});
+
+test('version 1 sheets move to the new layout', () => {
+  const s = S.normalize({ v: 1, name: 'Old', cls: 'Hunter', level: '3', ancestry: 'Human', size: 'Medium', speed: '6',
+    stats: { str: { val: 1, save: 'dis' }, dex: { val: 2, key: true }, wil: { val: 3, save: 'adv' } },
+    skills: { arcana: 1, finesse: 2, might: 0 }, removed: ['header:origin', 'defense:armor', 'stats:wil', 'skills:might'],
+    extras: { defense: [{ type: 'num', label: 'Gold', value: '12' }], skills: [{ type: 'skill', label: 'Ride', stat: 'wil', points: 1 }] },
+    entries: [{ title: 'Note', body: 'x' }] });
+  assert.strictEqual(s.cls, 'Hunter 3');
+  assert.strictEqual(s.speed, '6');
+  assert.strictEqual(s.stats.wis.val, 3, 'WIL becomes WIS');
+  assert.strictEqual(s.stats.dex.key, true);
+  assert.strictEqual(s.saves.str.mode, 'dis');
+  assert.strictEqual(s.saves.wil.mode, 'adv');
+  assert.strictEqual(s.skills.arcana, 1);
+  assert.deepStrictEqual(s.extras.skills.map((b) => [b.label, b.stat, b.points]), [['Ride', 'wis', 1], ['Finesse', 'dex', 2]]);
+  assert.deepStrictEqual(s.extras.combat.map((b) => [b.label, b.value]), [['Gold', '12']]);
+  assert.deepStrictEqual(s.extras.header.map((b) => [b.label, b.value]), [['Size', 'Medium']]);
+  assert.deepStrictEqual(s.removed.sort(), ['combat:armor', 'header:ancestry', 'header:cls', 'stats:wis']);
+  assert.deepStrictEqual(s.tabs.map((t) => t.name), ['Actions', 'Abilities', 'Inventory']);
+  assert.strictEqual(s.entries[0].title, 'Note');
+  assert.strictEqual(s.v, 2);
 });
 
 test('saving several characters; export and import', () => {
@@ -84,14 +117,17 @@ test('saving several characters; export and import', () => {
   const first = S.loadAll(storage);
   assert.strictEqual(Object.keys(first.chars).length, 1, 'starts with one blank character');
   const b = S.blank('Bryn');
+  b.tabs[0].entries.push(S.newEntry({ title: 'Longbow', sum: '+3' }));
   first.chars[b.id] = b;
   first.current = b.id;
   assert.ok(S.saveAll(storage, first));
   const again = S.loadAll(storage);
   assert.strictEqual(again.current, b.id);
   assert.strictEqual(again.chars[b.id].name, 'Bryn');
+  assert.strictEqual(again.chars[b.id].tabs[0].entries[0].sum, '+3');
   const copy = S.importJson(S.exportJson(b));
   assert.strictEqual(copy.name, 'Bryn');
+  assert.strictEqual(copy.tabs[0].entries[0].title, 'Longbow');
   assert.notStrictEqual(copy.id, b.id, 'an import never overwrites');
   assert.throws(() => S.importJson('{"name":"x"}'));
   assert.throws(() => S.importJson('nope'));
@@ -101,18 +137,24 @@ test('saving several characters; export and import', () => {
 
 test('undo brings back the layout but keeps what was typed since', () => {
   const before = S.blank();
-  before.entries = [{ id: 'a', title: 'Aura', body: '' }, { id: 'b', title: 'Rope', body: '' }];
+  before.entries = [{ id: 'a', title: 'Aura', sum: '', body: '' }, { id: 'b', title: 'Rope', sum: '', body: '' }];
+  before.tabs[0].entries = [{ id: 'x', title: 'Bow', sum: '', body: '' }, { id: 'y', title: 'Axe', sum: '', body: '' }];
   const now = JSON.parse(JSON.stringify(before));
-  now.entries = [{ id: 'a', title: 'Aura', body: 'typed later' }]; // Rope deleted, then Aura edited
+  now.entries = [{ id: 'a', title: 'Aura', sum: '', body: 'typed later' }]; // Rope deleted, then Aura edited
   now.removed = ['skills:lore'];
   now.hp.cur = '9';
-  now.extras.defense = now.extras.defense.slice(1);
-  now.extras.defense[0].value = '30';
+  now.extras.combat = now.extras.combat.slice(1);
+  now.extras.combat[0].value = '30';
+  now.tabs[0].entries = [{ id: 'y', title: 'Axe', sum: 'typed', body: '' }];
+  now.tabs[0].name = 'Attacks';
+  now.tabs.splice(2, 1); // Inventory tab deleted
   const u = S.undoLayout(before, now);
   assert.deepStrictEqual(u.entries.map((e) => [e.title, e.body]), [['Aura', 'typed later'], ['Rope', '']]);
   assert.deepStrictEqual(u.removed, []);
   assert.strictEqual(u.hp.cur, '9');
-  assert.deepStrictEqual(u.extras.defense.map((b) => [b.label, b.value]), [['Mana', ''], ['Gold', '30'], ['Inventory', '']]);
+  assert.deepStrictEqual(u.extras.combat.map((b) => [b.label, b.value]), [['Mana', ''], ['Gold', '30'], ['Inventory', '']]);
+  assert.deepStrictEqual(u.tabs.map((t) => t.name), ['Attacks', 'Abilities', 'Inventory']);
+  assert.deepStrictEqual(u.tabs[0].entries.map((e) => [e.title, e.sum]), [['Bow', ''], ['Axe', 'typed']]);
 });
 
 test('move', () => {

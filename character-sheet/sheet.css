@@ -1,6 +1,5 @@
-/* Character Sheet: the sheet itself follows the official Nimble character sheet (dark grey frames,
-   white fields, condensed caps labels; the blue fill on the PDF is only its form-field highlight, so
-   not copied), sitting on the site's parchment page (nimble.css). */
+/* Character Sheet: our table's sheet (rounded heavy-outlined boxes, panels with sideways labels,
+   white fields, condensed caps labels), sitting on the site's parchment page (nimble.css). */
 main.wide { max-width: 1140px; }
 
 /* Toolbar */
@@ -39,7 +38,7 @@ main.wide { max-width: 1140px; }
 /* The sheet */
 .cs {
   --f: #58595b; --f2: #808285; --line: #d9dadc; --line2: #b3b4b7; --hover: #f5f5f6; --lab: #8a8b8e;
-  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 16px 14px;
+  position: relative; display: flex; flex-direction: column; gap: 30px;
   padding: 26px 26px 28px; background: #fff; color: #231f20; font-family: var(--body);
   box-shadow: 0 1px 2px rgba(60, 40, 20, .12), 0 8px 28px rgba(60, 40, 20, .14);
 }
@@ -98,8 +97,6 @@ main.wide { max-width: 1140px; }
   position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 20; min-width: 320px;
   padding: 0 12px 12px; background: #fff; border: 3px solid var(--f); box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
 }
-.cs-def .cs-tray { left: auto; width: max(100%, 380px); }
-.cs-stats .cs-tray { right: auto; width: max(100%, 380px); }
 .cs-tray-title {
   margin: 0 -12px 12px; padding: 5px 12px; background: var(--f); color: #fff;
   font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
@@ -135,108 +132,171 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 .cs-setting .stepper { border-color: var(--f); background: #fff; }
 .cs-setting .stepper button, .cs-setting .stepper input { font-family: var(--body); font-size: 1.05rem; height: 30px; }
 
-/* Top row: Name, Ancestry/Class/Level | (Hit Points) | Size/Speed, Height/Weight, Hit Dice */
-.cs-head { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 14px; }
-.cs-hl, .cs-hr { display: flex; gap: 12px; min-width: 0; }
-.cs-hgroup { flex: var(--g, 1) 1 0; min-width: 0; }
-.cs-hin { display: flex; align-items: center; gap: 4px; }
-.cs-hin .narrow { flex: 0 0 40px; text-align: center; padding: 2px 4px; }
-.cs-hslash { color: var(--line2); font-size: 22px; }
-.cs-hlabel {
-  margin-top: 5px; padding-top: 3px; border-top: 2px solid var(--line); color: var(--lab);
-  font-size: 14.5px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
 
-/* Hit Points: a shield (roof on top, point at the bottom), Temp HP in its lower half */
-.cs-hp {
-  grid-column: 2; grid-row: 1 / 3; align-self: start; position: relative; z-index: 1; margin-top: 34px;
-  display: flex; flex-direction: column; gap: 5px; padding: 5px; background: var(--f);
-  clip-path: polygon(50% 0, 100% 20px, 100% calc(100% - 20px), 50% 100%, 0 calc(100% - 20px), 0 20px);
+/* Rounded boxes with a heavy outline, like the sheet's */
+.cs { --ink: #231f20; }
+.cs-rbox { position: relative; border: 2.5px solid var(--ink); border-radius: 16px; background: #fff; }
+.cs-num {
+  width: 100%; min-width: 0; height: auto; padding: 0 2px; border: 0; border-radius: 0; background: transparent;
+  text-align: center; font-size: 32px; font-weight: 600;
 }
-.cs-hp-a { background: #fff; padding: 24px 8px 10px; text-align: center; clip-path: polygon(50% 0, 100% 17px, 100% 100%, 0 100%, 0 17px); }
-.cs-hp-b { background: #fff; padding: 6px 8px 26px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 17px), 50% 100%, 0 calc(100% - 17px)); }
-.cs-heart { position: absolute; top: 8px; left: 50%; width: 20px; height: 20px; margin-left: -10px; color: var(--f); }
-.cs-hp .cs-cap { margin-bottom: 6px; }
-.cs-hp .cs-slash { height: 46px; }
-.cs-hp-b .cs-big { height: 42px; }
+.cs-num:hover { background: var(--hover); }
+.cs-num:focus { box-shadow: none; background: var(--hover); outline: 2px solid var(--f); outline-offset: -2px; }
+.cs-num.bloodied { color: var(--blood); font-weight: 800; }
+.cs-sub { color: #646565; font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; line-height: 1.15; }
+.cs-cap { font-size: 17px; font-weight: 800; text-transform: uppercase; line-height: 1.1; text-align: center; }
 
-/* Stats: ▲ save advantage, value, key-stat box + name, ▼ save disadvantage */
-.cs-stats { grid-column: 1; grid-row: 2; align-self: start; margin-top: 10px; }
-.cs-statrow { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 10px; }
-.cs-statw { display: flex; flex-direction: column; align-items: center; }
-.cs-stat {
-  align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 6px;
-  border: 3px solid var(--f); border-bottom: 0; border-radius: 3px 3px 0 0; background: #fff;
+/* Panels: a thin frame with a sideways label on the left, or a label on the top edge */
+.cs-pnl { border: 1.5px solid var(--ink); padding: 18px 18px 22px 52px; }
+.cs-vl {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 38px; display: flex; align-items: center; justify-content: center;
+  border-right: 1px solid var(--line);
 }
-.cs-stat > .cs-in { width: 64%; height: 56px; font-size: 28px; }
-.cs-statname {
-  align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px; margin: 0 -3px;
-  border-radius: 0 0 16px 16px; background: var(--f); color: #fff; font-size: 23px; font-weight: 700; text-transform: uppercase; cursor: pointer;
+.cs-vl span { writing-mode: vertical-rl; transform: rotate(180deg); color: var(--f); font-size: 14px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; }
+.cs-legend {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 0 14px; background: #fff;
+  color: var(--f); font-size: 14px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; white-space: nowrap;
 }
-.cs-save { position: relative; width: 34px; height: 20px; padding: 0; border: 0; background: transparent; }
-.cs-save::before { content: ""; position: absolute; inset: 4px 9px; background: #c4c5c7; transition: background .12s; }
-.cs-save:hover::before { background: var(--f2); }
-.cs-save.adv::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.cs-save.dis::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
-.cs-save.on::before { inset: 2px 9px; background: #231f20; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-.cs-statw > .cs-save.dis { margin-top: 4px; }
+.cs-more { right: 14px; top: -21px; height: 21px; }
+.cs-head .cs-more { right: 0; }
 
-/* Armor, Initiative, Wounds */
-.cs-def { grid-column: 3; grid-row: 2; display: flex; gap: 10px; align-items: flex-start; align-self: start; margin-top: 10px; }
-.cs-dbox {
-  flex: 0 0 80px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px 10px;
-  border: 3px solid var(--f); border-bottom-width: 9px; background: #fff;
+/* Details: name banner, then lines for class, ancestry, height, weight, and Hit Dice */
+.cs-head { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+.cs-ribbon { flex: 1 1 300px; display: flex; flex-direction: column; gap: 4px; }
+.cs-banner { height: 66px; padding: 3px 4px; background: var(--ink); clip-path: polygon(0 0, 100% 0, calc(100% - 20px) 50%, 100% 100%, 0 100%, 20px 50%); }
+.cs-banner-in { height: 100%; display: flex; align-items: center; padding: 0 30px; background: #fff; clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); }
+.cs-name {
+  height: 44px; padding: 0 6px; border: 0; font: italic 900 28px var(--head); font-variant: small-caps; letter-spacing: .01em;
 }
-.cs-dbox .cs-cap { font-size: 15px; }
-.cs-dbox .cs-in { width: 56px; }
-.cs-woundw { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: center; }
-.cs-wounds {
-  position: relative; align-self: stretch; margin-top: 10px; padding: 18px 10px 12px;
-  border: 3px solid var(--f); border-bottom-width: 9px; border-radius: 12px; background: #fff;
+.cs-name:focus { box-shadow: none; background: var(--hover); }
+.cs-ribbon > .cs-sub { align-self: flex-end; padding-right: 24px; }
+.cs-details {
+  flex: 2 1 500px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; padding: 12px 18px;
+  border: 2.5px solid var(--ink); border-radius: 14px;
 }
-.cs-wcap {
-  position: absolute; top: -12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px;
-  padding: 0 10px; background: #fff; font-size: 16px; font-weight: 700; text-transform: uppercase; white-space: nowrap;
-}
-.cs-wcap .cs-ic { width: 15px; height: 15px; color: var(--f); }
-.cs-track { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
-.cs-track::before { content: ""; position: absolute; left: 10px; right: 14px; top: 50%; height: 4px; margin-top: -2px; background: var(--f); }
-.cs-dot { position: relative; flex: none; width: 24px; height: 24px; padding: 0; border: 3px solid var(--f); border-radius: 50%; background: #fff; transition: transform .1s; }
-.cs-dot:hover { transform: scale(1.12); }
-.cs-dot.on { background: radial-gradient(circle, #231f20 0 5px, #fff 5.5px); }
-.cs-dot.skull { width: 30px; height: 30px; border: 0; background: transparent; color: var(--f); display: grid; place-items: center; }
-.cs-dot.skull .cs-ic { width: 28px; height: 28px; }
-.cs-dot.skull.on, .cs-wounds.dead .cs-dot.skull { color: var(--blood); }
-.cs-marks { display: flex; gap: 5px; margin-top: 6px; }
-.cs-mark { appearance: none; -webkit-appearance: none; width: 19px; height: 19px; margin: 0; border: 1.5px dashed var(--f2); background: #fff; cursor: pointer; }
-.cs-mark:checked { border-style: solid; border-color: var(--f); background: var(--f); }
-.cs-mark:focus-visible { outline: 2px solid var(--f); }
+.cs-dgrid { flex: 1 1 300px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 22px; }
+.cs-lf { display: flex; flex-direction: column; gap: 1px; }
+.cs-line { height: 30px; padding: 0 2px; border: 0; border-bottom: 1.5px solid #8a8b8e; border-radius: 0; font-size: 18px; }
+.cs-line:hover { border-color: var(--f); }
+.cs-line:focus { box-shadow: none; border-color: var(--ink); background: var(--hover); }
+.cs-hd { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0 auto; }
+.cs-hdbox { display: flex; align-items: center; width: 118px; height: 62px; padding: 0 6px; border-radius: 14px; }
+.cs-hdbox .cs-num { font-size: 26px; }
+.cs-hslash { color: var(--f2); font-size: 22px; }
 
-/* Skills: one band with notched end caps; stat on top, total in the middle, name below */
-.cs-skills { grid-column: 1 / -1; grid-row: 3; margin: 6px 26px 0; }
-.cs-skills::before, .cs-skills::after {
-  content: ""; position: absolute; top: 18px; width: 26px; height: 46px; background: var(--f);
-  clip-path: polygon(0 18%, 45% 18%, 45% 0, 100% 0, 100% 100%, 45% 100%, 45% 82%, 0 82%);
+/* Stats and Saves on the left, Combat on the right */
+.cs-row { display: flex; flex-wrap: wrap; gap: 26px 22px; align-items: stretch; }
+.cs-col { flex: 1 1 540px; min-width: 0; display: flex; flex-direction: column; gap: 26px; }
+.cs-statrow { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 12px; }
+.cs-stat { display: flex; flex-direction: column; align-items: center; gap: 18px; min-width: 0; }
+.cs-sbox { display: flex; align-items: center; width: 100%; height: 82px; padding: 0 4px 10px; }
+.cs-sbox > .cs-num { font-size: 36px; height: 54px; }
+/* The oval: a slot for a small number */
+.cs-oval {
+  position: absolute; left: 50%; bottom: -15px; z-index: 1; width: 50px; height: 28px; padding: 0 4px; transform: translateX(-50%);
+  border: 2.5px solid var(--ink); border-radius: 50%; background: #fff; text-align: center; font-size: 16px; font-weight: 700;
 }
-.cs-skills::before { left: -26px; }
-.cs-skills::after { right: -26px; transform: scaleX(-1); }
-.cs-band { display: flex; border: 3px solid var(--f); border-bottom: 0; background: #fff; }
-.cs-skill {
-  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding-top: 4px; border-right: 3px solid var(--f);
+.cs-oval:hover { border-color: var(--ink); background: var(--hover); }
+.cs-oval:focus { border-color: var(--ink); box-shadow: 0 0 0 2px var(--f2); }
+.cs-sname {
+  padding: 2px 8px; border: 1.5px solid transparent; border-radius: 4px; background: transparent;
+  font-size: 18px; font-weight: 800; text-transform: uppercase; line-height: 1.1;
 }
-.cs-skill:last-child { border-right: 0; }
-.cs-sst { color: #a7a8aa; font-size: 13px; font-weight: 700; text-transform: uppercase; line-height: 1.1; }
-.cs-skill > .cs-in { width: 64%; height: 44px; }
-.cs-snm {
-  align-self: stretch; margin-top: 5px; padding: 4px 2px; background: var(--f); color: #fff; text-align: center;
-  font-size: 14.5px; font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.cs-sname:hover { border-color: var(--line2); }
+.cs-sname.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.cs-saverow { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 20px; }
+.cs-save { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 76px; padding: 4px 12px 6px 16px; }
+.cs-save > .cs-num { font-size: 28px; height: 38px; }
+.cs-pip {
+  position: absolute; left: -14px; top: 50%; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; padding: 0;
+  transform: translateY(-50%); border: 2px solid var(--ink); border-radius: 50%; background: #fff; font-size: 11px; line-height: 1;
 }
-.cs-pts { position: absolute; top: 4px; right: 6px; color: var(--f2); font-size: 12px; font-weight: 700; }
-.cs.editing .cs-skill.cs-box { outline-offset: -4px; }
+.cs-pip:hover { background: var(--hover); }
+.cs-pip.on { background: var(--ink); color: #fff; }
+
+.cs-combat { flex: 1 1 400px; min-width: 0; }
+.cs-cmb { display: flex; gap: 18px; align-items: flex-start; }
+.cs-ac { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cs-shield { position: relative; width: 100px; height: 116px; color: var(--ink); }
+.cs-shield svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cs-shield .cs-num { position: absolute; left: 18px; right: 18px; top: 32px; width: auto; height: 50px; font-size: 36px; }
+.cs-cmb-r { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 16px; }
+.cs-cell { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cs-hpcell { flex-basis: 220px; }
+.cs-duo { display: flex; height: 76px; overflow: hidden; }
+.cs-duo > div { flex: 1 1 0; min-width: 0; display: flex; align-items: center; }
+.cs-duo > div + div { border-left: 2px solid var(--ink); }
+.cs-duo .cs-num { height: 100%; }
+.cs-duo .cs-tmp { flex: 0 0 56px; background: #f3f3f4; }
+.cs-duo .cs-tmp .cs-num { font-size: 22px; }
+.cs-labels { display: flex; padding: 0 2px; }
+.cs-labels > span { flex: 1 1 0; }
+.cs-labels .cs-tmp { flex: 0 0 56px; text-align: center; }
+.cs-wnd { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
+.cs-track { display: flex; align-items: center; justify-content: space-between; height: 58px; padding: 0 16px 8px; }
+.cs-track::before { content: ""; position: absolute; left: 30px; right: 40px; top: 21px; height: 2px; background: var(--ink); }
+.cs-w {
+  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; border: 0;
+  background: transparent; color: var(--ink); font-size: 11px; font-weight: 600;
+}
+.cs-dot { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; background: #fff; transition: transform .1s; }
+.cs-w:hover .cs-dot { transform: scale(1.12); }
+.cs-w.on .cs-dot { border-color: var(--blood); background: var(--blood); }
+.cs-wn { color: #646565; line-height: 1; }
+.cs-w.skull .cs-ic { width: 28px; height: 28px; margin-top: -3px; }
+.cs-w.skull .cs-wn { margin-top: -3px; }
+.cs-w.skull.on, .cs-track.dead .cs-w.skull { color: var(--blood); }
+
+/* Skills: a band of boxes, the name and its stat below each */
+.cs-skills { padding: 26px 18px 20px; }
+.cs-band { display: grid; grid-template-columns: repeat(var(--n, 10), minmax(0, 1fr)); gap: 16px 10px; }
+.cs-skill { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; }
+.cs-kbox { display: flex; align-items: center; width: 100%; height: 68px; padding: 0 4px; }
+.cs-kbox .cs-num { height: 48px; font-size: 30px; }
+.cs-pts { position: absolute; top: 3px; right: 9px; color: var(--f2); font-size: 12px; font-weight: 700; }
+.cs-skill .cs-cap { font-size: 15px; }
+
+/* Edit layout */
+.cs.editing .cs-rbox, .cs.editing .cs-lf, .cs.editing .cs-ribbon { outline: 1.5px dashed var(--f2); outline-offset: 4px; }
+.cs.editing .cs-box > .cs-x { top: -12px; left: -12px; }
+.cs.editing .cs-lf { padding-left: 14px; }
+.cs-stats .cs-tray, .cs-saves .cs-tray { right: auto; width: max(100%, 380px); }
+.cs-combat .cs-tray { left: auto; width: max(100%, 380px); }
+
+/* Tabs: a strip of tabs over a panel of collapsible entries */
+.cs-tabstrip { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px; padding-left: 12px; }
+.cs-tab {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 18px;
+  border: 2px solid var(--ink); border-bottom: 0; border-radius: 10px 10px 0 0; background: #e6e4df;
+  font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+}
+.cs-tab:hover { background: #f0efeb; }
+.cs-tab.on { z-index: 1; height: 46px; margin-bottom: -2px; background: #fff; }
+.cs-tabn { color: var(--f2); font-weight: 600; }
+.cs-tab.edit { padding: 0 6px 0 4px; gap: 2px; cursor: pointer; }
+.cs-tgrip { display: grid; place-items: center; width: 18px; height: 28px; color: var(--f2); cursor: grab; }
+.cs-tname {
+  min-width: 0; height: 28px; padding: 0 4px; border: 1px solid var(--line); border-radius: 2px; background: #fff;
+  font-size: 15px; font-weight: 700; text-transform: uppercase;
+}
+.cs-tname:focus { outline: 2px solid var(--f); outline-offset: -1px; }
+.cs-tdel { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: var(--blood); color: #fff; }
+.cs-tab.drop { box-shadow: -4px 0 0 var(--f); }
+.cs-tab.dragging { opacity: .4; }
+.cs-tabadd {
+  width: 46px; height: 40px; border: 2px dashed var(--f2); border-bottom: 0; border-radius: 10px 10px 0 0; background: transparent;
+  color: var(--f); font-size: 22px; font-weight: 700;
+}
+.cs-tabadd:hover { border-style: solid; background: var(--hover); }
+.cs-tabpanel { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 2px solid var(--ink); }
+.cs-tabpanel .cs-elist { padding: 0; }
+.cs-tabpanel .cs-addb.wide { margin-top: 0; }
+.cs-elist-top { display: flex; justify-content: flex-end; }
+.cs-elist-top .cs-fold { border-color: var(--line2); color: var(--f); }
+.cs-elist-top .cs-fold:hover { background: var(--hover); }
 
 /* Notes: free text on the left, collapsible entries on the right */
-.cs-notes { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.cs-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .cs-panel { display: flex; flex-direction: column; min-width: 0; min-height: 300px; background: #fff; border: 3px solid var(--f); }
 .cs-ptitle {
   display: flex; align-items: center; justify-content: space-between; min-height: 28px; padding: 0 6px 0 10px;
@@ -279,38 +339,50 @@ input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
   background: #fff; font-size: 16px; line-height: 1.4;
 }
 
-/* Phones and narrow windows: one column, the shield under the details. */
+
+/* Tab entries: light bars, summary on the right */
+.cs-entry.lite { border: 1.5px solid var(--f); }
+.cs-entry.lite .cs-ebar { min-height: 46px; padding: 0 8px 0 4px; background: #efefef; color: var(--ink); }
+.cs-entry.lite .cs-ebar:hover { background: #e4e4e5; }
+.cs-entry.lite .cs-etitle { font-size: 18px; }
+.cs-entry.lite .cs-epeek { margin-left: auto; flex: 0 1 auto; text-align: right; opacity: .75; font-size: 16px; }
+.cs-entry.lite input.cs-etitle { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+.cs-entry.lite input.cs-etitle::placeholder { color: var(--f2); }
+.cs-entry.lite input.cs-etitle:focus { outline-color: var(--f); }
+.cs-entry.lite .cs-edel { color: var(--f); }
+.cs-entry.lite .cs-edel:hover { color: #fff; }
+.cs-esum {
+  display: block; width: 100%; height: 34px; padding: 0 12px; border: 0; border-top: 1.5px solid var(--f); border-bottom: 1px solid var(--line);
+  border-radius: 0; background: #fafafa; font-size: 16px; font-weight: 600;
+}
+.cs-esum:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--f); }
+.cs-entry.lite:not(:has(.cs-esum)) .cs-ebody { border-top: 1.5px solid var(--f); }
+
+/* Phones and narrow windows */
 @media (max-width: 860px) {
-  .cs { grid-template-columns: minmax(0, 1fr); padding: 26px 14px 20px; gap: 22px; }
-  .cs-head { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .cs-hgap { display: none; }
-  .cs-hl, .cs-hr { flex-wrap: wrap; }
-  .cs-hgroup { flex-basis: 40%; }
-  .cs-hp { grid-column: 1; grid-row: auto; justify-self: center; width: 180px; margin-top: 0; }
-  .cs-stats, .cs-def, .cs-skills, .cs-notes { grid-column: 1; grid-row: auto; margin-top: 0; }
-  .cs-def { flex-wrap: wrap; }
-  .cs-woundw { flex-basis: 100%; }
-  .cs-dbox { flex: 1 1 0; }
-  .cs-skills { margin: 0; }
-  .cs-skills::before, .cs-skills::after { display: none; }
-  .cs-band { flex-wrap: wrap; border-bottom: 3px solid var(--f); }
-  .cs-skill { flex: 0 0 20%; border-bottom: 3px solid var(--f); }
-  .cs-skill:nth-child(5n) { border-right: 0; }
-  .cs-snm { font-size: 11.5px; padding: 3px 1px; }
+  .cs { padding: 26px 14px 20px; gap: 26px; }
+  .cs-cmb { flex-wrap: wrap; justify-content: center; }
+  .cs-cmb-r { flex-basis: 100%; }
   .cs-notes { grid-template-columns: minmax(0, 1fr); }
-  .cs-tray, .cs-def .cs-tray, .cs-stats .cs-tray { left: 0; right: 0; width: auto; min-width: 0; }
+  .cs-band { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .cs-tray, .cs-stats .cs-tray, .cs-saves .cs-tray, .cs-combat .cs-tray { left: 0; right: 0; width: auto; min-width: 0; }
   .cs-edel { opacity: .75; }
 }
-@media (max-width: 420px) {
-  .cs-statname { font-size: 18px; gap: 4px; }
-  .cs-stat > .cs-in { width: 76%; }
-  .cs-skill > .cs-in { width: 82%; font-size: 21px; }
-  .cs-snm { font-size: 9px; letter-spacing: -.04em; padding: 3px 0; text-overflow: clip; }
+@media (max-width: 560px) {
+  .cs-pnl { padding: 16px 12px 20px 44px; }
+  .cs-vl { width: 32px; }
+  .cs-statrow { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 22px; }
+  .cs-saverow { gap: 16px; }
+  .cs-save { padding: 4px 6px 6px 14px; }
+  .cs-band { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  .cs-skill .cs-cap { font-size: 13px; }
+  .cs-tabstrip { padding-left: 4px; gap: 3px; }
+  .cs-tab { padding: 0 9px; gap: 4px; font-size: 13px; letter-spacing: 0; }
   .cs-saved { display: none; }
 }
 
 @media print {
-  .cs-tools, .back, .cs-more, .cs-tray, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold { display: none !important; }
+  .cs-tools, .back, .cs-more, .cs-tray, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold, .cs-tabadd, .cs-tdel, .cs-tgrip { display: none !important; }
   main::before, main::after { display: none; }
   body { background: #fff; }
   .cs { box-shadow: none; padding: 0; outline: 0; }

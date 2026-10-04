@@ -1,44 +1,51 @@
 // Character Sheet: pure logic (no DOM), so it runs in the browser (window.Sheet) and under Node
 // for tests (module.exports).
-// The layout follows the official Nimble character sheet: four stats, ten skills (each tied to a
-// stat), Hit Points with Temp HP, Armor, Initiative, Wounds and Hit Dice. These are labels from
-// the sheet, not numbers from the GM Guide. Derived (not printed in the GM Guide), as on the sheet:
-// a skill is its stat plus the skill points put into it, and Initiative is DEX plus any bonus.
+// The layout is our table's sheet: six stats (each with a small number slot), three saves,
+// Armor, Hit Points, Initiative / Speed, Wounds, ten skills (each tied to a stat), tabs of
+// collapsible entries, and notes. These are labels, not numbers from the GM Guide. Derived (not
+// printed in the GM Guide): a skill is its stat plus the skill points put into it, and
+// Initiative is DEX plus any bonus.
 
 (function (root) {
-  const VERSION = 1;
+  const VERSION = 2;
   const STORE = 'chongkit.sheets'; // localStorage: { current, chars: { id: sheet } }
 
   const STATS = [
-    { id: 'str', name: 'STR' }, { id: 'dex', name: 'DEX' }, { id: 'int', name: 'INT' }, { id: 'wil', name: 'WIL' },
+    { id: 'str', name: 'STR' }, { id: 'dex', name: 'DEX' }, { id: 'con', name: 'CON' },
+    { id: 'int', name: 'INT' }, { id: 'wis', name: 'WIS' }, { id: 'cha', name: 'CHA' },
   ];
+  const SAVES = [{ id: 'str', name: 'STR' }, { id: 'dex', name: 'DEX' }, { id: 'wil', name: 'WIL' }];
   const SKILLS = [
     { id: 'arcana', name: 'Arcana', stat: 'int' },
     { id: 'examination', name: 'Examination', stat: 'int' },
-    { id: 'finesse', name: 'Finesse', stat: 'dex' },
-    { id: 'influence', name: 'Influence', stat: 'wil' },
-    { id: 'insight', name: 'Insight', stat: 'wil' },
+    { id: 'influence', name: 'Influence', stat: 'cha' },
+    { id: 'insight', name: 'Insight', stat: 'cha' },
+    { id: 'intimidation', name: 'Intimidation', stat: 'str' },
     { id: 'lore', name: 'Lore', stat: 'int' },
-    { id: 'might', name: 'Might', stat: 'str' },
-    { id: 'naturecraft', name: 'Naturecraft', stat: 'wil' },
-    { id: 'perception', name: 'Perception', stat: 'wil' },
+    { id: 'naturecraft', name: 'Naturecraft', stat: 'wis' },
+    { id: 'perception', name: 'Perception', stat: 'wis' },
+    { id: 'sleight', name: 'Sleight of Hand', stat: 'dex' },
     { id: 'stealth', name: 'Stealth', stat: 'dex' },
   ];
   // The boxes each section shows by default (any of them can be removed and restored).
   const SECTIONS = {
-    header: ['name', 'origin', 'sizeSpeed', 'heightWeight', 'hitDice'],
+    header: ['name', 'cls', 'ancestry', 'height', 'weight', 'hitDice'],
     stats: STATS.map((s) => s.id),
-    defense: ['armor', 'initiative', 'wounds'],
+    saves: SAVES.map((s) => s.id),
+    combat: ['armor', 'hp', 'initSpeed', 'wounds'],
     skills: SKILLS.map((s) => s.id),
   };
+  const TABS = ['Actions', 'Abilities', 'Inventory'];
   // Kinds of box you can add: a number, a line of text, current/max, or (skills only) a skill.
   const BOX_TYPES = ['num', 'text', 'pair', 'skill'];
-  const WOUNDS = 6; // the sheet's track: five circles and the skull
+  const WOUNDS = 6; // five circles and the skull
 
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
   const int = (v, d = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : d; };
   const str = (v) => (v == null ? '' : String(v));
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+  const mode = (v) => (v === 'adv' || v === 'dis' ? v : '');
+  const emptyExtras = () => Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, []]));
 
   function newBox(section, type, extra = {}) {
     const t = BOX_TYPES.includes(type) ? type : 'num';
@@ -47,33 +54,85 @@
     if (t === 'skill') { box.stat = 'str'; box.points = 0; delete box.value; }
     return Object.assign(box, extra);
   }
+  const newEntry = (extra = {}) => ({ id: uid(), title: '', sum: '', body: '', ...extra });
+  const newTab = (name = '') => ({ id: uid(), name, entries: [] });
 
   function blank(name = '') {
     const s = {
       v: VERSION, id: uid(), name,
-      ancestry: '', cls: '', level: '1', size: '', speed: '', height: '', weight: '',
+      cls: '', ancestry: '', height: '', weight: '', speed: '',
       hitDice: { cur: '1', die: '' },
       hp: { cur: '', max: '', temp: '' },
-      armor: '', initBonus: 0, wounds: 0, woundsMax: WOUNDS, woundMarks: [false, false, false, false, false],
-      stats: {}, skills: {},
+      armor: '', initBonus: 0, wounds: 0, woundsMax: WOUNDS,
+      stats: {}, saves: {}, skills: {},
       removed: [], // default boxes taken off the sheet: `${section}:${id}`
-      extras: { header: [], stats: [], defense: [], skills: [] },
+      extras: emptyExtras(),
+      tabs: TABS.map(newTab), tab: '',
       notes: '', entries: [],
     };
-    STATS.forEach((st) => { s.stats[st.id] = { val: 0, key: false, save: '' }; });
+    s.tab = s.tabs[0].id;
+    STATS.forEach((st) => { s.stats[st.id] = { val: 0, slot: '', key: false }; });
+    SAVES.forEach((sv) => { s.saves[sv.id] = { val: '', mode: '' }; });
     SKILLS.forEach((sk) => { s.skills[sk.id] = 0; });
-    // Common extras, waiting behind the defense section's +.
-    s.extras.defense.push(newBox('defense', 'pair', { label: 'Mana' }), newBox('defense', 'num', { label: 'Gold' }),
-      newBox('defense', 'pair', { label: 'Inventory', max: '10' }));
+    // Common extras, waiting behind the combat section's +.
+    s.extras.combat.push(newBox('combat', 'pair', { label: 'Mana' }), newBox('combat', 'num', { label: 'Gold' }),
+      newBox('combat', 'pair', { label: 'Inventory', max: '10' }));
     return s;
   }
 
+  // Version 1 sheets (four stats, Nimble's skill list, a "defense" section) move to the new
+  // layout without losing anything typed: WIL becomes WIS, dropped skills with points become
+  // extra skill boxes, level joins the class.
+  function upgrade(raw) {
+    const r = JSON.parse(JSON.stringify(raw));
+    const stats = r.stats || {};
+    if (stats.wil && !stats.wis) stats.wis = stats.wil;
+    r.saves = {};
+    for (const id of ['str', 'dex', 'wil']) r.saves[id] = { val: '', mode: (stats[id] || {}).save };
+    r.stats = stats;
+    const lvl = str(r.level).trim();
+    r.cls = [str(r.cls).trim(), str(r.cls).trim() && lvl ? lvl : ''].filter(Boolean).join(' ');
+    const extras = r.extras || {};
+    extras.combat = extras.defense || [];
+    extras.header = (extras.header || []).slice();
+    if (str(r.size).trim()) extras.header.push({ type: 'text', label: 'Size', value: r.size });
+    extras.skills = (extras.skills || []).slice();
+    const old = { finesse: ['Finesse', 'dex'], might: ['Might', 'str'] };
+    for (const [id, [label, stat]] of Object.entries(old)) {
+      const pts = int((r.skills || {})[id]);
+      if (pts) extras.skills.push({ type: 'skill', label, stat, points: pts });
+    }
+    if (extras.stats) extras.stats.forEach((b) => { if (b && b.stat === 'wil') b.stat = 'wis'; });
+    extras.skills.forEach((b) => { if (b && b.stat === 'wil') b.stat = 'wis'; });
+    r.extras = extras;
+    const moved = { 'header:origin': ['header:cls', 'header:ancestry'], 'header:heightWeight': ['header:height', 'header:weight'],
+      'header:sizeSpeed': [], 'stats:wil': ['stats:wis'], 'skills:finesse': [], 'skills:might': [] };
+    r.removed = (Array.isArray(r.removed) ? r.removed : []).flatMap((k) => {
+      if (moved[k]) return moved[k];
+      return typeof k === 'string' && k.startsWith('defense:') ? ['combat:' + k.slice(8)] : [k];
+    });
+    return r;
+  }
+
+  function normBox(sec, b) {
+    const box = newBox(sec, b.type);
+    box.id = str(b.id) || box.id;
+    box.label = str(b.label);
+    if (box.type === 'skill') { box.stat = STATS.some((x) => x.id === b.stat) ? b.stat : 'str'; box.points = int(b.points); }
+    else box.value = str(b.value);
+    if (box.type === 'pair') box.max = str(b.max);
+    return box;
+  }
+  const normEntries = (list) => (Array.isArray(list) ? list : []).filter((e) => e && typeof e === 'object')
+    .map((e) => ({ id: str(e.id) || uid(), title: str(e.title), sum: str(e.sum), body: str(e.body) }));
+
   // Anything loaded (old saves, imports) is filled out to the current shape.
-  function normalize(raw) {
+  function normalize(input) {
+    if (!input || typeof input !== 'object') return blank();
+    const raw = int(input.v, 1) < 2 ? upgrade(input) : input;
     const s = blank();
-    s.extras = { header: [], stats: [], defense: [], skills: [] };
-    if (!raw || typeof raw !== 'object') return blank();
-    for (const k of ['id', 'name', 'ancestry', 'cls', 'level', 'size', 'speed', 'height', 'weight', 'armor', 'notes']) {
+    s.extras = emptyExtras();
+    for (const k of ['id', 'name', 'cls', 'ancestry', 'height', 'weight', 'speed', 'armor', 'notes']) {
       if (raw[k] != null) s[k] = str(raw[k]);
     }
     if (!s.id) s.id = uid();
@@ -82,29 +141,27 @@
     s.initBonus = int(raw.initBonus);
     s.woundsMax = clamp(int(raw.woundsMax, WOUNDS), 1, 20);
     s.wounds = clamp(int(raw.wounds), 0, s.woundsMax);
-    const marks = Array.isArray(raw.woundMarks) ? raw.woundMarks : [];
-    s.woundMarks = [0, 1, 2, 3, 4].map((i) => !!marks[i]);
     for (const st of STATS) {
       const r = (raw.stats || {})[st.id] || {};
-      s.stats[st.id] = { val: int(r.val), key: !!r.key, save: r.save === 'adv' || r.save === 'dis' ? r.save : '' };
+      s.stats[st.id] = { val: int(r.val), slot: str(r.slot), key: !!r.key };
+    }
+    for (const sv of SAVES) {
+      const r = (raw.saves || {})[sv.id] || {};
+      s.saves[sv.id] = { val: str(r.val), mode: mode(r.mode) };
     }
     for (const sk of SKILLS) s.skills[sk.id] = int((raw.skills || {})[sk.id]);
     const known = new Set(Object.entries(SECTIONS).flatMap(([sec, ids]) => ids.map((id) => `${sec}:${id}`)));
     s.removed = Array.isArray(raw.removed) ? [...new Set(raw.removed.filter((r) => known.has(r)))] : [];
     for (const sec of Object.keys(SECTIONS)) {
       const list = Array.isArray((raw.extras || {})[sec]) ? raw.extras[sec] : [];
-      s.extras[sec] = list.filter((b) => b && typeof b === 'object').map((b) => {
-        const box = newBox(sec, b.type);
-        box.id = str(b.id) || box.id;
-        box.label = str(b.label);
-        if (box.type === 'skill') { box.stat = STATS.some((x) => x.id === b.stat) ? b.stat : 'str'; box.points = int(b.points); }
-        else box.value = str(b.value);
-        if (box.type === 'pair') box.max = str(b.max);
-        return box;
-      });
+      s.extras[sec] = list.filter((b) => b && typeof b === 'object').map((b) => normBox(sec, b));
     }
-    s.entries = (Array.isArray(raw.entries) ? raw.entries : []).filter((e) => e && typeof e === 'object')
-      .map((e) => ({ id: str(e.id) || uid(), title: str(e.title), body: str(e.body) }));
+    if (Array.isArray(raw.tabs)) {
+      s.tabs = raw.tabs.filter((t) => t && typeof t === 'object')
+        .map((t) => ({ id: str(t.id) || uid(), name: str(t.name), entries: normEntries(t.entries) }));
+    }
+    s.tab = s.tabs.some((t) => t.id === raw.tab) ? raw.tab : (s.tabs[0] || {}).id || '';
+    s.entries = normEntries(raw.entries);
     return s;
   }
 
@@ -118,8 +175,8 @@
   // Click a wound circle: fill up to it, or clear it if it's the last one filled.
   const setWounds = (current, index) => (index + 1 === current ? index : index + 1);
 
-  // Save advantage / disadvantage: one per stat, clicking the marked one clears it.
-  const toggleSave = (current, which) => (current === which ? '' : which);
+  // Save advantage / disadvantage: the pip cycles none → ▲ advantage → ▼ disadvantage → none.
+  const cycleSave = (current) => ({ '': 'adv', adv: 'dis', dis: '' })[mode(current)];
 
   // Bloodied: at or below half Max HP.
   function bloodied(hp) {
@@ -168,14 +225,19 @@
     return { ...s, removed };
   }
 
-  // Undo a layout change (remove, delete, add, move): bring back the earlier layout, but keep
-  // everything typed since then (boxes and entries that still exist keep their current text).
+  // Undo a layout change (remove, delete, add, move, tabs): bring back the earlier layout, but
+  // keep everything typed since then (boxes, entries and tabs that still exist keep their text).
   function undoLayout(prev, cur) {
     const pick = (before, now) => before.map((b) => now.find((c) => c.id === b.id) || b);
     const out = { ...cur, removed: prev.removed.slice(), woundsMax: prev.woundsMax };
     out.wounds = Math.min(cur.wounds, out.woundsMax);
-    out.extras = Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, pick(prev.extras[k] || [], cur.extras[k] || [])]));
+    out.extras = Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, pick((prev.extras || {})[k] || [], (cur.extras || {})[k] || [])]));
     out.entries = pick(prev.entries, cur.entries);
+    out.tabs = (prev.tabs || []).map((t) => {
+      const now = (cur.tabs || []).find((c) => c.id === t.id);
+      return now ? { ...now, entries: pick(t.entries, now.entries) } : t;
+    });
+    if (!out.tabs.some((t) => t.id === out.tab)) out.tab = prev.tab;
     return out;
   }
 
@@ -214,9 +276,9 @@
   }
 
   const api = {
-    VERSION, STORE, STATS, SKILLS, SECTIONS, BOX_TYPES, WOUNDS, uid,
-    blank, normalize, newBox, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
-    setWounds, toggleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
+    VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, WOUNDS, uid,
+    blank, normalize, newBox, newEntry, newTab, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
+    setWounds, cycleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
     loadAll, saveAll, exportJson, importJson,
   };
   if (typeof module !== 'undefined') module.exports = api;

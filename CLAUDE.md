@@ -51,15 +51,17 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 
 `character-sheet/`: the Nimble character sheet. The Nimble ground rules apply, with these differences:
 
-1. **The sheet looks like the official Nimble character sheet** (dark grey frames, white fields (never the PDF's blue form-field fill),
-   condensed caps labels), set on the usual parchment page with the notice and footer. Its own styles
-   live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
+1. **The sheet is our table's sheet** (v2): rounded heavy-outlined boxes, panels with sideways labels,
+   white fields, condensed caps labels, set on the usual parchment page with the notice and footer.
+   Six stats (STR DEX CON INT WIS CHA, each with an oval number slot), three saves (STR DEX WIL),
+   Combat (Armor, HP, Initiative/Speed, Wounds), ten skills, tabs of collapsible entries, notes.
+   Its own styles live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
 2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
-3. **No GM Guide numbers:** the layout, skill/stat pairs and the six-wound track come from the official
-   sheet; call them derived. Don't add class or ancestry data that isn't in the PDF.
+3. **No GM Guide numbers:** the layout, stats, saves, skill/stat pairs and the six-wound track are the
+   table's choices; call them derived. Don't add class or ancestry data that isn't in the PDF.
 4. **Configurable:** playing vs Edit layout. A section's + tab opens a tray (floating, the sheet never
    grows) with its extra boxes; in Edit layout the tray also adds, restores and reorders, and boxes
-   get a × to remove. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`.
+   get a × to remove. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs (`tabs`: name + entries) are added, renamed, deleted and reordered in Edit layout. Old saves are upgraded in `normalize` (`v` < 2).
 5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
    `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
 
@@ -100,8 +102,8 @@ assets/css/nimble.css        Shared GM-Guide look for every page
 character-sheet/             → /character-sheet/
   index.html                 Page + toolbar
   sheet.js                   Pure logic: defaults, skill math, calculator, saving, import/export
-  ui.js                      Draws the sheet, popovers, notes entries
-  sheet.css                  The official-sheet look
+  ui.js                      Draws the sheet, trays, tabs and entries
+  sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)
 combat-generator/            → /combat-generator/
   index.html                 UI

@@ -18,6 +18,17 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Tests: skill math, wounds, saves, Bloodied, calculator, normalize, storage, import/export, undo
 - [x] Clearer editing: playing vs **Edit layout** mode, + N tabs for extras, red × to remove, Undo toast + Ctrl+Z (keeps typing done since), grips for dragging, ↑/↓ steps numbers, outlined white fields, entry previews + expand/collapse all, More menu, Saved indicator
 
+### ✅ v2 — done (redesign)
+- [x] New look from the table's sheet: name banner, details box, rounded heavy-outlined boxes, panels with sideways labels
+- [x] Six stats (STR DEX CON INT WIS CHA), each with an oval number slot; click the name to mark a key stat
+- [x] Saves as their own section (STR DEX WIL): number + ▲/▼ pip
+- [x] Combat panel: Armor shield, HP / Max HP / Temp, Initiative / Speed, Wounds track
+- [x] Skills: Arcana, Examination, Influence, Insight, Intimidation, Lore, Naturecraft, Perception, Sleight of Hand, Stealth
+- [x] Tabs (Actions / Abilities / Inventory) of collapsible bars with a summary; tabs renamed, added, deleted, reordered in Edit layout
+- [x] Every section still removable / restorable / extendable; notes unchanged
+- [x] v1 saves upgrade automatically (WIL → WIS, level joins class, Finesse/Might points → extra skill boxes)
+- [x] Tests: new layout, saves cycle, v1 upgrade, tabs in normalize / undo / import
+
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 
