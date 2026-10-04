@@ -84,14 +84,38 @@ HP: Minion (any damage kills)
 Damage: Stab. 1d4 (no crits, miss on a 1)
 
 Loot: 40 gp each (160 gp for the party)`;
-  const { rows } = C.parseCommand(text);
+  const { rows, note } = C.parseCommand(text);
   assert.deepStrictEqual(rows, [
-    { name: 'Monster A', count: 1, hp: 119, max: 119, extra: 0, ac: 'M' },
-    { name: 'Kobold Sneak', count: 2, hp: 15, max: 15, extra: 0, ac: '' },
-    { name: 'Kobold Minion', count: 1, hp: 3, max: 3, extra: 0, ac: '', group: true },
+    { name: 'Monster A', count: 1, hp: 119, max: 119, extra: 0, ac: 'M', note: 'Damage: (2×) 3d10+1\nSave DC: 16' },
+    { name: 'Kobold Sneak', count: 2, hp: 15, max: 15, extra: 0, ac: 'N', note: 'Damage: Stab. 1d4+2 (or Sling, Range 8).\nSave DC: 10 (by level)' },
+    { name: 'Kobold Minion', count: 1, hp: 3, max: 3, extra: 0, ac: '', group: true, note: 'Damage: Stab. 1d4 (no crits, miss on a 1)' },
   ]);
-  const boss = C.parseCommand('The Boss (Legendary, level 3)\nHP: 100\nArmor: Heavy').rows;
-  assert.deepStrictEqual(boss, [{ name: 'The Boss', count: 1, hp: 100, max: 100, extra: 0, ac: 'H' }]);
+  assert.strictEqual(note, 'Hard Fight · 4 heroes, level 5\n\nTwist: Defend the Fort. Heroes must defend a location.\n\n'
+    + 'Kobolds\nNooooo! When an ally within 2 spaces dies, attack once for free.\n\nLoot: 40 gp each (160 gp for the party)');
+  const entries = C.rowsToEntries(rows, { tab: 't' });
+  assert.deepStrictEqual(entries.map((e) => e.note), [rows[0].note, rows[1].note, rows[1].note, rows[2].note], 'every copy keeps the note');
+  const boss = C.parseCommand('The Boss (Legendary, level 3)\nHP: 100\nArmor: Heavy\nSave DC: 15').rows;
+  assert.deepStrictEqual(boss, [{ name: 'The Boss', count: 1, hp: 100, max: 100, extra: 0, ac: 'H', note: 'Save DC: 15' }]);
+  assert.strictEqual(C.parseCommand('Wolf x2\nHP: 9').note, undefined, 'no general note without one');
+  assert.strictEqual(C.newEntry({ name: 'Plain' }).note, undefined);
+});
+
+test('armor keeps its first letter; tab notes add up', () => {
+  assert.deepStrictEqual(['None', 'medium', 'Heavy', '15', ''].map(C.acFrom), ['N', 'M', 'H', '15', '']);
+  assert.strictEqual(C.parseCommand('Ogre 59 ac:Medium').rows[0].ac, 'M');
+  assert.strictEqual(C.addNote('', 'Fight'), 'Fight');
+  assert.strictEqual(C.addNote('Fight', 'Loot'), 'Fight\n\nLoot');
+  assert.strictEqual(C.addNote('Fight\n\nLoot', 'Loot'), 'Fight\n\nLoot', 'pasting twice adds nothing');
+});
+
+test('tab notes are saved, the Players tab too', () => {
+  const md = { ...C.tabPatch({ id: 'x', name: 'Fight', order: 1, note: 'Loot: 40 gp' }), ...C.tabPatch({ id: C.PLAYERS_TAB, name: 'Players', note: 'Party gold' }) };
+  const s = C.readState(md);
+  assert.deepStrictEqual(s.tabs.map((t) => t.note), ['Party gold', 'Loot: 40 gp']);
+  assert.ok(!s.tabs[0].room, 'a scene note does not mark the Players tab as a room tab');
+  const back = C.moveTabPatches({ id: C.PLAYERS_TAB, name: 'Players', note: 'Party gold' }, [], false);
+  assert.strictEqual(C.readState(back.to, back.from).tabs[0].note, 'Party gold', 'the note comes back to the scene');
+  assert.strictEqual(C.readState({}, { ...C.tabPatch({ id: C.PLAYERS_TAB, name: 'Players', note: 'Room' }) }).tabs[0].note, 'Room');
 });
 
 test('scene metadata round trip: Players tab always exists, deleted entries vanish', () => {

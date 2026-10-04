@@ -37,8 +37,15 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Tests: math, HP rules, command parser, generator paste, metadata round trip, permissions
 - [x] Browser smoke test against a fake Owlbear SDK (add, math, Extra/Max HP, AC, attach/detach, focus, hide all, rename, room tab, /clear, help, delete tab, phone width): all pass. Fixed two typing bugs it found: text typed into the add box right after making a tab was wiped, and a change from another player mid-rename wiped the tab name (v1.4.1)
 
+## ✅ Notes (v1.5.0)
+- [x] Entry notes (⋯ menu): a pasted generator block keeps its Damage, Save DC, Move and ability lines there
+- [x] Tab general note (box under the add box): the fight's title, twist, family traits and loot from a paste; GM tabs: GM only. Works on the Players tab too (its `t/players` key carries the note)
+- [x] Armor keeps its first letter: `Armor: None` → N (was blank), Medium → M, Heavy → H; `ac:Medium` too
+- [x] Tests: notes from a paste, general note, armor letters, Players tab note round trip
+- [x] Browser smoke test (fake SDK): paste → tab note + entry notes, edit both, saved to metadata
+
 ## 📋 Next up
-- [ ] Install in a real Owlbear room and check: drag onto a tab, the × detach, a room tab across two scenes, badge size/position on different token sizes, the AC shield shape, click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
+- [ ] Install in a real Owlbear room and check: notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge size/position on different token sizes, the AC shield shape, click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
 - [ ] Fix whatever that test turns up
 
 ## Dropped

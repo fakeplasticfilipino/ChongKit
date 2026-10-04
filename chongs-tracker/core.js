@@ -112,8 +112,7 @@
   //   Ogre 59 ac:M max:70 extra:5
   //   Kobold Minion x10    (a name with "minion" in it: ONE entry whose HP is the number of minions)
   // or paste the ChongKit combat generator's text: every "Name xN / HP: n / Armor: X" block.
-  const ARMOR_AC = { none: '', medium: 'M', heavy: 'H' };
-
+  // ac: and Armor: keep a word's first letter (None -> N, Medium -> M, Heavy -> H).
   function parseCommand(text) {
     const src = String(text).replace(/\r\n?/g, '\n').trim();
     if (!src) return { rows: [], errors: [] };
@@ -135,7 +134,7 @@
       if ((m = /^[x×](\d+)$/i.exec(w))) row.count = Math.max(1, Math.min(50, parseInt(m[1], 10)));
       else if ((m = /^(hp|max|extra|ac):(.+)$/i.exec(w))) {
         const key = m[1].toLowerCase(), val = m[2];
-        if (key === 'ac') row.ac = val;
+        if (key === 'ac') row.ac = acFrom(val);
         else {
           const n = evalExpr(val);
           if (n === null) return null;
@@ -168,27 +167,47 @@
     return row;
   }
 
+  // Each block with an "HP:" line is a monster. Its other lines (Damage, Save DC, Move, abilities)
+  // become the entry's note; blocks without a monster (the fight's title, twist, traits, loot) become
+  // the tab's general note.
   function parseGeneratorText(src) {
-    const rows = [];
+    const rows = [], general = [];
     for (const block of src.split(/\n\s*\n/)) {
       const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) continue;
       const hpLine = lines.find((l) => /^HP:/i.test(l));
-      if (!hpLine || !lines.length) continue;
+      if (!hpLine) { general.push(lines.join('\n')); continue; }
       const head = /^(.*?)\s+x(\d+)\b/i.exec(lines[0]);
       const name = (head ? head[1] : lines[0]).replace(/\s*\(.*\)\s*$/, '').trim();
       const count = head ? parseInt(head[2], 10) : 1;
       const hpText = hpLine.replace(/^HP:\s*/i, '');
       const minion = /^minion/i.test(hpText);
       const hp = minion ? count : parseInt(hpText, 10);
-      if (!name || !Number.isFinite(hp)) continue;
+      if (!name || !Number.isFinite(hp)) { general.push(lines.join('\n')); continue; }
       const armorLine = lines.find((l) => /^Armor:/i.test(l));
-      const armor = armorLine ? armorLine.replace(/^Armor:\s*/i, '').trim() : '';
-      const ac = armor.toLowerCase() in ARMOR_AC ? ARMOR_AC[armor.toLowerCase()] : armor;
+      const ac = armorLine ? acFrom(armorLine.replace(/^Armor:\s*/i, '')) : '';
       const row = { name, count: minion ? 1 : count, hp, max: hp, extra: 0, ac };
       if (minion) row.group = true;
+      const note = lines.slice(1).filter((l) => l !== hpLine && l !== armorLine).join('\n');
+      if (note) row.note = note;
       rows.push(row);
     }
-    return { rows, errors: [] };
+    const out = { rows, errors: [] };
+    if (general.length) out.note = general.join('\n\n');
+    return out;
+  }
+
+  // Armor written as a word keeps its first letter ("None" -> N, "Medium" -> M); numbers stay as typed.
+  function acFrom(text) {
+    const t = String(text).trim();
+    return /^[a-z]/i.test(t) ? t[0].toUpperCase() : t;
+  }
+
+  // A pasted general note goes under the tab's note (unless it's already there).
+  function addNote(note, more) {
+    const a = String(note || '').trim(), b = String(more || '').trim();
+    if (!b || a.includes(b)) return a;
+    return a ? `${a}\n\n${b}` : b;
   }
 
   // One row "Goblin x3" -> entries "Goblin 1", "Goblin 2", "Goblin 3".
@@ -198,7 +217,7 @@
       for (let i = 1; i <= r.count; i++) {
         out.push(newEntry({
           name: r.count > 1 ? `${r.name} ${i}` : r.name,
-          hp: r.hp, max: r.max, extra: r.extra, ac: r.ac,
+          hp: r.hp, max: r.max, extra: r.extra, ac: r.ac, note: r.note,
           tab, order: order + out.length, hidden, group: !!r.group,
         }));
       }
@@ -210,12 +229,14 @@
   // hidden = the stats are hidden from players: they see the entry, its AC, and H or B instead of
   // its HP. New entries start hidden, except on the Players tab (or another players' tab).
   // group = minions sharing this entry: picking tokens attaches all of them to it.
-  function newEntry({ name = 'New', hp = 0, max = null, extra = 0, ac = '', tab = PLAYERS_TAB, order = 0, token = null, hidden, group = false } = {}) {
+  // note = free text kept with the entry (damage, save DC, abilities...).
+  function newEntry({ name = 'New', hp = 0, max = null, extra = 0, ac = '', note = '', tab = PLAYERS_TAB, order = 0, token = null, hidden, group = false } = {}) {
     const e = {
       id: uid(), tab, order, name, hp, max, extra, ac, token, tokens: token ? [token] : [],
       hidden: hidden === undefined ? tab !== PLAYERS_TAB : !!hidden,
     };
     if (group) e.group = true;
+    if (note) e.note = note;
     return e;
   }
 
@@ -256,6 +277,7 @@
   }
 
   // --- Metadata <-> state ----------------------------------------------------------
+  // A tab may carry a general note (`note`: free text shown at the top of the tab).
   // Tabs live in the scene's metadata, except tabs saved to the room (room: true), which live in the
   // room's metadata with their entries so they show in every scene. The Players tab is always there;
   // a `t/players` key in the room's metadata only marks it as saved to the room.
@@ -276,9 +298,11 @@
     const byId = new Map();
     readTabs(md, byId, false);
     readTabs(rmd, byId, true); // a room tab wins over a scene copy left behind mid-move
+    // The Players tab's own keys only carry its note (and, in the room, mark it as saved there).
     const players = { ...DEFAULT_TABS[0] };
-    const pk = rmd[KEYS.tabPrefix + PLAYERS_TAB];
-    if (pk && typeof pk === 'object') players.room = true;
+    const ps = md[KEYS.tabPrefix + PLAYERS_TAB], pk = rmd[KEYS.tabPrefix + PLAYERS_TAB];
+    if (ps && typeof ps === 'object' && ps.note) players.note = ps.note;
+    if (pk && typeof pk === 'object') { players.room = true; if (pk.note) players.note = pk.note; }
     const tabs = [players, ...[...byId.values()].sort((a, b) => (a.order || 0) - (b.order || 0))];
     const roomTab = new Set(tabs.filter((t) => t.room).map((t) => t.id));
     // An entry is read from both places; mid-move it can be in both: keep the copy that sits where
@@ -315,7 +339,7 @@
   // that clears where it was. Back in the scene, it's only in the current scene.
   function moveTabPatches(tab, entries, toRoom) {
     const to = {}, from = {};
-    if (tab.id !== PLAYERS_TAB || toRoom) Object.assign(to, tabPatch(tab));
+    if (tab.id !== PLAYERS_TAB || toRoom || tab.note) Object.assign(to, tabPatch(tab));
     Object.assign(from, tabDeletePatch(tab.id));
     for (const e of entries) if (e.tab === tab.id) { Object.assign(to, entryPatch(e)); Object.assign(from, deletePatch(e.id)); }
     return { to, from };
@@ -333,7 +357,7 @@
   const api = {
     NS, KEYS, PLAYERS_TAB, uid,
     evalExpr, readInput, applyHp,
-    parseCommand, rowsToEntries,
+    parseCommand, rowsToEntries, acFrom, addNote,
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,
     readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, moveTabPatches,
     ROOM_LIMIT, metadataSize, isPlayerTab, masked, canEdit,

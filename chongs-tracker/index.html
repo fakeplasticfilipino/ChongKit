@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chong's Tracker</title>
-<link rel="stylesheet" href="style.css?v=1.4.1">
+<link rel="stylesheet" href="style.css?v=1.5.0">
 </head>
 <body>
 <div class="tabbar">
@@ -12,15 +12,20 @@
   <span id="tab-add"></span>
 </div>
 <div id="bar" class="bar"></div>
+<div id="note" class="tab-note"></div>
 <main id="list" class="list"></main>
 <p id="empty" class="empty" hidden></p>
 <section id="help" class="help" hidden>
   <h2>Adding</h2>
   <p>Type a name and its HP, then press Enter. <code>Goblin x4 15</code> makes four goblins with 15 HP
     each. Tack on <code>ac:M</code>, <code>max:70</code> or <code>extra:5</code> if you need them, or paste a
-    whole fight from the combat generator.</p>
+    whole fight from the combat generator: each monster keeps its other lines (damage, save DC…) as its
+    note, and the rest of the fight goes in the tab's note at the top.</p>
   <p>Anything called a minion becomes one shared entry: <code>Kobold Minion x10</code> has 10 HP, one per
     kobold, and can hold all ten tokens.</p>
+
+  <h2>Notes</h2>
+  <p>The box at the top of a tab is its note. Each entry has its own note in ⋯.</p>
 
   <h2>HP</h2>
   <p>The HP box works like a calculator. <code>-3</code> is 3 damage, <code>+5</code> heals 5, and a plain
@@ -48,7 +53,7 @@
   <code id="manifest-url"></code>
 </div>
 
-<script src="core.js?v=1.4.1"></script>
-<script type="module" src="app.js?v=1.4.1"></script>
+<script src="core.js?v=1.5.0"></script>
+<script type="module" src="app.js?v=1.5.0"></script>
 </body>
 </html>

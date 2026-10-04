@@ -164,7 +164,12 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   rename or delete those).
 - **Add entries** in the box at the top (press Enter): `Goblin x4 15` makes Goblin 1–4 with 15 HP. Add `ac:M`,
   `max:70` or `extra:5` if you like. Or paste a fight from the Combat Generator: every
-  `Name xN / HP / Armor` block becomes entries (Armor None/Medium/Heavy becomes AC blank/M/H).
+  `Name xN / HP / Armor` block becomes entries. Armor keeps its first letter (None/Medium/Heavy
+  becomes AC N/M/H; `ac:Medium` works too). The block's other lines (Damage, Save DC, Move,
+  abilities) become each entry's **note**; everything not beside a monster (the fight's title,
+  twist, family traits, loot) goes in the tab's **general note**.
+- **Notes:** the box under the add box is the tab's general note (GM tabs: GM only; players' tabs:
+  everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note.
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
   "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
 - **Mass delete (GM only):** `/clear` deletes every entry in the current tab; `/clear Goblin`
@@ -193,7 +198,7 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **On the token:** HP in a red circle in the lower-left corner, Extra HP in a blue one beside it,
   and AC on a shield in the lower-right corner.
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
-  e.g. `M`, `H`, `15`), stats shown/hidden (GM), and delete.
+  e.g. `M`, `H`, `15`), **Note**, stats shown/hidden (GM), and delete.
 - **Hidden stats:** players see every entry, but when its stats are hidden they only see **H**
   (healthy) or **B** (Bloodied: at or below half Max HP, or at 0) and the AC, in the panel. On the map
   everyone, GM included, sees just H/B and AC for those entries; the GM still sees the real HP in

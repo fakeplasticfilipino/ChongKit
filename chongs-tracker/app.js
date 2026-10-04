@@ -153,9 +153,14 @@ async function toggleRoom(tab) {
 function runCommand(text) {
   const clear = C.parseClear(text);
   if (clear) return runClear(clear);
-  const { rows, errors } = C.parseCommand(text);
+  const { rows, errors, note } = C.parseCommand(text);
   if (errors.length) OBR.notification.show(`Couldn't read: ${errors.join(' / ')}`, 'WARNING');
-  if (!rows.length) return false;
+  const tab = tabById(current);
+  if (note && tab) {
+    const merged = C.addNote(tab.note, note);
+    if (merged !== (tab.note || '')) saveTab({ ...tab, note: merged });
+  }
+  if (!rows.length) return !!note;
   const order = Math.max(0, ...entries.filter((e) => e.tab === current).map((e) => e.order + 1));
   const hidden = C.isPlayerTab(tabById(current)) ? false : undefined;
   saveEntries(C.rowsToEntries(rows, { tab: current, order, hidden }));
@@ -301,6 +306,7 @@ function render() {
     $('tabs').replaceChildren();
     $('tab-add').replaceChildren();
     $('bar').replaceChildren();
+    $('note').replaceChildren();
     setHelp(false);
     $('help-btn').hidden = true;
     renderList();
@@ -316,6 +322,7 @@ function render() {
     dirty = true;
     a.addEventListener('blur', catchUp, { once: true });
   } else renderBar();
+  renderNote();
   renderList();
 }
 let pointerDown = false;
@@ -436,6 +443,29 @@ function renderBar() {
     bar.append(iconButton('room', tab.room ? 'Saved to the room (every scene): click to keep in this scene only' : 'Save to the room (every scene)',
       () => toggleRoom(tab), !!tab.room));
   }
+}
+
+// A text box that grows with its text (up to a point) and saves when you leave it.
+function noteBox(value, placeholder, onCommit) {
+  const box = el('textarea', { className: 'note', rows: 1, value: value || '', placeholder, spellcheck: false });
+  const grow = () => { box.style.height = 'auto'; box.style.height = Math.min(240, Math.max(32, box.scrollHeight + 2)) + 'px'; };
+  box.addEventListener('input', grow);
+  box.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { box.value = value || ''; box.blur(); } });
+  box.addEventListener('change', () => onCommit(box.value.trim()));
+  requestAnimationFrame(grow);
+  return box;
+}
+
+// The tab's general note, at the top: for whoever can add to the tab (GM tabs: GM only).
+function renderNote() {
+  const wrap = $('note');
+  const tab = tabById(current);
+  const canAdd = role === 'GM' || C.isPlayerTab(tab);
+  if (!tab || !canAdd) { wrap.replaceChildren(); return; }
+  wrap.replaceChildren(noteBox(tab.note, 'Note', (text) => {
+    const cur = tabById(tab.id);
+    if (cur && text !== (cur.note || '')) saveTab({ ...cur, note: text });
+  }));
 }
 
 function renderList() {
@@ -622,6 +652,8 @@ function renderMore(e) {
     el('label', { className: 'field' }, el('span', { textContent: 'Max HP' }), max),
     el('label', { className: 'field' }, el('span', { textContent: 'Extra HP' }), extra),
     el('label', { className: 'field' }, el('span', { textContent: 'AC' }), ac)));
+  more.append(el('label', { className: 'field' }, el('span', { textContent: 'Note' }),
+    noteBox(e.note, '', (text) => { if (text !== (e.note || '')) updateEntry(e, { note: text }); })));
 
   const actions = el('div', { className: 'actions' });
   if (role === 'GM') {

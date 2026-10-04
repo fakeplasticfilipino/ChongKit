@@ -68,6 +68,10 @@ select option { background: var(--paper); color: var(--text); }
 /* Command bar */
 .bar { display: flex; gap: 2px; align-items: flex-start; padding: 0 12px 8px; }
 .bar textarea { flex: 1; resize: none; height: 32px; max-height: 120px; line-height: 20px; margin-right: 4px; }
+/* Notes: the tab's note under the add box; an entry's note in its ⋯ menu */
+.tab-note { padding: 0 12px 8px; }
+.tab-note:empty { display: none; }
+textarea.note { display: block; width: 100%; resize: none; height: 32px; line-height: 20px; white-space: pre-wrap; }
 /* Help sheet: covers the whole panel; the ⓘ / × button stays in the lower-right corner. */
 .help {
   position: fixed; inset: 0; z-index: 10; overflow-y: auto; padding: 14px 16px 64px;
