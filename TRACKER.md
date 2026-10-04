@@ -42,7 +42,18 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Optional sign-in: Discord or email + password (Supabase Auth via plain fetch, no library)
 - [x] Characters sync to the account (`character_sheets`, RLS: own rows only); merge on sign-in, newer edit wins; deletes sync; refresh on returning to the tab
 - [x] Tests: merge rules
-- [ ] Discord provider switched on in Supabase (needs the Discord app's client ID/secret: see the setup notes)
+- [x] Discord provider switched on in Supabase
+
+### ✅ Paper, notes tabs, edge cases and security — done
+- [x] The sheet as a sheet of paper on a darker desk: black edge, edge shading, margin lines, corner imprint
+- [x] Notes in tabs (shared tab strip with the entries); v3 notes become the first tab
+- [x] PKCE sign-in (Discord, email confirmation, password reset); Forgot password + New password dialog
+- [x] Accounts never mix on a shared browser (`owner` per character, sync records per account); optional "remove my characters" on sign-out
+- [x] Delete account (`delete_my_account()`), queued offline deletes, retry with backoff, "Not synced" / "Signed out" messages
+- [x] Several tabs of the page merge each other's saves; redraws wait until you stop typing
+- [x] Database: 512 KB / 200 characters limits, never replace a newer version with an older one; old `characters` table and its function removed
+- [x] Content-Security-Policy on the sheet page; imports over 1 MB refused; 8+ character passwords for new accounts
+- [x] Tests: notes tabs upgrade, owner-aware merge, imports are yours
 
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide

@@ -61,11 +61,13 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 `character-sheet/`: the Nimble character sheet. The Nimble ground rules apply, with these differences:
 
 1. **The sheet is our table's sheet** (v2): rounded heavy-outlined boxes, panels with sideways labels,
-   parchment fields (never white), condensed caps labels, set on the usual parchment page with the
-   notice and footer. The sheet fills most of the screen (slim notice, one toolbar row).
+   parchment fields (never white), condensed caps labels. The sheet is a **sheet of paper**: lighter
+   parchment with a clear black edge, faint edge shading, printed margin lines and a corner imprint,
+   lying on a darker desk (`body.cs-desk`), with the notice and footer. It fills most of the screen
+   (slim notice, one toolbar row).
    Six stats (STR DEX CON INT WIS CHA, each with an oval number slot), three saves (STR DEX WIL),
    Combat (Armor, HP, Initiative/Speed, Wounds + optional 5 dashed extra circles; filled wounds are
-   black), ten skills, tabs of collapsible entries, notes.
+   black), ten skills, tabs of collapsible entries, tabs of notes.
    Its own styles live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
 2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
 3. **No GM Guide numbers:** the layout, stats, saves, skill/stat pairs and the six-wound track are the
@@ -74,15 +76,24 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    another box of the section's own kind (`ADDS`: stat, save, skill, detail line; Combat: number or
    current/max) and restores removed ones; added boxes show inline with the defaults, boxes get a × to
    remove and added ones a grip to reorder. Tabs are managed directly, like browser tabs (+, double-click
-   rename, ×, drag). Notes are one free-text panel. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs live in `tabs` (name + entries). Old saves are upgraded in `normalize` (`upgrade1` for v1, `upgrade2` for v2).
+   rename, ×, drag); the entries' tabs and the notes' tabs share `tabStrip`. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs live in `tabs` (name + entries), notes in `noteTabs` (name + text). Old saves are upgraded in `normalize` (`upgrade1` for v1, `upgrade2` for v2, notes → first notes tab for v3).
 5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
    `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
 6. **Accounts (optional):** `cloud.js` (browser global `Cloud`) signs in with Discord or email +
    password against Supabase project `chong-nimble-sheet` (ref `fmkbvoukbrxjbzlexjhu`) and syncs
    characters to `public.character_sheets` (`user_id`, `id`, `data` jsonb, `updated_at`; RLS: own
-   rows only). Each character carries `updated` (ms of its last edit); `Sheet.mergeChars` merges
-   account and browser (newer edit wins; tested). The publishable key in `cloud.js` is public by
-   design; never put a secret/service key in the repo. The session is in localStorage `chongkit.auth`.
+   rows only). Each character carries `updated` (ms of its last edit) and `owner` (the account it
+   synced to); `Sheet.mergeChars` merges account and browser (newer edit wins; another account's
+   characters are never uploaded; queued deletes are respected; tested). The publishable key in
+   `cloud.js` is public by design; never put a secret/service key in the repo. The session is in
+   localStorage `chongkit.auth`; sync records are per account (`chongkit.synced.<user>`,
+   `chongkit.deletes.<user>`).
+7. **Security rules (keep them):** sign-in uses PKCE (never tokens in the URL); user text is only ever
+   set as text/value, never as HTML; the page has a Content-Security-Policy (scripts from the site,
+   data only to the Supabase project); the database refuses characters over 512 KB, more than 200
+   per account, and older versions over newer ones (trigger `character_sheets_keep_newer`);
+   `delete_my_account()` (security definer) only ever deletes the caller. Tabs of the page merge each
+   other's saves (`storage` event); deletes made offline are queued; failed syncs retry with backoff.
 
 ## Chong's Tracker (Owlbear Rodeo extension)
 

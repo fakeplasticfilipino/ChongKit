@@ -1,27 +1,28 @@
 // Character Sheet: sign-in and syncing through Supabase (browser global `Cloud`).
 // Plain fetch calls to Supabase's Auth and REST APIs, no library, so the page stays zero-install.
 // Signed out, nothing here runs and the sheet only uses this browser's localStorage.
-// Sign-in: Discord (OAuth redirect) or email + password. The session lives in localStorage.
+// Sign-in: Discord or email + password, using the PKCE flow (only a one-time code ever appears in
+// the address bar; it's swapped for the session here). The session lives in localStorage.
 // Data: one row per character in `character_sheets` (user_id, id, data, updated_at); row-level
-// security lets each account read and write only its own rows.
+// security lets each account read and write only its own rows. The database also refuses
+// characters over 512 KB, more than 200 per account, and older versions over newer ones.
 (function () {
   const URL_ = 'https://fmkbvoukbrxjbzlexjhu.supabase.co';
-  const KEY = 'sb_publishable_p327nFvW--OtzVX2W7saxA_1tEietW5'; // publishable (public) key: safe in the page, RLS guards the data
+  const KEY = 'sb_publishable_p327nFvW--OtzVX2W7saxA_1tEietW5'; // publishable (public) key: RLS guards the data
   const STORE = 'chongkit.auth';
-  const SYNCED = 'chongkit.synced'; // ids this browser has seen in the account (see Sheet.mergeChars)
+  const PKCE = 'chongkit.pkce'; // { verifier, kind: 'oauth' | 'signup' | 'recovery' } while a sign-in is under way
 
   const get = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
   const put = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
   let session = get(STORE); // { access_token, refresh_token, expires_at (s), user }
   const listeners = new Set();
-  const emit = () => listeners.forEach((f) => f(session));
+  const emit = (why) => listeners.forEach((f) => f(session, why));
 
-  function save(s) {
+  function save(s, why) {
     session = s;
     put(STORE, s);
-    if (!s) put(SYNCED, null);
-    emit();
+    emit(why);
   }
   function fromTokens(t, user) {
     return {
@@ -30,16 +31,31 @@
       user: user || t.user || null,
     };
   }
+  // Sync records are kept per account, so one account's characters never mix into another's.
+  const userKey = (name) => (session && session.user ? `chongkit.${name}.${session.user.id}` : null);
 
-  async function auth(path, body, token) {
+  async function auth(path, body, token, method) {
     const res = await fetch(`${URL_}/auth/v1/${path}`, {
-      method: body ? 'POST' : 'GET',
+      method: method || (body ? 'POST' : 'GET'),
       headers: { apikey: KEY, 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.msg || data.error_description || data.message || `Sign-in failed (${res.status})`);
+    if (!res.ok) {
+      const e = new Error(data.msg || data.error_description || data.message || `Sign-in failed (${res.status})`);
+      e.status = res.status;
+      throw e;
+    }
     return data;
+  }
+
+  // PKCE: a random verifier stays in this browser; only its SHA-256 goes to Supabase.
+  const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  async function challenge(kind) {
+    const verifier = b64url(crypto.getRandomValues(new Uint8Array(48)));
+    put(PKCE, { verifier, kind });
+    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+    return { code_challenge: b64url(hash), code_challenge_method: 's256' };
   }
 
   // A fresh access token (refreshed a minute before it runs out); null when signed out.
@@ -50,7 +66,12 @@
     if (!refreshing) {
       refreshing = auth('token?grant_type=refresh_token', { refresh_token: session.refresh_token })
         .then((t) => save(fromTokens(t, t.user || session.user)))
-        .catch((e) => { if (/invalid|expired|not found/i.test(e.message)) save(null); throw e; })
+        .catch((e) => {
+          // Refused by Supabase (revoked, expired, account deleted): the session is over; sign out and say so.
+          // A network error keeps the session, to try again later.
+          if (e.status === 400 || e.status === 401 || e.status === 403) save(null, 'expired');
+          throw e;
+        })
         .finally(() => { refreshing = null; });
     }
     await refreshing;
@@ -65,7 +86,11 @@
       headers: { apikey: KEY, Authorization: `Bearer ${t}`, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
-    if (!res.ok) throw new Error(`Sync failed (${res.status})`);
+    if (res.status === 401) { save(null, 'expired'); throw new Error('Signed out'); }
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.message || `Sync failed (${res.status})`);
+    }
     return res.status === 204 ? null : res.json().catch(() => null);
   }
 
@@ -73,47 +98,80 @@
 
   const Cloud = {
     get user() { return session && session.user; },
+    get userId() { return session && session.user ? session.user.id : null; },
     get signedIn() { return !!session; },
     name() {
       const u = session && session.user;
       if (!u) return '';
       const m = u.user_metadata || {};
-      return m.full_name || m.name || m.custom_claims?.global_name || m.user_name || u.email || 'Account';
+      return m.full_name || m.name || (m.custom_claims && m.custom_claims.global_name) || m.user_name || u.email || 'Account';
     },
     onChange(f) { listeners.add(f); },
 
-    // Discord: off to Discord and back here with the tokens in the URL (handled by finishRedirect).
-    discord() {
-      location.href = `${URL_}/auth/v1/authorize?provider=discord&redirect_to=${encodeURIComponent(here())}`;
+    async discord() {
+      const c = await challenge('oauth');
+      location.href = `${URL_}/auth/v1/authorize?provider=discord&redirect_to=${encodeURIComponent(here())}`
+        + `&code_challenge=${c.code_challenge}&code_challenge_method=${c.code_challenge_method}`;
     },
     async signIn(email, password) {
       save(fromTokens(await auth('token?grant_type=password', { email, password })));
     },
     // Returns true when signed in right away, false when the email has to be confirmed first.
     async signUp(email, password) {
-      const r = await auth(`signup?redirect_to=${encodeURIComponent(here())}`, { email, password });
-      if (r.access_token) { save(fromTokens(r)); return true; }
+      const c = await challenge('signup');
+      const r = await auth(`signup?redirect_to=${encodeURIComponent(here())}`, { email, password, ...c });
+      if (r.access_token) { put(PKCE, null); save(fromTokens(r)); return true; }
       return false;
+    },
+    // Emails a link back here; finishRedirect then reports 'recovery' so the page asks for a new password.
+    async resetPassword(email) {
+      const c = await challenge('recovery');
+      await auth(`recover?redirect_to=${encodeURIComponent(here())}`, { email, ...c });
+    },
+    async setPassword(password) {
+      const t = await token();
+      if (!t) throw new Error('Signed out');
+      const user = await auth('user', { password }, t, 'PUT');
+      save({ ...session, user: user || session.user });
     },
     async signOut() {
       const t = session && session.access_token;
       save(null);
       if (t) auth('logout', {}, t).catch(() => {});
     },
-    // After Discord or an email confirmation link: read the tokens (or error) from the URL hash.
+    async deleteAccount() {
+      await rest('POST', 'rpc/delete_my_account', {});
+      put(userKey('synced'), null);
+      put(userKey('deletes'), null);
+      save(null);
+    },
+    // Back from Discord, an email link or a reset link. Returns null (nothing to do), 'signin', or
+    // 'recovery' (ask for a new password). Reads ?code= (PKCE) and, for old links, #access_token=.
     async finishRedirect() {
+      const q = new URLSearchParams(location.search);
       const h = new URLSearchParams(location.hash.slice(1));
-      if (!h.has('access_token') && !h.has('error_description')) return null;
-      history.replaceState(null, '', location.pathname + location.search);
-      if (h.has('error_description')) throw new Error(h.get('error_description'));
+      const err = q.get('error_description') || h.get('error_description');
+      const code = q.get('code');
+      if (!err && !code && !h.has('access_token')) return null;
+      q.delete('code'); q.delete('error'); q.delete('error_code'); q.delete('error_description');
+      history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : ''));
+      if (err) throw new Error(err);
+      if (code) {
+        const p = get(PKCE);
+        put(PKCE, null);
+        if (!p) throw new Error('This link was opened in a different browser. Open it where you started, or just sign in.');
+        save(fromTokens(await auth('token?grant_type=pkce', { auth_code: code, code_verifier: p.verifier })));
+        return p.kind === 'recovery' ? 'recovery' : 'signin';
+      }
       const t = Object.fromEntries(h);
       const user = await auth('user', null, t.access_token).catch(() => null);
       save(fromTokens(t, user));
-      return session;
+      return t.type === 'recovery' ? 'recovery' : 'signin';
     },
 
-    synced: () => get(SYNCED) || [],
-    setSynced: (ids) => put(SYNCED, [...new Set(ids)]),
+    // Ids this browser has seen in the account (see Sheet.mergeChars), per account.
+    synced: () => get(userKey('synced')) || [],
+    setSynced: (ids) => { const k = userKey('synced'); if (k) put(k, [...new Set(ids)]); },
     async list() { return (await rest('GET', 'character_sheets?select=id,data')) || []; },
     async push(chars) {
       if (!chars.length) return;
@@ -121,7 +179,22 @@
         chars.map((c) => ({ id: c.id, data: c, updated_at: new Date().toISOString() })),
         'resolution=merge-duplicates,return=minimal');
     },
-    async remove(id) { await rest('DELETE', `character_sheets?id=eq.${encodeURIComponent(id)}`, null, 'return=minimal'); },
+    // Deletes are queued until the account confirms them, so one made offline isn't undone later.
+    async remove(id) {
+      const k = userKey('deletes');
+      if (k) put(k, [...new Set([...(get(k) || []), id])]);
+      await Cloud.flushDeletes();
+    },
+    pendingDeletes: () => get(userKey('deletes')) || [],
+    async flushDeletes() {
+      const k = userKey('deletes');
+      const ids = (k && get(k)) || [];
+      for (const id of ids) {
+        await rest('DELETE', `character_sheets?id=eq.${encodeURIComponent(id)}`, null, 'return=minimal');
+        put(k, (get(k) || []).filter((x) => x !== id));
+        Cloud.setSynced(Cloud.synced().filter((x) => x !== id));
+      }
+    },
   };
   window.Cloud = Cloud;
 })();

@@ -69,14 +69,18 @@
   }
   function save() {
     clearTimeout(timer);
+    // Another tab of this page may have saved since: take its newer characters first.
+    adopt(store.getItem(S.STORE));
     // A character whose content changed gets a new timestamp (and is queued for the account).
     for (const c of Object.values(all.chars)) {
       const now = S.content(c);
       if (lastJson[c.id] !== now) { c.updated = Date.now(); lastJson[c.id] = now; dirty.add(c.id); }
     }
     const ok = S.saveAll(store, all);
-    status(ok ? 'Saved' : 'Not saved', !ok);
-    if (C && C.signedIn && dirty.size) { clearTimeout(pushTimer); pushTimer = setTimeout(push, 1200); }
+    stored = new Set(Object.keys(all.chars));
+    // Saved here, but say so if the account is behind (a sync failed and is waiting to retry).
+    status(!ok ? 'Not saved' : syncBad ? 'Saved here, not synced' : 'Saved', !ok || syncBad);
+    if (C && C.signedIn && dirty.size) schedulePush(1200);
   }
   function status(text, bad) {
     const n = $('saved');
@@ -88,27 +92,98 @@
   }
   window.addEventListener('pagehide', () => { save(); push(); });
 
+  // --- Several tabs of this page ----------------------------------------------------------
+  // Every tab saves to the same localStorage key. When another tab saves, take its newer
+  // characters (never the one you're typing in) and its deletions (only of characters left
+  // untouched here), so tabs don't overwrite each other.
+  let stored = new Set(Object.keys(all.chars)); // ids in localStorage when this tab last read or wrote it
+  const deletedHere = new Set();
+  function adopt(raw) {
+    let data;
+    try { data = JSON.parse(raw); } catch { return false; }
+    if (!data || !data.chars || typeof data.chars !== 'object') return false;
+    let changed = false;
+    const other = {};
+    for (const r of Object.values(data.chars)) { const c = S.normalize(r); other[c.id] = c; }
+    for (const o of Object.values(other)) {
+      const mine = all.chars[o.id];
+      if (!mine) {
+        if (deletedHere.has(o.id)) continue; // deleted in this tab
+        all.chars[o.id] = o; lastJson[o.id] = S.content(o); changed = true;
+      } else if (o.updated > mine.updated && S.content(o) !== S.content(mine)) {
+        if (mine === s && typing()) continue;
+        all.chars[o.id] = o; lastJson[o.id] = S.content(o);
+        if (mine === s) s = o;
+        changed = true;
+      }
+    }
+    for (const id of Object.keys(all.chars)) {
+      if (!other[id] && stored.has(id) && lastJson[id] === S.content(all.chars[id]) && Object.keys(all.chars).length > 1) {
+        delete all.chars[id]; changed = true;
+      }
+    }
+    stored = new Set(Object.keys(other));
+    if (!all.chars[s.id]) { s = all.chars[Object.keys(all.chars)[0]]; all.current = s.id; }
+    return changed;
+  }
+  window.addEventListener('storage', (ev) => {
+    if (ev.key !== S.STORE || ev.newValue == null) return;
+    if (adopt(ev.newValue)) softRender();
+  });
+  // Redraw after outside changes (other tabs, the account), but never under the cursor: while
+  // you're typing it waits until you leave the box.
+  let pendingRender = false;
+  function softRender() {
+    if (typing()) { pendingRender = true; return; }
+    pendingRender = false;
+    names();
+    render();
+  }
+  document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !typing()) softRender(); }, 0));
+
   // --- Account sync (cloud.js) -----------------------------------------------------------
   // Signed in, every edited character is also saved to the account; signing in merges the
-  // account's characters with this browser's (the newer edit of each wins).
+  // account's characters with this browser's (the newer edit of each wins). Characters synced to
+  // one account are never uploaded to another.
   const C = window.Cloud;
   const lastJson = {}; // content last saved, per character
   const dirty = new Set(); // characters edited since they were last sent to the account
   let pushTimer = null;
+  let retryDelay = 5000; // after a failed sync: try again in 5 s, then 10, 20… up to a minute
+  let syncBad = false;
   for (const c of Object.values(all.chars)) lastJson[c.id] = S.content(c);
+  function schedulePush(ms) { clearTimeout(pushTimer); pushTimer = setTimeout(push, ms); }
+  function failed() {
+    syncBad = true;
+    status('Not synced', true);
+    schedulePush(retryDelay);
+    retryDelay = Math.min(60000, retryDelay * 2);
+  }
   async function push() {
     clearTimeout(pushTimer);
-    if (!C || !C.signedIn || !dirty.size) return;
-    const ids = [...dirty];
-    dirty.clear();
-    const list = ids.map((id) => all.chars[id]).filter(Boolean);
+    if (!C || !C.signedIn) return;
     try {
-      await C.push(list);
+      await C.flushDeletes();
+      if (!dirty.size) return;
+      const ids = [...dirty];
+      dirty.clear();
+      // Another account's characters (left in this browser) are never uploaded here.
+      const list = ids.map((id) => all.chars[id]).filter((c) => c && (!c.owner || c.owner === C.userId));
+      if (!list.length) return; // only other accounts' characters changed: nothing for this one
+      list.forEach((c) => { c.owner = C.userId; });
+      try {
+        await C.push(list);
+      } catch (e) {
+        ids.forEach((id) => dirty.add(id));
+        throw e;
+      }
       C.setSynced([...C.synced(), ...list.map((c) => c.id)]);
+      S.saveAll(store, all);
+      retryDelay = 5000;
+      syncBad = false;
       status('Synced');
     } catch {
-      ids.forEach((id) => dirty.add(id));
-      status('Not synced', true);
+      if (C.signedIn) failed();
     }
   }
   async function syncAll() {
@@ -116,25 +191,35 @@
     save();
     status('Syncing…');
     try {
+      await C.flushDeletes();
       const remote = await C.list();
-      const m = S.mergeChars(all.chars, remote, C.synced());
+      const before = JSON.stringify(Object.values(all.chars).map(S.content).sort());
+      const m = S.mergeChars(all.chars, remote, C.synced(), C.userId, C.pendingDeletes());
       if (!Object.keys(m.chars).length) { const b = S.blank(); m.chars[b.id] = b; }
       all.chars = m.chars;
       for (const c of Object.values(all.chars)) lastJson[c.id] = S.content(c);
       m.upload.forEach((id) => dirty.add(id));
       C.setSynced(remote.map((r) => r.id));
       if (!all.chars[all.current]) all.current = Object.keys(all.chars)[0];
-      if (s.id !== all.current || all.chars[s.id] !== s) { s = all.chars[all.current]; history = []; openEntries.clear(); }
+      if (all.chars[s.id] !== s) {
+        const was = s.id;
+        s = all.chars[all.current];
+        if (s.id !== was) { history = []; openEntries.clear(); }
+      }
       S.saveAll(store, all);
-      names();
-      render();
+      stored = new Set(Object.keys(all.chars));
+      // Only redraw when the account actually changed something.
+      if (JSON.stringify(Object.values(all.chars).map(S.content).sort()) !== before) softRender();
+      else names();
+      retryDelay = 5000;
+      syncBad = false;
       if (dirty.size) await push(); else status('Synced');
     } catch {
-      status('Not synced', true);
+      if (C.signedIn) failed();
     }
   }
-  // Coming back to the tab picks up edits made on another device (not while typing).
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !typing()) syncAll(); });
+  // Coming back to the tab picks up edits made on another device.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncAll(); });
   window.addEventListener('online', () => { if (C && C.signedIn) syncAll(); });
   const refresh = () => derived.forEach((f) => f());
 
@@ -517,11 +602,13 @@
 
   // Tabs, like a browser's: click to switch, + adds one, double-click a name to rename it,
   // × closes it (with Undo), drag a tab to move it.
+  // Used by the entries' tabs and the notes' tabs: `k` names the list (`tabs` / `noteTabs`) and
+  // `pick` the current one (`tab` / `noteTab`); `count` shows a number on each tab.
   let renaming = null;
-  function tabsSection() {
-    const cur = s.tabs.find((t) => t.id === s.tab) || s.tabs[0];
-    const pickTab = (t) => { if (s.tab !== t.id) { s.tab = t.id; commit(); render(); } };
-    const strip = s.tabs.map((t, i) => {
+  function tabStrip(k, pick, make, count, label) {
+    const cur = s[k].find((t) => t.id === s[pick]) || s[k][0];
+    const pickTab = (t) => { if (s[pick] !== t.id) { s[pick] = t.id; commit(); render(); } };
+    const strip = s[k].map((t, i) => {
       const on = t === cur;
       let name;
       if (renaming === t.id) {
@@ -539,33 +626,37 @@
           onblur: () => finish(true) });
       } else {
         name = h('button', { type: 'button', role: 'tab', class: 'cs-tabbtn', 'aria-selected': String(on), title: 'Double-click to rename',
-          onclick: () => pickTab(t), ondblclick: () => { renaming = t.id; s.tab = t.id; render(); } },
-        t.name || 'Untitled', h('span', { class: 'cs-tabn' }, String(t.entries.length)));
+          onclick: () => pickTab(t), ondblclick: () => { renaming = t.id; s[pick] = t.id; render(); } },
+        t.name || 'Untitled', count ? h('span', { class: 'cs-tabn' }, String(count(t))) : null);
       }
       const node = h('div', { class: 'cs-tab' + (on ? ' on' : ''), draggable: renaming === t.id ? 'false' : 'true' }, name,
         h('button', { type: 'button', class: 'cs-tdel', title: 'Close tab', 'aria-label': `Close ${t.name || 'tab'}`,
           onclick: () => change(`Closed ${t.name || 'tab'}`, () => {
-            const k = s.tabs.indexOf(t);
-            s.tabs = s.tabs.filter((x) => x !== t);
-            if (s.tab === t.id) s.tab = (s.tabs[Math.min(k, s.tabs.length - 1)] || {}).id || '';
+            const at = s[k].indexOf(t);
+            s[k] = s[k].filter((x) => x !== t);
+            if (s[pick] === t.id) s[pick] = (s[k][Math.min(at, s[k].length - 1)] || {}).id || '';
           }) }, icon('close', 'cs-ic xs')));
-      draggable(node, node, 'tab', i, (from, to) => change(null, () => { s.tabs = S.move(s.tabs, from, to); }));
+      draggable(node, node, 'tab-' + k, i, (from, to) => change(null, () => { s[k] = S.move(s[k], from, to); }));
       return node;
     });
-    strip.push(h('button', { type: 'button', class: 'cs-tabadd', title: 'New tab', 'aria-label': 'New tab',
+    strip.push(h('button', { type: 'button', class: 'cs-tabadd', title: label, 'aria-label': label,
       onclick: () => {
-        const t = S.newTab('');
-        change(null, () => { s.tabs.push(t); s.tab = t.id; });
+        const t = make();
+        change(null, () => { s[k].push(t); s[pick] = t.id; });
         renaming = t.id;
         render();
       } }, '+'));
+    if (renaming) setTimeout(() => { const n = document.querySelector('.cs-tname'); if (n && document.activeElement !== n) { n.focus(); n.select(); } }, 0);
+    return { cur, strip: h('div', { class: 'cs-tabstrip', role: 'tablist' }, strip) };
+  }
+  function tabsSection() {
+    const { cur, strip } = tabStrip('tabs', 'tab', () => S.newTab(''), (t) => t.entries.length, 'New tab');
     let panel = null;
     if (cur) {
       const el = entryList({ key: 'tab-' + cur.id, get: () => cur.entries, set: (v) => { cur.entries = v; } });
       panel = h('div', { class: 'cs-tabpanel', role: 'tabpanel' }, el.fold ? h('div', { class: 'cs-elist-top' }, el.fold) : null, el.list, el.add);
     }
-    if (renaming) setTimeout(() => { const n = document.querySelector('.cs-tname'); if (n && document.activeElement !== n) { n.focus(); n.select(); } }, 0);
-    return h('section', { class: 'cs-tabs' }, h('div', { class: 'cs-tabstrip', role: 'tablist' }, strip), panel);
+    return h('section', { class: 'cs-tabs' }, strip, panel);
   }
 
   // A tab's entries: bars showing a name and summary; click one to open it, drag to reorder.
@@ -623,10 +714,13 @@
     return node;
   }
 
-  // Notes: one free-text panel across the sheet.
+  // Notes: tabs of free text on ruled lines (same tabs as the entries).
   function notes() {
-    return h('section', { class: 'cs-sec cs-pnl cs-notes' }, h('span', { class: 'cs-legend' }, 'Notes'),
-      h('textarea', { class: 'cs-free', 'aria-label': 'Notes', value: s.notes, oninput: (ev) => { s.notes = ev.target.value; commit(); } }));
+    const { cur, strip } = tabStrip('noteTabs', 'noteTab', () => S.newNote(''), null, 'New notes tab');
+    const page = cur ? h('div', { class: 'cs-tabpanel cs-notepage', role: 'tabpanel' },
+      h('textarea', { class: 'cs-free', 'aria-label': cur.name || 'Notes', value: cur.text, spellcheck: true,
+        oninput: (ev) => { cur.text = ev.target.value; commit(); } })) : null;
+    return h('section', { class: 'cs-notes' }, h('div', { class: 'cs-sectitle' }, 'Notes'), strip, page);
   }
 
   function render() {
@@ -682,20 +776,28 @@
     const c = S.normalize(JSON.parse(JSON.stringify(s)));
     c.id = S.uid();
     c.name = (s.name || 'Unnamed') + ' (copy)';
+    c.owner = ''; // a new character of yours
     show(c);
   });
   $('delete').addEventListener('click', () => {
     closeMenu();
     if (!confirm(`Delete ${s.name || 'this character'}? This can't be undone.`)) return;
     const id = s.id;
-    delete all.chars[id];
-    delete lastJson[id];
-    dirty.delete(id);
-    if (C && C.signedIn) {
-      C.remove(id).then(() => C.setSynced(C.synced().filter((x) => x !== id))).catch(() => status('Not synced', true));
-    }
+    const synced = C && C.signedIn && (s.owner === C.userId || C.synced().includes(id));
+    forget([id]);
+    // Queued until the account confirms it, so a delete made offline isn't undone on the next sync.
+    if (synced) C.remove(id).then(() => { syncBad = false; status('Synced'); }).catch(failed);
     show(Object.values(all.chars)[0] || S.blank());
   });
+  // Drop characters from this tab (deleted, or removed from this browser).
+  function forget(ids) {
+    for (const id of ids) {
+      delete all.chars[id];
+      delete lastJson[id];
+      dirty.delete(id);
+      deletedHere.add(id);
+    }
+  }
   $('export').addEventListener('click', () => {
     closeMenu();
     const blob = new Blob([S.exportJson(s)], { type: 'application/json' });
@@ -710,6 +812,7 @@
     const file = ev.target.files[0];
     ev.target.value = '';
     if (!file) return;
+    if (file.size > 1000000) { alert(`Couldn't import ${file.name}: it's over 1 MB, too big for a character.`); return; }
     try { show(S.importJson(await file.text())); }
     catch (err) { alert(`Couldn't import ${file.name}: ${err.message}`); }
   });
@@ -726,18 +829,68 @@
     b.textContent = C.signedIn ? C.name() : 'Sign in';
     b.title = C.signedIn ? 'Account' : '';
   }
-  function openAccount(msg) {
+  const MIN_PASSWORD = 8;
+  function dialog(msg) {
     const close = h('button', { type: 'button', class: 'cs-dlg-x', 'aria-label': 'Close', onclick: () => dlg.close() }, icon('close', 'cs-ic'));
     const note = h('p', { class: 'cs-auth-msg', 'aria-live': 'polite' }, msg || '');
     const say = (t, bad) => { note.textContent = t; note.classList.toggle('bad', !!bad); };
-    let body;
+    return { close, note, say, show: (...body) => { dlg.replaceChildren(close, ...body.filter(Boolean), note); if (!dlg.open) dlg.showModal(); } };
+  }
+  // After a password-reset link: choose a new password.
+  function openNewPassword() {
+    const d = dialog();
+    const a = h('input', { type: 'password', class: 'cs-auth-in', autocomplete: 'new-password', required: true, minLength: MIN_PASSWORD, 'aria-label': 'New password' });
+    const b = h('input', { type: 'password', class: 'cs-auth-in', autocomplete: 'new-password', required: true, minLength: MIN_PASSWORD, 'aria-label': 'Repeat the new password' });
+    d.show(h('h2', {}, 'New password'),
+      h('form', { class: 'cs-auth-form', onsubmit: async (ev) => {
+        ev.preventDefault();
+        if (!a.reportValidity() || !b.reportValidity()) return;
+        if (a.value !== b.value) { d.say('The two passwords are different.', true); return; }
+        d.say('…');
+        try { await C.setPassword(a.value); d.say('Password saved.'); setTimeout(() => dlg.close(), 900); } catch (e) { d.say(e.message, true); }
+      } },
+      h('label', {}, h('span', { class: 'label' }, 'New password'), a),
+      h('label', {}, h('span', { class: 'label' }, 'Repeat it'), b),
+      h('button', { type: 'submit', class: 'btn primary' }, 'Save password')));
+  }
+  // The account's characters in this browser (synced to it, or marked as its own).
+  const accountChars = () => Object.values(all.chars).filter((c) => c.owner === C.userId || C.synced().includes(c.id)).map((c) => c.id);
+  function leaveAccount(removeHere) {
+    if (removeHere) {
+      forget(accountChars());
+      if (!Object.keys(all.chars).length) { const b = S.blank(); all.chars[b.id] = b; lastJson[b.id] = S.content(b); }
+      if (!all.chars[s.id]) s = Object.values(all.chars)[0];
+      commit(); save(); names(); render();
+    }
+  }
+  function openAccount(msg) {
+    const d = dialog(msg);
+    const { say } = d;
     if (C.signedIn) {
-      body = [h('h2', {}, C.name()),
+      const remove = h('input', { type: 'checkbox' });
+      d.show(h('h2', {}, C.name()),
         C.user && C.user.email && C.user.email !== C.name() ? h('p', { class: 'cs-auth-sub' }, C.user.email) : null,
+        h('label', { class: 'cs-check-row' }, remove, h('span', {}, 'Remove my characters from this browser when I sign out')),
         h('div', { class: 'cs-auth-row' },
           h('button', { type: 'button', class: 'btn', onclick: () => { dlg.close(); syncAll(); } }, 'Sync now'),
-          h('button', { type: 'button', class: 'btn', onclick: async () => { await C.signOut(); dlg.close(); } }, 'Sign out')),
-        note];
+          h('button', { type: 'button', class: 'btn', onclick: async () => {
+            await push(); // send any last edits first
+            leaveAccount(remove.checked);
+            await C.signOut();
+            dlg.close();
+          } }, 'Sign out')),
+        h('button', { type: 'button', class: 'cs-link danger', onclick: async () => {
+          if (!confirm('Delete your account and every character saved in it? This can\'t be undone.')) return;
+          say('…');
+          try {
+            const ids = accountChars();
+            await C.deleteAccount();
+            forget(ids);
+            leaveAccount(true);
+            dlg.close();
+            status('Account deleted');
+          } catch (e) { say(e.message, true); }
+        } }, 'Delete account and all its characters…'));
     } else {
       const email = h('input', { type: 'email', class: 'cs-auth-in', autocomplete: 'email', required: true, 'aria-label': 'Email' });
       const pass = h('input', { type: 'password', class: 'cs-auth-in', autocomplete: 'current-password', required: true, minLength: 6, 'aria-label': 'Password' });
@@ -752,8 +905,8 @@
       discord.setAttribute('class', 'cs-ic');
       discord.setAttribute('aria-hidden', 'true');
       discord.innerHTML = `<path fill="currentColor" d="${DISCORD}"/>`;
-      body = [h('h2', {}, 'Sign in'),
-        h('button', { type: 'button', class: 'btn cs-discord', onclick: () => C.discord() }, discord, 'Continue with Discord'),
+      d.show(h('h2', {}, 'Sign in'),
+        h('button', { type: 'button', class: 'btn cs-discord', onclick: () => C.discord().catch((e) => say(e.message, true)) }, discord, 'Continue with Discord'),
         h('div', { class: 'cs-or' }, h('span', {}, 'or')),
         h('form', { class: 'cs-auth-form', onsubmit: go(async (e, p) => { await C.signIn(e, p); dlg.close(); syncAll(); }) },
           h('label', {}, h('span', { class: 'label' }, 'Email'), email),
@@ -761,16 +914,23 @@
           h('div', { class: 'cs-auth-row' },
             h('button', { type: 'submit', class: 'btn primary' }, 'Sign in'),
             h('button', { type: 'button', class: 'btn', onclick: go(async (e, p) => {
+              if (p.length < MIN_PASSWORD) { say(`Use a password of at least ${MIN_PASSWORD} characters.`, true); return; }
               if (await C.signUp(e, p)) { dlg.close(); syncAll(); } else say('Check your email to confirm your account, then sign in.');
             }) }, 'Create account'))),
-        note];
+        h('button', { type: 'button', class: 'cs-link', onclick: async () => {
+          if (!email.reportValidity()) return;
+          say('…');
+          try { await C.resetPassword(email.value.trim()); say('Check your email for a link to set a new password.'); } catch (e) { say(e.message, true); }
+        } }, 'Forgot password?'));
     }
-    dlg.replaceChildren(close, ...body.filter(Boolean));
-    if (!dlg.open) dlg.showModal();
   }
   if (C) {
     $('account').addEventListener('click', () => openAccount());
-    C.onChange(accountButton);
+    C.onChange((session, why) => {
+      accountButton();
+      // The session ended by itself (expired, revoked, account deleted elsewhere): say so; edits stay here.
+      if (why === 'expired') status('Signed out. Sign in to sync', true);
+    });
   }
   accountButton();
 
@@ -780,7 +940,10 @@
   if (C) {
     // Back from Discord (or an email confirmation link): finish signing in, then sync.
     C.finishRedirect()
-      .then((done) => { if (done || C.signedIn) syncAll(); })
+      .then((done) => {
+        if (done === 'recovery') openNewPassword();
+        if (done || C.signedIn) syncAll();
+      })
       .catch((e) => openAccount(e.message));
   }
 })();

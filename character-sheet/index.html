@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Only this site's own scripts run; data goes only to the Supabase project (sign-in and sync). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file:; style-src 'self' file: 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' file: data:; connect-src https://fmkbvoukbrxjbzlexjhu.supabase.co; form-action 'self'; base-uri 'self'; object-src 'none'">
 <title>Character Sheet</title>
 <!-- Stand-ins for the guide's fonts: Beaufort Pro Heavy → Merriweather Black, Avenir Next Condensed → Barlow Semi Condensed.
      Offline, the page falls back to Georgia / Arial Narrow and still works. -->
@@ -12,7 +14,7 @@
 <link rel="stylesheet" href="../assets/css/nimble.css">
 <link rel="stylesheet" href="sheet.css">
 </head>
-<body>
+<body class="cs-desk">
 <main class="cs-page">
   <p class="notice">This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p>
 

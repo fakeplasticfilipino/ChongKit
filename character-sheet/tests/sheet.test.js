@@ -16,7 +16,9 @@ test('a blank sheet has the default layout', () => {
   assert.deepStrictEqual(Object.values(s.extras).flat(), [], 'no added boxes to start');
   assert.strictEqual(s.woundExtra, false);
   assert.deepStrictEqual(s.woundMarks, [false, false, false, false, false]);
-  assert.ok(!('entries' in s), 'notes are plain text');
+  assert.ok(!('entries' in s) && !('notes' in s), 'notes live in tabs');
+  assert.deepStrictEqual(s.noteTabs.map((t) => [t.name, t.text]), [['Notes', '']]);
+  assert.strictEqual(s.noteTab, s.noteTabs[0].id);
 });
 
 test('skills and Initiative follow their stat', () => {
@@ -120,7 +122,7 @@ test('version 1 sheets move to the new layout', () => {
   assert.deepStrictEqual(s.removed.sort(), ['combat:armor', 'header:ancestry', 'header:cls', 'stats:wis']);
   assert.deepStrictEqual(s.tabs.map((t) => t.name), ['Actions', 'Abilities', 'Inventory', 'Notes'], 'old note entries become a Notes tab');
   assert.strictEqual(s.tabs[3].entries[0].title, 'Note');
-  assert.strictEqual(s.v, 3);
+  assert.strictEqual(s.v, 4);
 });
 
 test('version 2 sheets: starter boxes go unless used, entries become a Notes tab', () => {
@@ -178,26 +180,47 @@ test('undo brings back the layout but keeps what was typed since', () => {
   assert.deepStrictEqual(u.tabs[0].entries.map((e) => [e.title, e.sum]), [['Bow', ''], ['Axe', 'typed']]);
 });
 
-test('syncing with an account: newer edit wins, untouched blanks stay local', () => {
-  const mk = (id, name, updated) => ({ ...S.blank(name), id, updated });
-  const local = { a: mk('a', 'Local newer', 200), b: mk('b', 'Local older', 100), c: mk('c', 'Only here', 50), d: mk('d', '', 0), e: mk('e', 'Gone', 70) };
+test('syncing with an account: newer edit wins, untouched blanks stay local, accounts never mix', () => {
+  const mk = (id, name, updated, owner = '') => ({ ...S.blank(name), id, updated, owner });
+  const local = { a: mk('a', 'Local newer', 200), b: mk('b', 'Local older', 100), c: mk('c', 'Only here', 50), d: mk('d', '', 0),
+    e: mk('e', 'Gone', 70, 'me'), o: mk('o', 'Other account', 999, 'them'), q: mk('q', 'Queued delete', 80, 'me') };
   const remote = [
     { id: 'a', data: mk('a', 'Remote older', 150) },
     { id: 'b', data: mk('b', 'Remote newer', 300) },
     { id: 'f', data: mk('f', 'Only there', 10) },
+    { id: 'q', data: mk('q', 'Queued delete', 80) },
     { id: 'x', data: null },
   ];
-  const m = S.mergeChars(local, remote, ['e']); // e was in the account before: deleted on another device
-  assert.deepStrictEqual(Object.keys(m.chars).sort(), ['a', 'b', 'c', 'd', 'f']);
+  const m = S.mergeChars(local, remote, ['e', 'q'], 'me', ['q']); // e: deleted on another device; q: deleted here, not sent yet
+  assert.deepStrictEqual(Object.keys(m.chars).sort(), ['a', 'b', 'c', 'd', 'f', 'o']);
   assert.strictEqual(m.chars.a.name, 'Local newer');
   assert.strictEqual(m.chars.b.name, 'Remote newer');
   assert.strictEqual(m.chars.f.name, 'Only there');
-  assert.deepStrictEqual(m.upload.sort(), ['a', 'c'], 'never-edited d is not uploaded');
+  assert.deepStrictEqual(m.upload.sort(), ['a', 'c'], 'never-edited d and the other account\'s o are not uploaded');
+  assert.strictEqual(m.chars.a.owner, 'me');
+  assert.strictEqual(m.chars.f.owner, 'me');
+  assert.strictEqual(m.chars.o.owner, 'them');
+  assert.strictEqual(m.chars.d.owner, '', 'a blank stays this browser\'s');
   assert.strictEqual(S.normalize({ v: 3, updated: 'x' }).updated, 0);
   assert.strictEqual(S.normalize({ v: 3, name: 'Old save' }).updated, 1, 'saves from before syncing get uploaded');
   assert.strictEqual(S.blank().updated, 0);
   const s = S.blank('Same');
-  assert.strictEqual(S.content(s), S.content({ ...s, updated: 999 }), 'the timestamp is not content');
+  assert.strictEqual(S.content(s), S.content({ ...s, updated: 999, owner: 'me' }), 'timestamp and owner are not content');
+  const imported = S.importJson(S.exportJson({ ...s, owner: 'them' }));
+  assert.strictEqual(imported.owner, '', 'an import is yours');
+  assert.ok(imported.updated > 1, 'an import counts as an edit');
+});
+test('version 3 notes become the first notes tab; notes tabs are cleaned up', () => {
+  const s = S.normalize({ v: 3, notes: 'Owes Marta 12 gold.' });
+  assert.deepStrictEqual(s.noteTabs.map((t) => [t.name, t.text]), [['Notes', 'Owes Marta 12 gold.']]);
+  const t = S.normalize({ v: 4, noteTabs: [{ id: 'n1', name: 'NPCs', text: 3 }, null, 'x'], noteTab: 'gone' });
+  assert.deepStrictEqual(t.noteTabs, [{ id: 'n1', name: 'NPCs', text: '3' }]);
+  assert.strictEqual(t.noteTab, 'n1');
+  assert.deepStrictEqual(S.normalize({ v: 4, noteTabs: [] }).noteTabs, [], 'all notes tabs closed stays closed');
+  const before = S.normalize({ v: 4, noteTabs: [{ id: 'a', name: 'A', text: '' }, { id: 'b', name: 'B', text: '' }] });
+  const now = JSON.parse(JSON.stringify(before));
+  now.noteTabs = [{ id: 'a', name: 'A', text: 'typed later' }]; // B closed, then A typed in
+  assert.deepStrictEqual(S.undoLayout(before, now).noteTabs.map((x) => [x.name, x.text]), [['A', 'typed later'], ['B', '']]);
 });
 
 test('move', () => {

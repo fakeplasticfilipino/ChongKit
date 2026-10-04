@@ -1,7 +1,12 @@
 /* Character Sheet: our table's sheet (rounded heavy-outlined boxes, panels with sideways labels,
    condensed caps labels), sitting on the site's parchment page (nimble.css). Like the GM Guide it is
    matte parchment throughout, never white, with soft brown-black ink. */
-:root { --sheet: #f1eadc; --fld: #f6f1e6; --fld2: #e8e0cf; }
+:root { --sheet: #f7f1e3; --fld: #fbf7ee; --fld2: #ece3d1; }
+/* The page is a darker desk, so the sheet reads as a sheet of paper lying on it. */
+body.cs-desk, html:has(body.cs-desk) {
+  background-color: #d8ccb4;
+  background-image: radial-gradient(ellipse at 30% 0%, rgba(236, 226, 206, .55), transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(140, 118, 86, .25), transparent 65%);
+}
 /* The sheet takes most of the screen: slim notice, one toolbar row. */
 main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
 .cs-page .notice { margin-bottom: 10px; padding: 5px 12px; font-size: .8rem; }
@@ -45,10 +50,21 @@ main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
 .cs {
   --f: #5a5148; --f2: #8c8274; --line: #d8cfbf; --line2: #b8ad9c; --hover: #ece4d4; --lab: #7b7266;
   position: relative; display: flex; flex-direction: column; gap: 30px;
-  padding: 26px 26px 28px; background: var(--sheet); color: var(--ink); font-family: var(--body);
-  box-shadow: 0 1px 2px rgba(60, 40, 20, .12), 0 8px 28px rgba(60, 40, 20, .14);
+  padding: 46px 44px 40px; color: var(--ink); font-family: var(--body);
+  /* A sheet of paper: a clear black edge, faint shading toward the edges, a soft shadow on the desk */
+  background-color: var(--sheet);
+  background-image: linear-gradient(180deg, rgba(255, 252, 244, .6), transparent 30%, transparent 75%, rgba(214, 198, 168, .18)),
+    radial-gradient(ellipse at 50% 40%, transparent 60%, rgba(170, 140, 95, .16) 100%);
+  border: 2px solid #1f1b17; border-radius: 2px;
+  box-shadow: 0 1px 1px rgba(60, 40, 20, .18), 0 4px 10px rgba(60, 40, 20, .14), 0 22px 48px rgba(60, 40, 20, .22);
 }
-.cs.editing { outline: 2px dashed var(--f2); outline-offset: -10px; }
+/* The printed margin lines and the imprint in the corner */
+.cs::before { content: ""; position: absolute; inset: 12px; border: 1px solid rgba(58, 51, 44, .28); pointer-events: none; }
+.cs::after {
+  content: "Nimble · Character Sheet"; position: absolute; top: 20px; right: 28px; pointer-events: none;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #8a7f70;
+}
+.cs.editing { outline: 2px dashed var(--f2); outline-offset: -22px; }
 .cs input, .cs textarea, .cs select, .cs button { font-family: inherit; color: inherit; }
 .cs button { cursor: pointer; }
 .cs-ic { width: 18px; height: 18px; flex: none; }
@@ -285,13 +301,15 @@ main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
 .cs-elist-top .cs-fold { border-color: var(--line2); color: var(--f); }
 .cs-elist-top .cs-fold:hover { background: var(--hover); }
 
-/* Notes: one free-text panel on ruled lines; entries (tabs) */
-.cs-notes { padding: 22px 18px 16px; }
+/* Notes: tabs of free text on ruled lines (same tabs as the entries) */
+.cs-sectitle { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 14px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--lab); }
+.cs-sectitle::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.cs-notepage { padding: 10px 16px 14px; }
 .cs-fold { padding: 2px 8px; border: 1px solid rgba(255, 255, 255, .45); background: transparent; color: var(--fld); font-size: 12px; font-weight: 700; text-transform: uppercase; }
 .cs-fold:hover { background: rgba(255, 255, 255, .14); }
 .cs-free {
   display: block; width: 100%; min-height: 288px; padding: 0 4px; border: 0; border-radius: 0; resize: vertical;
-  font-size: 18px; line-height: 32px; background: repeating-linear-gradient(var(--sheet) 0 31px, #d3c9b8 31px 32px);
+  font-size: 18px; line-height: 32px; background: repeating-linear-gradient(transparent 0 31px, #d3c7b2 31px 32px);
 }
 .cs-free:focus, .cs-ebody:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--f); }
 .cs-elist { display: flex; flex-direction: column; gap: 6px; }
@@ -353,6 +371,9 @@ input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
   .cs-vl { width: 32px; }
   .cs-statrow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   main.cs-page { padding: 8px 8px 16px; }
+  .cs { padding: 32px 14px 22px; }
+  .cs::before { inset: 6px; }
+  .cs::after { display: none; }
   .cs-saverow { gap: 16px; }
   .cs-save { padding: 4px 6px 6px 14px; }
   .cs-band { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
@@ -384,12 +405,17 @@ input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
 .cs-auth-sub { margin: -10px 0 14px; color: var(--muted); }
 .cs-auth-msg { min-height: 1.4em; margin: 12px 0 0; color: var(--ink-soft); }
 .cs-auth-msg.bad { color: var(--blood); font-weight: 600; }
+.cs-check-row { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px; cursor: pointer; }
+.cs-check-row input { width: 18px; height: 18px; margin: 2px 0 0; flex: none; }
+.cs-link { margin-top: 12px; padding: 0; border: 0; background: none; font: 600 15px var(--body); color: var(--ink-soft); text-decoration: underline; cursor: pointer; }
+.cs-link.danger { color: var(--blood); }
 #account { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media print {
   .cs-tools, .notice, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold, .cs-tabadd, .cs-tdel, .cs-editbar { display: none !important; }
   main::before, main::after { display: none; }
   body { background: #fff; }
-  .cs { box-shadow: none; padding: 0; outline: 0; }
+  .cs { box-shadow: none; padding: 0; outline: 0; border: 0; background: none; }
+  .cs::before, .cs::after { display: none; }
   .cs-in { border-color: transparent; }
   .cs-free { min-height: 220px; }
 }

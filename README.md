@@ -30,6 +30,17 @@ that already has characters merges them with the account's (for a character on b
 edit wins). Coming back to the tab picks up edits made elsewhere. Signed out, the sheet works as
 before, only in this browser. Deleting a character while signed in deletes it from the account too.
 
+- **Forgot password?** (in the Sign in box) emails a link; opening it asks for a new password.
+- **Sign out** keeps your characters in this browser unless you tick **Remove my characters from this
+  browser** (do that on a shared computer). Characters from one account are never uploaded to
+  another, even if someone else signs in on the same browser.
+- **Delete account and all its characters…** (in the account box) removes the account for good.
+- **Offline:** keep playing. The toolbar says **Not synced**; edits and deletes are sent when you're
+  back online. Two tabs of the sheet open at once share their edits.
+- **Limits:** 512 KB per character (far more than any sheet needs) and 200 characters per account.
+  Imports over 1 MB are refused. If two devices edit the same character, the edit made last (by each
+  device's clock) wins.
+
 - **Details:** name on the banner; Class & Level, Ancestry, Height, Weight; Hit Dice (left / die).
 - **Stats:** STR, DEX, CON, INT, WIS, CHA. Type each stat in its box; the oval under it is a slot for a
   second number. Click a stat's name to mark it as a key stat (it turns dark).
@@ -56,8 +67,8 @@ before, only in this browser. Deleting a character while signed in deletes it fr
   section with the rest; type their name, drag the grip to reorder. Removed boxes come back from the
   same bar, and Combat's bar sets Max Wounds. **Done** (or Esc) goes back to playing. Removing or
   deleting anything shows **Undo** (Ctrl+Z works too).
-- **Notes:** one free-text panel across the bottom. (Older sheets' note entries moved into a **Notes**
-  tab.)
+- **Notes:** tabs of free text on ruled lines, working like the tabs above (+, double-click to rename,
+  ×, drag). Older sheets' notes are in the first tab, **Notes**.
 
 **Derived, not from the GM Guide:** the sheet's layout (our table's sheet), its stats, saves,
 skill-to-stat pairs, skill = stat + points, Initiative = DEX + bonus and the six-wound track are not

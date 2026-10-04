@@ -2,12 +2,12 @@
 // for tests (module.exports).
 // The layout is our table's sheet: six stats (each with a small number slot), three saves,
 // Armor, Hit Points, Initiative / Speed, Wounds (plus five optional extra circles), ten skills
-// (each tied to a stat), tabs of collapsible entries, and notes. These are labels, not numbers
+// (each tied to a stat), tabs of collapsible entries, and tabs of notes. These are labels, not numbers
 // from the GM Guide. Derived (not printed in the GM Guide): a skill is its stat plus the skill
 // points put into it, and Initiative is DEX plus any bonus.
 
 (function (root) {
-  const VERSION = 3;
+  const VERSION = 4;
   const STORE = 'chongkit.sheets'; // localStorage: { current, chars: { id: sheet } }
 
   const STATS = [
@@ -61,10 +61,11 @@
   }
   const newEntry = (extra = {}) => ({ id: uid(), title: '', sum: '', body: '', ...extra });
   const newTab = (name = '') => ({ id: uid(), name, entries: [] });
+  const newNote = (name = '', text = '') => ({ id: uid(), name, text });
 
   function blank(name = '') {
     const s = {
-      v: VERSION, id: uid(), name, updated: 0,
+      v: VERSION, id: uid(), name, updated: 0, owner: '',
       cls: '', ancestry: '', height: '', weight: '', speed: '',
       hitDice: { cur: '1', die: '' },
       hp: { cur: '', max: '', temp: '' },
@@ -74,9 +75,10 @@
       removed: [], // default boxes taken off the sheet: `${section}:${id}`
       extras: emptyExtras(), // added boxes, shown in their section after the defaults
       tabs: TABS.map(newTab), tab: '',
-      notes: '',
+      noteTabs: [newNote('Notes')], noteTab: '', // notes: tabs of free text
     };
     s.tab = s.tabs[0].id;
+    s.noteTab = s.noteTabs[0].id;
     STATS.forEach((st) => { s.stats[st.id] = { val: 0, slot: '', key: false }; });
     SAVES.forEach((sv) => { s.saves[sv.id] = { val: '', mode: '' }; });
     SKILLS.forEach((sk) => { s.skills[sk.id] = 0; });
@@ -153,15 +155,17 @@
     let raw = input;
     if (int(raw.v, 1) < 2) raw = upgrade1(raw);
     if (int(input.v, 1) < 3) raw = upgrade2(raw);
+    if (int(input.v, 1) < 4) raw = { ...raw, noteTabs: [newNote('Notes', str(raw.notes))] }; // v3 notes: one tab
     const s = blank();
     s.extras = emptyExtras();
-    for (const k of ['id', 'name', 'cls', 'ancestry', 'height', 'weight', 'speed', 'armor', 'notes']) {
+    for (const k of ['id', 'name', 'cls', 'ancestry', 'height', 'weight', 'speed', 'armor']) {
       if (raw[k] != null) s[k] = str(raw[k]);
     }
     if (!s.id) s.id = uid();
     // Last edit (ms), for syncing; 0 = never edited. Saves from before syncing have none: they count
     // as edited (so they're uploaded on first sign-in) but older than anything in the account.
     s.updated = raw.updated == null ? 1 : Math.max(0, int(raw.updated));
+    s.owner = str(raw.owner); // the account it was synced to ('' = this browser only)
     s.hitDice = { cur: str((raw.hitDice || {}).cur ?? '1'), die: str((raw.hitDice || {}).die) };
     s.hp = { cur: str((raw.hp || {}).cur), max: str((raw.hp || {}).max), temp: str((raw.hp || {}).temp) };
     s.initBonus = int(raw.initBonus);
@@ -193,6 +197,11 @@
         .map((t) => ({ id: str(t.id) || uid(), name: str(t.name), entries: normEntries(t.entries) }));
     }
     s.tab = s.tabs.some((t) => t.id === raw.tab) ? raw.tab : (s.tabs[0] || {}).id || '';
+    if (Array.isArray(raw.noteTabs)) {
+      s.noteTabs = raw.noteTabs.filter((t) => t && typeof t === 'object')
+        .map((t) => ({ id: str(t.id) || uid(), name: str(t.name), text: str(t.text) }));
+    }
+    s.noteTab = s.noteTabs.some((t) => t.id === raw.noteTab) ? raw.noteTab : (s.noteTabs[0] || {}).id || '';
     return s;
   }
 
@@ -275,6 +284,8 @@
       return now ? { ...now, entries: pick(t.entries, now.entries) } : t;
     });
     if (!out.tabs.some((t) => t.id === out.tab)) out.tab = prev.tab;
+    out.noteTabs = (prev.noteTabs || []).map((t) => (cur.noteTabs || []).find((c) => c.id === t.id) || t);
+    if (!out.noteTabs.some((t) => t.id === out.noteTab)) out.noteTab = prev.noteTab;
     return out;
   }
 
@@ -306,46 +317,48 @@
 
   // --- Syncing with an account ---------------------------------------------------------
   // `remote` is the account's characters ([{ id, data }]); `synced` the ids this browser has seen
-  // in the account before. Returns the merged characters and the ids to upload:
+  // in this account before; `user` the account's id; `deletes` ids deleted here but not yet in the
+  // account. Returns the merged characters and the ids to upload:
   // - in both: the newer edit wins (uploaded if it's the local one);
-  // - only remote: downloaded;
-  // - only local: uploaded if it was ever edited, or dropped if it was synced before (it was
-  //   deleted on another device).
-  function mergeChars(local, remote, synced = []) {
+  // - only remote: downloaded (unless it's waiting to be deleted);
+  // - only local: uploaded if it was ever edited, dropped if it was synced before (deleted on
+  //   another device), and kept but never uploaded if it belongs to another account.
+  // Every character that ends up in the account is marked with its `owner`.
+  function mergeChars(local, remote, synced = [], user = '', deletes = []) {
     const chars = {};
     const upload = [];
     const seen = new Set(synced);
+    const gone = new Set(deletes);
     const inRemote = new Set();
     for (const row of remote || []) {
-      if (!row || !row.data) continue;
+      if (!row || !row.data || gone.has(row.id)) continue;
       const r = normalize({ ...row.data, id: row.id });
       inRemote.add(r.id);
       const l = local[r.id];
-      if (l && l.updated > r.updated) { chars[l.id] = l; upload.push(l.id); }
-      else chars[r.id] = r;
+      if (l && l.updated > r.updated && (!l.owner || l.owner === user)) { chars[l.id] = { ...l, owner: user }; upload.push(l.id); }
+      else chars[r.id] = { ...r, owner: user };
     }
     for (const l of Object.values(local)) {
-      if (inRemote.has(l.id)) continue;
+      if (inRemote.has(l.id) || gone.has(l.id)) continue;
+      if (l.owner && l.owner !== user) { chars[l.id] = l; continue; } // another account's: never upload
       if (seen.has(l.id)) continue; // deleted elsewhere
-      chars[l.id] = l;
-      if (l.updated) upload.push(l.id);
+      if (l.updated) { chars[l.id] = { ...l, owner: user }; upload.push(l.id); } else chars[l.id] = l;
     }
     return { chars, upload };
   }
-  // The character without its timestamp: two sheets with the same content compare equal.
-  const content = (s) => JSON.stringify({ ...s, updated: 0 });
-
+  // The character without its timestamp and owner: two copies with the same content compare equal.
+  const content = (s) => JSON.stringify({ ...s, updated: 0, owner: '' });
   const exportJson = (s) => JSON.stringify({ chongkitSheet: VERSION, ...s }, null, 2);
   // An imported character always gets a new id, so it never overwrites one you have.
   function importJson(text) {
     const raw = JSON.parse(text);
     if (!raw || typeof raw !== 'object' || !raw.chongkitSheet) throw new Error('Not a ChongKit character');
-    return { ...normalize(raw), id: uid() };
+    return { ...normalize(raw), id: uid(), owner: '', updated: Date.now() }; // a new character of yours
   }
 
   const api = {
     VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, ADDS, WOUNDS, EXTRA_WOUNDS, uid,
-    blank, normalize, newBox, newEntry, newTab, statList, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
+    blank, normalize, newBox, newEntry, newTab, newNote, statList, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
     setWounds, cycleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
     loadAll, saveAll, exportJson, importJson, mergeChars, content,
   };
