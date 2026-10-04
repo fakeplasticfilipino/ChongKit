@@ -196,9 +196,9 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **Select a token on the map** and its entry jumps to the top of the list (outlined, switching tabs
   if needed) until you deselect it, so you can change its HP without scrolling.
 - **On the token:** small dark pills along the bottom edge: HP in the lower-left corner (red edge;
-  hidden stats show a green **H** or a dark-red **B**), Extra HP beside it (blue edge), and AC with a
-  small shield in the lower-right corner. They grow with the token, within limits; when
-  they don't all fit on one row, Extra HP (and then AC) moves up a row.
+  with Extra HP it reads `8 + 2`; hidden stats show a green **H** or a dark-red **B**) and AC in the
+  lower-right corner. They grow with the token, within limits; when they don't fit on one row, AC
+  moves up a row.
 - **The ⋯ menu** on an entry has **Max HP** (fills the HP bar), **Extra HP**, **AC** (any text,
   e.g. `M`, `H`, `15`), **Note**, stats shown/hidden (GM), and delete.
 - **Hidden stats:** players see every entry, but when its stats are hidden they only see **H**

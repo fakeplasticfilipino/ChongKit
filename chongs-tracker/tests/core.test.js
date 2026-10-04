@@ -111,27 +111,24 @@ test('armor keeps its first letter (None: no AC); tab notes add up', () => {
 
 test('token badges: small pills in the lower corners', () => {
   const parts = (e, s = 150) => C.badgeSpecs(e, s, s);
-  const all = parts({ hp: 17, max: 30, extra: 5, ac: 'M' });
-  assert.deepStrictEqual(all.map((x) => x.key), ['hp', 'hp.t', 'xp', 'xp.t', 'ac', 'ac.g', 'ac.t']);
-  assert.deepStrictEqual(all.filter((x) => x.type === 'text').map((x) => x.text), ['17', '+5', 'M']);
+  const all = parts({ hp: 8, max: 30, extra: 2, ac: 'M' });
+  assert.deepStrictEqual(all.map((x) => x.key), ['hp', 'hp.t', 'ac', 'ac.t']);
+  assert.deepStrictEqual(all.filter((x) => x.type === 'text').map((x) => x.text), ['8 + 2', 'M'], 'Extra HP shares the HP pill');
+  assert.strictEqual(parts({ hp: 8 })[1].text, '8', 'no Extra HP: just HP');
   for (const x of all) { // inside the token's box, in its bottom quarter
     const pts = x.type === 'text' ? [{ x: x.box.x, y: x.box.y }, { x: x.box.x + x.box.w, y: x.box.y + x.box.h }] : x.points.map((q) => ({ x: q.x + x.at.x, y: q.y + x.at.y }));
     assert.ok(pts.every((q) => q.x >= 0 && q.x <= 150 && q.y >= 150 * 0.75 && q.y <= 150), x.key);
   }
-  const hpBox = all.find((x) => x.key === 'hp.t').box, xpBox = all.find((x) => x.key === 'xp.t').box;
-  assert.ok(xpBox.x > hpBox.x + hpBox.w, 'Extra HP sits beside HP');
   const hidden = parts({ hidden: true, hp: 8, max: 30, extra: 5, ac: '' });
   assert.deepStrictEqual(hidden.map((x) => x.key), ['hp', 'hp.t'], 'hidden: H/B only, no Extra HP; no AC, no pill');
   assert.strictEqual(hidden[1].text, 'B');
   assert.strictEqual(hidden[0].fill, C.BADGE.bloodiedFill);
-  // Pills never overlap: what doesn't fit beside HP moves up a row.
+  // Pills never overlap: AC moves up a row when it doesn't fit beside HP.
   const rect = (x) => { const xs = x.points.map((q) => q.x + x.at.x), ys = x.points.map((q) => q.y + x.at.y); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
   for (const s of [40, 75, 150, 300]) {
     for (const e of [{ hp: 7, ac: 'M' }, { hp: 119, extra: 12, ac: '15' }, { hp: 1000, extra: 100, ac: '18' }]) {
-      const r = parts(e, s).filter((x) => x.key === x.part).map(rect);
-      for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
-        assert.ok(!(r[i][0] < r[j][2] && r[j][0] < r[i][2] && r[i][1] < r[j][3] && r[j][1] < r[i][3]), `${s}px ${JSON.stringify(e)}`);
-      }
+      const [a, b] = parts(e, s).filter((x) => x.type === 'shape').map(rect);
+      assert.ok(!(a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]), `${s}px ${JSON.stringify(e)}`);
     }
   }
   const h = (s) => C.badgeSpecs({ hp: 1 }, s, s)[1].box.h;

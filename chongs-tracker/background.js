@@ -1,6 +1,6 @@
 // Chong's Tracker: background page (always running while the extension is on).
-// 1. Draws the badges on attached tokens: small dark pills, HP in the lower-left corner with Extra HP
-//    beside it, and AC (with a shield mark) in the lower-right corner. They are LOCAL items (only on this screen), built
+// 1. Draws the badges on attached tokens: small dark pills, HP in the lower-left corner (with Extra HP:
+//    "8 + 2") and AC in the lower-right corner. They are LOCAL items (only on this screen), built
 //    from the scene metadata, so nothing extra is saved. When an entry's stats are hidden, everyone
 //    (GM too) sees H (healthy) or B (Bloodied) instead of the HP number, no Extra HP, and the AC.
 // 2. Adds a right-click "Track" item for tokens.
