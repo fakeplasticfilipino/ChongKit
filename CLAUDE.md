@@ -21,7 +21,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 3. **Keep tools zero-install.** Plain HTML + vanilla JS that opens from `file://`. No build step, no
    frameworks, no CDN scripts. The only external request allowed is Google Fonts, and every page
    must still work offline on its fallback fonts.
-4. **Match the GM Guide's look.** Parchment background, thin brown corner flourishes, heavy
+4. **Match the GM Guide's look.** Parchment background (no corner flourishes: they distract), heavy
    wedge-serif headings (Merriweather 900 standing in for Beaufort Pro Heavy), condensed sans body
    (Barlow Semi Condensed for Avenir Next Condensed), notched-corner stat blocks with italic
    small-caps names, grey arrow-tipped ability bars, heart/shield icons for HP/armor, dark red
@@ -60,7 +60,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 
 1. **The sheet is our table's sheet** (v2): rounded heavy-outlined boxes, panels with sideways labels,
    parchment fields (never white), condensed caps labels, set on the usual parchment page with the
-   notice and footer. The sheet fills most of the screen (slim notice, one toolbar row, no corner flourishes).
+   notice and footer. The sheet fills most of the screen (slim notice, one toolbar row).
    Six stats (STR DEX CON INT WIS CHA, each with an oval number slot), three saves (STR DEX WIL),
    Combat (Armor, HP, Initiative/Speed, Wounds + optional 5 dashed extra circles; filled wounds are
    black), ten skills, tabs of collapsible entries, notes.

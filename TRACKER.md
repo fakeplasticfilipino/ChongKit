@@ -50,6 +50,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Landing page: divider ornament under the title
 - [x] Combat Generator: setup and the text output side by side (stacked on phones); output box sits in a stat-block frame
 - [x] Character Sheet recoloured from white to parchment (fields, boxes, tabs, notes)
+- [x] Corner flourishes removed everywhere; landing page tools in three equal columns (one on narrow screens)
+- [x] Combat Generator as wide as the sheet; the text frame grows to the setup panel's height; More options in two columns
 
 ## Combat Generator (`combat-generator/`)
 

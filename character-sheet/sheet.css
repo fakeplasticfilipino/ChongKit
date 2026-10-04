@@ -2,9 +2,8 @@
    condensed caps labels), sitting on the site's parchment page (nimble.css). Like the GM Guide it is
    matte parchment throughout, never white, with soft brown-black ink. */
 :root { --sheet: #f1eadc; --fld: #f6f1e6; --fld2: #e8e0cf; }
-/* The sheet takes most of the screen: slim notice, one toolbar row, no corner flourishes. */
+/* The sheet takes most of the screen: slim notice, one toolbar row. */
 main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
-main.cs-page::before, main.cs-page::after { display: none; }
 .cs-page .notice { margin-bottom: 10px; padding: 5px 12px; font-size: .8rem; }
 .cs-page .foot { margin-top: 14px; font-size: .78rem; }
 .cs-tools .back { margin: 0 6px 0 0; }
