@@ -167,14 +167,19 @@ function runCommand(text) {
   return true;
 }
 
-// /clear: delete every entry in this tab (or those whose names start with the given text). GM only.
+// /clear: delete every entry in this tab and empty its general note (or, with a name, delete the
+// entries whose names start with it; the note stays). GM only.
 function runClear(clear) {
   if (role !== 'GM') { OBR.notification.show('Only the GM can clear entries', 'WARNING'); return false; }
   const hit = entries.filter((e) => e.tab === current && C.clearMatches(e, clear));
-  if (!hit.length) { OBR.notification.show('Nothing to clear'); return true; }
-  if (!confirm(`Delete ${hit.length} entr${hit.length === 1 ? 'y' : 'ies'} from this tab?`)) return false;
+  const tab = tabById(current);
+  const note = !clear.match && tab && !!tab.note;
+  if (!hit.length && !note) { OBR.notification.show('Nothing to clear'); return true; }
+  const what = [hit.length && `${hit.length} entr${hit.length === 1 ? 'y' : 'ies'}`, note && 'the note'].filter(Boolean).join(' and ');
+  if (!confirm(`Delete ${what} from this tab?`)) return false;
+  if (note) saveTab({ ...tab, note: '' });
   hit.forEach((e) => open.delete(e.id));
-  deleteEntries(hit.map((e) => e.id));
+  if (hit.length) deleteEntries(hit.map((e) => e.id));
   return true;
 }
 

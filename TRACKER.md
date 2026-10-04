@@ -101,6 +101,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Unique encounter twist (p.28–29, all 37), off by default
 - [x] Generic monsters fill in when a family can't reach the budget (shown with their level for reskinning)
 - [x] Setup choices remembered in localStorage (never the generated fight)
+- [x] Summary line and Loot are options (More options), off by default; ticking them redraws the same fight
 
 ### 📋 Next up
 - (nothing queued)

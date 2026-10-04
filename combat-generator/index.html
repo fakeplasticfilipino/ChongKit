@@ -102,6 +102,8 @@
         </label>
         <label class="field check"><input id="abilities" type="checkbox"> Special abilities</label>
         <label class="field check"><input id="twist" type="checkbox"> Unique encounter twist</label>
+        <label class="field check"><input id="summary" type="checkbox"> Summary</label>
+        <label class="field check"><input id="loot" type="checkbox"> Loot</label>
       </div>
     </details>
   </section>
@@ -138,7 +140,7 @@
   // Only the choices are saved in this browser, never the generated fight.
   const STORE = 'chongkit.combat-generator.settings';
   const SELECTS = ['family', 'armor', 'die', 'shape', 'minions', 'patron'];
-  const CHECKS = ['abilities', 'twist'];
+  const CHECKS = ['abilities', 'twist', 'summary', 'loot'];
   const SEGS = ['mode', 'difficulty'];
 
   function saveSettings() {
@@ -269,10 +271,13 @@
       }
     }
 
-    const loot = [`Loot: ${gp(e.reward.perHero)} each (${gp(e.reward.party)} for the party)`];
-    if (e.family && e.family.loot) loot.push(`${e.family.loot.name}: ${e.family.loot.text}`);
-    blocks.push(loot);
-    return [head, ...blocks.map((b) => b.join('\n'))].join('\n\n');
+    if ($('loot').checked) {
+      const loot = [`Loot: ${gp(e.reward.perHero)} each (${gp(e.reward.party)} for the party)`];
+      if (e.family && e.family.loot) loot.push(`${e.family.loot.name}: ${e.family.loot.text}`);
+      blocks.push(loot);
+    }
+    if ($('summary').checked) blocks.unshift([head]);
+    return blocks.map((b) => b.join('\n')).join('\n\n');
   }
 
   function show(e) {
@@ -307,6 +312,8 @@
     show(current);
   }
 
+  // Summary and Loot only change what the text shows: same fight, redrawn.
+  ['summary', 'loot'].forEach((id) => $(id).addEventListener('change', () => { saveSettings(); show(current); }));
   $('new').addEventListener('click', generate);
   $('dice').addEventListener('click', newDice);
   $('copy').addEventListener('click', async (ev) => {

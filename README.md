@@ -83,7 +83,7 @@ from the GM Guide (which has no character rules). Ancestry and Class are free te
 1. Use **−/+** to set the number of heroes and their level.
 2. Pick **Monsters** or **Boss**, then a difficulty. The fight updates right away.
 3. Pick **Creatures**: **Generic** (Monster Builder stats) or a bestiary family such as Kobolds, Goblins, Bandits or Undead.
-4. Armor, dice, build, minions, who's paying, special abilities and the encounter twist are under **More options**.
+4. Armor, dice, build, minions, who's paying, special abilities, the encounter twist, the **Summary** line (difficulty, heroes and level) and the **Loot** are under **More options**. The last four are off by default.
 
 Your choices are remembered in this browser, so the page opens the way you left it. Only the settings are saved, never the generated fight.
 
@@ -97,7 +97,7 @@ Damage: Throw Scorpion (2×). (Range 8) 1d4+2.
 Save DC: 10 (by level)
 ```
 
-followed by any abilities, then the gold for each hero and the whole party (plus the family's loot table, if it has one). The box is editable, so rename monsters or add notes right there.
+followed by any abilities. With **Loot** ticked, the gold for each hero and the whole party (plus the family's loot table, if it has one) comes last; with **Summary** ticked, a line like `Medium Fight · 4 heroes, level 3` comes first. The box is editable, so rename monsters or add notes right there.
 
 - **New Encounter:** a different fight with the same settings.
 - **New Dice:** the same generic monsters (or boss) with new dice (same averages). Bestiary monsters keep their printed attacks.
@@ -172,8 +172,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note.
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
   "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
-- **Mass delete (GM only):** `/clear` deletes every entry in the current tab; `/clear Goblin`
-  deletes only names starting with "Goblin". It asks first.
+- **Mass delete (GM only):** `/clear` deletes every entry in the current tab and empties its general
+  note; `/clear Goblin` deletes only names starting with "Goblin" (the note stays). It asks first.
 - **Change HP** by typing math in the HP box and pressing Enter: `20-3` → 17, `-3` takes 3 off,
   `+5` heals 5, `12` sets it to 12. No dice: roll them at the table.
   - Damage uses up **Extra HP** first.
