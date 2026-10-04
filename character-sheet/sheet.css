@@ -1,9 +1,14 @@
 /* Character Sheet: our table's sheet (rounded heavy-outlined boxes, panels with sideways labels,
    white fields, condensed caps labels), sitting on the site's parchment page (nimble.css). */
-main.wide { max-width: 1140px; }
+/* The sheet takes most of the screen: slim notice, one toolbar row, no corner flourishes. */
+main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
+main.cs-page::before, main.cs-page::after { display: none; }
+.cs-page .notice { margin-bottom: 10px; padding: 5px 12px; font-size: .8rem; }
+.cs-page .foot { margin-top: 14px; font-size: .78rem; }
+.cs-tools .back { margin: 0 6px 0 0; }
 
 /* Toolbar */
-.cs-tools { position: relative; margin: 0 0 18px; align-items: center; }
+.cs-tools { position: relative; margin: 0 0 12px; align-items: center; }
 .cs-tools select { min-width: 210px; }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
 .cs-menu { position: relative; }
@@ -73,65 +78,42 @@ main.wide { max-width: 1140px; }
 .cs-check:checked::after { content: "✓"; color: #231f20; font-weight: 700; font-size: 15px; line-height: 1; }
 .cs-check:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
-/* Sections: the + tab (extra boxes) and Edit layout */
+/* Sections and Edit layout: × removes a box, a grip drags an added one, the edit bar adds more */
 .cs-sec { position: relative; min-width: 0; }
-.cs-more {
-  position: absolute; top: -19px; right: 0; z-index: 6; display: inline-flex; align-items: center; gap: 3px;
-  height: 19px; padding: 0 8px; border: 0; border-radius: 6px 6px 0 0; background: var(--f); color: #fff;
-  font-size: 13px; font-weight: 700; line-height: 1;
-}
-.cs-more .cs-plus { font-size: 17px; margin-top: -1px; }
-.cs-more:hover, .cs-more.on { background: #231f20; }
-.cs-more:focus-visible { outline: 2px solid var(--f); outline-offset: 2px; }
 .cs-box { position: relative; }
-.cs.editing .cs-box { outline: 1.5px dashed var(--f2); outline-offset: 3px; }
 .cs-x {
   position: absolute; top: -10px; left: -10px; z-index: 5; display: grid; place-items: center;
   width: 22px; height: 22px; padding: 0; border: 2px solid #fff; border-radius: 50%; background: var(--blood); color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
 .cs-x:hover { transform: scale(1.1); }
-
-/* The tray a + opens: it floats over the sheet, so the sheet never grows */
-.cs-tray {
-  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 20; min-width: 320px;
-  padding: 0 12px 12px; background: #fff; border: 3px solid var(--f); box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
-}
-.cs-tray-title {
-  margin: 0 -12px 12px; padding: 5px 12px; background: var(--f); color: #fff;
-  font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
-}
-.cs-xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 14px; margin: 4px 0 12px; }
-.cs-xgrid:has(.t-pair, .t-text) { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); }
-.cs-xbox { position: relative; display: flex; flex-direction: column; border: 3px solid var(--f); background: #fff; }
-.cs-xbox.drop { box-shadow: -5px 0 0 var(--f); }
-.cs-xbox.dragging, .cs-entry.dragging { opacity: .4; }
-.cs-xbox > .cs-in, .cs-xbox > .cs-pair, .cs-xbox > .cs-xskill { margin: 8px; width: auto; }
-.cs-xlabel {
-  display: block; width: 100%; min-width: 0; height: 26px; padding: 0 6px; border: 0; border-radius: 0; line-height: 26px;
-  background: var(--f); color: #fff; text-align: center; font-size: 15px; font-weight: 700; text-transform: uppercase;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-input.cs-xlabel::placeholder { color: rgba(255, 255, 255, .55); }
-input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
-.cs-xskill { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.cs-xstat { border: 1px solid var(--line); background: #fff; color: var(--lab); font-size: 13px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-.cs-grip { position: absolute; top: -10px; right: -10px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--f); color: #fff; cursor: grab; border: 2px solid #fff; }
-.cs-adds, .cs-gone { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.cs-gone { margin-top: 12px; padding-top: 10px; border-top: 1.5px solid var(--line); }
-.cs-gone-label { color: var(--lab); font-size: 14px; font-weight: 700; text-transform: uppercase; }
+.cs-grip { position: absolute; top: -10px; right: -10px; z-index: 5; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--f); color: #fff; cursor: grab; border: 2px solid #fff; }
+.cs-box.drop { box-shadow: -5px 0 0 var(--f); }
+.cs-box.dragging, .cs-entry.dragging { opacity: .4; }
+.cs-editbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; padding-top: 12px; border-top: 1.5px dashed var(--line2); }
+.cs-head > .cs-editbar { flex-basis: 100%; margin-top: 0; }
 .cs-addb {
   display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border: 2px dashed var(--f2); background: transparent; color: var(--f);
   font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em;
 }
 .cs-addb:hover { border-style: solid; background: var(--hover); }
 .cs-addb.restore { border-style: solid; border-width: 1.5px; border-color: var(--line2); text-transform: none; font-size: 15px; }
-.cs-addb.wide { justify-content: center; width: 100%; margin-top: auto; }
-.cs-setting { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.cs-setlabel { font-size: 15px; font-weight: 700; text-transform: uppercase; color: var(--f); }
+.cs-addb.wide { justify-content: center; width: 100%; }
+.cs-addb.sm { padding: 2px 10px; font-size: 13px; }
+.cs-setting { display: flex; align-items: center; gap: 10px; }
+.cs-setlabel { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--f); }
 .cs-setting .stepper { border-color: var(--f); background: #fff; }
 .cs-setting .stepper button, .cs-setting .stepper input { font-family: var(--body); font-size: 1.05rem; height: 30px; }
-
+/* An added box's name: typed in Edit layout */
+.cs-lbl-in { min-width: 0; max-width: 100%; padding: 1px 4px; border: 1px dashed var(--f2); border-radius: 3px; background: #fff; text-align: center; }
+.cs-lbl-in:focus { outline: 2px solid var(--f); outline-offset: 0; border-style: solid; }
+.cs-lbl-in::placeholder { color: var(--line2); }
+.cs-sub.cs-lbl-in { text-align: left; }
+/* An added skill picks its stat */
+.cs-xstat {
+  max-width: 100%; padding: 0 2px; border: 0; border-bottom: 1px dashed var(--line2); background: transparent; color: #646565;
+  font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; text-align: center; cursor: pointer;
+}
 
 /* Rounded boxes with a heavy outline, like the sheet's */
 .cs { --ink: #231f20; }
@@ -157,8 +139,6 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
   position: absolute; top: -11px; left: 50%; transform: translateX(-50%); padding: 0 14px; background: #fff;
   color: var(--f); font-size: 14px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; white-space: nowrap;
 }
-.cs-more { right: 14px; top: -21px; height: 21px; }
-.cs-head .cs-more { right: 0; }
 
 /* Details: name banner, then lines for class, ancestry, height, weight, and Hit Dice */
 .cs-head { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
@@ -186,8 +166,8 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 
 /* Stats and Saves on the left, Combat on the right */
 .cs-row { display: flex; flex-wrap: wrap; gap: 26px 22px; align-items: stretch; }
-.cs-col { flex: 1 1 540px; min-width: 0; display: flex; flex-direction: column; gap: 26px; }
-.cs-statrow { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 12px; }
+.cs-col { flex: 1.3 1 540px; min-width: 0; display: flex; flex-direction: column; gap: 26px; }
+.cs-statrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 24px 12px; }
 .cs-stat { display: flex; flex-direction: column; align-items: center; gap: 18px; min-width: 0; }
 .cs-sbox { display: flex; align-items: center; width: 100%; height: 82px; padding: 0 4px 10px; }
 .cs-sbox > .cs-num { font-size: 36px; height: 54px; }
@@ -204,7 +184,7 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 }
 .cs-sname:hover { border-color: var(--line2); }
 .cs-sname.on { background: var(--ink); border-color: var(--ink); color: #fff; }
-.cs-saverow { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 20px; }
+.cs-saverow { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 20px; }
 .cs-save { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 76px; padding: 4px 12px 6px 16px; }
 .cs-save > .cs-num { font-size: 28px; height: 38px; }
 .cs-pip {
@@ -230,7 +210,7 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 .cs-duo .cs-tmp { flex: 0 0 56px; background: #f3f3f4; }
 .cs-duo .cs-tmp .cs-num { font-size: 22px; }
 .cs-labels { display: flex; padding: 0 2px; }
-.cs-labels > span { flex: 1 1 0; }
+.cs-labels > * { flex: 1 1 0; min-width: 0; }
 .cs-labels .cs-tmp { flex: 0 0 56px; text-align: center; }
 .cs-wnd { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
 .cs-track { display: flex; align-items: center; justify-content: space-between; height: 58px; padding: 0 16px 8px; }
@@ -241,15 +221,24 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 }
 .cs-dot { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; background: #fff; transition: transform .1s; }
 .cs-w:hover .cs-dot { transform: scale(1.12); }
-.cs-w.on .cs-dot { border-color: var(--blood); background: var(--blood); }
+.cs-w.on .cs-dot { background: var(--ink); }
 .cs-wn { color: #646565; line-height: 1; }
 .cs-w.skull .cs-ic { width: 28px; height: 28px; margin-top: -3px; }
 .cs-w.skull .cs-wn { margin-top: -3px; }
-.cs-w.skull.on, .cs-track.dead .cs-w.skull { color: var(--blood); }
+/* Extra wounds: five smaller dashed circles under the track */
+.cs-wx { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 22px; }
+.cs-wxd { width: 17px; height: 17px; padding: 0; border: 2px dashed var(--ink); border-radius: 50%; background: #fff; }
+.cs-wxd:hover { transform: scale(1.12); }
+.cs-wxd.on { border-style: solid; background: var(--ink); }
+.cs-wxdel { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: var(--blood); color: #fff; }
+/* Added Combat boxes: a single number like Armor, or current / max like HP */
+.cs-single { flex: 0 1 130px; align-items: stretch; }
+.cs-one { display: flex; align-items: center; height: 76px; padding: 0 4px; }
+.cs-one .cs-num { height: 100%; }
 
 /* Skills: a band of boxes, the name and its stat below each */
 .cs-skills { padding: 26px 18px 20px; }
-.cs-band { display: grid; grid-template-columns: repeat(var(--n, 10), minmax(0, 1fr)); gap: 16px 10px; }
+.cs-band { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 16px 10px; }
 .cs-skill { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; }
 .cs-kbox { display: flex; align-items: center; width: 100%; height: 68px; padding: 0 4px; }
 .cs-kbox .cs-num { height: 48px; font-size: 30px; }
@@ -260,58 +249,50 @@ input.cs-xlabel:focus { outline: 2px solid #fff; outline-offset: -4px; }
 .cs.editing .cs-rbox, .cs.editing .cs-lf, .cs.editing .cs-ribbon { outline: 1.5px dashed var(--f2); outline-offset: 4px; }
 .cs.editing .cs-box > .cs-x { top: -12px; left: -12px; }
 .cs.editing .cs-lf { padding-left: 14px; }
-.cs-stats .cs-tray, .cs-saves .cs-tray { right: auto; width: max(100%, 380px); }
-.cs-combat .cs-tray { left: auto; width: max(100%, 380px); }
 
 /* Tabs: a strip of tabs over a panel of collapsible entries */
 .cs-tabstrip { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px; padding-left: 12px; }
 .cs-tab {
-  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 18px;
-  border: 2px solid var(--ink); border-bottom: 0; border-radius: 10px 10px 0 0; background: #e6e4df;
-  font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  position: relative; display: inline-flex; align-items: center; height: 40px; padding: 0 6px 0 0;
+  border: 2px solid var(--ink); border-bottom: 0; border-radius: 10px 10px 0 0; background: #e6e4df; cursor: grab;
 }
 .cs-tab:hover { background: #f0efeb; }
 .cs-tab.on { z-index: 1; height: 46px; margin-bottom: -2px; background: #fff; }
+.cs-tabbtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 6px 0 16px; border: 0; background: transparent;
+  font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+}
 .cs-tabn { color: var(--f2); font-weight: 600; }
-.cs-tab.edit { padding: 0 6px 0 4px; gap: 2px; cursor: pointer; }
-.cs-tgrip { display: grid; place-items: center; width: 18px; height: 28px; color: var(--f2); cursor: grab; }
 .cs-tname {
-  min-width: 0; height: 28px; padding: 0 4px; border: 1px solid var(--line); border-radius: 2px; background: #fff;
+  min-width: 0; height: 28px; margin-left: 10px; padding: 0 4px; border: 1px solid var(--f); border-radius: 2px; background: #fff;
   font-size: 15px; font-weight: 700; text-transform: uppercase;
 }
 .cs-tname:focus { outline: 2px solid var(--f); outline-offset: -1px; }
-.cs-tdel { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: var(--blood); color: #fff; }
+.cs-tdel { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--f2); }
+.cs-tdel:hover { background: var(--blood); color: #fff; }
 .cs-tab.drop { box-shadow: -4px 0 0 var(--f); }
 .cs-tab.dragging { opacity: .4; }
 .cs-tabadd {
   width: 46px; height: 40px; border: 2px dashed var(--f2); border-bottom: 0; border-radius: 10px 10px 0 0; background: transparent;
   color: var(--f); font-size: 22px; font-weight: 700;
 }
-.cs-tabadd:hover { border-style: solid; background: var(--hover); }
-.cs-tabpanel { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 2px solid var(--ink); }
+.cs-tabadd:hover { border-style: solid; background: var(--hover); }.cs-tabpanel { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 2px solid var(--ink); }
 .cs-tabpanel .cs-elist { padding: 0; }
 .cs-tabpanel .cs-addb.wide { margin-top: 0; }
 .cs-elist-top { display: flex; justify-content: flex-end; }
 .cs-elist-top .cs-fold { border-color: var(--line2); color: var(--f); }
 .cs-elist-top .cs-fold:hover { background: var(--hover); }
 
-/* Notes: free text on the left, collapsible entries on the right */
-.cs-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.cs-panel { display: flex; flex-direction: column; min-width: 0; min-height: 300px; background: #fff; border: 3px solid var(--f); }
-.cs-ptitle {
-  display: flex; align-items: center; justify-content: space-between; min-height: 28px; padding: 0 6px 0 10px;
-  background: var(--f); color: #fff; font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
-}
+/* Notes: one free-text panel on ruled lines; entries (tabs) */
+.cs-notes { padding: 22px 18px 16px; }
 .cs-fold { padding: 2px 8px; border: 1px solid rgba(255, 255, 255, .45); background: transparent; color: #fff; font-size: 12px; font-weight: 700; text-transform: uppercase; }
 .cs-fold:hover { background: rgba(255, 255, 255, .14); }
 .cs-free {
-  flex: 1; display: block; width: 100%; min-height: 270px; padding: 10px 12px; border: 0; border-radius: 0;
-  background: #fff; font-size: 17px; line-height: 1.4; resize: vertical;
+  display: block; width: 100%; min-height: 288px; padding: 0 4px; border: 0; border-radius: 0; resize: vertical;
+  font-size: 18px; line-height: 32px; background: repeating-linear-gradient(#fff 0 31px, #d3d4d6 31px 32px);
 }
 .cs-free:focus, .cs-ebody:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--f); }
-.cs-entries { gap: 0; }
-.cs-elist { display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 8px; }
-.cs-entries .cs-addb.wide { width: auto; margin: auto 10px 10px; }
+.cs-elist { display: flex; flex-direction: column; gap: 6px; }
 .cs-entry { background: #fff; border: 2px solid var(--f); }
 .cs-entry.drop { box-shadow: 0 -5px 0 var(--f); }
 .cs-ebar {
@@ -363,29 +344,27 @@ input.cs-etitle:focus { outline: 2px solid #fff; outline-offset: -2px; }
   .cs { padding: 26px 14px 20px; gap: 26px; }
   .cs-cmb { flex-wrap: wrap; justify-content: center; }
   .cs-cmb-r { flex-basis: 100%; }
-  .cs-notes { grid-template-columns: minmax(0, 1fr); }
-  .cs-band { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .cs-tray, .cs-stats .cs-tray, .cs-saves .cs-tray, .cs-combat .cs-tray { left: 0; right: 0; width: auto; min-width: 0; }
   .cs-edel { opacity: .75; }
 }
 @media (max-width: 560px) {
   .cs-pnl { padding: 16px 12px 20px 44px; }
   .cs-vl { width: 32px; }
-  .cs-statrow { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 22px; }
+  .cs-statrow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  main.cs-page { padding: 8px 8px 16px; }
   .cs-saverow { gap: 16px; }
   .cs-save { padding: 4px 6px 6px 14px; }
   .cs-band { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  .cs-tabbtn { padding: 0 4px 0 10px; font-size: 13px; letter-spacing: 0; }
   .cs-skill .cs-cap { font-size: 13px; }
   .cs-tabstrip { padding-left: 4px; gap: 3px; }
-  .cs-tab { padding: 0 9px; gap: 4px; font-size: 13px; letter-spacing: 0; }
   .cs-saved { display: none; }
 }
 
 @media print {
-  .cs-tools, .back, .cs-more, .cs-tray, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold, .cs-tabadd, .cs-tdel, .cs-tgrip { display: none !important; }
+  .cs-tools, .notice, .cs-x, .cs-addb, .cs-toast, .cs-grip, .cs-edel, .cs-fold, .cs-tabadd, .cs-tdel, .cs-editbar { display: none !important; }
   main::before, main::after { display: none; }
   body { background: #fff; }
   .cs { box-shadow: none; padding: 0; outline: 0; }
   .cs-in { border-color: transparent; }
-  .cs-panel, .cs-free { min-height: 220px; }
+  .cs-free { min-height: 220px; }
 }

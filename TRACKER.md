@@ -29,6 +29,15 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] v1 saves upgrade automatically (WIL → WIS, level joins class, Finesse/Might points → extra skill boxes)
 - [x] Tests: new layout, saves cycle, v1 upgrade, tabs in normalize / undo / import
 
+### ✅ v3 — done
+- [x] Add another box of the section's own kind (+ Stat / Save / Skill / Line; Combat: Number, Current / Max), shown inline; trays removed
+- [x] Added skills can follow added stats
+- [x] Tabs work like browser tabs (+, double-click rename, × close with Undo, drag)
+- [x] Notes: one free-text panel (old note entries move to a Notes tab)
+- [x] Wounds fill black; optional row of 5 small dashed extra circles
+- [x] Sheet fills most of the screen: slim notice, back link in the toolbar, no title or flourishes
+- [x] v2 upgrade drops unused starter Mana / Gold / Inventory boxes
+
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 

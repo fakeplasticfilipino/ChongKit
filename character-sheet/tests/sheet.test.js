@@ -13,7 +13,10 @@ test('a blank sheet has the default layout', () => {
   assert.deepStrictEqual(s.removed, []);
   assert.deepStrictEqual(s.tabs.map((t) => t.name), ['Actions', 'Abilities', 'Inventory']);
   assert.strictEqual(s.tab, s.tabs[0].id);
-  assert.deepStrictEqual(s.extras.combat.map((b) => b.label), ['Mana', 'Gold', 'Inventory'], 'extras wait behind the +');
+  assert.deepStrictEqual(Object.values(s.extras).flat(), [], 'no added boxes to start');
+  assert.strictEqual(s.woundExtra, false);
+  assert.deepStrictEqual(s.woundMarks, [false, false, false, false, false]);
+  assert.ok(!('entries' in s), 'notes are plain text');
 });
 
 test('skills and Initiative follow their stat', () => {
@@ -32,6 +35,11 @@ test('skills and Initiative follow their stat', () => {
   const box = S.newBox('skills', 'skill', { stat: 'cha', points: 2 });
   s.stats.cha.val = -1;
   assert.strictEqual(S.boxSkillTotal(s, box), 1);
+  const luck = S.newBox('stats', 'stat', { label: 'LCK', value: 3 });
+  s.extras.stats.push(luck);
+  assert.deepStrictEqual(S.statList(s).map((x) => x.name), ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', 'LCK']);
+  box.stat = luck.id;
+  assert.strictEqual(S.boxSkillTotal(s, box), 5, 'a skill can follow an added stat');
 });
 
 test('wounds, saves, Bloodied', () => {
@@ -68,12 +76,14 @@ test('removing and restoring default boxes', () => {
 });
 
 test('normalize fills odd saves', () => {
-  const s = S.normalize({ v: 2, name: 'Shroudstone', stats: { int: { val: '2', key: 1, slot: 14 } },
+  const s = S.normalize({ v: 3, name: 'Shroudstone', woundExtra: 1, woundMarks: [1, 0, 'x'], stats: { int: { val: '2', key: 1, slot: 14 } },
     saves: { dex: { val: 3, mode: 'adv' }, wil: { mode: 'nope' } },
     skills: { lore: '1' }, wounds: 99, removed: ['skills:lore', 'bogus:x'], extras: { stats: [{ type: 'pair', label: 'Luck', value: 3 }, null] },
     tabs: [{ name: 'Spells', entries: [{ title: 'Light', sum: 'cantrip' }, 7] }, 'junk'], tab: 'missing',
-    entries: [{ title: 'Reflective Aura', body: 'When you Defend…' }, 'junk'] });
+  });
   assert.strictEqual(s.name, 'Shroudstone');
+  assert.strictEqual(s.woundExtra, true);
+  assert.deepStrictEqual(s.woundMarks, [true, false, true, false, false]);
   assert.deepStrictEqual(s.stats.int, { val: 2, slot: '14', key: true });
   assert.deepStrictEqual(s.saves.dex, { val: '3', mode: 'adv' });
   assert.deepStrictEqual(s.saves.wil, { val: '', mode: '' });
@@ -84,9 +94,11 @@ test('normalize fills odd saves', () => {
   assert.deepStrictEqual(s.extras.combat, [], 'deleted extras stay deleted');
   assert.deepStrictEqual(s.tabs.map((t) => [t.name, t.entries.map((e) => [e.title, e.sum])]), [['Spells', [['Light', 'cantrip']]]]);
   assert.strictEqual(s.tab, s.tabs[0].id, 'a missing tab falls back to the first');
-  assert.strictEqual(s.entries.length, 1);
-  assert.ok(s.entries[0].id);
-  assert.deepStrictEqual(S.normalize({ v: 2, tabs: [] }).tabs, [], 'all tabs deleted stays deleted');
+  assert.deepStrictEqual(S.normalize({ v: 3, tabs: [] }).tabs, [], 'all tabs deleted stays deleted');
+  const odd = S.normalize({ v: 3, extras: { stats: [{ type: 'stat', label: 'LCK', value: '2', slot: 4, key: 1 }], skills: [{ type: 'skill', stat: 'gone' }], saves: [{ type: 'save', mode: 'dis', value: 1 }] } });
+  assert.deepStrictEqual([odd.extras.stats[0].value, odd.extras.stats[0].slot, odd.extras.stats[0].key], [2, '4', true]);
+  assert.strictEqual(odd.extras.skills[0].stat, 'str', 'an unknown stat falls back to STR');
+  assert.deepStrictEqual([odd.extras.saves[0].value, odd.extras.saves[0].mode], ['1', 'dis']);
 });
 
 test('version 1 sheets move to the new layout', () => {
@@ -106,9 +118,18 @@ test('version 1 sheets move to the new layout', () => {
   assert.deepStrictEqual(s.extras.combat.map((b) => [b.label, b.value]), [['Gold', '12']]);
   assert.deepStrictEqual(s.extras.header.map((b) => [b.label, b.value]), [['Size', 'Medium']]);
   assert.deepStrictEqual(s.removed.sort(), ['combat:armor', 'header:ancestry', 'header:cls', 'stats:wis']);
-  assert.deepStrictEqual(s.tabs.map((t) => t.name), ['Actions', 'Abilities', 'Inventory']);
-  assert.strictEqual(s.entries[0].title, 'Note');
-  assert.strictEqual(s.v, 2);
+  assert.deepStrictEqual(s.tabs.map((t) => t.name), ['Actions', 'Abilities', 'Inventory', 'Notes'], 'old note entries become a Notes tab');
+  assert.strictEqual(s.tabs[3].entries[0].title, 'Note');
+  assert.strictEqual(s.v, 3);
+});
+
+test('version 2 sheets: starter boxes go unless used, entries become a Notes tab', () => {
+  const s = S.normalize({ v: 2, extras: { combat: [{ type: 'pair', label: 'Mana', value: '', max: '' }, { type: 'num', label: 'Gold', value: '30' },
+    { type: 'pair', label: 'Inventory', value: '', max: '10' }, { type: 'num', label: 'Luck', value: '' }] },
+  tabs: [{ name: 'Actions', entries: [] }], entries: [{ title: 'Aura', body: 'x' }] });
+  assert.deepStrictEqual(s.extras.combat.map((b) => b.label), ['Gold', 'Luck']);
+  assert.deepStrictEqual(s.tabs.map((t) => [t.name, t.entries.length]), [['Actions', 0], ['Notes', 1]]);
+  assert.strictEqual(S.normalize({ v: 2 }).tabs.length, 3, 'no entries: no Notes tab');
 });
 
 test('saving several characters; export and import', () => {
@@ -137,10 +158,10 @@ test('saving several characters; export and import', () => {
 
 test('undo brings back the layout but keeps what was typed since', () => {
   const before = S.blank();
-  before.entries = [{ id: 'a', title: 'Aura', sum: '', body: '' }, { id: 'b', title: 'Rope', sum: '', body: '' }];
+  before.extras.combat = [S.newBox('combat', 'pair', { label: 'Mana' }), S.newBox('combat', 'num', { label: 'Gold' }), S.newBox('combat', 'pair', { label: 'Inventory' })];
   before.tabs[0].entries = [{ id: 'x', title: 'Bow', sum: '', body: '' }, { id: 'y', title: 'Axe', sum: '', body: '' }];
   const now = JSON.parse(JSON.stringify(before));
-  now.entries = [{ id: 'a', title: 'Aura', sum: '', body: 'typed later' }]; // Rope deleted, then Aura edited
+  now.woundExtra = true;
   now.removed = ['skills:lore'];
   now.hp.cur = '9';
   now.extras.combat = now.extras.combat.slice(1);
@@ -149,7 +170,7 @@ test('undo brings back the layout but keeps what was typed since', () => {
   now.tabs[0].name = 'Attacks';
   now.tabs.splice(2, 1); // Inventory tab deleted
   const u = S.undoLayout(before, now);
-  assert.deepStrictEqual(u.entries.map((e) => [e.title, e.body]), [['Aura', 'typed later'], ['Rope', '']]);
+  assert.strictEqual(u.woundExtra, false);
   assert.deepStrictEqual(u.removed, []);
   assert.strictEqual(u.hp.cur, '9');
   assert.deepStrictEqual(u.extras.combat.map((b) => [b.label, b.value]), [['Mana', ''], ['Gold', '30'], ['Inventory', '']]);

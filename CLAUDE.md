@@ -53,15 +53,19 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 
 1. **The sheet is our table's sheet** (v2): rounded heavy-outlined boxes, panels with sideways labels,
    white fields, condensed caps labels, set on the usual parchment page with the notice and footer.
+   The sheet fills most of the screen (slim notice, one toolbar row, no corner flourishes).
    Six stats (STR DEX CON INT WIS CHA, each with an oval number slot), three saves (STR DEX WIL),
-   Combat (Armor, HP, Initiative/Speed, Wounds), ten skills, tabs of collapsible entries, notes.
+   Combat (Armor, HP, Initiative/Speed, Wounds + optional 5 dashed extra circles; filled wounds are
+   black), ten skills, tabs of collapsible entries, notes.
    Its own styles live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
 2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
 3. **No GM Guide numbers:** the layout, stats, saves, skill/stat pairs and the six-wound track are the
    table's choices; call them derived. Don't add class or ancestry data that isn't in the PDF.
-4. **Configurable:** playing vs Edit layout. A section's + tab opens a tray (floating, the sheet never
-   grows) with its extra boxes; in Edit layout the tray also adds, restores and reorders, and boxes
-   get a × to remove. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs (`tabs`: name + entries) are added, renamed, deleted and reordered in Edit layout. Old saves are upgraded in `normalize` (`v` < 2).
+4. **Configurable:** playing vs Edit layout. In Edit layout each section ends with a bar that adds
+   another box of the section's own kind (`ADDS`: stat, save, skill, detail line; Combat: number or
+   current/max) and restores removed ones; added boxes show inline with the defaults, boxes get a × to
+   remove and added ones a grip to reorder. Tabs are managed directly, like browser tabs (+, double-click
+   rename, ×, drag). Notes are one free-text panel. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs live in `tabs` (name + entries). Old saves are upgraded in `normalize` (`upgrade1` for v1, `upgrade2` for v2).
 5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
    `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
 

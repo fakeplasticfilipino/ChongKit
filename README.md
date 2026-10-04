@@ -7,7 +7,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | Tool | Status | What it does |
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
-| [Character Sheet](character-sheet/) | ✅ v2 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, and boxes you can add and remove; saves locally. |
+| [Character Sheet](character-sheet/) | ✅ v3 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, notes; add more of any box, remove any; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
@@ -20,7 +20,8 @@ browser. Everything saves in this browser as you type (localStorage), so it's th
 another device). The list at the top switches between characters and **New** starts one; **More** has
 Copy, Export, Import, Print and Delete. Every number box steps with the ↑ / ↓ keys (Shift: by 5).
 Characters saved by v1 move over by themselves (WIL becomes WIS, level joins the class, Finesse and
-Might points become extra skill boxes).
+Might points become extra skill boxes); v2 sheets drop the unused starter Mana / Gold / Inventory boxes
+and move note entries into a Notes tab.
 
 - **Details:** name on the banner; Class & Level, Ancestry, Height, Weight; Hit Dice (left / die).
 - **Stats:** STR, DEX, CON, INT, WIS, CHA. Type each stat in its box; the oval under it is a slot for a
@@ -33,21 +34,23 @@ Might points become extra skill boxes).
 - **Combat:** Armor (shield), HP / Max HP / Temp, Initiative / Speed, Wounds.
 - **HP, Temp HP, saves, the ovals and Current/Max boxes do math:** `-4` takes 4 off, `+3` adds 3,
   `13-4` or `10` sets it (Enter or click away). HP turns dark red when Bloodied (at or below half max).
-- **Wounds:** click a circle to fill up to it; click the last filled one to clear it. The skull is the
-  last wound.
-- **Tabs** (Actions, Abilities, Inventory to start): each tab is a list of bars showing a name and a
-  short summary on the right. Click a bar to open it and edit its name, summary and details. Drag the
-  grip to reorder, × to delete (with Undo), Expand all / Collapse all at the top.
-- **Extra boxes:** a section with extra boxes shows a small **+ N** tab on its top edge; click it to open
-  them in a tray over the sheet (the sheet itself never grows). Combat starts with Mana, Gold and
-  Inventory there.
+- **Wounds:** click a circle to fill it (black) up to there; click the last filled one to clear it. The
+  skull is the last wound. Edit layout can add a row of five smaller dashed circles under the track for
+  extra wounds (each clicks on and off).
+- **Tabs** (Actions, Abilities, Inventory to start) work like browser tabs: click to switch, **+** adds
+  one, double-click a name to rename it, × closes it (with Undo), drag a tab to move it. Each tab is a
+  list of bars showing a name and a short summary on the right. Click a bar to open it and edit its
+  name, summary and details. Drag the grip to reorder, × to delete (with Undo), Expand all / Collapse
+  all at the top.
 - **Edit layout** (toolbar) is for changing the sheet: every box gets a red × to take it off, and each
-  section's + tray lets you add a Number, Text or Current/Max box (or a Skill tied to a stat), put
-  removed boxes back, drag boxes by their grip to reorder, and set Max Wounds. Tabs can be renamed,
-  added (+), deleted (×) and dragged into a new order. **Done** (or Esc) goes back to playing.
-  Removing or deleting anything shows **Undo** (Ctrl+Z works too).
-- **Notes:** the left panel is free text. The right one holds entries: each is one bar showing its
-  title and first line; click it to open and write.
+  section ends with buttons that add another box of its own kind: **+ Stat** (big box, oval, name),
+  **+ Save**, **+ Skill** (pick the stat it follows, including added stats), **+ Line** in the details,
+  and in Combat **+ Number** (like Armor) or **+ Current / Max** (like HP). Added boxes sit in the
+  section with the rest; type their name, drag the grip to reorder. Removed boxes come back from the
+  same bar, and Combat's bar sets Max Wounds. **Done** (or Esc) goes back to playing. Removing or
+  deleting anything shows **Undo** (Ctrl+Z works too).
+- **Notes:** one free-text panel across the bottom. (Older sheets' note entries moved into a **Notes**
+  tab.)
 
 **Derived, not from the GM Guide:** the sheet's layout (our table's sheet), its stats, saves,
 skill-to-stat pairs, skill = stat + points, Initiative = DEX + bonus and the six-wound track are not

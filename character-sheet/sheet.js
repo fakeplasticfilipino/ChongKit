@@ -1,13 +1,13 @@
 // Character Sheet: pure logic (no DOM), so it runs in the browser (window.Sheet) and under Node
 // for tests (module.exports).
 // The layout is our table's sheet: six stats (each with a small number slot), three saves,
-// Armor, Hit Points, Initiative / Speed, Wounds, ten skills (each tied to a stat), tabs of
-// collapsible entries, and notes. These are labels, not numbers from the GM Guide. Derived (not
-// printed in the GM Guide): a skill is its stat plus the skill points put into it, and
-// Initiative is DEX plus any bonus.
+// Armor, Hit Points, Initiative / Speed, Wounds (plus five optional extra circles), ten skills
+// (each tied to a stat), tabs of collapsible entries, and notes. These are labels, not numbers
+// from the GM Guide. Derived (not printed in the GM Guide): a skill is its stat plus the skill
+// points put into it, and Initiative is DEX plus any bonus.
 
 (function (root) {
-  const VERSION = 2;
+  const VERSION = 3;
   const STORE = 'chongkit.sheets'; // localStorage: { current, chars: { id: sheet } }
 
   const STATS = [
@@ -36,9 +36,12 @@
     skills: SKILLS.map((s) => s.id),
   };
   const TABS = ['Actions', 'Abilities', 'Inventory'];
-  // Kinds of box you can add: a number, a line of text, current/max, or (skills only) a skill.
-  const BOX_TYPES = ['num', 'text', 'pair', 'skill'];
+  // Kinds of box: another of the section's own kind (stat, save, skill, a detail line) or, in
+  // Combat, a number or current/max box like Armor and HP.
+  const BOX_TYPES = ['num', 'text', 'pair', 'skill', 'stat', 'save'];
+  const ADDS = { header: ['text'], stats: ['stat'], saves: ['save'], combat: ['num', 'pair'], skills: ['skill'] };
   const WOUNDS = 6; // five circles and the skull
+  const EXTRA_WOUNDS = 5; // the optional row of small dashed circles under the track
 
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
   const int = (v, d = 0) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : d; };
@@ -52,6 +55,8 @@
     const box = { id: uid(), type: t, label: '', value: '' };
     if (t === 'pair') box.max = '';
     if (t === 'skill') { box.stat = 'str'; box.points = 0; delete box.value; }
+    if (t === 'stat') { box.value = 0; box.slot = ''; box.key = false; }
+    if (t === 'save') box.mode = '';
     return Object.assign(box, extra);
   }
   const newEntry = (extra = {}) => ({ id: uid(), title: '', sum: '', body: '', ...extra });
@@ -64,26 +69,24 @@
       hitDice: { cur: '1', die: '' },
       hp: { cur: '', max: '', temp: '' },
       armor: '', initBonus: 0, wounds: 0, woundsMax: WOUNDS,
+      woundExtra: false, woundMarks: Array(EXTRA_WOUNDS).fill(false),
       stats: {}, saves: {}, skills: {},
       removed: [], // default boxes taken off the sheet: `${section}:${id}`
-      extras: emptyExtras(),
+      extras: emptyExtras(), // added boxes, shown in their section after the defaults
       tabs: TABS.map(newTab), tab: '',
-      notes: '', entries: [],
+      notes: '',
     };
     s.tab = s.tabs[0].id;
     STATS.forEach((st) => { s.stats[st.id] = { val: 0, slot: '', key: false }; });
     SAVES.forEach((sv) => { s.saves[sv.id] = { val: '', mode: '' }; });
     SKILLS.forEach((sk) => { s.skills[sk.id] = 0; });
-    // Common extras, waiting behind the combat section's +.
-    s.extras.combat.push(newBox('combat', 'pair', { label: 'Mana' }), newBox('combat', 'num', { label: 'Gold' }),
-      newBox('combat', 'pair', { label: 'Inventory', max: '10' }));
     return s;
   }
 
   // Version 1 sheets (four stats, Nimble's skill list, a "defense" section) move to the new
   // layout without losing anything typed: WIL becomes WIS, dropped skills with points become
   // extra skill boxes, level joins the class.
-  function upgrade(raw) {
+  function upgrade1(raw) {
     const r = JSON.parse(JSON.stringify(raw));
     const stats = r.stats || {};
     if (stats.wil && !stats.wis) stats.wis = stats.wil;
@@ -113,14 +116,32 @@
     });
     return r;
   }
+  // Version 2 sheets: added boxes now show on the sheet itself, so the starter Mana / Gold /
+  // Inventory boxes go unless something was typed in them; the notes' entries become a Notes tab;
+  // marked extra wound circles turn the extra row on.
+  function upgrade2(raw) {
+    const r = JSON.parse(JSON.stringify(raw));
+    const starter = (b) => b && ['Mana', 'Gold', 'Inventory'].includes(b.label) && !str(b.value) && ['', '10'].includes(str(b.max));
+    if (r.extras && Array.isArray(r.extras.combat)) r.extras.combat = r.extras.combat.filter((b) => !starter(b));
+    const entries = Array.isArray(r.entries) ? r.entries.filter((e) => e && typeof e === 'object') : [];
+    if (entries.length) {
+      if (!Array.isArray(r.tabs)) r.tabs = TABS.map(newTab);
+      r.tabs.push({ ...newTab('Notes'), entries });
+    }
+    delete r.entries;
+    r.woundExtra = Array.isArray(r.woundMarks) && r.woundMarks.some(Boolean);
+    return r;
+  }
 
   function normBox(sec, b) {
     const box = newBox(sec, b.type);
     box.id = str(b.id) || box.id;
     box.label = str(b.label);
-    if (box.type === 'skill') { box.stat = STATS.some((x) => x.id === b.stat) ? b.stat : 'str'; box.points = int(b.points); }
+    if (box.type === 'skill') { box.stat = str(b.stat) || 'str'; box.points = int(b.points); }
+    else if (box.type === 'stat') { box.value = int(b.value); box.slot = str(b.slot); box.key = !!b.key; }
     else box.value = str(b.value);
     if (box.type === 'pair') box.max = str(b.max);
+    if (box.type === 'save') box.mode = mode(b.mode);
     return box;
   }
   const normEntries = (list) => (Array.isArray(list) ? list : []).filter((e) => e && typeof e === 'object')
@@ -129,7 +150,9 @@
   // Anything loaded (old saves, imports) is filled out to the current shape.
   function normalize(input) {
     if (!input || typeof input !== 'object') return blank();
-    const raw = int(input.v, 1) < 2 ? upgrade(input) : input;
+    let raw = input;
+    if (int(raw.v, 1) < 2) raw = upgrade1(raw);
+    if (int(input.v, 1) < 3) raw = upgrade2(raw);
     const s = blank();
     s.extras = emptyExtras();
     for (const k of ['id', 'name', 'cls', 'ancestry', 'height', 'weight', 'speed', 'armor', 'notes']) {
@@ -141,6 +164,9 @@
     s.initBonus = int(raw.initBonus);
     s.woundsMax = clamp(int(raw.woundsMax, WOUNDS), 1, 20);
     s.wounds = clamp(int(raw.wounds), 0, s.woundsMax);
+    s.woundExtra = !!raw.woundExtra;
+    const marks = Array.isArray(raw.woundMarks) ? raw.woundMarks : [];
+    s.woundMarks = s.woundMarks.map((_, i) => !!marks[i]);
     for (const st of STATS) {
       const r = (raw.stats || {})[st.id] || {};
       s.stats[st.id] = { val: int(r.val), slot: str(r.slot), key: !!r.key };
@@ -156,16 +182,25 @@
       const list = Array.isArray((raw.extras || {})[sec]) ? raw.extras[sec] : [];
       s.extras[sec] = list.filter((b) => b && typeof b === 'object').map((b) => normBox(sec, b));
     }
+    // A skill's stat is one of the six or an added stat; anything else falls back to STR.
+    const statIds = new Set(statList(s).map((x) => x.id));
+    for (const b of Object.values(s.extras).flat()) if (b.type === 'skill' && !statIds.has(b.stat)) b.stat = 'str';
     if (Array.isArray(raw.tabs)) {
       s.tabs = raw.tabs.filter((t) => t && typeof t === 'object')
         .map((t) => ({ id: str(t.id) || uid(), name: str(t.name), entries: normEntries(t.entries) }));
     }
     s.tab = s.tabs.some((t) => t.id === raw.tab) ? raw.tab : (s.tabs[0] || {}).id || '';
-    s.entries = normEntries(raw.entries);
     return s;
   }
 
-  const statVal = (s, id) => (s.stats[id] ? s.stats[id].val : 0);
+  // Every stat a skill can follow: the six, then any added stat boxes (by their label).
+  const statList = (s) => STATS.map((x) => ({ id: x.id, name: x.name }))
+    .concat(((s.extras || {}).stats || []).filter((b) => b.type === 'stat').map((b) => ({ id: b.id, name: b.label || 'Stat' })));
+  function statVal(s, id) {
+    if (s.stats[id]) return s.stats[id].val;
+    const b = ((s.extras || {}).stats || []).find((x) => x.id === id && x.type === 'stat');
+    return b ? int(b.value) : 0;
+  }
   const skillTotal = (s, id) => statVal(s, (SKILLS.find((k) => k.id === id) || {}).stat) + (s.skills[id] || 0);
   const boxSkillTotal = (s, box) => statVal(s, box.stat) + (box.points || 0);
   const initiative = (s) => statVal(s, 'dex') + (s.initBonus || 0);
@@ -229,10 +264,9 @@
   // keep everything typed since then (boxes, entries and tabs that still exist keep their text).
   function undoLayout(prev, cur) {
     const pick = (before, now) => before.map((b) => now.find((c) => c.id === b.id) || b);
-    const out = { ...cur, removed: prev.removed.slice(), woundsMax: prev.woundsMax };
+    const out = { ...cur, removed: prev.removed.slice(), woundsMax: prev.woundsMax, woundExtra: !!prev.woundExtra };
     out.wounds = Math.min(cur.wounds, out.woundsMax);
     out.extras = Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, pick((prev.extras || {})[k] || [], (cur.extras || {})[k] || [])]));
-    out.entries = pick(prev.entries, cur.entries);
     out.tabs = (prev.tabs || []).map((t) => {
       const now = (cur.tabs || []).find((c) => c.id === t.id);
       return now ? { ...now, entries: pick(t.entries, now.entries) } : t;
@@ -276,8 +310,8 @@
   }
 
   const api = {
-    VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, WOUNDS, uid,
-    blank, normalize, newBox, newEntry, newTab, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
+    VERSION, STORE, STATS, SAVES, SKILLS, SECTIONS, TABS, BOX_TYPES, ADDS, WOUNDS, EXTRA_WOUNDS, uid,
+    blank, normalize, newBox, newEntry, newTab, statList, statVal, skillTotal, boxSkillTotal, initiative, pointsFor,
     setWounds, cycleSave, bloodied, evalExpr, applyMath, isRemoved, setRemoved, undoLayout, move,
     loadAll, saveAll, exportJson, importJson,
   };

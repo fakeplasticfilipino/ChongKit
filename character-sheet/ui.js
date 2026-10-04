@@ -1,7 +1,7 @@
 // Character Sheet: the page. Draws the sheet from the character (sheet.js has the rules) and
 // saves every change to this browser's localStorage.
-// Two modes: playing (fill it in; a section's + shows its extra boxes) and Edit layout (add,
-// remove, restore and reorder boxes, tabs and entries). Every removal can be undone (toast or Ctrl+Z).
+// Two modes: playing (fill it in, use the tabs) and Edit layout (add another box of a section's
+// kind, remove, restore and reorder boxes). Every removal can be undone (toast or Ctrl+Z).
 (function () {
   const S = window.Sheet;
   const $ = (id) => document.getElementById(id);
@@ -14,7 +14,6 @@
   let all = S.loadAll(store);
   let s = all.chars[all.current];
   let editing = false; // Edit layout
-  let tray = null; // the section whose + is open
   const openEntries = new Set();
   let derived = []; // redraws numbers that follow the stats (skills, Initiative)
 
@@ -182,7 +181,7 @@
   }
   const statName = (id) => (S.STATS.find((x) => x.id === id) || {}).name || '';
 
-  // --- Sections, trays, edit layout -------------------------------------------------------
+  // --- Sections and edit layout -----------------------------------------------------------
   const TITLES = { header: 'Details', stats: 'Stats', saves: 'Saves', combat: 'Combat', skills: 'Skills' };
   const DEFAULT_NAMES = {
     header: { name: 'Character Name', cls: 'Class & Level', ancestry: 'Ancestry', height: 'Height', weight: 'Weight', hitDice: 'Hit Dice' },
@@ -191,25 +190,33 @@
     combat: { armor: 'Armor', hp: 'Hit Points', initSpeed: 'Initiative & Speed', wounds: 'Wounds' },
     skills: Object.fromEntries(S.SKILLS.map((x) => [x.id, x.name])),
   };
+  const ADD_NAMES = { text: 'Line', stat: 'Stat', save: 'Save', skill: 'Skill', num: 'Number', pair: 'Current / Max' };
   const shown = (name) => S.SECTIONS[name].filter((id) => !S.isRemoved(s, name, id));
   const removedIn = (name) => S.SECTIONS[name].filter((id) => S.isRemoved(s, name, id));
 
-  // A section: a framed panel with its side label (or a label on the top edge), and the + tab
-  // that shows how many extra boxes are tucked away. Playing, the + only appears when there's
-  // something there; in Edit layout it's always there (to add boxes).
+  // A section: a framed panel with its side label (or a label on the top edge). In Edit layout it
+  // ends with a bar that adds another box of the same kind and puts removed boxes back.
   function section(name, cls, label, ...content) {
-    const open = tray === name;
-    const n = s.extras[name].length;
-    const tab = (editing || n || open) ? h('button', {
-      type: 'button', class: 'cs-more' + (open ? ' on' : ''), 'aria-expanded': String(open),
-      title: open ? 'Close' : `More ${TITLES[name].toLowerCase()}`, 'aria-label': open ? 'Close' : `More ${TITLES[name].toLowerCase()}`,
-      onclick: () => { tray = open ? null : name; render(); },
-    }, open ? icon('close', 'cs-ic sm') : h('span', { class: 'cs-plus' }, '+'), !open && n ? h('span', {}, String(n)) : null) : null;
     const lab = label === 'side' ? h('div', { class: 'cs-vl' }, h('span', {}, TITLES[name]))
       : label === 'top' ? h('span', { class: 'cs-legend' }, TITLES[name]) : null;
-    return h('section', { class: `cs-sec ${cls}${open ? ' tray-open' : ''}` }, lab, ...content, tab, open ? trayFor(name) : null);
+    return h('section', { class: `cs-sec ${cls}` }, lab, ...content, editing ? editBar(name) : null);
   }
-  // In Edit layout every default box gets a × that takes it off the sheet (into its tray).
+  function editBar(name) {
+    const adds = S.ADDS[name].map((type) => h('button', {
+      type: 'button', class: 'cs-addb',
+      onclick: () => {
+        const b = S.newBox(name, type);
+        change(null, () => { s.extras[name].push(b); });
+        setTimeout(() => { const n = document.querySelector(`[data-box="${b.id}"] .cs-lbl-in`); if (n) n.focus(); }, 0);
+      },
+    }, '+ ', ADD_NAMES[type]));
+    const gone = removedIn(name).map((id) => h('button', {
+      type: 'button', class: 'cs-addb restore', title: 'Put back',
+      onclick: () => change(null, () => { s = S.setRemoved(s, name, id, false); }),
+    }, icon('undo', 'cs-ic sm'), DEFAULT_NAMES[name][id]));
+    return h('div', { class: 'cs-editbar' }, adds, name === 'combat' ? woundsSetting() : null, gone);
+  }
+  // In Edit layout every default box gets a × that takes it off the sheet (Edit layout can put it back).
   function removable(name, id, node) {
     node.classList.add('cs-box');
     if (editing) {
@@ -220,35 +227,8 @@
     }
     return node;
   }
-
-  function trayFor(name) {
-    const boxes = s.extras[name].map((b, i) => extraBox(name, b, i));
-    const parts = [h('div', { class: 'cs-tray-title' }, TITLES[name])];
-    if (boxes.length) parts.push(h('div', { class: 'cs-xgrid' }, boxes));
-    if (editing) {
-      if (name === 'combat') parts.push(woundsSetting());
-      const add = (type, label) => h('button', {
-        type: 'button', class: 'cs-addb',
-        onclick: () => {
-          const b = S.newBox(name, type);
-          change(null, () => { s.extras[name].push(b); });
-          focusBox(b.id);
-        },
-      }, '+ ', label);
-      const adds = name === 'skills' ? [add('skill', 'Skill')] : [add('num', 'Number'), add('text', 'Text'), add('pair', 'Current / Max')];
-      const gone = removedIn(name).map((id) => h('button', {
-        type: 'button', class: 'cs-addb restore', title: 'Put back',
-        onclick: () => change(null, () => { s = S.setRemoved(s, name, id, false); }),
-      }, icon('undo', 'cs-ic sm'), DEFAULT_NAMES[name][id]));
-      parts.push(h('div', { class: 'cs-adds' }, adds));
-      if (gone.length) parts.push(h('div', { class: 'cs-gone' }, h('span', { class: 'cs-gone-label' }, 'Removed'), gone));
-    } else if (!boxes.length) parts.push(h('div', { class: 'cs-adds' }, h('button', { type: 'button', class: 'cs-addb', onclick: () => setEditing(true) }, 'Edit layout')));
-    return h('div', { class: 'cs-tray', role: 'dialog', 'aria-label': TITLES[name] }, parts);
-  }
-  function focusBox(id) {
-    setTimeout(() => { const n = document.querySelector(`[data-box="${id}"] .cs-xlabel`); if (n) n.focus(); }, 0);
-  }
   // Drag to reorder: the grip starts it, items in the same list accept the drop.
+  let dragKind = null;
   function draggable(grip, node, kind, i, onMove) {
     grip.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('text/plain', `${kind}|${i}`); ev.dataTransfer.effectAllowed = 'move'; node.classList.add('dragging'); dragKind = kind; });
     grip.addEventListener('dragend', () => { node.classList.remove('dragging'); dragKind = null; });
@@ -262,39 +242,70 @@
       else render();
     });
   }
-  let dragKind = null;
 
-  function extraBox(name, b, i) {
-    const label = editing
-      ? h('input', { class: 'cs-xlabel', value: b.label, 'aria-label': 'Label', placeholder: 'Label', spellcheck: false,
-        oninput: (ev) => { b.label = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } })
-      : h('div', { class: 'cs-xlabel' }, b.label || '—');
-    let body;
-    if (b.type === 'text') body = h('input', { class: 'cs-in', value: b.value, 'aria-label': b.label || 'Text', oninput: (ev) => { b.value = ev.target.value; commit(); } });
-    else if (b.type === 'pair') {
-      body = h('div', { class: 'cs-pair' },
-        calc(() => b.value, (v) => { b.value = v; }, (b.label || 'Value') + ' current', 'cs-big'),
-        h('span', { class: 'cs-slash' }),
-        h('input', { class: 'cs-in cs-big', value: b.max, 'aria-label': (b.label || 'Value') + ' max', oninput: (ev) => { b.max = ev.target.value; commit(); } }));
+  // --- Added boxes: drawn like the section's own boxes ---------------------------------------
+  // Their name is typed in Edit layout and shown as a label when playing.
+  function label(b, fallback, cls) {
+    if (!editing) return h('span', { class: cls }, b.label || fallback);
+    return h('input', { class: `${cls} cs-lbl-in`, value: b.label, placeholder: fallback, 'aria-label': 'Name', spellcheck: false,
+      size: Math.max(3, (b.label || fallback).length),
+      oninput: (ev) => { b.label = ev.target.value; ev.target.size = Math.max(3, (b.label || fallback).length); commit(); },
+      onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
+  }
+  function added(name, b, i) {
+    const nm = b.label || ADD_NAMES[b.type];
+    let node;
+    if (b.type === 'stat') {
+      const name2 = editing ? label(b, 'Stat', 'cs-sname') : h('button', {
+        type: 'button', class: 'cs-sname' + (b.key ? ' on' : ''), 'aria-pressed': String(b.key), title: 'Key stat', 'aria-label': `${nm} key stat`,
+        onclick: () => { b.key = !b.key; commit(); render(); },
+      }, b.label || 'Stat');
+      node = h('div', { class: 'cs-stat' },
+        h('div', { class: 'cs-sbox cs-rbox' },
+          whole(() => b.value, (v) => { b.value = v; refresh(); }, nm, 'cs-num'),
+          calc(() => b.slot, (v) => { b.slot = v; }, `${nm} small number`, 'cs-oval')),
+        name2);
+    } else if (b.type === 'save') {
+      node = h('div', { class: 'cs-save cs-rbox' },
+        pip(b, nm), calc(() => b.value, (v) => { b.value = v; }, `${nm} save`, 'cs-num'), label(b, 'Save', 'cs-cap'));
     } else if (b.type === 'skill') {
-      const stat = h('select', { class: 'cs-xstat', 'aria-label': 'Stat', onchange: (ev) => { b.stat = ev.target.value; commit(); refresh(); } },
-        S.STATS.map((x) => h('option', { value: x.id, selected: x.id === b.stat }, x.name)));
-      body = h('div', { class: 'cs-xskill' }, stat,
-        follows(() => S.boxSkillTotal(s, b), (v) => { b.points = S.pointsFor(v, S.statVal(s, b.stat)); }, b.label || 'Skill', 'cs-big',
-          () => `${statName(b.stat)} ${S.statVal(s, b.stat)} + ${b.points || 0}`));
-    } else body = calc(() => b.value, (v) => { b.value = v; }, b.label || 'Number', 'cs-big');
-    const box = h('div', { class: `cs-xbox t-${b.type}`, 'data-box': b.id }, body, label);
+      const pts = h('span', { class: 'cs-pts' });
+      derived.push(() => { const p = b.points || 0; pts.textContent = p ? (p > 0 ? `+${p}` : String(p)) : ''; });
+      const stat = h('select', { class: 'cs-xstat', 'aria-label': `${nm} stat`, onchange: (ev) => { b.stat = ev.target.value; commit(); refresh(); } },
+        S.statList(s).map((x) => h('option', { value: x.id, selected: x.id === b.stat }, x.name)));
+      node = h('div', { class: 'cs-skill' },
+        h('div', { class: 'cs-kbox cs-rbox' }, pts,
+          follows(() => S.boxSkillTotal(s, b), (v) => { b.points = S.pointsFor(v, S.statVal(s, b.stat)); }, nm, 'cs-num',
+            () => `${S.statList(s).find((x) => x.id === b.stat).name} ${S.statVal(s, b.stat)} + ${b.points || 0}`)),
+        label(b, 'Skill', 'cs-cap'), stat);
+    } else if (b.type === 'text') {
+      const inp = h('input', { class: 'cs-in cs-line', value: b.value, 'aria-label': nm, spellcheck: false, oninput: (ev) => { b.value = ev.target.value; commit(); } });
+      node = h('label', { class: 'cs-lf' }, label(b, 'Line', 'cs-sub'), inp);
+    } else if (b.type === 'pair') {
+      const max = h('input', { class: 'cs-in cs-num', value: b.max, 'aria-label': `${nm} max`, oninput: (ev) => { b.max = ev.target.value; commit(); } });
+      stepper(max, (v) => { max.value = v; b.max = v; commit(); });
+      node = h('div', { class: 'cs-cell' },
+        h('div', { class: 'cs-duo cs-rbox' }, h('div', {}, calc(() => b.value, (v) => { b.value = v; }, nm, 'cs-num')), h('div', {}, max)),
+        h('div', { class: 'cs-labels' }, label(b, 'Current', 'cs-cap'), h('span', { class: 'cs-cap' }, 'Max')));
+    } else {
+      node = h('div', { class: 'cs-cell cs-single' },
+        h('div', { class: 'cs-one cs-rbox' }, calc(() => b.value, (v) => { b.value = v; }, nm, 'cs-num')),
+        label(b, 'Number', 'cs-cap'));
+    }
+    node.classList.add('cs-box', 'cs-added');
+    node.dataset.box = b.id;
     if (editing) {
-      box.append(h('button', {
-        type: 'button', class: 'cs-x', title: 'Delete', 'aria-label': `Delete ${b.label || 'box'}`,
-        onclick: () => change(`Deleted ${b.label || 'box'}`, () => { s.extras[name] = s.extras[name].filter((x) => x.id !== b.id); }),
+      node.append(h('button', {
+        type: 'button', class: 'cs-x', title: 'Delete', 'aria-label': `Delete ${nm}`,
+        onclick: () => change(`Deleted ${nm}`, () => { s.extras[name] = s.extras[name].filter((x) => x.id !== b.id); }),
       }, icon('close', 'cs-ic xs')));
       const grip = h('span', { class: 'cs-grip', title: 'Drag to move', draggable: 'true' }, icon('grip', 'cs-ic sm'));
-      box.append(grip);
-      draggable(grip, box, 'box-' + name, i, (from, to) => change(null, () => { s.extras[name] = S.move(s.extras[name], from, to); }));
+      node.append(grip);
+      draggable(grip, node, 'box-' + name, i, (from, to) => change(null, () => { s.extras[name] = S.move(s.extras[name], from, to); }));
     }
-    return box;
+    return node;
   }
+  const addedIn = (name) => s.extras[name].map((b, i) => added(name, b, i));
   function woundsSetting() {
     const step = (d) => change(null, () => { s.woundsMax = Math.max(1, Math.min(20, s.woundsMax + d)); s.wounds = Math.min(s.wounds, s.woundsMax); });
     return h('div', { class: 'cs-setting' },
@@ -310,7 +321,8 @@
   function header() {
     const ids = shown('header');
     const lines = ids.filter((id) => ['cls', 'ancestry', 'height', 'weight'].includes(id)).map((id) => removable('header', id,
-      h('label', { class: 'cs-lf' }, h('span', { class: 'cs-sub' }, DEFAULT_NAMES.header[id]), text(id, DEFAULT_NAMES.header[id], 'cs-line'))));
+      h('label', { class: 'cs-lf' }, h('span', { class: 'cs-sub' }, DEFAULT_NAMES.header[id]), text(id, DEFAULT_NAMES.header[id], 'cs-line'))))
+      .concat(addedIn('header'));
     const parts = [];
     if (ids.includes('name')) {
       parts.push(removable('header', 'name', h('div', { class: 'cs-ribbon' },
@@ -330,8 +342,7 @@
 
   // Stats: a big number, a small number in the oval, and the name (click it to mark a key stat).
   function stats() {
-    const ids = shown('stats');
-    return section('stats', 'cs-pnl cs-stats', 'side', h('div', { class: 'cs-statrow', style: `--n:${Math.max(1, ids.length)}` }, ids.map((id) => {
+    return section('stats', 'cs-pnl cs-stats', 'side', h('div', { class: 'cs-statrow' }, shown('stats').map((id) => {
       const st = s.stats[id];
       const name = DEFAULT_NAMES.stats[id];
       return removable('stats', id, h('div', { class: 'cs-stat' },
@@ -342,27 +353,29 @@
           type: 'button', class: 'cs-sname' + (st.key ? ' on' : ''), 'aria-pressed': String(st.key), title: 'Key stat', 'aria-label': `${name} key stat`,
           onclick: () => { st.key = !st.key; commit(); render(); },
         }, name)));
-    })));
+    }), addedIn('stats')));
   }
 
   // Saves: a number, the name, and a pip that cycles ▲ advantage / ▼ disadvantage / none.
+  function pip(sv, name) {
+    const lab = sv.mode === 'adv' ? 'advantage' : sv.mode === 'dis' ? 'disadvantage' : 'normal';
+    return h('button', {
+      type: 'button', class: 'cs-pip' + (sv.mode ? ' on' : ''), title: `Save: ${lab}`, 'aria-label': `${name} save: ${lab}`,
+      onclick: () => { sv.mode = S.cycleSave(sv.mode); commit(); render(); },
+    }, sv.mode === 'adv' ? '▲' : sv.mode === 'dis' ? '▼' : '');
+  }
   function saves() {
-    const ids = shown('saves');
-    return section('saves', 'cs-pnl cs-saves', 'side', h('div', { class: 'cs-saverow', style: `--n:${Math.max(1, ids.length)}` }, ids.map((id) => {
+    return section('saves', 'cs-pnl cs-saves', 'side', h('div', { class: 'cs-saverow' }, shown('saves').map((id) => {
       const sv = s.saves[id];
       const name = S.SAVES.find((x) => x.id === id).name;
-      const label = sv.mode === 'adv' ? 'advantage' : sv.mode === 'dis' ? 'disadvantage' : 'normal';
       return removable('saves', id, h('div', { class: 'cs-save cs-rbox' },
-        h('button', {
-          type: 'button', class: 'cs-pip' + (sv.mode ? ' on' : ''), title: `Save: ${label}`, 'aria-label': `${name} save: ${label}`,
-          onclick: () => { sv.mode = S.cycleSave(sv.mode); commit(); render(); },
-        }, sv.mode === 'adv' ? '▲' : sv.mode === 'dis' ? '▼' : ''),
+        pip(sv, name),
         calc(() => sv.val, (v) => { sv.val = v; }, `${name} save`, 'cs-num'),
         h('span', { class: 'cs-cap' }, name)));
-    })));
+    }), addedIn('saves')));
   }
 
-  // Combat: the Armor shield on the left; HP, Initiative / Speed and Wounds beside it.
+  // Combat: the Armor shield on the left; HP, Initiative / Speed, Wounds and added boxes beside it.
   function combat() {
     const ids = shown('combat');
     const side = [];
@@ -382,6 +395,7 @@
           h('div', { class: 'cs-labels' }, h('span', { class: 'cs-cap' }, 'Initiative'), h('span', { class: 'cs-cap' }, 'Speed')))));
       } else side.push(removable('combat', id, wounds()));
     }
+    side.push(...addedIn('combat'));
     return section('combat', 'cs-pnl cs-combat', 'side', h('div', { class: 'cs-cmb' }, ac, side.length ? h('div', { class: 'cs-cmb-r' }, side) : null));
   }
   function hitPoints() {
@@ -396,6 +410,8 @@
         h('div', { class: 'cs-tmp' }, calc(() => s.hp.temp, (v) => { s.hp.temp = v; }, 'Temp HP', 'cs-num'))),
       h('div', { class: 'cs-labels' }, h('span', { class: 'cs-cap' }, 'HP'), h('span', { class: 'cs-cap' }, 'Max HP'), h('span', { class: 'cs-sub cs-tmp' }, 'Temp')));
   }
+  // Wounds: the track ends in the skull. Under it, an optional row of five small dashed circles
+  // for extra wounds (added and removed in Edit layout).
   function wounds() {
     const dots = [];
     for (let i = 0; i < s.woundsMax; i++) {
@@ -406,70 +422,95 @@
         title: `${i + 1}`, 'aria-label': `Wound ${i + 1}`, onclick: () => { s.wounds = S.setWounds(s.wounds, i); commit(); render(); },
       }, last ? icon('skull', 'cs-ic') : h('span', { class: 'cs-dot' }), h('span', { class: 'cs-wn' }, String(i + 1))));
     }
+    let extra = null;
+    if (s.woundExtra) {
+      extra = h('div', { class: 'cs-wx' }, s.woundMarks.map((m, i) => h('button', {
+        type: 'button', class: 'cs-wxd' + (m ? ' on' : ''), 'aria-pressed': String(m), 'aria-label': `Extra wound ${i + 1}`,
+        onclick: () => { s.woundMarks[i] = !m; commit(); render(); },
+      })), editing ? h('button', {
+        type: 'button', class: 'cs-wxdel', title: 'Remove extra circles', 'aria-label': 'Remove extra wound circles',
+        onclick: () => change('Removed extra wounds', () => { s.woundExtra = false; }),
+      }, icon('close', 'cs-ic xs')) : null);
+    } else if (editing) {
+      extra = h('div', { class: 'cs-wx' }, h('button', {
+        type: 'button', class: 'cs-addb sm', onclick: () => change(null, () => { s.woundExtra = true; }),
+      }, `+ ${S.EXTRA_WOUNDS} extra`));
+    }
     return h('div', { class: 'cs-wnd' },
-      h('div', { class: 'cs-track cs-rbox' + (s.wounds >= s.woundsMax ? ' dead' : '') }, dots),
-      h('span', { class: 'cs-cap' }, 'Wounds'));
+      h('div', { class: 'cs-track cs-rbox' }, dots),
+      h('span', { class: 'cs-cap' }, 'Wounds'),
+      extra);
   }
 
   function skills() {
-    return section('skills', 'cs-pnl cs-skills', 'top', h('div', { class: 'cs-band', style: `--n:${Math.max(1, shown('skills').length)}` }, shown('skills').map((id) => {
+    return section('skills', 'cs-pnl cs-skills', 'top', h('div', { class: 'cs-band' }, shown('skills').map((id) => {
       const sk = S.SKILLS.find((x) => x.id === id);
       const st = statName(sk.stat);
       const pts = h('span', { class: 'cs-pts' });
-      const showPts = () => { const p = s.skills[id]; pts.textContent = p ? (p > 0 ? `+${p}` : String(p)) : ''; };
-      derived.push(showPts);
+      derived.push(() => { const p = s.skills[id]; pts.textContent = p ? (p > 0 ? `+${p}` : String(p)) : ''; });
       return removable('skills', id, h('div', { class: 'cs-skill' },
         h('div', { class: 'cs-kbox cs-rbox' }, pts,
           follows(() => S.skillTotal(s, id), (v) => { s.skills[id] = S.pointsFor(v, S.statVal(s, sk.stat)); }, sk.name, 'cs-num',
             () => `${st} ${S.statVal(s, sk.stat)} + ${s.skills[id] || 0}`)),
         h('span', { class: 'cs-cap' }, sk.name),
         h('span', { class: 'cs-sub' }, st)));
-    })));
+    }), addedIn('skills')));
   }
 
-  // Tabs of collapsible entries (Actions, Abilities, Inventory…). Edit layout renames, adds,
-  // deletes and reorders tabs.
+  // Tabs, like a browser's: click to switch, + adds one, double-click a name to rename it,
+  // × closes it (with Undo), drag a tab to move it.
+  let renaming = null;
   function tabsSection() {
-    if (!s.tabs.length && !editing) return null;
     const cur = s.tabs.find((t) => t.id === s.tab) || s.tabs[0];
+    const pickTab = (t) => { if (s.tab !== t.id) { s.tab = t.id; commit(); render(); } };
     const strip = s.tabs.map((t, i) => {
       const on = t === cur;
-      if (!editing) {
-        return h('button', { type: 'button', role: 'tab', class: 'cs-tab' + (on ? ' on' : ''), 'aria-selected': String(on),
-          onclick: () => { s.tab = t.id; commit(); render(); } }, t.name || 'Untitled', h('span', { class: 'cs-tabn' }, String(t.entries.length)));
+      let name;
+      if (renaming === t.id) {
+        let done = false;
+        const finish = (keep) => {
+          if (done) return;
+          done = true;
+          if (keep) { t.name = name.value.trim(); commit(); }
+          renaming = null;
+          render();
+        };
+        name = h('input', { class: 'cs-tname', value: t.name, 'aria-label': 'Tab name', spellcheck: false, size: Math.max(4, t.name.length + 1),
+          oninput: () => { name.size = Math.max(4, name.value.length + 1); },
+          onkeydown: (ev) => { if (ev.key === 'Enter') finish(true); if (ev.key === 'Escape') { ev.stopPropagation(); finish(false); } },
+          onblur: () => finish(true) });
+      } else {
+        name = h('button', { type: 'button', role: 'tab', class: 'cs-tabbtn', 'aria-selected': String(on), title: 'Double-click to rename',
+          onclick: () => pickTab(t), ondblclick: () => { renaming = t.id; s.tab = t.id; render(); } },
+        t.name || 'Untitled', h('span', { class: 'cs-tabn' }, String(t.entries.length)));
       }
-      const grip = h('span', { class: 'cs-tgrip', title: 'Drag to move', draggable: 'true' }, icon('grip', 'cs-ic sm'));
-      const node = h('div', { class: 'cs-tab edit' + (on ? ' on' : ''), onclick: (ev) => { if (!on && !ev.target.closest('button')) { s.tab = t.id; commit(); render(); } } },
-        grip,
-        h('input', { class: 'cs-tname', value: t.name, 'aria-label': 'Tab name', placeholder: 'Tab', spellcheck: false, size: Math.max(4, t.name.length),
-          oninput: (ev) => { t.name = ev.target.value; ev.target.size = Math.max(4, t.name.length); commit(); },
-          onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } }),
-        h('button', { type: 'button', class: 'cs-tdel', title: 'Delete tab', 'aria-label': `Delete ${t.name || 'tab'} tab`,
-          onclick: () => change(`Deleted ${t.name || 'tab'}`, () => {
+      const node = h('div', { class: 'cs-tab' + (on ? ' on' : ''), draggable: renaming === t.id ? 'false' : 'true' }, name,
+        h('button', { type: 'button', class: 'cs-tdel', title: 'Close tab', 'aria-label': `Close ${t.name || 'tab'}`,
+          onclick: () => change(`Closed ${t.name || 'tab'}`, () => {
             const k = s.tabs.indexOf(t);
             s.tabs = s.tabs.filter((x) => x !== t);
             if (s.tab === t.id) s.tab = (s.tabs[Math.min(k, s.tabs.length - 1)] || {}).id || '';
           }) }, icon('close', 'cs-ic xs')));
-      draggable(grip, node, 'tab', i, (from, to) => change(null, () => { s.tabs = S.move(s.tabs, from, to); }));
+      draggable(node, node, 'tab', i, (from, to) => change(null, () => { s.tabs = S.move(s.tabs, from, to); }));
       return node;
     });
-    if (editing) {
-      strip.push(h('button', { type: 'button', class: 'cs-tabadd', title: 'Add tab', 'aria-label': 'Add tab',
-        onclick: () => {
-          const t = S.newTab('');
-          change(null, () => { s.tabs.push(t); s.tab = t.id; });
-          setTimeout(() => { const n = document.querySelector('.cs-tab.on .cs-tname'); if (n) n.focus(); }, 0);
-        } }, '+'));
-    }
+    strip.push(h('button', { type: 'button', class: 'cs-tabadd', title: 'New tab', 'aria-label': 'New tab',
+      onclick: () => {
+        const t = S.newTab('');
+        change(null, () => { s.tabs.push(t); s.tab = t.id; });
+        renaming = t.id;
+        render();
+      } }, '+'));
     let panel = null;
     if (cur) {
-      const el = entryList({ key: 'tab-' + cur.id, get: () => cur.entries, set: (v) => { cur.entries = v; }, sum: true, cls: 'lite' });
+      const el = entryList({ key: 'tab-' + cur.id, get: () => cur.entries, set: (v) => { cur.entries = v; } });
       panel = h('div', { class: 'cs-tabpanel', role: 'tabpanel' }, el.fold ? h('div', { class: 'cs-elist-top' }, el.fold) : null, el.list, el.add);
     }
+    if (renaming) setTimeout(() => { const n = document.querySelector('.cs-tname'); if (n && document.activeElement !== n) { n.focus(); n.select(); } }, 0);
     return h('section', { class: 'cs-tabs' }, h('div', { class: 'cs-tabstrip', role: 'tablist' }, strip), panel);
   }
 
-  // A list of collapsible entries (a tab's, or the notes'): click a bar to open it, drag to reorder.
+  // A tab's entries: bars showing a name and summary; click one to open it, drag to reorder.
   function entryList(list) {
     const items = list.get();
     const add = h('button', {
@@ -495,11 +536,10 @@
   function entry(e, i, list) {
     const open = openEntries.has(e.id);
     const toggle = () => { if (open) openEntries.delete(e.id); else openEntries.add(e.id); render(); };
-    const first = e.body.split('\n').find((l) => l.trim()) || '';
-    const peek = (list.sum && e.sum) || first;
+    const peek = e.sum || e.body.split('\n').find((l) => l.trim()) || '';
     const title = open
       ? h('input', { class: 'cs-etitle', value: e.title, 'aria-label': 'Title', placeholder: 'Title', spellcheck: false,
-        oninput: (ev) => { e.title = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const b = node.querySelector('.cs-esum, .cs-ebody'); if (b) b.focus(); } } })
+        oninput: (ev) => { e.title = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const b = node.querySelector('.cs-esum'); if (b) b.focus(); } } })
       : h('span', { class: 'cs-etext' },
         h('span', { class: 'cs-etitle' + (e.title ? '' : ' none') }, e.title || 'Untitled'),
         peek ? h('span', { class: 'cs-epeek' }, peek) : null);
@@ -513,12 +553,10 @@
       onclick: (ev) => { if (!ev.target.closest('input, button, .cs-grip')) toggle(); },
       onkeydown: (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === bar) { ev.preventDefault(); toggle(); } },
     }, grip, icon('chevron', 'cs-ic cs-chev'), title, del);
-    const node = h('div', { class: `cs-entry ${list.cls || ''}${open ? ' open' : ''}`, 'data-entry': e.id }, bar);
+    const node = h('div', { class: `cs-entry lite${open ? ' open' : ''}`, 'data-entry': e.id }, bar);
     if (open) {
-      if (list.sum) {
-        node.append(h('input', { class: 'cs-esum', value: e.sum, 'aria-label': 'Summary', placeholder: 'Summary', spellcheck: false,
-          oninput: (ev) => { e.sum = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); node.querySelector('.cs-ebody').focus(); } } }));
-      }
+      node.append(h('input', { class: 'cs-esum', value: e.sum, 'aria-label': 'Summary', placeholder: 'Summary', spellcheck: false,
+        oninput: (ev) => { e.sum = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); node.querySelector('.cs-ebody').focus(); } } }));
       const body = h('textarea', { class: 'cs-ebody', 'aria-label': e.title || 'Entry', value: e.body, oninput: (ev) => { e.body = ev.target.value; commit(); grow(ev.target); } });
       node.append(body);
       setTimeout(() => grow(body), 0);
@@ -527,13 +565,10 @@
     return node;
   }
 
-  // Notes: free text on the left, collapsible entries on the right.
+  // Notes: one free-text panel across the sheet.
   function notes() {
-    const free = h('textarea', { class: 'cs-free', 'aria-label': 'Notes', value: s.notes, oninput: (ev) => { s.notes = ev.target.value; commit(); } });
-    const el = entryList({ key: 'notes', get: () => s.entries, set: (v) => { s.entries = v; } });
-    return h('div', { class: 'cs-notes' },
-      h('div', { class: 'cs-panel' }, h('div', { class: 'cs-ptitle' }, h('span', {}, 'Notes')), free),
-      h('div', { class: 'cs-panel cs-entries' }, h('div', { class: 'cs-ptitle' }, h('span', {}, 'Entries'), el.fold), el.list, el.add));
+    return h('section', { class: 'cs-sec cs-pnl cs-notes' }, h('span', { class: 'cs-legend' }, 'Notes'),
+      h('textarea', { class: 'cs-free', 'aria-label': 'Notes', value: s.notes, oninput: (ev) => { s.notes = ev.target.value; commit(); } }));
   }
 
   function render() {
@@ -544,18 +579,13 @@
       header(),
       h('div', { class: 'cs-row' }, h('div', { class: 'cs-col' }, stats(), saves()), combat()),
       skills(),
-      tabsSection() || '',
+      tabsSection(),
       notes());
     refresh();
   }
 
-  // An open + closes when you click elsewhere or press Esc.
-  document.addEventListener('pointerdown', (ev) => {
-    if (tray && !ev.target.closest('.cs-sec.tray-open, .cs-more, #toast')) { tray = null; render(); }
-  });
   document.addEventListener('keydown', (ev) => {
-    if (ev.key !== 'Escape') return;
-    if (tray) { tray = null; render(); } else if (editing && !typing()) setEditing(false);
+    if (ev.key === 'Escape' && editing && !typing()) setEditing(false);
   });
 
   // --- Toolbar ------------------------------------------------------------------------
@@ -575,7 +605,7 @@
   function show(c) {
     all.chars[c.id] = c;
     s = c;
-    tray = null;
+    renaming = null;
     history = [];
     hideToast();
     openEntries.clear();
@@ -618,7 +648,7 @@
     try { show(S.importJson(await file.text())); }
     catch (err) { alert(`Couldn't import ${file.name}: ${err.message}`); }
   });
-  $('print').addEventListener('click', () => { closeMenu(); tray = null; if (editing) setEditing(false); else render(); window.print(); });
+  $('print').addEventListener('click', () => { closeMenu(); if (editing) setEditing(false); else render(); window.print(); });
 
   names();
   render();
