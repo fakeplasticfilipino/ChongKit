@@ -178,6 +178,10 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   twist, family traits, loot) goes in the tab's **general note**.
 - **Notes:** the box under the add box is the tab's general note (GM tabs: GM only; players' tabs:
   everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note.
+- **Rolls in notes:** dice in a note (`1d8!+3d8+2`, `2d6+3`, `1d20`) are underlined. Click one to
+  roll it in **Chong Die** (it must be installed in the room): Chong Die's open tab decides whether it
+  rolls at once (⚡ on) or puts the dice on the tray. A `(2×)` before it on the line rolls it twice.
+  Click anywhere else in the note to edit it.
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
   "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
 - **Mass delete (GM only):** `/clear` deletes every entry in the current tab and empties its general
@@ -244,12 +248,15 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 **Using it**
 - **Command line** (always at the top of the tray): type a roll and press Enter. `!r` is optional.
   ↑ / ↓ step through what you typed before. It fades while dice roll.
-- **★** saves the typed roll as a **pill** in the current tab.
-- **Panel** (sidebar button ▤): tabs of pills. **+** adds a tab, double-click renames, **×** deletes,
-  drag to reorder. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
+- **Panel** (sidebar button ▤): tabs of **pills** (saved rolls). The small **+** after the tabs adds a
+  tab; double-click renames, **×** deletes, drag to reorder.
+- **+** (right of the tabs) adds a roll to the open tab: a name, the roll (filled in from the command
+  line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
+  the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
   to edit or delete it.
-- Each tab has an **Instant** switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
+- **⚡** is the tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
+- Rolls clicked in **Chong's Tracker** notes come here and follow the open tab's ⚡.
 - The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)

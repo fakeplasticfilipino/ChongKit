@@ -123,6 +123,10 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
    script/stylesheet link in `index.html` and `background.html`. GitHub Pages lets browsers cache each
    file for 10 minutes, so without it Owlbear can mix old and new files (e.g. a new `app.js` with an
    old `core.js`) and the panel breaks.
+9. **Rolls in notes go to Chong Die.** `findRolls` (core.js, tested) finds dice in note text; a click
+   sends `{ id, command }` on `com.chongkit.chongdie/roll` as a LOCAL broadcast (this player only)
+   and waits 1 s for `…/ack`, else "Install Chong Die to roll". Don't change the channel names
+   without changing Chong Die (`src/chong/channels.ts`).
 
 ## Chong Die (Owlbear Rodeo dice)
 
@@ -143,6 +147,8 @@ line and saved-roll pills. System-agnostic; spec in `docs/superpowers/specs/2026
 5. **Rolls carry `chong` metadata** (`ChongRollMeta`: command, die id → logical die, virtual dice)
    so every player recomputes the same result from the synced values. Only the roller's
    `useWaveRunner` throws new waves. Plugin id prefix `com.chongkit.chongdie/`.
+   Owlbear SDK 3.x. Rolls from Chong's Tracker: the background page acks `…/roll`, opens the
+   action and re-sends `…/run` until the window's `…/run-ack` (`channels.ts`, `incoming.ts`).
 6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested).
 7. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names,
    so no `?v=` is needed. Libraries build into their own `vendor` chunk so rebuilds stay small.

@@ -46,7 +46,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Tests: notes from a paste, general note, armor letters, Players tab note round trip
 - [x] Browser smoke test (fake SDK): paste → tab note + entry notes, edit both, saved to metadata
 
+## ✅ Rolls in notes (v1.8.0)
+- [x] Dice in entry and tab notes are underlined (`findRolls`, tested); click → Chong Die (LOCAL broadcast), `(2×)` → `!rr 2`; no Chong Die → notification
+- [x] Notes show as text; click elsewhere in a note to edit it
+- [x] Browser check (fake SDK): paste, underline, click sends, no-ack notification, edit + Escape
+
 ## 📋 Next up
+- [ ] Owlbear: click a note roll with Chong Die ⚡ on and off, with Chong Die closed, and without it installed
 - [ ] Install in a real Owlbear room and check: notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge pills on different token sizes and maps (v1.6.0), click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
 - [ ] Fix whatever that test turns up
 

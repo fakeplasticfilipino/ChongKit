@@ -14,7 +14,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Tests (Vitest): parser, evaluator, physical dice, result text, saved rolls, roll metadata, Place
 - [x] Browser check (local): adv roll, exploding waves, reroll wave, virtual d7, save pill, Place, Instant
 
+## ✅ v1.1.0
+- [x] Owlbear SDK 3.x
+- [x] Rolls from Chong's Tracker: background acks, opens the window, re-sends until acked; follows the open tab's ⚡ (tested)
+- [x] Panel: + (add roll) and ⚡ (Instant) icon buttons; ★ removed; small new-tab +
+- [x] Pills show name + dice; optional description (hover / long-press, dialog)
+
 ## 📋 Next up
+- [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker
 - [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays
 - [ ] Watch an exploding die pop out with the window in front (the local check ran in a hidden pane, so physics only stepped on screenshots)
 - [ ] Check in Owlbear: invalid pill outline, export/import (downloads may be blocked in the extension frame), phone width
