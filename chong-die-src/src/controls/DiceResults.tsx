@@ -12,6 +12,8 @@ import { DiceRoll } from "../types/DiceRoll";
 import { Die, isDie } from "../types/Die";
 import { Dice, isDice } from "../types/Dice";
 import { DicePreview } from "../previews/DicePreview";
+import { getRollDisplay } from "../chong/rollMeta";
+import { MarkdownText } from "../chong/MarkdownText";
 
 export function DiceResults({
   diceRoll,
@@ -24,9 +26,17 @@ export function DiceResults({
   expanded: boolean;
   onExpand: (expand: boolean) => void;
 }) {
+  const display = useMemo(
+    () => (diceRoll.chong ? getRollDisplay(diceRoll, rollValues) : null),
+    [diceRoll, rollValues]
+  );
   const finalValue = useMemo(() => {
+    if (diceRoll.chong) {
+      // Still waiting for a follow-up wave
+      return display ? display.total : "…";
+    }
     return getCombinedDiceValue(diceRoll, rollValues);
-  }, [diceRoll, rollValues]);
+  }, [diceRoll, rollValues, display]);
 
   return (
     <Stack alignItems="center" maxHeight="calc(100vh - 100px)">
@@ -51,7 +61,17 @@ export function DiceResults({
         style={{ transformOrigin: "50% 0 0" }}
       >
         <Stack overflow="auto" sx={{ pointerEvents: "all" }}>
-          <DiceResultsExpanded diceRoll={diceRoll} rollValues={rollValues} />
+          {diceRoll.chong ? (
+            <Stack gap={0.5} px={2} maxWidth="320px">
+              {display?.lines.map((line, i) => (
+                <Typography key={i} color="white" variant="body2" textAlign="center">
+                  <MarkdownText text={line} />
+                </Typography>
+              ))}
+            </Stack>
+          ) : (
+            <DiceResultsExpanded diceRoll={diceRoll} rollValues={rollValues} />
+          )}
         </Stack>
       </Grow>
     </Stack>

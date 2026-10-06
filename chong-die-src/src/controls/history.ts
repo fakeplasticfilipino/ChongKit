@@ -8,6 +8,8 @@ export interface RecentRoll {
   bonus: number;
   advantage: Advantage;
   diceById: Record<string, Die>;
+  /** Set for Chong Die command rolls */
+  command?: string;
 }
 
 interface DiceHistoryState {

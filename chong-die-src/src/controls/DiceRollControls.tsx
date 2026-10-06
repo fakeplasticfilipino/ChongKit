@@ -23,6 +23,7 @@ import { getDiceToRoll, useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
 import { useDiceHistoryStore } from "./history";
 import { Die } from "../types/Die";
+import { startCommandRoll } from "../chong/rollRunner";
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -52,14 +53,16 @@ export function DiceRollControls() {
   );
 
   const rollValues = useDiceRollStore((state) => state.rollValues);
+  const isCommandRoll = useDiceRollStore((state) => Boolean(state.roll?.chong));
   const finishedRolling = useMemo(() => {
     const values = Object.values(rollValues);
     if (values.length === 0) {
-      return false;
+      // A command roll of only virtual dice has no 3D dice
+      return isCommandRoll;
     } else {
       return values.every((value) => value !== null);
     }
-  }, [rollValues]);
+  }, [rollValues, isCommandRoll]);
 
   if (!isDefault) {
     return (
@@ -345,7 +348,14 @@ function FinishedRollControls() {
         >
           <Tooltip title="Reroll" sx={{ pointerEvents: "all" }}>
             <IconButton
-              onClick={() => reroll()}
+              onClick={() => {
+                if (roll?.chong) {
+                  // Waves and keys belong to the old roll: roll the command again
+                  startCommandRoll(roll.chong.command, { hidden: Boolean(roll.hidden) });
+                } else {
+                  reroll();
+                }
+              }}
               sx={{ pointerEvents: "all", color: "white" }}
             >
               <RerollDiceIcon />

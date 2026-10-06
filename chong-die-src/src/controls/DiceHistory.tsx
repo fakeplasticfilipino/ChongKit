@@ -16,6 +16,7 @@ import { DicePreview } from "../previews/DicePreview";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { getDiceToRoll, useDiceControlsStore } from "./store";
+import { startCommandRoll } from "../chong/rollRunner";
 
 export function DiceHistory() {
   const startRoll = useDiceRollStore((state) => state.startRoll);
@@ -28,6 +29,15 @@ export function DiceHistory() {
   );
 
   function handleRoll(roll: RecentRoll) {
+    if (roll.command) {
+      try {
+        startCommandRoll(roll.command, { hidden });
+      } catch {
+        // A command that no longer parses: leave it
+      }
+      handleClose();
+      return;
+    }
     const dice = getDiceToRoll(roll.counts, roll.advantage, roll.diceById);
     startRoll({ dice, bonus: roll.bonus, hidden });
     resetDiceCounts();
@@ -117,6 +127,7 @@ function RecentRollChip({
       }}
       label={
         <Stack direction="row" alignItems="center" gap={0.5} px={2}>
+          {recentRoll.command && <span>{recentRoll.command}</span>}
           {Object.entries(recentRoll.counts).map(([id, count]) => {
             const die = recentRoll.diceById[id];
             if (!die || count === 0) {

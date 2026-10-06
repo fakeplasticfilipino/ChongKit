@@ -1,3 +1,4 @@
+import type { ChongRollMeta } from "../chong/rollMeta";
 import { Dice } from "./Dice";
 
 /**
@@ -6,4 +7,6 @@ import { Dice } from "./Dice";
  */
 export interface DiceRoll extends Dice {
   hidden?: boolean;
+  /** Set on Chong Die command rolls */
+  chong?: ChongRollMeta;
 }

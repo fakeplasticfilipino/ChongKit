@@ -5,6 +5,7 @@ import { DiceRoll } from "../types/DiceRoll";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceTransform } from "../types/DiceTransform";
 import { getPluginId } from "./getPluginId";
+import { getRollDisplay } from "../chong/rollMeta";
 
 export function usePlayerDice(player?: Player) {
   const diceRoll = useMemo(() => {
@@ -63,6 +64,9 @@ export function usePlayerDice(player?: Player) {
   }, [rollValues]);
 
   const finalValue = useMemo(() => {
+    if (diceRoll?.chong) {
+      return getRollDisplay(diceRoll, rollValues)?.total ?? null;
+    }
     if (diceRoll && finishedRollValues) {
       return getCombinedDiceValue(diceRoll, finishedRollValues);
     } else {
@@ -76,11 +80,12 @@ export function usePlayerDice(player?: Player) {
     }
     const values = Object.values(rollValues);
     if (values.length === 0) {
-      return false;
+      // A command roll of only virtual dice has no 3D dice
+      return Boolean(diceRoll?.chong);
     } else {
       return values.every((value) => value !== null);
     }
-  }, [rollValues]);
+  }, [rollValues, diceRoll]);
 
   return {
     diceRoll,

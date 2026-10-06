@@ -10,6 +10,9 @@ import { DiceTransform } from "../types/DiceTransform";
 import { getRandomDiceThrow } from "../helpers/DiceThrower";
 import { generateDiceId } from "../helpers/generateDiceId";
 import { DiceThrow } from "../types/DiceThrow";
+import { Die } from "../types/Die";
+import { Dice } from "../types/Dice";
+import type { ChongRollMeta } from "../chong/rollMeta";
 
 interface DiceRollState {
   roll: DiceRoll | null;
@@ -32,6 +35,14 @@ interface DiceRollState {
   /** Reroll select ids of dice or reroll all dice by passing `undefined` */
   reroll: (ids?: string[], manualThrows?: Record<string, DiceThrow>) => void;
   finishDieRoll: (id: string, number: number, transform: DiceTransform) => void;
+  /** Add a follow-up wave of dice to the current roll (Chong Die rerolls and explosions) */
+  addDice: (
+    dice: (Die | Dice)[],
+    throws: Record<string, DiceThrow>,
+    chong: ChongRollMeta
+  ) => void;
+  /** Update a command roll's metadata (e.g. newly rolled virtual dice) */
+  setChong: (chong: ChongRollMeta) => void;
 }
 
 export const useDiceRollStore = create<DiceRollState>()(
@@ -72,6 +83,27 @@ export const useDiceRollStore = create<DiceRollState>()(
             state.rollTransforms,
             state.rollThrows
           );
+        }
+      });
+    },
+    addDice: (dice, throws, chong) => {
+      set((state) => {
+        if (!state.roll) {
+          return;
+        }
+        state.roll.dice.push(...dice);
+        state.roll.chong = chong;
+        for (const die of getDieFromDice({ dice })) {
+          state.rollValues[die.id] = null;
+          state.rollTransforms[die.id] = null;
+          state.rollThrows[die.id] = throws[die.id] || getRandomDiceThrow();
+        }
+      });
+    },
+    setChong: (chong) => {
+      set((state) => {
+        if (state.roll) {
+          state.roll.chong = chong;
         }
       });
     },
