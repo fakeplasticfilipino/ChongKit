@@ -4,6 +4,7 @@ import { immer } from "zustand/middleware/immer";
 import {
   emptySaved,
   loadSaved,
+  Pill,
   pushHistory,
   RollTab,
   saveSaved,
@@ -18,14 +19,17 @@ interface ChongState {
   placed: string | null;
   /** Message shown under the command line */
   error: string | null;
+  /** What's typed in the command line (the + button starts a pill from it) */
+  draft: string;
+  setDraft: (text: string) => void;
   addTab: () => void;
   renameTab: (id: string, name: string) => void;
   deleteTab: (id: string) => void;
   moveTab: (id: string, toIndex: number) => void;
   setActiveTab: (id: string) => void;
   setInstant: (id: string, on: boolean) => void;
-  addPill: (tabId: string, name: string, command: string) => void;
-  editPill: (id: string, name: string, command: string) => void;
+  addPill: (tabId: string, name: string, command: string, description?: string) => void;
+  editPill: (id: string, name: string, command: string, description?: string) => void;
   deletePill: (id: string) => void;
   movePill: (id: string, toTabId: string, toIndex: number) => void;
   setPanelOpen: (open: boolean) => void;
@@ -56,6 +60,12 @@ export const useChongStore = create<ChongState>()(
     panelOpen: true,
     placed: null,
     error: null,
+    draft: "",
+    setDraft(text) {
+      set((state) => {
+        state.draft = text;
+      });
+    },
     addTab() {
       set((state) => {
         const tab: RollTab = {
@@ -115,19 +125,28 @@ export const useChongStore = create<ChongState>()(
         }
       });
     },
-    addPill(tabId, name, command) {
+    addPill(tabId, name, command, description) {
       set((state) => {
         const tab = state.saved.tabs.find((t) => t.id === tabId);
-        tab?.pills.push({ id: newId(), name: name.trim() || command, command });
+        const pill: Pill = { id: newId(), name: name.trim() || command, command };
+        if (description?.trim()) {
+          pill.description = description.trim();
+        }
+        tab?.pills.push(pill);
       });
     },
-    editPill(id, name, command) {
+    editPill(id, name, command, description) {
       set((state) => {
         const found = findPill(state.saved, id);
         if (found) {
           const pill = found.tab.pills[found.index];
           pill.name = name.trim() || command;
           pill.command = command;
+          if (description?.trim()) {
+            pill.description = description.trim();
+          } else {
+            delete pill.description;
+          }
         }
       });
     },

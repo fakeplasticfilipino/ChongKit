@@ -4,6 +4,8 @@ export interface Pill {
   id: string;
   name: string;
   command: string;
+  /** Shown on hover / long-press, not on the pill */
+  description?: string;
 }
 
 export interface RollTab {
@@ -60,7 +62,11 @@ export function validateSavedRolls(data: unknown): SavedRolls | null {
     const pills: Pill[] = [];
     for (const p of Array.isArray(t.pills) ? t.pills : []) {
       if (p && isText(p.id) && isText(p.name) && isText(p.command)) {
-        pills.push({ id: p.id, name: p.name, command: p.command });
+        const pill: Pill = { id: p.id, name: p.name, command: p.command };
+        if (isText(p.description) && p.description) {
+          pill.description = p.description;
+        }
+        pills.push(pill);
       }
     }
     tabs.push({ id: t.id, name: t.name, instant: t.instant === true, pills });

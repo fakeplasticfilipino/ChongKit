@@ -15,6 +15,7 @@ export function PillDialog({
   title,
   initialName,
   initialCommand,
+  initialDescription = "",
   onSave,
   onClose,
 }: {
@@ -22,18 +23,21 @@ export function PillDialog({
   title: string;
   initialName: string;
   initialCommand: string;
-  onSave: (name: string, command: string) => void;
+  initialDescription?: string;
+  onSave: (name: string, command: string, description: string) => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState(initialName);
   const [command, setCommand] = useState(initialCommand);
+  const [description, setDescription] = useState(initialDescription);
 
   useEffect(() => {
     if (open) {
       setName(initialName);
       setCommand(initialCommand);
+      setDescription(initialDescription);
     }
-  }, [open, initialName, initialCommand]);
+  }, [open, initialName, initialCommand, initialDescription]);
 
   const error = command.trim()
     ? pillError({ id: "", name, command })
@@ -41,7 +45,7 @@ export function PillDialog({
 
   function save() {
     if (!error) {
-      onSave(name.trim() || command.trim(), command.trim());
+      onSave(name.trim() || command.trim(), command.trim(), description.trim());
     }
   }
 
@@ -68,6 +72,15 @@ export function PillDialog({
           inputProps={{ spellCheck: false, style: { fontFamily: "monospace" } }}
           onChange={(e) => setCommand(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
+        />
+        <TextField
+          margin="dense"
+          label="Description"
+          fullWidth
+          multiline
+          minRows={2}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
         />
       </DialogContent>
       <DialogActions>

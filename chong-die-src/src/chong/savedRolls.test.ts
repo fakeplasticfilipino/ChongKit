@@ -118,3 +118,29 @@ test("import accepts an export", () => {
   s.tabs[0].name = "Attacks";
   expect(importSaved(JSON.stringify(s)).tabs[0].name).toBe("Attacks");
 });
+
+test("a pill's description survives a round trip", () => {
+  const storage = fakeStorage();
+  const s = emptySaved();
+  s.tabs[0].pills.push({ id: "p", name: "Sword", command: "1d8", description: "Versatile" });
+  saveSaved(s, storage);
+  expect(loadSaved(storage).tabs[0].pills[0].description).toBe("Versatile");
+});
+
+test("a non-text description is dropped, the pill kept", () => {
+  const v = validateSavedRolls({
+    version: 1,
+    tabs: [{ id: "t", name: "A", instant: false, pills: [{ id: "a", name: "A", command: "1d4", description: 5 }] }],
+    history: [],
+  });
+  expect(v!.tabs[0].pills[0]).toEqual({ id: "a", name: "A", command: "1d4" });
+});
+
+test("old pills without a description load unchanged", () => {
+  const v = validateSavedRolls({
+    version: 1,
+    tabs: [{ id: "t", name: "A", instant: false, pills: [{ id: "a", name: "A", command: "1d4" }] }],
+    history: [],
+  });
+  expect(v!.tabs[0].pills[0]).toEqual({ id: "a", name: "A", command: "1d4" });
+});

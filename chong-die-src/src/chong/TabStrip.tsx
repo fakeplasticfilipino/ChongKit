@@ -112,8 +112,9 @@ export function TabStrip() {
         );
       })}
       <Tooltip title="New tab" disableInteractive>
-        <IconButton size="small" onClick={addTab} sx={{ flexShrink: 0 }}>
-          <AddIcon />
+        {/* Small and dim: the panel's own + (add roll) is the main one */}
+        <IconButton size="small" aria-label="New tab" onClick={addTab} sx={{ flexShrink: 0, opacity: 0.6 }}>
+          <AddIcon sx={{ fontSize: 16 }} />
         </IconButton>
       </Tooltip>
       <ConfirmDialog

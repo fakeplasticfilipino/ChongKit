@@ -1,36 +1,29 @@
 import { useState } from "react";
 
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
-
-import StarIcon from "@mui/icons-material/StarRounded";
 
 import { useDiceRollStore } from "../dice/store";
 import { useDiceControlsStore } from "../controls/store";
 import { useChongStore } from "./chongStore";
 import { startCommandRoll } from "./rollRunner";
-import { PillDialog } from "./PillDialog";
 
 export const COMMAND_LINE_HEIGHT = 52;
 
 /** Always-visible `!r` box at the top of the tray */
 export function CommandLine() {
   const theme = useTheme();
-  const [text, setText] = useState("");
+  const text = useChongStore((state) => state.draft);
+  const setText = useChongStore((state) => state.setDraft);
   // Position while stepping through history with ↑ / ↓ (null = typing)
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
 
   const history = useChongStore((state) => state.saved.history);
   const error = useChongStore((state) => state.error);
   const setError = useChongStore((state) => state.setError);
   const setPanelOpen = useChongStore((state) => state.setPanelOpen);
-  const activeTabId = useChongStore((state) => state.activeTabId);
-  const addPill = useChongStore((state) => state.addPill);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
 
   const rolling = useDiceRollStore((state) =>
@@ -83,7 +76,7 @@ export function CommandLine() {
           display: "flex",
           alignItems: "center",
           height: COMMAND_LINE_HEIGHT - 16,
-          pl: 1.5,
+          px: 1.5,
           borderRadius: "18px",
           bgcolor: "background.paper",
           border: 1,
@@ -116,17 +109,6 @@ export function CommandLine() {
           }}
           sx={{ fontFamily: "monospace" }}
         />
-        <Tooltip title="Save as a pill" disableInteractive>
-          <span>
-            <IconButton
-              size="small"
-              disabled={!text.trim()}
-              onClick={() => setSaving(true)}
-            >
-              <StarIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
       </Box>
       {error && (
         <Typography
@@ -137,17 +119,6 @@ export function CommandLine() {
           {error}
         </Typography>
       )}
-      <PillDialog
-        open={saving}
-        title="Save roll"
-        initialName={text.trim()}
-        initialCommand={text.trim()}
-        onClose={() => setSaving(false)}
-        onSave={(name, command) => {
-          addPill(activeTabId, name, command);
-          setSaving(false);
-        }}
-      />
     </Box>
   );
 }

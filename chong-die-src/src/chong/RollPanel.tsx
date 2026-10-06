@@ -2,12 +2,14 @@ import { useRef, useState } from "react";
 
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Slide from "@mui/material/Slide";
-import Switch from "@mui/material/Switch";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 
+import AddIcon from "@mui/icons-material/AddRounded";
 import BoltIcon from "@mui/icons-material/BoltRounded";
 
 import { useDiceControlsStore } from "../controls/store";
@@ -29,6 +31,9 @@ export function RollPanel() {
   const activeTabId = useChongStore((state) => state.activeTabId);
   const tab = tabs.find((t) => t.id === activeTabId) || tabs[0];
   const setInstant = useChongStore((state) => state.setInstant);
+  const draft = useChongStore((state) => state.draft);
+  const addPill = useChongStore((state) => state.addPill);
+  const [adding, setAdding] = useState(false);
 
   return (
     <Slide in={open} direction="down" mountOnEnter unmountOnExit>
@@ -53,23 +58,37 @@ export function RollPanel() {
           sx={{ display: "flex", alignItems: "center", px: 1, pt: 0.5, gap: 0.5 }}
         >
           <TabStrip />
+          <Tooltip title="Add roll" disableInteractive>
+            <IconButton size="small" aria-label="Add roll" onClick={() => setAdding(true)}>
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Instant" disableInteractive>
+            <IconButton
+              size="small"
+              aria-label="Instant"
+              aria-pressed={tab.instant}
+              color={tab.instant ? "primary" : "default"}
+              sx={{ opacity: tab.instant ? 1 : 0.5 }}
+              onClick={() => setInstant(tab.id, !tab.instant)}
+            >
+              <BoltIcon />
+            </IconButton>
+          </Tooltip>
           <MoreMenu />
         </Box>
-        <Box component="div" sx={{ display: "flex", justifyContent: "flex-end", px: 1.5 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={tab.instant}
-                onChange={(e) => setInstant(tab.id, e.target.checked)}
-              />
-            }
-            label="Instant"
-            labelPlacement="start"
-            componentsProps={{ typography: { variant: "body2" } }}
-          />
-        </Box>
         <PillList tab={tab} />
+        <PillDialog
+          open={adding}
+          title="Add roll"
+          initialName=""
+          initialCommand={draft.trim()}
+          onClose={() => setAdding(false)}
+          onSave={(name, command, description) => {
+            addPill(tab.id, name, command, description);
+            setAdding(false);
+          }}
+        />
       </Box>
     </Slide>
   );
@@ -125,11 +144,19 @@ function PillList({ tab }: { tab: RollTab }) {
       {tab.pills.map((pill, index) => {
         const invalid = pillError(pill) !== null;
         return (
+          <Tooltip key={pill.id} title={pill.description || ""} disableInteractive>
           <Chip
-            key={pill.id}
-            label={pill.name}
-            title={pill.command}
-            icon={tab.instant ? <BoltIcon /> : undefined}
+            label={
+              <span>
+                {pill.name}
+                <Typography
+                  component="span"
+                  sx={{ ml: 1, fontFamily: "monospace", fontSize: 12, opacity: 0.6 }}
+                >
+                  {pill.command}
+                </Typography>
+              </span>
+            }
             variant="outlined"
             color={invalid ? "error" : "default"}
             draggable
@@ -169,9 +196,15 @@ function PillList({ tab }: { tab: RollTab }) {
             onPointerLeave={cancelPress}
             sx={{ fontSize: 15, height: 36, borderRadius: "18px", maxWidth: "100%" }}
           />
+          </Tooltip>
         );
       })}
       <Menu anchorEl={menu?.anchor} open={Boolean(menu)} onClose={() => setMenu(null)}>
+        {menu?.pill.description && (
+          <Typography variant="body2" sx={{ px: 2, py: 1, maxWidth: 260, opacity: 0.8 }}>
+            {menu.pill.description}
+          </Typography>
+        )}
         <MenuItem
           onClick={() => {
             setEditing(menu!.pill);
@@ -194,9 +227,10 @@ function PillList({ tab }: { tab: RollTab }) {
         title="Edit roll"
         initialName={editing?.name ?? ""}
         initialCommand={editing?.command ?? ""}
+        initialDescription={editing?.description ?? ""}
         onClose={() => setEditing(null)}
-        onSave={(name, command) => {
-          editPill(editing!.id, name, command);
+        onSave={(name, command, description) => {
+          editPill(editing!.id, name, command, description);
           setEditing(null);
         }}
       />
