@@ -5,8 +5,8 @@ Guidance for Claude (and humans) working in this repo.
 ## What this is
 
 ChongKit is a set of TTRPG tools for one table running **Nimble 5e (v2)**, plus **Chong's Tracker**, a
-system-agnostic Owlbear Rodeo extension (see its own section below; the Nimble ground rules don't
-apply to it). The rules source is
+system-agnostic Owlbear Rodeo extension, and **Chong Die**, a fork of the Owlbear Rodeo dice
+extension (see their own sections below; the Nimble ground rules don't apply to them). The rules source is
 `source/nimble-gm-guide-v2.0.1.pdf` (Nimble 5e v2 GM Guide v2.0.1, 115 pages).
 Page numbers in code and docs are the **printed** page numbers (PDF page index = printed + 1).
 
@@ -124,6 +124,30 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
    file for 10 minutes, so without it Owlbear can mix old and new files (e.g. a new `app.js` with an
    old `core.js`) and the panel breaks.
 
+## Chong Die (Owlbear Rodeo dice)
+
+A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
+line and saved-roll pills. System-agnostic; spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`.
+
+1. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
+   built with Vite. Source in `chong-die-src/` (off the site via `_config.yml`, public on GitHub);
+   `npx yarn@1.22.22 build` writes `chong-die/`, which is committed. **Rebuild and commit
+   `chong-die/` after every source change.** The build empties `chong-die/` except `TRACKER.md`.
+2. **GPL-3.0.** Keep `chong-die-src/LICENSE` and list every change in `chong-die-src/NOTICE.md`;
+   the ⋯ → About credit stays.
+3. **Owlbear's look** (the upstream MUI theme), no `nimble.css`, no Nimble notice or footer.
+4. **The roll engine is pure TypeScript** in `src/roll/` (parser, evaluator, result text), covered
+   by Vitest (`npx yarn@1.22.22 test`). Avrae's `d20` syntax; operations apply in the order written.
+   Rerolls and explosions come back as waves of new dice (keys: `<rep>.<dice id>.<n>`, + `r` / `e`).
+5. **Rolls carry `chong` metadata** (`ChongRollMeta`: command, die id → logical die, virtual dice)
+   so every player recomputes the same result from the synced values. Only the roller's
+   `useWaveRunner` throws new waves. Plugin id prefix `com.chongkit.chongdie/`.
+6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested).
+7. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names,
+   so no `?v=` is needed. Libraries build into their own `vendor` chunk so rebuilds stay small.
+8. Status and backlog: `chong-die/TRACKER.md`. Pulling upstream fixes: diff the upstream repo
+   against `chong-die-src/` and port by hand.
+
 ## Layout
 
 ```
@@ -151,6 +175,11 @@ chongs-tracker/              Owlbear extension → /chongs-tracker/ (install: ma
   vendor/obr-sdk.js          Bundled @owlbear-rodeo/sdk (don't edit)
   tests/core.test.js         node:test suite (not published)
   TRACKER.md                 The tracker's own status and backlog (not published)
+chong-die/                   Built Chong Die (committed) → /chong-die/ (install: manifest.json)
+  TRACKER.md                 Its status and backlog (not published)
+chong-die-src/               Chong Die source: fork of owlbear-rodeo/dice (GPL-3.0, not published)
+  src/roll/                  Roll engine: parser, evaluator, result text (+ Vitest tests)
+  src/chong/                 Command line, panel, pills, saved rolls, roll runner
 docs/rules-reference.md      Rules tables with page numbers → /docs/rules-reference.html
 source/                      The GM Guide PDF (not published)
 README.md                    What the tools are and how to use them
@@ -164,6 +193,7 @@ CommonJS modules for Node tests.
 ## Commands
 
 - Test: `node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js` (Node 18+, no dependencies)
+- Chong Die: `cd chong-die-src && npx yarn@1.22.22 test` and `npx yarn@1.22.22 build` (needs `npx yarn@1.22.22` install first)
 - Run: `python3 -m http.server` in the repo root, then open http://localhost:8000/ (this matches how GitHub Pages serves it). Opening a tool's `index.html` directly also works.
 
 ## Reading the PDF

@@ -7,6 +7,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | Tool | Status | What it does |
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
+| [Chong Die](chong-die/) | ✅ v1 | Owlbear Rodeo 3D dice with an Avrae-style command line and saved rolls. Fork of Owlbear Rodeo Dice (GPL-3.0). |
 | [Character Sheet](character-sheet/) | ✅ v3 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, notes; add more of any box, remove any; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
@@ -223,6 +224,48 @@ receives the scene data.
 `export { default } from "@owlbear-rodeo/sdk"; export * from "@owlbear-rodeo/sdk";`, then
 `npx esbuild entry.js --bundle --format=esm --minify --outfile=obr-sdk.js` and copy the result over.
 
+## Chong Die (Owlbear Rodeo)
+
+3D dice for [Owlbear Rodeo](https://www.owlbear.rodeo/) with an Avrae-style command line and
+saved rolls. It is a modified version of [Owlbear Rodeo Dice](https://github.com/owlbear-rodeo/dice)
+and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, changes listed in
+`chong-die-src/NOTICE.md`).
+
+**To install:** in Owlbear, open your profile → **Extensions** → **Add Extension**, paste
+`https://fakeplasticfilipino.github.io/ChongKit/chong-die/manifest.json`, then turn it on in your room.
+
+**Using it**
+- **Command line** (always at the top of the tray): type a roll and press Enter. `!r` is optional.
+  ↑ / ↓ step through what you typed before. It fades while dice roll.
+- **★** saves the typed roll as a **pill** in the current tab.
+- **Panel** (sidebar button ▤): tabs of pills. **+** adds a tab, double-click renames, **×** deletes,
+  drag to reorder. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
+  to edit or delete it.
+- Each tab has an **Instant** switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
+  tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
+- The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
+
+**Roll syntax** (Avrae's `d20` syntax)
+
+| Write | Means |
+|---|---|
+| `1d20+5`, `d%` | Dice and math: `+ - * / // %`, parentheses |
+| `4d6kh3`, `2d20kl1`, `8d6k>2`, `4d6p<3`, `3d6pl1` | Keep / drop highest, lowest, above, below |
+| `1d6rr1`, `2d6ro<3`, `1d6ra6` | Reroll until not / once / once and add |
+| `2d6e6`, `1d4!`, `3d10e>8` | Exploding dice (a new die pops out of the one that exploded) |
+| `4d6mi2`, `2d8ma6` | Minimum / maximum per die |
+| `1d6[fire]` | Label |
+| `1d20+5 adv Perception` | `adv` / `dis` turn the first d20 into 2d20kh1 / kl1; the rest is a comment |
+| `!rr 4 1d20+5` | Roll it 4 times |
+| `!rrr 4 1d20+5 15` | Roll it 4 times against DC 15 |
+
+Operations apply in the order written. Rerolls and explosions are thrown as extra dice (at most 20
+per roll). d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …) are rolled without
+a 3D die. Limits: 100 dice per throw, sides up to 1000, repeats up to 25.
+
+**Building:** `cd chong-die-src`, then `npx yarn@1.22.22` (install) and `npx yarn@1.22.22 build`,
+which writes the site files into `chong-die/`. Commit both folders. Tests: `npx yarn@1.22.22 test`.
+
 ## Hosting (GitHub Pages)
 
 The repo root is the website:
@@ -243,6 +286,7 @@ To preview locally, run `python3 -m http.server` in the repo root and open http:
 
 ```
 node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js
+cd chong-die-src && npx yarn@1.22.22 test
 ```
 
 The tests check that every generated damage expression averages exactly the guide's value, that encounters (generic and bestiary) land inside the difficulty bands, and that bestiary fights only use their own family.

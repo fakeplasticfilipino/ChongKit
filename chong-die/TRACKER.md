@@ -5,13 +5,16 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). Spec:
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## 🚧 v1.0.0
-- [x] Upstream imported into `chong-die-src/`, renamed, builds into `chong-die/`
-- [ ] Roll engine: parser, evaluator (rerolls / explosions in waves), result text
-- [ ] Saved rolls (tabs, pills, Instant switch, export/import)
-- [ ] Command rolls on the tray: waves, exploding dice pop out, sync to the party
-- [ ] Command line, panel, tab strip, pills, Place flow
-- [ ] Docs, landing card
+## ✅ v1.0.0
+- [x] Upstream imported into `chong-die-src/`, renamed (plugin id `com.chongkit.chongdie/`), builds into `chong-die/`
+- [x] Roll engine (`src/roll/`): Avrae parser, evaluator with reroll / explosion waves, result text, virtual dice for odd sizes
+- [x] Saved rolls (tabs, pills, Instant switch, export/import) in localStorage `chongkit.chongdie`
+- [x] Command rolls on the tray: follow-up waves, exploding dice pop out of their parent, other players see the same total
+- [x] Command line (always on top, fades while rolling, history), panel, tab strip, pills, Place flow
+- [x] Tests (Vitest): parser, evaluator, physical dice, result text, saved rolls, roll metadata, Place
+- [x] Browser check (local): adv roll, exploding waves, reroll wave, virtual d7, save pill, Place, Instant
 
 ## 📋 Next up
-- [ ] Install in a real Owlbear room and test with two players
+- [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays
+- [ ] Watch an exploding die pop out with the window in front (the local check ran in a hidden pane, so physics only stepped on screenshots)
+- [ ] Check in Owlbear: invalid pill outline, export/import (downloads may be blocked in the extension frame), phone width
