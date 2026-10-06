@@ -18,3 +18,11 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays
 - [ ] Watch an exploding die pop out with the window in front (the local check ran in a hidden pane, so physics only stepped on screenshots)
 - [ ] Check in Owlbear: invalid pill outline, export/import (downloads may be blocked in the extension frame), phone width
+
+## 💡 From the v1 review (deferred)
+- Other players' trays may replay a follow-up wave slightly differently mid-roll (totals are right); check with two clients, maybe defer `addDice` a tick
+- Hidden rolls still put virtual-die values and the command in player metadata: strip `chong.virtual` when hidden
+- A pill over the dice limits (`!rr 25 5d6`) isn't outlined red; it errors only on click
+- Import keeps duplicate tab / pill ids: regenerate them
+- Virtual dice show only in the text, not as a flat chip; the history chip shows the command but not the total
+- Pills can't be dragged on touch screens
