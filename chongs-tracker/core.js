@@ -410,8 +410,31 @@
     return out;
   }
 
+  // Dice rolls in note text, for clicking them into Chong Die. A roll is a dice term (`1d8`, `d20`,
+  // `d%`, with Avrae ops like `!`, `kh1`, `rr<2`) followed by more dice or numbers joined by + / -.
+  // A repeat like `(2×)` or `(2x)` earlier on the line makes it `!rr 2 …` (one roll per attack).
+  const DICE_TERM = String.raw`\d*d(?:\d+|%)(?:!|(?:kh|kl|ph|pl|rr|ro|ra|mi|ma|k|p|e)[<>]?\d+)*`;
+  const ROLL_RE = new RegExp(String.raw`(?<![\w!.%])${DICE_TERM}(?:[+-](?:${DICE_TERM}|\d+(?!\w)))*(?![\w%!])`, 'g');
+  const REPEAT_RE = /\((\d+)\s*[×x]\)/g;
+
+  function findRolls(line) {
+    const text = String(line || '');
+    const rolls = [];
+    for (const m of text.matchAll(ROLL_RE)) {
+      let times = 1;
+      for (const r of text.slice(0, m.index).matchAll(REPEAT_RE)) times = Number(r[1]);
+      const expr = m[0];
+      rolls.push({
+        start: m.index,
+        end: m.index + expr.length,
+        command: times > 1 ? `!rr ${times} ${expr}` : `!r ${expr}`,
+      });
+    }
+    return rolls;
+  }
+
   const api = {
-    NS, KEYS, PLAYERS_TAB, uid,
+    NS, KEYS, PLAYERS_TAB, uid, findRolls,
     evalExpr, readInput, applyHp,
     parseCommand, rowsToEntries, acFrom, addNote,
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,

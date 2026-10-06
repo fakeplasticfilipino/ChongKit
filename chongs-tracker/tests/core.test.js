@@ -251,3 +251,19 @@ test('HP bar fill', () => {
   assert.strictEqual(C.hpFraction({ hp: -5, max: 20 }), 0);
   assert.strictEqual(C.hpFraction({ hp: 7, max: null }), 1);
 });
+
+test('findRolls: generator damage lines', () => {
+  assert.deepStrictEqual(C.findRolls('Damage: 1d8!+3d8+2'), [{ start: 8, end: 18, command: '!r 1d8!+3d8+2' }]);
+  assert.deepStrictEqual(C.findRolls('Damage: (2×) 3d10+1').map((r) => r.command), ['!rr 2 3d10+1']);
+  assert.deepStrictEqual(C.findRolls('Damage: Stab (2×). 1d4+2 (or Sling, Range 8).').map((r) => r.command), ['!rr 2 1d4+2']);
+  assert.deepStrictEqual(C.findRolls('Damage: 2d6+3 (move & hit) or 4d8 (big hit)').map((r) => r.command), ['!r 2d6+3', '!r 4d8']);
+  assert.deepStrictEqual(C.findRolls('Damage: Stab. 1d4 (no crits, miss on a 1)').map((r) => r.command), ['!r 1d4']);
+  assert.deepStrictEqual(C.findRolls('Roll d20 then 1d20kh1 and d%').map((r) => r.command), ['!r d20', '!r 1d20kh1', '!r d%']);
+  assert.deepStrictEqual(C.findRolls('Slice (3x). 1d8+1').map((r) => r.command), ['!rr 3 1d8+1']);
+});
+
+test('findRolls: no false rolls', () => {
+  assert.deepStrictEqual(C.findRolls('HP: 30, Save DC 13, Range 8'), []);
+  assert.deepStrictEqual(C.findRolls('5d6x and d20s and add20'), []);
+  assert.deepStrictEqual(C.findRolls(''), []);
+});
