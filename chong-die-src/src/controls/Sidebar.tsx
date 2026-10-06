@@ -7,6 +7,7 @@ import { DicePicker } from "./DicePicker";
 import { DiceExtras } from "./DiceExtras";
 import { DiceHidden } from "./DiceHidden";
 import { DiceHistory } from "./DiceHistory";
+import { PanelToggle } from "../chong/PanelToggle";
 
 import { FairnessTesterButton } from "../tests/FairnessTesterButton";
 
@@ -33,6 +34,7 @@ export function Sidebar() {
         <DiceHidden />
         <DiceExtras />
         <DiceHistory />
+        <PanelToggle />
         <FairnessTesterButton />
         <PluginGate>
           <Divider flexItem sx={{ mx: 1 }} />

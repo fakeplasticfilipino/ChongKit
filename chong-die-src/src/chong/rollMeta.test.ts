@@ -83,12 +83,15 @@ test("a roll still waiting for a wave shows nothing", () => {
   expect(getRollDisplay(roll, { a: 1 })).toBeNull();
 });
 
-test("pop-out throw starts above the parent and goes up", () => {
+test("pop-out throw starts clear above the parent and flies up and sideways", () => {
   const t = popThrow(
     { position: { x: 0.1, y: 0.2, z: -0.3 }, rotation: { x: 0, y: 0, z: 0, w: 1 } },
     () => 0.5
   );
-  expect(t.position).toEqual({ x: 0.1, y: 0.45, z: -0.3 });
-  expect(t.linearVelocity).toEqual({ x: 0, y: 2.5, z: 0 });
+  expect(t.position).toEqual({ x: 0.1, y: 0.8, z: -0.3 });
+  // Sideways so it doesn't land back on the (locked) parent
+  expect(t.linearVelocity.x).toBeCloseTo(-0.8);
+  expect(t.linearVelocity.z).toBeCloseTo(0);
+  expect(t.linearVelocity.y).toBe(2);
   expect(t.angularVelocity).toEqual({ x: 4, y: 4, z: 4 });
 });

@@ -71,15 +71,22 @@ export function popThrow(
   const u3 = rand() * 2 * Math.PI;
   const a = Math.sqrt(1 - u1);
   const b = Math.sqrt(u1);
+  // Start clear of the parent and fly off sideways, so the new die doesn't
+  // land back on the locked parent and wobble there
+  const angle = rand() * 2 * Math.PI;
   return {
-    position: { x: p.x, y: p.y + 0.25, z: p.z },
+    position: { x: p.x, y: p.y + 0.6, z: p.z },
     rotation: {
       x: a * Math.sin(u2),
       y: a * Math.cos(u2),
       z: b * Math.sin(u3),
       w: b * Math.cos(u3),
     },
-    linearVelocity: { x: rand() - 0.5, y: 2 + rand(), z: rand() - 0.5 },
+    linearVelocity: {
+      x: Math.cos(angle) * 0.8,
+      y: 1.5 + rand(),
+      z: Math.sin(angle) * 0.8,
+    },
     angularVelocity: { x: 2 + 4 * rand(), y: 2 + 4 * rand(), z: 2 + 4 * rand() },
   };
 }

@@ -24,6 +24,7 @@ import { DiceType } from "../types/DiceType";
 import { useDiceHistoryStore } from "./history";
 import { Die } from "../types/Die";
 import { startCommandRoll } from "../chong/rollRunner";
+import { useChongStore } from "../chong/chongStore";
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -104,9 +105,20 @@ function DicePickedControls() {
   );
 
   const pushRecentRoll = useDiceHistoryStore((state) => state.pushRecentRoll);
+  const placed = useChongStore((state) => state.placed);
 
   function handleRoll() {
-    if (hasDice && rollPressTime) {
+    if (hasDice && rollPressTime && placed) {
+      // A placed command: throw its dice, the command works out the result
+      const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
+      const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
+      try {
+        startCommandRoll(placed, { hidden, speedMultiplier });
+      } catch (e) {
+        useChongStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+      }
+      handleReset();
+    } else if (hasDice && rollPressTime) {
       const dice = getDiceToRoll(counts, advantage, diceById);
       const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
@@ -274,7 +286,12 @@ function DicePickedControls() {
           left: 24,
         }}
       >
-        {advantage && (
+        {placed && (
+          <Typography textAlign="left" lineHeight="40px" color="white" variant="h6" noWrap maxWidth="120px">
+            {placed}
+          </Typography>
+        )}
+        {!placed && advantage && (
           <Typography
             textAlign="left"
             lineHeight="40px"

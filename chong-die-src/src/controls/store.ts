@@ -5,6 +5,26 @@ import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
+import { useChongStore } from "../chong/chongStore";
+
+let placing = false;
+
+/** Run tray changes that belong to placing a command (they keep it placed) */
+export function whilePlacing(fn: () => void) {
+  placing = true;
+  try {
+    fn();
+  } finally {
+    placing = false;
+  }
+}
+
+/** Changing dice by hand drops a placed command: the roll is a normal one again */
+function dropPlaced() {
+  if (!placing && useChongStore.getState().placed !== null) {
+    useChongStore.getState().setPlaced(null);
+  }
+}
 
 export type Advantage = "ADVANTAGE" | "DISADVANTAGE" | null;
 export type DiceCounts = Record<string, number>;
@@ -68,11 +88,13 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     resetDiceCounts() {
+      dropPlaced();
       set((state) => {
         state.diceCounts = state.defaultDiceCounts;
       });
     },
     changeDieCount(id, count) {
+      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] = count;
@@ -80,6 +102,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     incrementDieCount(id) {
+      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] += 1;
@@ -87,6 +110,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     decrementDieCount(id) {
+      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] -= 1;
@@ -94,11 +118,13 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     setDiceBonus(bonus) {
+      dropPlaced();
       set((state) => {
         state.diceBonus = bonus;
       });
     },
     setDiceAdvantage(advantage) {
+      dropPlaced();
       set((state) => {
         state.diceAdvantage = advantage;
       });
