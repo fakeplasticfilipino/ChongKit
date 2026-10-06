@@ -37,7 +37,7 @@ before, only in this browser. Deleting a character while signed in deletes it fr
 - **Delete account and all its characters…** (in the account box) removes the account for good.
 - **Offline:** keep playing. The toolbar says **Not synced**; edits and deletes are sent when you're
   back online. Two tabs of the sheet open at once share their edits.
-- **Limits:** 512 KB per character (far more than any sheet needs) and 200 characters per account.
+- **Limits:** 256 KB per character (far more than any sheet needs) and 50 characters per account.
   Imports over 1 MB are refused. If two devices edit the same character, the edit made last (by each
   device's clock) wins.
 

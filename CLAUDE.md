@@ -90,9 +90,10 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    `chongkit.deletes.<user>`).
 7. **Security rules (keep them):** sign-in uses PKCE (never tokens in the URL); user text is only ever
    set as text/value, never as HTML; the page has a Content-Security-Policy (scripts from the site,
-   data only to the Supabase project); the database refuses characters over 512 KB, more than 200
+   data only to the Supabase project); the database refuses characters over 256 KB, more than 50
    per account, and older versions over newer ones (trigger `character_sheets_keep_newer`);
-   `delete_my_account()` (security definer) only ever deletes the caller. Tabs of the page merge each
+   `delete_my_account()` (security definer) only ever deletes the caller; signed-in users get only
+   SELECT/INSERT/UPDATE/DELETE on `character_sheets` (no TRUNCATE etc.) and `anon` gets nothing. Tabs of the page merge each
    other's saves (`storage` event); deletes made offline are queued; failed syncs retry with backoff.
 
 ## Chong's Tracker (Owlbear Rodeo extension)

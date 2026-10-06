@@ -52,6 +52,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Delete account (`delete_my_account()`), queued offline deletes, retry with backoff, "Not synced" / "Signed out" messages
 - [x] Several tabs of the page merge each other's saves; redraws wait until you stop typing
 - [x] Database: 512 KB / 200 characters limits, never replace a newer version with an older one; old `characters` table and its function removed
+- [x] Security check (live project): RLS own-rows only, no secret key in the repo, no user text as HTML. Tightened: limits now 256 KB / 50 characters (so scripted accounts can't fill storage), signed-in users lose TRUNCATE/REFERENCES/TRIGGER, `anon` has no table access, `sheet_edit_stamp` signed-in only (migration `tighten_character_sheets`)
+- [ ] Turn on leaked password protection (Supabase dashboard → Authentication; may need a paid plan)
 - [x] Content-Security-Policy on the sheet page; imports over 1 MB refused; 8+ character passwords for new accounts
 - [x] Tests: notes tabs upgrade, owner-aware merge, imports are yours
 

@@ -5,7 +5,7 @@
 // the address bar; it's swapped for the session here). The session lives in localStorage.
 // Data: one row per character in `character_sheets` (user_id, id, data, updated_at); row-level
 // security lets each account read and write only its own rows. The database also refuses
-// characters over 512 KB, more than 200 per account, and older versions over newer ones.
+// characters over 256 KB, more than 50 per account, and older versions over newer ones.
 (function () {
   const URL_ = 'https://fmkbvoukbrxjbzlexjhu.supabase.co';
   const KEY = 'sb_publishable_p327nFvW--OtzVX2W7saxA_1tEietW5'; // publishable (public) key: RLS guards the data
