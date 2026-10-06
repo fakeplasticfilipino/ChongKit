@@ -201,3 +201,7 @@ test('Avrae Version keeps the same dice (same average)', () => {
     assert.strictEqual(dice(G.nimbleDice(e.text)), dice(e.text), e.text);
   }
 });
+
+test('Avrae Version leaves summoned minion dice alone', () => {
+  assert.strictEqual(G.nimbleDice('Summon 10 scarab minions (d6).'), 'Summon 10 scarab minions (d6).');
+});

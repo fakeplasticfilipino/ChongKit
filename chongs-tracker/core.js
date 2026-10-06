@@ -412,7 +412,8 @@
 
   // Dice rolls in note text, for clicking them into Chong Die. A roll is a dice term (`1d8`, `d20`,
   // `d%`, with Avrae ops like `!`, `kh1`, `rr<2`) followed by more dice or numbers joined by + / -.
-  // A repeat like `(2×)` or `(2x)` earlier on the line makes it `!rr 2 …` (one roll per attack).
+  // A repeat like `(2×)` or `(2x)` before it makes it `!rr 2 …` (one roll per attack), but only for
+  // the first roll after the marker: "Ravage (2×). 1d10. OR: Shoot. 1d10." rolls the Shoot once.
   const DICE_TERM = String.raw`\d*d(?:\d+|%)(?:!|(?:kh|kl|ph|pl|rr|ro|ra|mi|ma|k|p|e)[<>]?\d+)*`;
   const ROLL_RE = new RegExp(String.raw`(?<![\w!.%])${DICE_TERM}(?:[+-](?:${DICE_TERM}|\d+(?!\w)))*(?![\w%!])`, 'g');
   const REPEAT_RE = /\((\d+)\s*[×x]\)/g;
@@ -420,9 +421,11 @@
   function findRolls(line) {
     const text = String(line || '');
     const rolls = [];
+    let from = 0; // repeat markers before this point belong to an earlier roll
     for (const m of text.matchAll(ROLL_RE)) {
       let times = 1;
-      for (const r of text.slice(0, m.index).matchAll(REPEAT_RE)) times = Number(r[1]);
+      for (const r of text.slice(from, m.index).matchAll(REPEAT_RE)) times = Number(r[1]);
+      from = m.index + m[0].length;
       const expr = m[0];
       rolls.push({
         start: m.index,

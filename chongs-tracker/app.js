@@ -742,8 +742,14 @@ function renderMore(e) {
     el('label', { className: 'field' }, el('span', { textContent: 'Max HP' }), max),
     el('label', { className: 'field' }, el('span', { textContent: 'Extra HP' }), extra),
     el('label', { className: 'field' }, el('span', { textContent: 'AC' }), ac)));
-  more.append(el('label', { className: 'field' }, el('span', { textContent: 'Note' }),
-    noteView(e.note, '', (text) => { if (text !== (e.note || '')) updateEntry(e, { note: text }); })));
+  // Not a <label>: a label would pass a click on "Note" to the note's first roll button and roll it.
+  const note = noteView(e.note, '', (text) => { if (text !== (e.note || '')) updateEntry(e, { note: text }); });
+  const caption = el('span', { textContent: 'Note' });
+  caption.addEventListener('click', () => {
+    if (!note.isConnected) return;
+    if (note.tagName === 'TEXTAREA') note.focus(); else note.click();
+  });
+  more.append(el('div', { className: 'field' }, caption, note));
 
   const actions = el('div', { className: 'actions' });
   if (role === 'GM') {

@@ -40,10 +40,12 @@
   // Avrae Version: in each damage expression the first die (Nimble's primary die) is split off
   // and written exploding, Avrae style: 4d8+2 → 1d8!+3d8+2. Same dice, so the same table
   // average (the guide's averages ignore crits and misses, p.30). Notation only: derived.
-  const EXPR = /(?<![\w!])(\d*)d(\d+)(!?)((?:[+-](?:\d*d\d+!?|\d+))*)/g;
+  // Only rolls written with a count (`1d6+2`): a bare `(d6)` is a summoned minion's die, and
+  // minions don't crit.
+  const EXPR = /(?<![\w!])(\d+)d(\d+)(!?)((?:[+-](?:\d*d\d+!?|\d+))*)/g;
   function nimbleDice(text) {
     return text.replace(EXPR, (all, count, die, bang, rest) => {
-      const n = count === '' ? 1 : Number(count);
+      const n = Number(count);
       if (bang || n < 1) return all;
       return `1d${die}!${n > 1 ? `+${n - 1}d${die}` : ''}${rest}`;
     });

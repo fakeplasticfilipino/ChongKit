@@ -267,3 +267,13 @@ test('findRolls: no false rolls', () => {
   assert.deepStrictEqual(C.findRolls('5d6x and d20s and add20'), []);
   assert.deepStrictEqual(C.findRolls(''), []);
 });
+
+test('findRolls: a repeat only applies to the roll right after it', () => {
+  assert.deepStrictEqual(C.findRolls('Damage: Ravage (2×). 1d10. OR: Shoot. (Range 12) 1d10.').map((r) => r.command), ['!rr 2 1d10', '!r 1d10']);
+  assert.deepStrictEqual(C.findRolls('Damage: Smash (2×). 1d6+15. OR: Boulder! 1d6+20').map((r) => r.command), ['!rr 2 1d6+15', '!r 1d6+20']);
+});
+
+test('paste: Avrae Version damage stays in the entry note', () => {
+  const { rows } = C.parseCommand('Monster A x2\nHP: 30\nArmor: Medium\nDamage: (2×) 1d6!+1d6+3\nSave DC: 13');
+  assert.ok(rows[0].note.includes('Damage: (2×) 1d6!+1d6+3'));
+});

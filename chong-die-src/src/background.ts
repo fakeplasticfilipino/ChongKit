@@ -19,7 +19,8 @@ OBR.onReady(() => {
 // Rolls clicked in Chong's Tracker: answer it, open the dice window and hand the command over,
 // re-sending until the window says it has it (it may still be loading).
 const RESEND_MS = 250;
-const GIVE_UP_MS = 3000;
+// Long enough for a cold window to load the 3D libraries and subscribe; re-sends are deduped
+const GIVE_UP_MS = 15000;
 
 OBR.onReady(() => {
   OBR.broadcast.onMessage(CHANNELS.roll, (event) => {
