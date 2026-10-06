@@ -13,3 +13,4 @@ under the same license.
 - Avrae-style roll engine (`src/roll/`): parser, evaluator, result text
 - Command line, saved-roll tabs and pills, Place/Instant (`src/chong/`)
 - Follow-up dice waves for rerolls and exploding dice
+- Owlbear SDK upgraded from 1.3.9 to 3.x (for messages from Chong's Tracker)
