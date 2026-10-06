@@ -33,3 +33,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Import keeps duplicate tab / pill ids: regenerate them
 - Virtual dice show only in the text, not as a flat chip; the history chip shows the command but not the total
 - Pills can't be dragged on touch screens
+
+## 💡 From the v1.1 review (deferred)
+- Two tracker rolls in flight: the background's per-roll ack listeners can unsubscribe each other (harmless, deduped); use one listener + pending map, and catch the broadcast promises
+- On touch, a pill's description tooltip can show on top of the long-press menu
+- The vendor chunk changes whenever a new library part is imported (about 3.5 MB of git history each time): split three.js/Rapier from MUI so most rebuilds leave it alone
