@@ -75,3 +75,12 @@ test("dice picked by hand roll as a command with a primary die", () => {
   rollPickedDice({ hidden: false });
   expect(useDiceRollStore.getState().roll!.chong!.command).toBe("2d8");
 });
+
+test("with Nimble off the first die keeps the normal style", () => {
+  useChongStore.getState().setPrimaryStyle("SUNSET");
+  useChongStore.getState().setNimble(false);
+  startCommandRoll("2d6", { hidden: false });
+  const roll = useDiceRollStore.getState().roll!;
+  expect((roll.dice as { style: string }[]).map((d) => d.style)).not.toContain("SUNSET");
+  useChongStore.getState().setPrimaryStyle(null);
+});

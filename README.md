@@ -253,11 +253,12 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 - **⚡** is the tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the open tab's ⚡.
-- **Primary die:** the first die of every roll (one per roll with `!rr`, and the dice that explode
-  out of it) is drawn in its own style. Pick it with the button under the dice style picker.
-- **Nimble rules** (the **N** button under it): the primary die explodes on its max and a 1 on it is
-  a **Miss**. Off: plain Avrae rolling. Dice picked by hand on the tray follow it too (except with
-  advantage / disadvantage).
+- **Nimble rules** (⋯ menu → Nimble rules): the first die of every roll is the **primary die** (one
+  per roll with `!rr`). It explodes on its max and a 1 on it is a **Miss**. Off: plain Avrae
+  rolling. Dice picked by hand on the tray follow it too (except with advantage / disadvantage).
+  Write your own `e` on the first dice for a crit range: `1d6e>3+2d6` crits on 4–6.
+- **Primary die style:** with Nimble on, a button under the dice style picker picks the primary
+  die's style (it and the dice that explode out of it).
 - The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)

@@ -9,15 +9,18 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 
 import MoreIcon from "@mui/icons-material/MoreVertRounded";
+import CheckIcon from "@mui/icons-material/CheckRounded";
 
 import { useChongStore } from "./chongStore";
 import { importSaved, SavedRolls } from "./savedRolls";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-/** ⋯ menu: export / import saved rolls, about */
+/** ⋯ menu: Nimble rules on/off, export / import saved rolls, about */
 export function MoreMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [pending, setPending] = useState<SavedRolls | null>(null);
@@ -25,6 +28,8 @@ export function MoreMenu() {
   const fileRef = useRef<HTMLInputElement>(null);
   const setError = useChongStore((state) => state.setError);
   const replaceSaved = useChongStore((state) => state.replaceSaved);
+  const nimble = useChongStore((state) => state.prefs.nimble);
+  const setNimble = useChongStore((state) => state.setNimble);
 
   function exportRolls() {
     const saved = useChongStore.getState().saved;
@@ -52,6 +57,18 @@ export function MoreMenu() {
         <MoreIcon />
       </IconButton>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+        <MenuItem
+          role="menuitemcheckbox"
+          aria-checked={nimble}
+          onClick={() => {
+            setNimble(!nimble);
+            setAnchor(null);
+          }}
+        >
+          <ListItemIcon>{nimble && <CheckIcon fontSize="small" />}</ListItemIcon>
+          Nimble rules
+        </MenuItem>
+        <Divider />
         <MenuItem
           onClick={() => {
             exportRolls();

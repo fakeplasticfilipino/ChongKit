@@ -9,7 +9,7 @@ import { DiceHidden } from "./DiceHidden";
 import { DiceHistory } from "./DiceHistory";
 import { PanelToggle } from "../chong/PanelToggle";
 import { PrimaryDiePicker } from "../chong/PrimaryDiePicker";
-import { NimbleToggle } from "../chong/NimbleToggle";
+import { useChongStore } from "../chong/chongStore";
 import { IncomingRolls } from "../chong/IncomingRolls";
 
 import { FairnessTesterButton } from "../tests/FairnessTesterButton";
@@ -20,6 +20,8 @@ import { PartyTrays } from "../plugin/PartyTrays";
 import { ResizeObserver as PluginResizeObserver } from "../plugin/ResizeObserver";
 
 export function Sidebar() {
+  // The primary die only matters with Nimble rules on (⋯ menu in the panel)
+  const nimble = useChongStore((state) => state.prefs.nimble);
   return (
     <SimpleBar
       style={{
@@ -31,8 +33,7 @@ export function Sidebar() {
     >
       <Stack p={1} gap={1} alignItems="center">
         <DiceSetPicker />
-        <PrimaryDiePicker />
-        <NimbleToggle />
+        {nimble && <PrimaryDiePicker />}
         <Divider flexItem sx={{ mx: 1 }} />
         <DicePicker />
         <Divider flexItem sx={{ mx: 1 }} />

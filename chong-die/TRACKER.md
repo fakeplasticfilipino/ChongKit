@@ -31,6 +31,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Dice picked by hand roll as commands (primary die + Nimble), except advantage / disadvantage picks
 - [x] Glow removed; Combat Generator's Avrae Version removed
 
+## ✅ v1.4.0
+- [x] Nimble rules moved to the ⋯ menu (N button removed)
+- [x] Primary die button and primary style only with Nimble on (tested)
+
 ## 📋 Next up
 - [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker

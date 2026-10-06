@@ -120,12 +120,13 @@ export function nextWave(
   }
 }
 
-/** The dice set's style for this die, or the primary style for each roll's first die */
+/** The dice set's style for this die; with Nimble on, the primary style for each roll's first die */
 function styleFor(type: DiceType, key: string) {
   const set = useDiceControlsStore.getState().diceSet;
   const style = (set.dice.find((d) => d.type === type) || set.dice[0]).style;
-  if (isPrimaryKey(key)) {
-    return resolvePrimaryStyle(useChongStore.getState().prefs.primaryStyle, style);
+  const { primaryStyle, nimble } = useChongStore.getState().prefs;
+  if (nimble && isPrimaryKey(key)) {
+    return resolvePrimaryStyle(primaryStyle, style);
   }
   return style;
 }
