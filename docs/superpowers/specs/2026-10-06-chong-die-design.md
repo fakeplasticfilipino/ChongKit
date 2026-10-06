@@ -113,8 +113,8 @@ Each planned die carries the id of the term it belongs to, so values map back to
 
 ### 2.3 Evaluate
 
-Takes the landed values and applies, in Avrae's order: rerolls, explosions, clamps, keep/drop, then
-math. When rerolls or explosions need more dice it returns **wave N+1**: a list of new dice, each
+Takes the landed values and applies each term's operations **in the order written** (as Avrae's
+`d20` library does: `4d6rr1kh3` rerolls, then keeps), then the math. When rerolls or explosions need more dice it returns **wave N+1**: a list of new dice, each
 tagged with its parent die and why (reroll / explode). The tray throws that wave; exploding dice spawn
 at the parent's resting position with upward velocity and spin ("pop out"). Repeats until no more
 dice are needed. Cap: 20 extra dice per roll (then stops and marks the roll "capped").
