@@ -179,13 +179,24 @@ function evalDice(
     return null;
   }
 
-  const follow = (parent: DieResult, reason: "reroll" | "explode"): Follow => {
+  // Follow-up keys already given out in this term
+  const issued = new Set<string>();
+  const follow = (
+    parent: DieResult,
+    reason: "reroll" | "explode",
+    opIndex: number
+  ): Follow => {
     if (state.extra >= MAX_EXTRA_DICE) {
       state.capped = true;
       return "capped";
     }
     state.extra++;
-    const key = parent.key + (reason === "reroll" ? "r" : "e");
+    let key = parent.key + (reason === "reroll" ? "r" : "e");
+    if (issued.has(key)) {
+      // A later op (`1d6!!`, `ra6ra6`) follows up the same die again: new die
+      key += opIndex;
+    }
+    issued.add(key);
     const value = state.values[key];
     if (value === undefined) {
       state.needed.push({ key, size: parent.size, parent: parent.key, reason });
@@ -196,8 +207,8 @@ function evalDice(
     return die;
   };
 
-  for (const op of expr.ops) {
-    if (!applyOp(op, dice, follow)) {
+  for (const [i, op] of expr.ops.entries()) {
+    if (!applyOp(op, dice, (parent, reason) => follow(parent, reason, i))) {
       return null;
     }
   }

@@ -81,7 +81,8 @@ export const useDiceRollStore = create<DiceRollState>()(
             manualThrows,
             state.rollValues,
             state.rollTransforms,
-            state.rollThrows
+            state.rollThrows,
+            state.roll.chong?.parts
           );
         }
       });
@@ -118,12 +119,14 @@ export const useDiceRollStore = create<DiceRollState>()(
 
 /** Recursively update the ids of a draft to reroll dice */
 function rerollDraft(
-  diceRoll: WritableDraft<DiceRoll>,
+  diceRoll: WritableDraft<Dice>,
   ids: string[] | undefined,
   manualThrows: Record<string, DiceThrow> | undefined,
   rollValues: WritableDraft<Record<string, number | null>>,
   rollTransforms: WritableDraft<Record<string, DiceTransform | null>>,
-  rollThrows: WritableDraft<Record<string, DiceThrow>>
+  rollThrows: WritableDraft<Record<string, DiceThrow>>,
+  /** Chong Die command roll: die id → logical die, kept for the new id */
+  parts?: WritableDraft<ChongRollMeta["parts"]>
 ) {
   for (let dieOrDice of diceRoll.dice) {
     if (isDie(dieOrDice)) {
@@ -133,6 +136,11 @@ function rerollDraft(
         delete rollThrows[dieOrDice.id];
         const manualThrow = manualThrows?.[dieOrDice.id];
         const id = generateDiceId();
+        // Chong Die: the rethrown die stays the same logical die
+        if (parts && parts[dieOrDice.id]) {
+          parts[id] = parts[dieOrDice.id];
+          delete parts[dieOrDice.id];
+        }
         dieOrDice.id = id;
         rollValues[id] = null;
         rollTransforms[id] = null;
@@ -149,7 +157,8 @@ function rerollDraft(
         manualThrows,
         rollValues,
         rollTransforms,
-        rollThrows
+        rollThrows,
+        parts
       );
     }
   }

@@ -144,3 +144,17 @@ test("dropped and rerolled marks", () => {
     { key: "0.0.0r", size: 6, value: 5, dropped: false, exploded: false, rerolled: false },
   ]);
 });
+
+test("a second explode op on the same die throws a new die", () => {
+  expect(run("1d6!!", { "0.0.0": 6, "0.0.0e": 3 }).needed.map((d) => d.key)).toEqual([
+    "0.0.0e1",
+  ]);
+  expect(
+    run("1d6!!", { "0.0.0": 6, "0.0.0e": 3, "0.0.0e1": 4 }).result!.reps[0].total
+  ).toBe(13);
+});
+
+test("a second ra op on the same die throws a new die", () =>
+  expect(
+    run("1d6ra6ra6", { "0.0.0": 6, "0.0.0r": 2, "0.0.0r1": 5 }).result!.reps[0].total
+  ).toBe(13));

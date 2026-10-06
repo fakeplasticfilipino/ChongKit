@@ -138,7 +138,8 @@ line and saved-roll pills. System-agnostic; spec in `docs/superpowers/specs/2026
 3. **Owlbear's look** (the upstream MUI theme), no `nimble.css`, no Nimble notice or footer.
 4. **The roll engine is pure TypeScript** in `src/roll/` (parser, evaluator, result text), covered
    by Vitest (`npx yarn@1.22.22 test`). Avrae's `d20` syntax; operations apply in the order written.
-   Rerolls and explosions come back as waves of new dice (keys: `<rep>.<dice id>.<n>`, + `r` / `e`).
+   Rerolls and explosions come back as waves of new dice (keys: `<rep>.<dice id>.<n>`, + `r` / `e`;
+   a later op following up the same die again adds its op index, e.g. `1d6!!` → `0.0.0e1`).
 5. **Rolls carry `chong` metadata** (`ChongRollMeta`: command, die id → logical die, virtual dice)
    so every player recomputes the same result from the synced values. Only the roller's
    `useWaveRunner` throws new waves. Plugin id prefix `com.chongkit.chongdie/`.

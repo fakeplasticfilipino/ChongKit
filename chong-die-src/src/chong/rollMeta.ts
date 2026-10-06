@@ -14,6 +14,8 @@ export interface ChongRollMeta {
   /** Values of dice with no 3D model, by logical key */
   virtual: Record<string, number>;
   capped: boolean;
+  /** Set when the roll can't finish (e.g. it divides by zero once the dice land) */
+  error?: string;
 }
 
 /** Logical die values from the 3D dice; dice with any part unfinished are left out */
@@ -44,6 +46,9 @@ export function getRollDisplay(
   const meta = roll.chong;
   if (!meta || !rollValues) {
     return null;
+  }
+  if (meta.error) {
+    return { total: "Error", lines: [meta.error] };
   }
   if (Object.keys(meta.parts).some((id) => rollValues[id] == null)) {
     return null;

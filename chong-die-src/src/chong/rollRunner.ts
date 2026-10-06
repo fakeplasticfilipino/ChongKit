@@ -18,6 +18,7 @@ import { Die } from "../types/Die";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceType } from "../types/DiceType";
 import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
+import { RollError } from "../roll";
 import { useChongStore } from "./chongStore";
 
 /**
@@ -31,7 +32,17 @@ export function startCommandRoll(
   const cmd = parseCommand(command);
   const meta: ChongRollMeta = { command, parts: {}, virtual: {}, capped: false };
   const wave = nextWave(cmd, meta, {});
+  if (meta.error) {
+    throw new RollError(meta.error);
+  }
   const dice = makeDice(wave, meta);
+
+  // A typed roll or Instant pill replaces any dice placed or picked by hand,
+  // otherwise the tray keeps showing them instead of this roll's result
+  const controls = useDiceControlsStore.getState();
+  controls.resetDiceCounts();
+  controls.setDiceBonus(0);
+  controls.setDiceAdvantage(null);
 
   useDiceRollStore
     .getState()
@@ -49,7 +60,8 @@ export function startCommandRoll(
 /**
  * The next physical dice a command needs. Rolls any virtual dice
  * (sizes with no 3D model) on the way and records them in `meta`.
- * Returns [] when the command is finished.
+ * Returns [] when the command is finished, or when it can't go on
+ * (then `meta.error` says why).
  */
 export function nextWave(
   cmd: Command,
@@ -57,10 +69,16 @@ export function nextWave(
   rollValues: Record<string, number | null>
 ): LogicalDie[] {
   for (;;) {
-    const ev = evaluate(cmd, {
-      ...logicalValues(meta, rollValues),
-      ...meta.virtual,
-    });
+    let ev;
+    try {
+      ev = evaluate(cmd, {
+        ...logicalValues(meta, rollValues),
+        ...meta.virtual,
+      });
+    } catch (e) {
+      meta.error = e instanceof Error ? e.message : "Can't roll this";
+      return [];
+    }
     if (ev.result) {
       meta.capped = ev.result.capped;
       return [];

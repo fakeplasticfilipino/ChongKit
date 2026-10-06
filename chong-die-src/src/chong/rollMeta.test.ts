@@ -95,3 +95,12 @@ test("pop-out throw starts clear above the parent and flies up and sideways", ()
   expect(t.linearVelocity.y).toBe(2);
   expect(t.angularVelocity).toEqual({ x: 4, y: 4, z: 4 });
 });
+
+test("a roll that failed after landing shows the error", () => {
+  const roll: DiceRoll = {
+    dice: [],
+    combination: "NONE",
+    chong: { command: "1d6/0", parts: {}, virtual: {}, capped: false, error: "Can't divide by zero" },
+  };
+  expect(getRollDisplay(roll, {})).toEqual({ total: "Error", lines: ["Can't divide by zero"] });
+});
