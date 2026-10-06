@@ -71,10 +71,11 @@ function opText(op: Op, size: number): string {
   if (op.op === "mi" || op.op === "ma") {
     return `${op.op}${op.n}`;
   }
-  if (op.op === "e" && op.sel.kind === "=" && op.sel.n === size) {
+  const { sel } = op as Extract<Op, { sel: unknown }>;
+  if (op.op === "e" && sel.kind === "=" && sel.n === size) {
     return "!";
   }
-  return `${op.op}${op.sel.kind === "=" ? "" : op.sel.kind}${op.sel.n}`;
+  return `${op.op}${sel.kind === "=" ? "" : sel.kind}${sel.n}`;
 }
 
 function dieText(d: DieResult): string {
