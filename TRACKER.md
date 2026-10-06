@@ -115,6 +115,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ## Chong's Tracker (`chongs-tracker/`)
 Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chongs-tracker/TRACKER.md).
 
+## Chong Die (`chong-die/`)
+Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0) with an Avrae-style command line and saved-roll pills.
+- 🚧 Design approved in chat; spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md` awaiting review, then implementation plan
+
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool
 - [x] Shared stylesheet `assets/css/nimble.css`
