@@ -53,31 +53,39 @@ export function RollPanel() {
           borderColor: "divider",
         }}
       >
-        <Box
-          component="div"
-          sx={{ display: "flex", alignItems: "center", px: 1, pt: 0.5, gap: 0.5 }}
-        >
-          <TabStrip />
-          <Tooltip title="Add roll" disableInteractive>
-            <IconButton size="small" aria-label="Add roll" onClick={() => setAdding(true)}>
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Instant" disableInteractive>
-            <IconButton
-              size="small"
-              aria-label="Instant"
-              aria-pressed={tab.instant}
-              color={tab.instant ? "primary" : "default"}
-              sx={{ opacity: tab.instant ? 1 : 0.5 }}
-              onClick={() => setInstant(tab.id, !tab.instant)}
-            >
-              <BoltIcon />
-            </IconButton>
-          </Tooltip>
-          <MoreMenu />
+        <Box component="div" sx={{ display: "flex", flex: 1, minHeight: 0 }}>
+          {/* Tabs across the top, pills below */}
+          <Box component="div" sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+            <Box component="div" sx={{ display: "flex", alignItems: "center", pl: 1, pt: 0.5 }}>
+              <TabStrip />
+            </Box>
+            <PillList tab={tab} />
+          </Box>
+          {/* ⋯, add roll and Instant stacked on the right, so the tabs get the whole row */}
+          <Box
+            component="div"
+            sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5, pt: 0.5, pr: 0.5 }}
+          >
+            <MoreMenu />
+            <Tooltip title="Add roll" placement="left" disableInteractive>
+              <IconButton size="small" aria-label="Add roll" onClick={() => setAdding(true)}>
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Instant" placement="left" disableInteractive>
+              <IconButton
+                size="small"
+                aria-label="Instant"
+                aria-pressed={tab.instant}
+                color={tab.instant ? "primary" : "default"}
+                sx={{ opacity: tab.instant ? 1 : 0.5 }}
+                onClick={() => setInstant(tab.id, !tab.instant)}
+              >
+                <BoltIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
-        <PillList tab={tab} />
         <PillDialog
           open={adding}
           title="Add roll"

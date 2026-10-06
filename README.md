@@ -247,16 +247,20 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 
 **Using it**
 - **Command line** (always at the top of the tray): type a roll and press Enter. `!r` is optional.
-  ↑ / ↓ step through what you typed before. It fades while dice roll.
-- **Panel** (sidebar button ▤): tabs of **pills** (saved rolls). The small **+** after the tabs adds a
-  tab; double-click renames, **×** deletes, drag to reorder.
-- **+** (right of the tabs) adds a roll to the open tab: a name, the roll (filled in from the command
+  ↑ / ↓ step through what you typed before. It fades while dice roll. The button at its end shows
+  or hides the panel (so does ▤ in the sidebar).
+- **Panel:** tabs of **pills** (saved rolls). The small **+** after the tabs adds a tab;
+  double-click renames, **×** deletes, drag to reorder. Down the right edge: **⋯** (export, import,
+  about), **+** and **⚡**.
+- **+** adds a roll to the open tab: a name, the roll (filled in from the command
   line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
   the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
   to edit or delete it.
 - **⚡** is the tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the open tab's ⚡.
+- **Primary die:** the first die of each roll (Nimble's primary die) gets a faint glow on the tray
+  once it lands: gold when it shows its max (a crit), red on a 1 (a miss).
 - The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)

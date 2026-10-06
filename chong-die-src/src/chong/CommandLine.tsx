@@ -9,6 +9,7 @@ import { useDiceRollStore } from "../dice/store";
 import { useDiceControlsStore } from "../controls/store";
 import { useChongStore } from "./chongStore";
 import { startCommandRoll } from "./rollRunner";
+import { PanelToggle } from "./PanelToggle";
 
 export const COMMAND_LINE_HEIGHT = 52;
 
@@ -76,7 +77,8 @@ export function CommandLine() {
           display: "flex",
           alignItems: "center",
           height: COMMAND_LINE_HEIGHT - 16,
-          px: 1.5,
+          pl: 1.5,
+          pr: 0.5,
           borderRadius: "18px",
           bgcolor: "background.paper",
           border: 1,
@@ -109,6 +111,7 @@ export function CommandLine() {
           }}
           sx={{ fontFamily: "monospace" }}
         />
+        <PanelToggle size="small" />
       </Box>
       {error && (
         <Typography

@@ -9,6 +9,7 @@ import { Die } from "../types/Die";
 import { Dice as DefaultDice } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
 import { useDebugStore } from "../debug/store";
+import { PrimaryGlows } from "../chong/PrimaryGlow";
 
 export function DiceRoll({
   roll,
@@ -17,6 +18,8 @@ export function DiceRoll({
   finishedTransforms,
   transformsRef,
   Dice,
+  rollValues,
+  rollTransforms,
 }: {
   roll: DiceRollType;
   rollThrows: Record<string, DiceThrow>;
@@ -33,10 +36,16 @@ export function DiceRoll({
   > | null>;
   /** Override to provide a custom Dice component  */
   Dice: React.FC<JSX.IntrinsicElements["group"] & { die: Die }>;
+  /** Chong Die: values and landed positions, for the primary-die glow */
+  rollValues?: Record<string, number | null>;
+  rollTransforms?: Record<string, DiceTransform | null>;
 }) {
   const allowPhysicsDebug = useDebugStore((state) => state.allowPhysicsDebug);
 
   const dice = useMemo(() => roll && getDieFromDice(roll), [roll]);
+  const glows = (
+    <PrimaryGlows roll={roll} rollValues={rollValues} rollTransforms={rollTransforms} />
+  );
 
   const emptyCallback = useCallback(() => {}, []);
 
@@ -61,6 +70,7 @@ export function DiceRoll({
     // Move to a static dice representation when all dice values have been found
     return (
       <group>
+        {glows}
         {dice?.map((die) => {
           const dieTransform = finishedTransforms[die.id]!;
           const p = dieTransform.position;
@@ -93,6 +103,7 @@ export function DiceRoll({
         paused={paused}
       >
         <TrayColliders />
+        {glows}
         {dice?.map((die) => {
           const dieThrow = rollThrows[die.id];
           // Use a fixed transform if we have it

@@ -20,7 +20,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Panel: + (add roll) and ⚡ (Instant) icon buttons; ★ removed; small new-tab +
 - [x] Pills show name + dice; optional description (hover / long-press, dialog)
 
+## ✅ v1.2.0
+- [x] ⋯, + and ⚡ stacked down the panel's right edge; tabs get the whole row
+- [x] Panel button at the end of the command line
+- [x] Primary-die glow under the first die of each roll: purple, gold on a crit, red on a miss (`primaryDice`, tested)
+
 ## 📋 Next up
+- [ ] Look at the primary glow with the window in front (size 0.13, opacity 0.35; tune if too faint or strong)
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker
 - [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays
 - [ ] Watch an exploding die pop out with the window in front (the local check ran in a hidden pane, so physics only stepped on screenshots)
