@@ -4,6 +4,7 @@ export type {
   CommandResult,
   DieResult,
   Evaluation,
+  EvaluateOptions,
   LogicalDie,
   RepResult,
 } from "./evaluate";

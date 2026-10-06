@@ -122,12 +122,6 @@ The only exception is level ¼ (3 damage). No real dice average exactly 3, so it
 
 Named bestiary monsters keep the attacks printed in the guide. Their dice are not randomized.
 
-**Avrae Version** (More options) writes each damage roll with its first die split off and exploding,
-in Avrae's syntax: `4d8+2` becomes `1d8!+3d8+2`. That first die is Nimble's primary die, which crits
-on its max. The dice are the same, so the table average above is unchanged (the guide's averages
-ignore crits and misses). This notation is the tool's, not the guide's: Avrae can't write Nimble's
-"miss on a 1", and minions stay as they are (they don't crit). The text pastes into Chong's Tracker,
-where the rolls can be clicked to roll them in Chong Die.
 
 ### How encounters are built
 
@@ -259,8 +253,11 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 - **⚡** is the tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the open tab's ⚡.
-- **Primary die:** the first die of each roll (Nimble's primary die) gets a faint glow on the tray
-  once it lands: gold when it shows its max (a crit), red on a 1 (a miss).
+- **Primary die:** the first die of every roll (one per roll with `!rr`, and the dice that explode
+  out of it) is drawn in its own style. Pick it with the button under the dice style picker.
+- **Nimble rules** (the **N** button under it): the primary die explodes on its max and a 1 on it is
+  a **Miss**. Off: plain Avrae rolling. Dice picked by hand on the tray follow it too (except with
+  advantage / disadvantage).
 - The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)

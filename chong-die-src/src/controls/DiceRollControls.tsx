@@ -23,7 +23,7 @@ import { getDiceToRoll, useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
 import { useDiceHistoryStore } from "./history";
 import { Die } from "../types/Die";
-import { startCommandRoll } from "../chong/rollRunner";
+import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
 import { useChongStore } from "../chong/chongStore";
 
 const jiggle = keyframes`
@@ -117,6 +117,15 @@ function DicePickedControls() {
       } catch (e) {
         useChongStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
       }
+      handleReset();
+    } else if (
+      hasDice &&
+      rollPressTime &&
+      rollPickedDice({
+        hidden,
+        speedMultiplier: Math.max(1, Math.min(10, ((performance.now() - rollPressTime) / 1000) * 2)),
+      })
+    ) {
       handleReset();
     } else if (hasDice && rollPressTime) {
       const dice = getDiceToRoll(counts, advantage, diceById);

@@ -105,8 +105,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Setup choices remembered in localStorage (never the generated fight)
 - [x] Summary line and Loot are options (More options), off by default; ticking them redraws the same fight
 
-### ✅ Avrae Version — done
-- [x] More options → Avrae Version: primary die split off and exploding (`4d8+2` → `1d8!+3d8+2`), minions unchanged; notation is derived (README)
+### Avrae Version — removed
+- Was: More options → Avrae Version (`4d8+2` → `1d8!+3d8+2`). Removed: Chong Die now applies Nimble's primary-die rules itself (its Nimble switch)
 
 ### 📋 Next up
 - (nothing queued)

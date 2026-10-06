@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { DiceRoll } from "../types/DiceRoll";
-import { ChongRollMeta, getRollDisplay, logicalValues, popThrow, primaryDice } from "./rollMeta";
+import { ChongRollMeta, getRollDisplay, logicalValues, popThrow } from "./rollMeta";
 
 const advMeta: ChongRollMeta = {
   command: "!r 1d20+5 adv",
@@ -105,45 +105,3 @@ test("a roll that failed after landing shows the error", () => {
   expect(getRollDisplay(roll, {})).toEqual({ total: "Error", lines: ["Can't divide by zero"] });
 });
 
-const meta = (command: string, parts: ChongRollMeta["parts"]): DiceRoll => ({
-  dice: [],
-  combination: "NONE",
-  chong: { command, parts, virtual: {}, capped: false },
-});
-
-test("the primary die is the first die of each roll", () => {
-  const roll = meta("!rr 2 2d6+3", {
-    a: { key: "0.0.0", size: 6, part: 0 },
-    b: { key: "0.0.1", size: 6, part: 0 },
-    c: { key: "1.0.0", size: 6, part: 0 },
-    d: { key: "1.0.1", size: 6, part: 0 },
-  });
-  expect(primaryDice(roll, { a: 3, b: 6, c: 1, d: 2 })).toEqual([
-    { id: "a", state: "normal" },
-    { id: "c", state: "miss" },
-  ]);
-});
-
-test("a primary die on its max is a crit", () =>
-  expect(
-    primaryDice(meta("1d8!+3d8+2", { a: { key: "0.0.0", size: 8, part: 0 } }), { a: 8 })
-  ).toEqual([{ id: "a", state: "crit" }]));
-
-test("a d100 primary glows under its tens die and reads both parts", () =>
-  expect(
-    primaryDice(
-      meta("1d100", {
-        t: { key: "0.0.0", size: 100, part: 0 },
-        o: { key: "0.0.0", size: 100, part: 1 },
-      }),
-      { t: 0, o: 0 }
-    )
-  ).toEqual([{ id: "t", state: "crit" }]));
-
-test("a primary die still rolling has no glow", () =>
-  expect(
-    primaryDice(meta("1d20", { a: { key: "0.0.0", size: 20, part: 0 } }), { a: null })
-  ).toEqual([]));
-
-test("rolls without command data have no primary die", () =>
-  expect(primaryDice({ dice: [], combination: "NONE" }, {})).toEqual([]));

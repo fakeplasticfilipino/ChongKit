@@ -14,7 +14,7 @@ export interface FormattedResult {
 export function formatResult(r: CommandResult): FormattedResult {
   const { command } = r;
   const lines = r.reps.map((rep) => {
-    let line = `${exprText(command.expr, rep.terms)} = ${num(rep.total)}`;
+    let line = `${exprText(command.expr, rep.terms)} = ${repTotal(rep)}`;
     if (rep.success !== undefined) {
       line += rep.success ? " ✓" : " ✗";
     }
@@ -31,9 +31,14 @@ export function formatResult(r: CommandResult): FormattedResult {
   if (command.kind === "rrr") {
     total = `${r.reps.filter((rep) => rep.success).length} ✓`;
   } else {
-    total = r.reps.map((rep) => num(rep.total)).join(" · ");
+    total = r.reps.map(repTotal).join(" · ");
   }
   return { total, lines };
+}
+
+/** A roll's total, or Miss (Nimble: a 1 on the primary die) */
+function repTotal(rep: { total: number; miss: boolean }): string {
+  return rep.miss ? "Miss" : num(rep.total);
 }
 
 /** Whole numbers as is, others to at most 2 decimals */

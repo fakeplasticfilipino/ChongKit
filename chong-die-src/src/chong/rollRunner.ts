@@ -20,6 +20,7 @@ import { DiceType } from "../types/DiceType";
 import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
 import { RollError } from "../roll";
 import { useChongStore } from "./chongStore";
+import { countsToCommand, isPrimaryKey, resolvePrimaryStyle } from "./prefs";
 
 /**
  * Roll a command now. Throws `RollError` when it can't be rolled.
@@ -30,7 +31,13 @@ export function startCommandRoll(
 ): void {
   const command = input.trim();
   const cmd = parseCommand(command);
-  const meta: ChongRollMeta = { command, parts: {}, virtual: {}, capped: false };
+  const meta: ChongRollMeta = {
+    command,
+    parts: {},
+    virtual: {},
+    capped: false,
+    nimble: useChongStore.getState().prefs.nimble,
+  };
   const wave = nextWave(cmd, meta, {});
   if (meta.error) {
     throw new RollError(meta.error);
@@ -58,6 +65,23 @@ export function startCommandRoll(
 }
 
 /**
+ * Dice picked by hand on the tray roll as a command too, so they get a primary die and Nimble
+ * rules. Returns false (leaving it to the upstream roll) for advantage / disadvantage picks.
+ */
+export function rollPickedDice(opts: { hidden: boolean; speedMultiplier?: number }): boolean {
+  const { diceCounts, diceById, diceBonus, diceAdvantage } = useDiceControlsStore.getState();
+  if (diceAdvantage !== null) {
+    return false;
+  }
+  const command = countsToCommand(diceCounts, diceById, diceBonus);
+  if (!command) {
+    return false;
+  }
+  startCommandRoll(command, opts);
+  return true;
+}
+
+/**
  * The next physical dice a command needs. Rolls any virtual dice
  * (sizes with no 3D model) on the way and records them in `meta`.
  * Returns [] when the command is finished, or when it can't go on
@@ -71,10 +95,11 @@ export function nextWave(
   for (;;) {
     let ev;
     try {
-      ev = evaluate(cmd, {
-        ...logicalValues(meta, rollValues),
-        ...meta.virtual,
-      });
+      ev = evaluate(
+        cmd,
+        { ...logicalValues(meta, rollValues), ...meta.virtual },
+        { nimble: meta.nimble }
+      );
     } catch (e) {
       meta.error = e instanceof Error ? e.message : "Can't roll this";
       return [];
@@ -95,16 +120,21 @@ export function nextWave(
   }
 }
 
-function styleFor(type: DiceType) {
+/** The dice set's style for this die, or the primary style for each roll's first die */
+function styleFor(type: DiceType, key: string) {
   const set = useDiceControlsStore.getState().diceSet;
-  return (set.dice.find((d) => d.type === type) || set.dice[0]).style;
+  const style = (set.dice.find((d) => d.type === type) || set.dice[0]).style;
+  if (isPrimaryKey(key)) {
+    return resolvePrimaryStyle(useChongStore.getState().prefs.primaryStyle, style);
+  }
+  return style;
 }
 
 /** Upstream dice for logical dice; records each part in `meta.parts` */
 function makeDice(wave: LogicalDie[], meta: ChongRollMeta): (Die | Dice)[] {
   return wave.map((logical) => {
     const parts: Die[] = toPhysical(logical.size)!.map((type, part) => {
-      const die: Die = { id: generateDiceId(), style: styleFor(type), type };
+      const die: Die = { id: generateDiceId(), style: styleFor(type, logical.key), type };
       meta.parts[die.id] = { key: logical.key, size: logical.size, part };
       return die;
     });

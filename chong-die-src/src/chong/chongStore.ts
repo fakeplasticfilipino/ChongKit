@@ -10,6 +10,8 @@ import {
   saveSaved,
   SavedRolls,
 } from "./savedRolls";
+import { loadPrefs, Prefs, savePrefs } from "./prefs";
+import { DiceStyle } from "../types/DiceStyle";
 
 interface ChongState {
   saved: SavedRolls;
@@ -22,6 +24,10 @@ interface ChongState {
   /** What's typed in the command line (the + button starts a pill from it) */
   draft: string;
   setDraft: (text: string) => void;
+  /** Primary die style and Nimble rules (saved in this browser) */
+  prefs: Prefs;
+  setPrimaryStyle: (style: DiceStyle | null) => void;
+  setNimble: (on: boolean) => void;
   addTab: () => void;
   renameTab: (id: string, name: string) => void;
   deleteTab: (id: string) => void;
@@ -61,6 +67,17 @@ export const useChongStore = create<ChongState>()(
     placed: null,
     error: null,
     draft: "",
+    prefs: loadPrefs(),
+    setPrimaryStyle(style) {
+      set((state) => {
+        state.prefs.primaryStyle = style;
+      });
+    },
+    setNimble(on) {
+      set((state) => {
+        state.prefs.nimble = on;
+      });
+    },
     setDraft(text) {
       set((state) => {
         state.draft = text;
@@ -199,5 +216,8 @@ export const useChongStore = create<ChongState>()(
 useChongStore.subscribe((state, prev) => {
   if (state.saved !== prev.saved) {
     saveSaved(state.saved);
+  }
+  if (state.prefs !== prev.prefs) {
+    savePrefs(state.prefs);
   }
 });

@@ -27,6 +27,8 @@ export interface DieResult {
 
 export interface RepResult {
   total: number;
+  /** Nimble: the primary die (first die of the roll) showed a 1 */
+  miss: boolean;
   /** Dice of each dice term, keyed by the term's id */
   terms: Map<number, DieResult[]>;
   success?: boolean;
@@ -36,6 +38,14 @@ export interface CommandResult {
   command: Command;
   reps: RepResult[];
   capped: boolean;
+}
+
+export interface EvaluateOptions {
+  /**
+   * Nimble's primary die: the first die of each roll explodes on its max and a 1 on it is a miss
+   * (unless the roll already explodes that die's term).
+   */
+  nimble?: boolean;
 }
 
 export interface Evaluation {
@@ -54,21 +64,30 @@ export interface Evaluation {
  */
 export function evaluate(
   cmd: Command,
-  values: Record<string, number>
+  values: Record<string, number>,
+  options: EvaluateOptions = {}
 ): Evaluation {
   const firstWave = countDice(cmd.expr) * cmd.times;
   if (firstWave > MAX_WAVE_DICE) {
     throw new RollError(`Too many dice (max ${MAX_WAVE_DICE})`);
   }
 
-  const state: State = { values, needed: [], extra: 0, capped: false };
+  const state: State = {
+    values,
+    needed: [],
+    extra: 0,
+    capped: false,
+    nimble: Boolean(options.nimble),
+    miss: false,
+  };
   const reps: RepResult[] = [];
   for (let rep = 0; rep < cmd.times; rep++) {
     const terms = new Map<number, DieResult[]>();
+    state.miss = false;
     const total = evalExpr(cmd.expr, rep, terms, state);
-    const result: RepResult = { total: total ?? NaN, terms };
+    const result: RepResult = { total: total ?? NaN, miss: state.miss, terms };
     if (cmd.kind === "rrr" && total !== null) {
-      result.success = total >= cmd.dc!;
+      result.success = !state.miss && total >= cmd.dc!;
     }
     reps.push(result);
   }
@@ -88,6 +107,9 @@ interface State {
   /** Follow-up dice seen so far (rerolls and explosions) */
   extra: number;
   capped: boolean;
+  nimble: boolean;
+  /** Nimble miss in the roll being evaluated */
+  miss: boolean;
 }
 
 function countDice(expr: Expr): number {
@@ -206,6 +228,28 @@ function evalDice(
     dice.push(die);
     return die;
   };
+
+  // Nimble: the roll's first die is its primary die (its first dice term is id 0)
+  if (state.nimble && expr.id === 0 && dice.length > 0) {
+    const primary = dice[0];
+    if (primary.value === 1) {
+      state.miss = true;
+    }
+    if (!expr.ops.some((op) => op.op === "e")) {
+      let die = primary;
+      while (die.value === expr.size) {
+        const result = follow(die, "explode", -1);
+        if (result === "capped") {
+          break;
+        }
+        die.exploded = true;
+        if (result === "missing") {
+          return null;
+        }
+        die = result;
+      }
+    }
+  }
 
   for (const [i, op] of expr.ops.entries()) {
     if (!applyOp(op, dice, (parent, reason) => follow(parent, reason, i))) {

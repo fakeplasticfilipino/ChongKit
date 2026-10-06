@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "vitest";
 import { parseCommand } from "../roll";
-import { nextWave, startCommandRoll } from "./rollRunner";
+import { nextWave, rollPickedDice, startCommandRoll } from "./rollRunner";
 import { ChongRollMeta } from "./rollMeta";
 import { placeCommand } from "./place";
 import { useChongStore } from "./chongStore";
@@ -49,4 +49,29 @@ test("rethrowing one die of a command roll keeps it in the roll", () => {
   expect(Object.keys(parts)).toHaveLength(1);
   expect(parts[oldId]).toBeUndefined();
   expect(Object.values(parts)[0].key).toBe("0.0.0");
+});
+
+test("the first die of each roll uses the primary style, and Nimble is recorded", () => {
+  useChongStore.getState().setPrimaryStyle("SUNSET");
+  useChongStore.getState().setNimble(true);
+  startCommandRoll("!rr 2 2d6", { hidden: false });
+  const roll = useDiceRollStore.getState().roll!;
+  const styleByKey: Record<string, string> = {};
+  for (const die of roll.dice as { id: string; style: string }[]) {
+    styleByKey[roll.chong!.parts[die.id].key] = die.style;
+  }
+  expect(roll.chong!.nimble).toBe(true);
+  expect(styleByKey["0.0.0"]).toBe("SUNSET");
+  expect(styleByKey["1.0.0"]).toBe("SUNSET");
+  expect(styleByKey["0.0.1"]).not.toBe("SUNSET");
+  useChongStore.getState().setNimble(false);
+  useChongStore.getState().setPrimaryStyle(null);
+});
+
+test("dice picked by hand roll as a command with a primary die", () => {
+  const controls = useDiceControlsStore.getState();
+  const d8 = controls.diceSet.dice.find((d) => d.type === "D8")!;
+  controls.changeDieCount(d8.id, 2);
+  rollPickedDice({ hidden: false });
+  expect(useDiceRollStore.getState().roll!.chong!.command).toBe("2d8");
 });

@@ -23,10 +23,16 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ## ✅ v1.2.0
 - [x] ⋯, + and ⚡ stacked down the panel's right edge; tabs get the whole row
 - [x] Panel button at the end of the command line
-- [x] Primary-die glow under the first die of each roll: purple, gold on a crit, red on a miss (`primaryDice`, tested)
+- [x] ~~Primary-die glow~~ (replaced in v1.3.0)
+
+## ✅ v1.3.0
+- [x] Primary die drawn in its own style (sidebar button under the dice style picker; default: a style different from the dice)
+- [x] Nimble switch (N): primary die explodes on max, a 1 is a Miss; recorded with the roll so everyone sees the same (tested)
+- [x] Dice picked by hand roll as commands (primary die + Nimble), except advantage / disadvantage picks
+- [x] Glow removed; Combat Generator's Avrae Version removed
 
 ## 📋 Next up
-- [ ] Look at the primary glow with the window in front (size 0.13, opacity 0.35; tune if too faint or strong)
+- [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker
 - [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays
 - [ ] Watch an exploding die pop out with the window in front (the local check ran in a hidden pane, so physics only stepped on screenshots)

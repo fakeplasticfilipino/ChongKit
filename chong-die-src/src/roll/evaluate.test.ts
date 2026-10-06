@@ -158,3 +158,36 @@ test("a second ra op on the same die throws a new die", () =>
   expect(
     run("1d6ra6ra6", { "0.0.0": 6, "0.0.0r": 2, "0.0.0r1": 5 }).result!.reps[0].total
   ).toBe(13));
+
+const nim = (s: string, vals: Record<string, number>) =>
+  evaluate(parseCommand(s), vals, { nimble: true });
+
+test("nimble: the primary die explodes on its max", () => {
+  expect(nim("4d8+2", { "0.0.0": 8, "0.0.1": 2, "0.0.2": 3, "0.0.3": 4 }).needed.map((d) => d.key)).toEqual(["0.0.0e"]);
+  const r = nim("4d8+2", { "0.0.0": 8, "0.0.1": 2, "0.0.2": 3, "0.0.3": 4, "0.0.0e": 5 }).result!.reps[0];
+  expect(r.total).toBe(24);
+  expect(r.miss).toBe(false);
+});
+
+test("nimble: only the primary die explodes", () =>
+  expect(nim("2d6", { "0.0.0": 3, "0.0.1": 6 }).result!.reps[0].total).toBe(9));
+
+test("nimble: a 1 on the primary die is a miss", () => {
+  const r = nim("1d8+3d8+2", { "0.0.0": 1, "0.1.0": 5, "0.1.1": 5, "0.1.2": 5 }).result!.reps[0];
+  expect(r.miss).toBe(true);
+});
+
+test("nimble: no double explosion when the roll already explodes", () =>
+  expect(nim("1d8!+3d8", { "0.0.0": 8, "0.1.0": 1, "0.1.1": 2, "0.1.2": 3 }).needed.map((d) => d.key)).toEqual(["0.0.0e"]));
+
+test("nimble: each repeat hits or misses on its own", () =>
+  expect(nim("!rr 2 1d6", { "0.0.0": 1, "1.0.0": 4 }).result!.reps.map((r) => r.miss)).toEqual([true, false]));
+
+test("nimble: a miss fails against a DC", () =>
+  expect(nim("!rrr 1 1d20+30 10", { "0.0.0": 1 }).result!.reps[0].success).toBe(false));
+
+test("without nimble nothing changes", () => {
+  const r = run("1d8", { "0.0.0": 8 }).result!.reps[0];
+  expect(r.total).toBe(8);
+  expect(r.miss).toBe(false);
+});

@@ -8,6 +8,8 @@ import { DiceExtras } from "./DiceExtras";
 import { DiceHidden } from "./DiceHidden";
 import { DiceHistory } from "./DiceHistory";
 import { PanelToggle } from "../chong/PanelToggle";
+import { PrimaryDiePicker } from "../chong/PrimaryDiePicker";
+import { NimbleToggle } from "../chong/NimbleToggle";
 import { IncomingRolls } from "../chong/IncomingRolls";
 
 import { FairnessTesterButton } from "../tests/FairnessTesterButton";
@@ -29,6 +31,8 @@ export function Sidebar() {
     >
       <Stack p={1} gap={1} alignItems="center">
         <DiceSetPicker />
+        <PrimaryDiePicker />
+        <NimbleToggle />
         <Divider flexItem sx={{ mx: 1 }} />
         <DicePicker />
         <Divider flexItem sx={{ mx: 1 }} />

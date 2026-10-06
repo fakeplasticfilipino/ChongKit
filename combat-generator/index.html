@@ -104,7 +104,6 @@
         <label class="field check"><input id="twist" type="checkbox"> Unique encounter twist</label>
         <label class="field check"><input id="summary" type="checkbox"> Summary</label>
         <label class="field check"><input id="loot" type="checkbox"> Loot</label>
-        <label class="field check"><input id="avrae" type="checkbox"> Avrae Version</label>
       </div>
     </details>
   </section>
@@ -141,7 +140,7 @@
   // Only the choices are saved in this browser, never the generated fight.
   const STORE = 'chongkit.combat-generator.settings';
   const SELECTS = ['family', 'armor', 'die', 'shape', 'minions', 'patron'];
-  const CHECKS = ['abilities', 'twist', 'summary', 'loot', 'avrae'];
+  const CHECKS = ['abilities', 'twist', 'summary', 'loot'];
   const SEGS = ['mode', 'difficulty'];
 
   function saveSettings() {
@@ -227,8 +226,6 @@
   // --- Text output ------------------------------------------------------------
   function asText(e) {
     const blocks = [];
-    // Avrae Version: primary die split off and exploding (Gen.nimbleDice); minions never crit
-    const dmg = (t) => ($('avrae').checked ? Gen.nimbleDice(t) : t);
     const head = `${e.difficulty.name} ${e.mode === 'legendary' ? 'Boss Fight' : 'Fight'} · ${e.heroes} heroes, level ${e.level}`;
     if (e.twist) blocks.push([`Twist: ${e.twist.name} ${e.twist.text}`]);
 
@@ -238,7 +235,7 @@
         `The Boss (Legendary, level ${L.statLevel})`,
         `HP: ${L.hp}`,
         `Armor: ${L.armor.replace(' Armor', '')}`,
-        `Damage: ${dmg(L.small.attack.text)} (move & hit) or ${dmg(L.big.attack.text)} (big hit)`,
+        `Damage: ${L.small.attack.text} (move & hit) or ${L.big.attack.text} (big hit)`,
         `Save DC: ${L.dc}`,
         `Bloodied: ${L.bloodied} HP`,
         `Last Stand: ${L.lastStand} more damage`,
@@ -253,14 +250,14 @@
         if (m.bestiary) {
           const lines = [`${m.name} x${g.count}`, `HP: ${m.hp}`, `Armor: ${ARMOR[m.armor]}`];
           if (m.speed) lines.push(`Move: ${m.speed}`);
-          lines.push(`Damage: ${m.attacks.map(dmg).join(' ') || '—'}`, `Save DC: ${m.dc} (by level)`, ...m.abilities);
+          lines.push(`Damage: ${m.attacks.join(' ') || '—'}`, `Save DC: ${m.dc} (by level)`, ...m.abilities);
           blocks.push(lines);
           return;
         }
         // Fillers in a family fight show their level so the GM can reskin them.
         const tag = f ? ` (level ${m.label})` : SHAPE[m.shape] ? ` (${SHAPE[m.shape]})` : '';
         const lines = [`Monster ${letters[generic++]} x${g.count}${tag}`, `HP: ${m.hp}`, `Armor: ${ARMOR[m.armor.key]}`,
-          `Damage: ${dmg(m.attack.text)}`, `Save DC: ${m.dc}`];
+          `Damage: ${m.attack.text}`, `Save DC: ${m.dc}`];
         if (m.ability) lines.push(m.ability);
         blocks.push(lines);
       });
@@ -316,7 +313,7 @@
   }
 
   // Summary and Loot only change what the text shows: same fight, redrawn.
-  ['summary', 'loot', 'avrae'].forEach((id) => $(id).addEventListener('change', () => { saveSettings(); show(current); }));
+  ['summary', 'loot'].forEach((id) => $(id).addEventListener('change', () => { saveSettings(); show(current); }));
   $('new').addEventListener('click', generate);
   $('dice').addEventListener('click', newDice);
   $('copy').addEventListener('click', async (ev) => {

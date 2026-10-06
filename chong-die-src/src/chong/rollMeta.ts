@@ -16,6 +16,8 @@ export interface ChongRollMeta {
   capped: boolean;
   /** Set when the roll can't finish (e.g. it divides by zero once the dice land) */
   error?: string;
+  /** Rolled with Nimble rules on (primary die explodes on max, a 1 is a miss) */
+  nimble?: boolean;
 }
 
 /** Logical die values from the 3D dice; dice with any part unfinished are left out */
@@ -54,53 +56,15 @@ export function getRollDisplay(
     return null;
   }
   try {
-    const { result } = evaluate(parseCommand(meta.command), {
-      ...logicalValues(meta, rollValues),
-      ...meta.virtual,
-    });
+    const { result } = evaluate(
+      parseCommand(meta.command),
+      { ...logicalValues(meta, rollValues), ...meta.virtual },
+      { nimble: meta.nimble }
+    );
     return result ? formatResult(result) : null;
   } catch {
     return null;
   }
-}
-
-export type PrimaryState = "crit" | "miss" | "normal";
-
-/**
- * Nimble's primary die: the first die of each roll (`1d8!` in `1d8!+3d8+2`; one per `!rr` roll),
- * once it has landed. Max face = crit, 1 = miss. The glow goes under its first 3D die.
- */
-export function primaryDice(
-  roll: DiceRoll,
-  rollValues: Record<string, number | null> | undefined
-): { id: string; state: PrimaryState }[] {
-  const meta = roll.chong;
-  if (!meta || !rollValues) {
-    return [];
-  }
-  const groups = new Map<string, { size: number; ids: string[] }>();
-  for (const [id, { key, size, part }] of Object.entries(meta.parts)) {
-    if (/^\d+\.0\.0$/.test(key)) {
-      const group = groups.get(key) || { size, ids: [] };
-      group.ids[part] = id;
-      groups.set(key, group);
-    }
-  }
-  const result: { id: string; state: PrimaryState }[] = [];
-  const keys = [...groups.keys()].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-  for (const key of keys) {
-    const { size, ids } = groups.get(key)!;
-    const raw = ids.map((id) => rollValues[id]);
-    if (raw.some((v) => v === null || v === undefined)) {
-      continue;
-    }
-    const value = readLogical(size, raw as number[]);
-    result.push({
-      id: ids[0],
-      state: value === size ? "crit" : value === 1 ? "miss" : "normal",
-    });
-  }
-  return result;
 }
 
 /** A throw that pops a new die up out of the die that exploded */

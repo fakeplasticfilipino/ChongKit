@@ -149,6 +149,9 @@ line and saved-roll pills. System-agnostic; spec in `docs/superpowers/specs/2026
    `useWaveRunner` throws new waves. Plugin id prefix `com.chongkit.chongdie/`.
    Owlbear SDK 3.x. Rolls from Chong's Tracker: the background page acks `…/roll`, opens the
    action and re-sends `…/run` until the window's `…/run-ack` (`channels.ts`, `incoming.ts`).
+   Primary die = each roll's first die (`<rep>.0.0`, plus its `e` chain), drawn in the chosen style;
+   Nimble rules live in `evaluate(…, { nimble })` and the roll records `chong.nimble`. Both settings
+   are in localStorage `chongkit.chongdie.prefs` (`prefs.ts`, tested).
 6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested).
 7. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names,
    so no `?v=` is needed. Libraries build into their own `vendor` chunk so rebuilds stay small.

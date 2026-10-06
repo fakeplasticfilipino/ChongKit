@@ -10,8 +10,6 @@ export function PlayerDiceRoll({ player }: { player?: Player }) {
     finishedRollTransforms,
     finishedRolling,
     transformsRef,
-    rollValues,
-    rollTransforms,
   } = usePlayerDice(player);
 
   if (!diceRoll || !rollThrows || !finishedRollTransforms) {
@@ -24,8 +22,6 @@ export function PlayerDiceRoll({ player }: { player?: Player }) {
       rollThrows={rollThrows}
       finishedTransforms={finishedRolling ? finishedRollTransforms : undefined}
       transformsRef={transformsRef}
-      rollValues={rollValues}
-      rollTransforms={rollTransforms}
     />
   );
 }

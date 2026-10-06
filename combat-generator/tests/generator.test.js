@@ -178,30 +178,3 @@ test('derived bestiary Save DC follows the p.30 row', () => {
   assert.strictEqual(G.dcForLevel(4), 12);
   assert.strictEqual(G.dcForLevel(21), 20);
 });
-
-test('Avrae Version splits off an exploding primary die', () => {
-  assert.strictEqual(G.nimbleDice('4d8+2'), '1d8!+3d8+2');
-  assert.strictEqual(G.nimbleDice('1d6+2'), '1d6!+2');
-  assert.strictEqual(G.nimbleDice('2d6'), '1d6!+1d6');
-  assert.strictEqual(G.nimbleDice('(2×) 2d6+3'), '(2×) 1d6!+1d6+3');
-  assert.strictEqual(G.nimbleDice('Stab (2×). 1d4+2 (or Sling, Range 8).'), 'Stab (2×). 1d4!+2 (or Sling, Range 8).');
-  assert.strictEqual(G.nimbleDice('Cleave. 2d6+4. OR:'), 'Cleave. 1d6!+1d6+4. OR:');
-  assert.strictEqual(G.nimbleDice('3d8 (Range 12)'), '1d8!+2d8 (Range 12)');
-  assert.strictEqual(G.nimbleDice('Get in here! Call a goblin minion.'), 'Get in here! Call a goblin minion.');
-  assert.strictEqual(G.nimbleDice('1d8!+3d8+2'), '1d8!+3d8+2'); // already split: unchanged
-});
-
-test('Avrae Version keeps the same dice (same average)', () => {
-  const dice = (t) => t.match(/\d+d\d+/g).reduce((s, x) => {
-    const [n, d] = x.split('d').map(Number);
-    return s + n * (d + 1) / 2;
-  }, 0);
-  for (let i = 0; i < 200; i++) {
-    const e = G.randomDice(14);
-    assert.strictEqual(dice(G.nimbleDice(e.text)), dice(e.text), e.text);
-  }
-});
-
-test('Avrae Version leaves summoned minion dice alone', () => {
-  assert.strictEqual(G.nimbleDice('Summon 10 scarab minions (d6).'), 'Summon 10 scarab minions (d6).');
-});

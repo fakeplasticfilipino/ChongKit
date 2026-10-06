@@ -37,20 +37,6 @@
     return e.attacks > 1 ? `(${e.attacks}×) ${base}` : base;
   }
 
-  // Avrae Version: in each damage expression the first die (Nimble's primary die) is split off
-  // and written exploding, Avrae style: 4d8+2 → 1d8!+3d8+2. Same dice, so the same table
-  // average (the guide's averages ignore crits and misses, p.30). Notation only: derived.
-  // Only rolls written with a count (`1d6+2`): a bare `(d6)` is a summoned minion's die, and
-  // minions don't crit.
-  const EXPR = /(?<![\w!])(\d+)d(\d+)(!?)((?:[+-](?:\d*d\d+!?|\d+))*)/g;
-  function nimbleDice(text) {
-    return text.replace(EXPR, (all, count, die, bang, rest) => {
-      const n = Number(count);
-      if (bang || n < 1) return all;
-      return `1d${die}!${n > 1 ? `+${n - 1}d${die}` : ''}${rest}`;
-    });
-  }
-
   // Every dice expression whose TOTAL average (all attacks) equals `target` exactly.
   // attacks × (count × (die+1)/2 + mod) = target, with integer mod ≥ 0.
   // Keeps dice doing a real share of the damage so it isn't "1d4+40".
@@ -390,7 +376,7 @@
     };
   }
 
-  const api = { buildMonster, ALL_DICE, dieAvg, exprAvg, formatExpr, nimbleDice, dicePool, randomDice, splitBudget, rewardFor, generate, rowIndexForLevel, pickLevels, familyFits, dcForLevel };
+  const api = { buildMonster, ALL_DICE, dieAvg, exprAvg, formatExpr, dicePool, randomDice, splitBudget, rewardFor, generate, rowIndexForLevel, pickLevels, familyFits, dcForLevel };
   if (typeof module !== 'undefined') module.exports = api;
   else root.Gen = api;
 })(this);
