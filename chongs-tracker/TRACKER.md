@@ -23,7 +23,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Token badges (local, per screen): small dark pills with a thin colored edge (v1.6.0, were big outlined circles): HP lower-left (red edge; with Extra HP `8 + 2`, v1.6.1; hidden: green H / dark-red B), AC lower-right (no shield mark since v1.6.1); AC moves up a row when it doesn't fit beside HP (never overlaps); layout in `core.js` `badgeSpecs` (tested)
 - [x] Entry row: token picture (click = select on map), name, neutral HP bar (fills against Max HP), Extra HP chip
 - [x] ⋯ menu: Max HP, Extra HP, AC (free text: `M`, `H`, `15`…), show/hide, delete
-- [x] One ⋯ open at a time; a click elsewhere (panel or map) closes it; selecting a tracked token opens its ⋯; the pin keeps an entry open past both (v1.7.0)
+- [x] One ⋯ open at a time; a click elsewhere (panel or map) closes it; selecting a tracked token opens its ⋯; the pin keeps an entry open past both (v1.7.0); a map click that changes the selection closes it too (v1.7.1)
 - [x] Move an entry to another tab by dragging it onto the tab (the ⋯ menu's tab picker and + Token are gone)
 - [x] Detach: with the token selected, an × shows over its picture in the entry; click it (the Detach button is gone)
 - [x] Save a tab to the room (door button, confirm with a 16 kB warning): the tab and its entries live in room metadata and show in every scene; per tab, not per player

@@ -247,7 +247,8 @@ function focusSelected(sel) {
     .map((e) => e.id);
   if (next.join() === focus.join()) return;
   focus = next;
-  // Selecting a tracked token opens its entry.
+  // Selecting a tracked token opens its entry; clicking anything else on the map closes it.
+  if (active && !next.includes(active)) active = null;
   const opens = focus.map(byId).find((e) => C.canEdit(e, role, tabs));
   if (opens) active = opens.id;
   if (!focus.length) { render(); return; }
