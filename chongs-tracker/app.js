@@ -481,13 +481,71 @@ function noteBox(value, placeholder, onCommit) {
   return box;
 }
 
+// --- Rolls in notes → Chong Die -----------------------------------------------------
+// The click goes to this player's own Chong Die (LOCAL broadcast); its background page answers
+// right away. No answer within a second means it isn't installed.
+const ROLL_CHANNEL = 'com.chongkit.chongdie/roll';
+const ACK_CHANNEL = 'com.chongkit.chongdie/ack';
+const waitingAcks = new Map();
+let ackListening = false;
+
+function sendRoll(command) {
+  if (!ackListening) {
+    ackListening = true;
+    OBR.broadcast.onMessage(ACK_CHANNEL, (ev) => {
+      const done = waitingAcks.get(ev.data && ev.data.id);
+      if (done) done(true);
+    });
+  }
+  const id = C.uid();
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      waitingAcks.delete(id);
+      OBR.notification.show('Install Chong Die to roll');
+      resolve(false);
+    }, 1000);
+    waitingAcks.set(id, (ok) => { clearTimeout(timer); waitingAcks.delete(id); resolve(ok); });
+    OBR.broadcast.sendMessage(ROLL_CHANNEL, { id, command }, { destination: 'LOCAL' }).catch(() => {});
+  });
+}
+
+// A note shown as text with its dice rolls underlined: click a roll to roll it, click anywhere
+// else to edit (the edit box comes back with the raw text; leaving it shows the text again).
+function noteView(value, placeholder, onCommit) {
+  if (!value) return noteBox(value, placeholder, onCommit);
+  const view = el('div', { className: 'note-view', tabIndex: 0 });
+  String(value).split('\n').forEach((line, i) => {
+    if (i) view.append(el('br'));
+    let at = 0;
+    for (const r of C.findRolls(line)) {
+      view.append(line.slice(at, r.start));
+      const roll = el('button', { type: 'button', className: 'roll', textContent: line.slice(r.start, r.end), title: r.command });
+      roll.addEventListener('click', (ev) => { ev.stopPropagation(); sendRoll(r.command); });
+      view.append(roll);
+      at = r.end;
+    }
+    view.append(line.slice(at));
+  });
+  const edit = () => {
+    const box = noteBox(value, placeholder, onCommit);
+    view.replaceWith(box);
+    box.focus();
+    box.setSelectionRange(box.value.length, box.value.length);
+    // Leaving the box without a change shows the text again (a change redraws anyway)
+    box.addEventListener('blur', () => { if (box.isConnected && box.value.trim() === String(value).trim()) box.replaceWith(noteView(value, placeholder, onCommit)); });
+  };
+  view.addEventListener('click', edit);
+  view.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); edit(); } });
+  return view;
+}
+
 // The tab's general note, at the top: for whoever can add to the tab (GM tabs: GM only).
 function renderNote() {
   const wrap = $('note');
   const tab = tabById(current);
   const canAdd = role === 'GM' || C.isPlayerTab(tab);
   if (!tab || !canAdd) { wrap.replaceChildren(); return; }
-  wrap.replaceChildren(noteBox(tab.note, 'Note', (text) => {
+  wrap.replaceChildren(noteView(tab.note, 'Note', (text) => {
     const cur = tabById(tab.id);
     if (cur && text !== (cur.note || '')) saveTab({ ...cur, note: text });
   }));
@@ -685,7 +743,7 @@ function renderMore(e) {
     el('label', { className: 'field' }, el('span', { textContent: 'Extra HP' }), extra),
     el('label', { className: 'field' }, el('span', { textContent: 'AC' }), ac)));
   more.append(el('label', { className: 'field' }, el('span', { textContent: 'Note' }),
-    noteBox(e.note, '', (text) => { if (text !== (e.note || '')) updateEntry(e, { note: text }); })));
+    noteView(e.note, '', (text) => { if (text !== (e.note || '')) updateEntry(e, { note: text }); })));
 
   const actions = el('div', { className: 'actions' });
   if (role === 'GM') {
