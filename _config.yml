@@ -10,3 +10,5 @@ exclude:
   - character-sheet/tests/
   - chongs-tracker/TRACKER.md
   - docs/superpowers/   # design specs and plans
+  - chong-die-src/      # Chong Die source (public on GitHub, not on the site)
+  - chong-die/TRACKER.md
