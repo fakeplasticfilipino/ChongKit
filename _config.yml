@@ -9,3 +9,4 @@ exclude:
   - chongs-tracker/tests/
   - character-sheet/tests/
   - chongs-tracker/TRACKER.md
+  - docs/superpowers/   # design specs and plans
