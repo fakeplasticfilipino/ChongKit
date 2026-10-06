@@ -11,7 +11,14 @@ let tabs = [{ id: C.PLAYERS_TAB, name: 'Players' }];
 let entries = [];
 let current = C.PLAYERS_TAB;
 let renamingTab = null;
-const open = new Set(); // expanded entries
+// Expanded entries: one at a time (it closes on a click anywhere else), plus any pinned ones.
+let active = null;
+const pinned = new Set();
+const isExpanded = (id) => active === id || pinned.has(id);
+function collapse(id) {
+  pinned.delete(id);
+  if (active === id) active = null;
+}
 let dirty = false; // a render was skipped while the user was typing
 let sceneReady = false;
 let picking = null; // entry waiting for a token click on the map
@@ -31,6 +38,7 @@ const ICON = {
   shield: 'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z',
   info: 'M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z',
   room: 'M14 6v15H3v-2h2V3h9v1h5v15h2v2h-4V6h-3zm-4 5v2h2v-2h-2z',
+  pin: 'M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z',
 };
 const svg = (name) => `<svg viewBox="0 0 24 24" fill="currentColor"><path d="${ICON[name]}"/></svg>`;
 function iconButton(name, title, onClick, on = false) {
@@ -178,7 +186,7 @@ function runClear(clear) {
   const what = [hit.length && `${hit.length} entr${hit.length === 1 ? 'y' : 'ies'}`, note && 'the note'].filter(Boolean).join(' and ');
   if (!confirm(`Delete ${what} from this tab?`)) return false;
   if (note) saveTab({ ...tab, note: '' });
-  hit.forEach((e) => open.delete(e.id));
+  hit.forEach((e) => collapse(e.id));
   if (hit.length) deleteEntries(hit.map((e) => e.id));
   return true;
 }
@@ -239,6 +247,9 @@ function focusSelected(sel) {
     .map((e) => e.id);
   if (next.join() === focus.join()) return;
   focus = next;
+  // Selecting a tracked token opens its entry.
+  const opens = focus.map(byId).find((e) => C.canEdit(e, role, tabs));
+  if (opens) active = opens.id;
   if (!focus.length) { render(); return; }
   const tabsOf = focus.map((id) => byId(id).tab);
   if (tabsOf.includes(current)) render(); else setTab(tabsOf[0]);
@@ -337,6 +348,14 @@ document.addEventListener('pointerup', () => { pointerDown = false; catchUp(); }
 // A press that ends outside the panel never sends pointerup here: don't stay stuck waiting for it.
 for (const ev of ['pointercancel', 'blur']) window.addEventListener(ev, () => { pointerDown = false; catchUp(); });
 document.addEventListener('focusout', catchUp);
+// A click anywhere outside the open entry closes it (pinned ones stay). Redrawn after the click
+// lands, so the button pressed still works. Clicking the map takes focus from the panel.
+document.addEventListener('pointerdown', (ev) => {
+  if (!active || ev.target.closest(`.entry[data-id="${active}"]`)) return;
+  active = null;
+  dirty = true;
+}, true);
+window.addEventListener('blur', () => { if (active) { active = null; dirty = true; catchUp(); } });
 
 // Tab strip: fades at an edge with more tabs past it, scrolls sideways with the wheel, and brings
 // the open tab into view when it changes.
@@ -487,7 +506,7 @@ function renderList() {
 function renderEntry(e) {
   const edit = C.canEdit(e, role, tabs);
   const mask = C.masked(e, role);
-  const isOpen = open.has(e.id) && edit;
+  const isOpen = isExpanded(e.id) && edit;
   const wrap = el('div', { className: 'entry' + (isOpen ? ' open' : '') + (e.hidden && role === 'GM' ? ' hidden-entry' : '') + (focus.includes(e.id) ? ' focus' : '') });
   wrap.dataset.id = e.id;
   const row = el('div', { className: 'row' });
@@ -517,9 +536,16 @@ function renderEntry(e) {
   }, !edit));
   row.append(hp);
 
+  if (isOpen) {
+    const pin = pinned.has(e.id);
+    row.append(iconButton('pin', pin ? 'Unpin' : 'Pin open', () => {
+      if (pin) { pinned.delete(e.id); active = e.id; } else { pinned.add(e.id); if (active === e.id) active = null; }
+      render();
+    }, pin));
+  }
   if (edit) {
     row.append(iconButton('more', isOpen ? 'Close' : 'More', () => {
-      if (isOpen) open.delete(e.id); else open.add(e.id);
+      if (isOpen) collapse(e.id); else active = e.id;
       render();
     }, isOpen));
   }
@@ -670,7 +696,7 @@ function renderMore(e) {
   }
   actions.append(el('span', { className: 'grow' }));
   const del = el('button', { type: 'button', className: 'btn danger', textContent: 'Delete' });
-  del.addEventListener('click', () => { open.delete(e.id); deleteEntries([e.id]); });
+  del.addEventListener('click', () => { collapse(e.id); deleteEntries([e.id]); });
   actions.append(del);
   more.append(actions);
   return more;
