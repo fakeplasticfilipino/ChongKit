@@ -35,6 +35,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Nimble rules moved to the ⋯ menu (N button removed)
 - [x] Primary die button and primary style only with Nimble on (tested)
 
+## ✅ v1.4.1
+- [x] Exploding dice pop out higher (peak ≈1.3, under the 1.5 roof) and spin harder (tested)
+
 ## 📋 Next up
 - [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker

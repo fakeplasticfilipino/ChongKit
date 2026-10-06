@@ -92,8 +92,9 @@ test("pop-out throw starts clear above the parent and flies up and sideways", ()
   // Sideways so it doesn't land back on the (locked) parent
   expect(t.linearVelocity.x).toBeCloseTo(-0.8);
   expect(t.linearVelocity.z).toBeCloseTo(0);
-  expect(t.linearVelocity.y).toBe(2);
-  expect(t.angularVelocity).toEqual({ x: 4, y: 4, z: 4 });
+  // Shoots up high and spins hard, like a jackpot
+  expect(t.linearVelocity.y).toBeCloseTo(3.5);
+  expect(t.angularVelocity).toEqual({ x: 9, y: 9, z: 9 });
 });
 
 test("a roll that failed after landing shows the error", () => {

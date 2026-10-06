@@ -80,7 +80,9 @@ export function popThrow(
   const a = Math.sqrt(1 - u1);
   const b = Math.sqrt(u1);
   // Start clear of the parent and fly off sideways, so the new die doesn't
-  // land back on the locked parent and wobble there
+  // land back on the locked parent and wobble there. It shoots up high and
+  // spins hard (peaking near 1.3, under the tray's roof at 1.5) so an
+  // explosion feels like hitting the jackpot.
   const angle = rand() * 2 * Math.PI;
   return {
     position: { x: p.x, y: p.y + 0.6, z: p.z },
@@ -92,9 +94,9 @@ export function popThrow(
     },
     linearVelocity: {
       x: Math.cos(angle) * 0.8,
-      y: 1.5 + rand(),
+      y: 3.2 + 0.6 * rand(),
       z: Math.sin(angle) * 0.8,
     },
-    angularVelocity: { x: 2 + 4 * rand(), y: 2 + 4 * rand(), z: 2 + 4 * rand() },
+    angularVelocity: { x: 6 + 6 * rand(), y: 6 + 6 * rand(), z: 6 + 6 * rand() },
   };
 }
