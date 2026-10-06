@@ -122,6 +122,13 @@ The only exception is level ¼ (3 damage). No real dice average exactly 3, so it
 
 Named bestiary monsters keep the attacks printed in the guide. Their dice are not randomized.
 
+**Avrae Version** (More options) writes each damage roll with its first die split off and exploding,
+in Avrae's syntax: `4d8+2` becomes `1d8!+3d8+2`. That first die is Nimble's primary die, which crits
+on its max. The dice are the same, so the table average above is unchanged (the guide's averages
+ignore crits and misses). This notation is the tool's, not the guide's: Avrae can't write Nimble's
+"miss on a 1", and minions stay as they are (they don't crit). The text pastes into Chong's Tracker,
+where the rolls can be clicked to roll them in Chong Die.
+
 ### How encounters are built
 
 - **Budget** (p.26): add up the hero levels. Easy is under 50% of that, Medium about 75%, Hard 100%, Deadly 100–125%, and Very Deadly 150% or more.
