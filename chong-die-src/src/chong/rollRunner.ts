@@ -21,6 +21,7 @@ import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
 import { RollError } from "../roll";
 import { useTrayStore } from "./trayStore";
 import { countsToCommand } from "./prefs";
+import { usePrefsStore } from "./prefsStore";
 
 /**
  * Roll a command now. Throws `RollError` when it can't be rolled.
@@ -36,6 +37,7 @@ export function startCommandRoll(
     parts: {},
     virtual: {},
     capped: false,
+    nimble: usePrefsStore.getState().prefs.nimble,
   };
   const wave = nextWave(cmd, meta, {});
   if (meta.error) {
@@ -138,18 +140,19 @@ function makeDice(wave: LogicalDie[], meta: ChongRollMeta): (Die | Dice)[] {
 }
 
 /**
- * Explode a landed die of your command roll by hand (right-click / long-press): it's recorded in the
- * roll and the wave runner throws a new die of its size out of it. False when it can't (not a
- * command roll, still rolling, already exploded).
+ * Nimble: explode a landed die of your command roll by hand (right-click / long-press). It's
+ * recorded in the roll and starts a chain: a new die pops out of it, and every new die on its max
+ * explodes again. False when it can't (Nimble off, still rolling, already exploded).
  */
 export function explodeDie(dieId: string): boolean {
   const { roll, rollValues, setChong } = useDiceRollStore.getState();
   const part = roll?.chong?.parts[dieId];
-  if (!roll?.chong || !part || rollValues[dieId] === null || rollValues[dieId] === undefined) {
+  if (!roll?.chong?.nimble || !part || rollValues[dieId] === null || rollValues[dieId] === undefined) {
     return false;
   }
   const manual = roll.chong.manual || [];
-  if (manual.includes(part.key)) {
+  const exploded = Object.values(roll.chong.parts).some((p) => p.key === part.key + "m");
+  if (manual.includes(part.key) || exploded) {
     return false;
   }
   setChong({ ...roll.chong, manual: [...manual, part.key] });

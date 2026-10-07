@@ -5,8 +5,11 @@ import { ChongRollMeta } from "./rollMeta";
 import { placeCommand } from "./place";
 import { useChongStore } from "./chongStore";
 import { useTrayStore } from "./trayStore";
+import { usePrefsStore } from "./prefsStore";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
+
+const LANDED = { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } };
 
 beforeEach(() => {
   useTrayStore.getState().setPlaced(null);
@@ -72,9 +75,26 @@ test("the next roll clears the tray's error banner", () => {
   expect(useTrayStore.getState().error).toBeNull();
 });
 
-const LANDED = { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } };
+
+test("a roll records whether Nimble was on", () => {
+  usePrefsStore.getState().setNimble(true);
+  startCommandRoll("1d6", { hidden: false });
+  expect(useDiceRollStore.getState().roll!.chong!.nimble).toBe(true);
+  usePrefsStore.getState().setNimble(false);
+  startCommandRoll("1d6", { hidden: false });
+  expect(useDiceRollStore.getState().roll!.chong!.nimble).toBe(false);
+});
+
+test("without Nimble a die can't be exploded", () => {
+  usePrefsStore.getState().setNimble(false);
+  startCommandRoll("1d6", { hidden: false });
+  const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
+  useDiceRollStore.getState().finishDieRoll(id, 2, LANDED);
+  expect(explodeDie(id)).toBe(false);
+});
 
 test("exploding a landed die records it and throws a new die out of it", () => {
+  usePrefsStore.getState().setNimble(true);
   startCommandRoll("1d6+2d6", { hidden: false });
   const store = useDiceRollStore.getState();
   const parts = store.roll!.chong!.parts;
@@ -89,6 +109,7 @@ test("exploding a landed die records it and throws a new die out of it", () => {
 });
 
 test("a die still rolling can't be exploded", () => {
+  usePrefsStore.getState().setNimble(true);
   startCommandRoll("1d6", { hidden: false });
   const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
   expect(explodeDie(id)).toBe(false);
@@ -96,6 +117,7 @@ test("a die still rolling can't be exploded", () => {
 });
 
 test("exploding the same die twice does nothing the second time", () => {
+  usePrefsStore.getState().setNimble(true);
   startCommandRoll("1d6", { hidden: false });
   const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
   useDiceRollStore.getState().finishDieRoll(id, 2, LANDED);

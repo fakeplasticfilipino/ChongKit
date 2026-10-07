@@ -173,11 +173,20 @@ test("the new die adds to its term", () => {
   expect(r.terms.get(1)!.find((d) => d.key === "0.1.0")!.exploded).toBe(true);
 });
 
-test("exploding the new die chains another", () => {
-  const vals = { "0.0.0": 6, "0.0.0m": 6, "0.0.0mm": 2 };
-  expect(man("1d6", { "0.0.0": 6, "0.0.0m": 6 }, ["0.0.0", "0.0.0m"]).needed.map((d) => d.key)).toEqual(["0.0.0mm"]);
-  expect(man("1d6", vals, ["0.0.0", "0.0.0m"]).result!.reps[0].total).toBe(14);
+test("a right-click starts a chain: each new die on its max explodes again by itself", () => {
+  expect(man("1d6", { "0.0.0": 3, "0.0.0m": 6 }, ["0.0.0"]).needed.map((d) => d.key)).toEqual(["0.0.0mm"]);
+  expect(man("1d6", { "0.0.0": 3, "0.0.0m": 6, "0.0.0mm": 6 }, ["0.0.0"]).needed.map((d) => d.key)).toEqual(["0.0.0mmm"]);
+  expect(man("1d6", { "0.0.0": 3, "0.0.0m": 6, "0.0.0mm": 2 }, ["0.0.0"]).result!.reps[0].total).toBe(11);
 });
+
+test("the chain stops on anything below the max", () =>
+  expect(man("1d6", { "0.0.0": 6, "0.0.0m": 5 }, ["0.0.0"]).result!.reps[0].total).toBe(11));
+
+test("a new chain can start from a die that ended a chain", () =>
+  expect(man("1d6", { "0.0.0": 1, "0.0.0m": 2, "0.0.0mm": 4 }, ["0.0.0", "0.0.0m"]).result!.reps[0].total).toBe(7));
+
+test("a die already exploded in a chain isn't exploded twice", () =>
+  expect(man("1d6", { "0.0.0": 1, "0.0.0m": 6, "0.0.0mm": 2 }, ["0.0.0", "0.0.0m"]).result!.reps[0].total).toBe(9));
 
 test("an explosion of a die that isn't in the roll is ignored", () =>
   expect(man("1d6", { "0.0.0": 4 }, ["5.0.0"]).result!.reps[0].total).toBe(4));
@@ -189,14 +198,12 @@ test("explosions work after the roll's own explosions and in each repeat", () =>
 
 test("explosions count toward the 20 extra dice", () => {
   const vals: Record<string, number> = { "0.0.0": 1 };
-  const manual = ["0.0.0"];
   let key = "0.0.0";
   for (let i = 0; i < 25; i++) {
     key += "m";
-    vals[key] = 1;
-    manual.push(key);
+    vals[key] = 6;
   }
-  const r = man("1d6", vals, manual).result!;
+  const r = man("1d6", vals, ["0.0.0"]).result!;
   expect(r.capped).toBe(true);
-  expect(r.reps[0].total).toBe(21);
+  expect(r.reps[0].total).toBe(121);
 });

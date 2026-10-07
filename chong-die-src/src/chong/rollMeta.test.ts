@@ -107,6 +107,8 @@ test("a roll that failed after landing shows the error", () => {
 });
 
 
+const at = (x: number) => ({ position: { x, y: 0.05, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+
 const twoTerms: DiceRoll = {
   dice: [],
   combination: "NONE",
@@ -120,19 +122,37 @@ const twoTerms: DiceRoll = {
     },
     virtual: {},
     capped: false,
+    nimble: true,
   },
 };
 
-test("the leftmost die of each term is highlighted once it has landed", () => {
-  expect(highlightedDice(twoTerms, { a: 3, b: 2, c: 5, d: 4 })).toEqual(["a", "b"]);
-  expect(highlightedDice(twoTerms, { a: null, b: 2, c: 5, d: null })).toEqual(["b"]);
+test("each term's glow goes on whichever of its dice landed furthest left", () => {
+  expect(highlightedDice(twoTerms, { a: at(0.2), b: at(0.3), c: at(-0.1), d: at(-0.4) })).toEqual(["a", "c"]);
+  expect(highlightedDice(twoTerms, { a: at(0.2), b: at(-0.3), c: at(0.1), d: at(-0.4) })).toEqual(["a", "b"]);
 });
 
-test("each repeat has its own highlights; a d100 lights its first part", () => {
+test("dice that exploded out of others and dice replaced by a reroll don't count", () => {
   const roll: DiceRoll = {
-    dice: [],
-    combination: "NONE",
+    ...twoTerms,
     chong: {
+      ...twoTerms.chong!,
+      command: "2d6ro1",
+      parts: {
+        a: { key: "0.0.0", size: 6, part: 0 },
+        b: { key: "0.0.1", size: 6, part: 0 },
+        c: { key: "0.0.0r", size: 6, part: 0 },
+      },
+    },
+  };
+  // a was rerolled (c replaced it): b and c are the term's dice
+  expect(highlightedDice(roll, { a: at(-0.9), b: at(0.1), c: at(0.4) })).toEqual(["b"]);
+});
+
+test("each repeat has its own glow; a d100 goes by its first part", () => {
+  const roll: DiceRoll = {
+    ...twoTerms,
+    chong: {
+      ...twoTerms.chong!,
       command: "!rr 2 1d100",
       parts: {
         a: { key: "0.0.0", size: 100, part: 0 },
@@ -140,13 +160,15 @@ test("each repeat has its own highlights; a d100 lights its first part", () => {
         c: { key: "1.0.0", size: 100, part: 0 },
         d: { key: "1.0.0", size: 100, part: 1 },
       },
-      virtual: {},
-      capped: false,
     },
   };
-  expect(highlightedDice(roll, { a: 10, b: 3, c: 50, d: null })).toEqual(["a"]);
-  expect(highlightedDice(roll, { a: 10, b: 3, c: 50, d: 1 })).toEqual(["a", "c"]);
+  expect(highlightedDice(roll, { a: at(0), b: at(0.1), c: at(0.3), d: at(-0.5) })).toEqual(["a", "c"]);
 });
 
-test("a roll with an explosion by hand shows it in the total", () =>
-  expect(getRollDisplay({ ...twoTerms, chong: { ...twoTerms.chong!, manual: ["0.1.0"] } }, { a: 3, b: 2, c: 5, d: 4 })!.total).toBe("14"));
+test("no glows unless the roll was made with Nimble on", () =>
+  expect(highlightedDice({ ...twoTerms, chong: { ...twoTerms.chong!, nimble: false } }, { a: at(0), b: at(0), c: at(0), d: at(0) })).toEqual([]));
+
+test("a roll with a chain shows it in the total", () =>
+  expect(
+    getRollDisplay({ ...twoTerms, chong: { ...twoTerms.chong!, manual: ["0.1.0"] } }, { a: 3, b: 2, c: 5, d: 4 })!.total
+  ).toBe("14"));

@@ -65,7 +65,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Leftmost die of each term glows on the tray floor (tested which dice; seen in the browser)
 - [x] Right-click a landed die (touch: long-press) explodes it: `chong.manual` + `<key>m` dice, chains, 20-dice cap (tested); browser: 9 → 13 with a die popping out
 
+## ✅ v2.5.0
+- [x] Nimble switch back in ⋯ (recorded with the roll): glows + right-click chains; off = plain dice (tested)
+- [x] Glow goes on the die that landed furthest left in each term, not the first in the command (tested; browser: 1d6+3d6)
+- [x] Right-click starts a chain: the new die explodes again on its max (tested; browser: one right-click, 17 → 25)
+
 ## 📋 Next up
+- [ ] A die popped out next to a wall can come to rest wedged on the wall / its parent (seen in the browser): aim popThrow away from the nearest wall
 - [ ] Owlbear, v2.4: long-press on a phone explodes without throwing the die; another player sees the exploded die and the same total; glows on other players' trays
 - [ ] Owlbear, v2.3: Owlbear's glass shows through (transparent body); ⋯ → a player's tray; hidden rolls
 - [ ] Owlbear, v2.2: the window narrows to just the tray with the panel closed; another player's roll popover with the panel closed (its focus listener lives in the sidebar)

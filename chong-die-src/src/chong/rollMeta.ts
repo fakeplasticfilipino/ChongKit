@@ -16,8 +16,10 @@ export interface ChongRollMeta {
   capped: boolean;
   /** Set when the roll can't finish (e.g. it divides by zero once the dice land) */
   error?: string;
-  /** Dice the roller exploded by hand (right-click / long-press), by logical key, in order */
+  /** Dice the roller exploded by hand (right-click / long-press), by logical key: each starts a chain */
   manual?: string[];
+  /** Rolled with Nimble on: leftmost dice glow, dice can be exploded by hand */
+  nimble?: boolean;
 }
 
 /** Logical die values from the 3D dice; dice with any part unfinished are left out */
@@ -41,30 +43,48 @@ export function logicalValues(
 }
 
 /**
- * The leftmost die of each dice term (`.0` keys: `1d6+2d6` has two; one per `!rr` repeat) once it
- * has landed, as the 3D die to glow under (a d100's first part)
+ * Nimble: for each dice term (`1d6+2d6` has two; one per `!rr` repeat), the die that landed
+ * furthest left on the tray, as the 3D die to glow under (a d100 goes by its first part).
+ * Dice that exploded out of others don't count, nor dice replaced by a reroll.
  */
 export function highlightedDice(
   roll: DiceRoll,
-  rollValues: Record<string, number | null> | undefined
+  transforms: Record<string, DiceTransform | null | undefined>
 ): string[] {
   const meta = roll.chong;
-  if (!meta || !rollValues) {
+  if (!meta?.nimble) {
     return [];
   }
-  const groups = new Map<string, string[]>();
+  const keys = new Set(Object.values(meta.parts).map((p) => p.key));
+  // Logical key → its first 3D die
+  const first = new Map<string, string>();
   for (const [id, { key, part }] of Object.entries(meta.parts)) {
-    if (/^\d+\.\d+\.0$/.test(key)) {
-      const ids = groups.get(key) || [];
-      ids[part] = id;
-      groups.set(key, ids);
+    if (part === 0) {
+      first.set(key, id);
     }
   }
-  const landed = (id: string) => rollValues[id] !== null && rollValues[id] !== undefined;
-  return [...groups.entries()]
-    .filter(([, ids]) => ids.every(landed))
+  // Term (`<rep>.<dice id>`) → its dice: first throws and rerolls, not explosions
+  const terms = new Map<string, string[]>();
+  for (const key of keys) {
+    const match = /^(\d+\.\d+)\.\d+(r\d*)*$/.exec(key);
+    // Rerolled: a die keyed `<key>r` (or `<key>r1` …) took its place
+    const replaced = [...keys].some((k) => k !== key && /^r\d*$/.test(k.slice(key.length)) && k.startsWith(key));
+    if (match && !replaced) {
+      terms.set(match[1], [...(terms.get(match[1]) || []), key]);
+    }
+  }
+  const result: [string, string][] = [];
+  for (const [term, dice] of terms) {
+    const ids = dice.map((key) => first.get(key)!);
+    if (ids.some((id) => !id || !transforms[id])) {
+      continue;
+    }
+    const leftmost = ids.reduce((a, b) => (transforms[b]!.position.x < transforms[a]!.position.x ? b : a));
+    result.push([term, leftmost]);
+  }
+  return result
     .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
-    .map(([, ids]) => ids[0]);
+    .map(([, id]) => id);
 }
 
 /** The total and breakdown of a finished command roll, or null */

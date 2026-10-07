@@ -32,8 +32,8 @@ function getGlowTexture() {
 }
 
 /**
- * A faint glow on the tray floor under the leftmost die of each dice term, once the roll has
- * landed (every player's copy of the tray). Command rolls only.
+ * Nimble: a faint glow on the tray floor under the leftmost die of each dice term, once the roll
+ * has landed (every player's copy of the tray). Command rolls only.
  */
 export function Highlights({
   roll,
@@ -43,9 +43,7 @@ export function Highlights({
   transforms: Record<string, DiceTransform>;
 }) {
   const glows = useMemo(() => {
-    // Every die has landed (these are the finished transforms)
-    const landed = Object.fromEntries(Object.keys(transforms).map((id) => [id, 0]));
-    return highlightedDice(roll, landed).flatMap((id) =>
+    return highlightedDice(roll, transforms).flatMap((id) =>
       transforms[id] ? [{ id, position: transforms[id].position }] : []
     );
   }, [roll, transforms]);

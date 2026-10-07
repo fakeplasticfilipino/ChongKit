@@ -40,8 +40,8 @@ export interface CommandResult {
 
 export interface EvaluateOptions {
   /**
-   * Dice the player exploded by hand (right-click on the tray), by key: each adds one die of its
-   * size to its term, keyed `<key>m`. Exploding that die too (`<key>mm`) makes a chain.
+   * Dice the player exploded by hand (right-click on the tray), by key: each starts a chain, one
+   * new die of its size (`<key>m`), then another for every new die that shows its max (`…mm`).
    */
   manual?: string[];
 }
@@ -235,20 +235,28 @@ function evalDice(
     }
   }
 
-  // Dice exploded by hand, after the roll's own operations; new dice can be exploded too (a chain)
+  // Dice exploded by hand, after the roll's own operations: each starts a chain that goes on
+  // while the new die shows its max. A die that ended a chain can start a new one.
   let waiting = false;
   for (let i = 0; i < dice.length && state.manual.size > 0; i++) {
-    const die = dice[i];
-    if (die.dropped || !state.manual.has(die.key)) {
+    let die = dice[i];
+    if (die.dropped || die.exploded || !state.manual.has(die.key)) {
       continue;
     }
-    const result = follow(die, "manual", -1);
-    if (result === "capped") {
-      break;
-    }
-    die.exploded = true;
-    if (result === "missing") {
-      waiting = true;
+    for (;;) {
+      const result = follow(die, "manual", -1);
+      if (result === "capped") {
+        break;
+      }
+      die.exploded = true;
+      if (result === "missing") {
+        waiting = true;
+        break;
+      }
+      if (result.value !== die.size) {
+        break;
+      }
+      die = result;
     }
   }
   if (waiting) {

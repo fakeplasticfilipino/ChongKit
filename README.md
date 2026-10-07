@@ -251,7 +251,7 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 - **Tabs of pills** (saved rolls): the small **+** after the tabs adds a tab; double-click renames,
   **×** deletes, drag to reorder. The **+** after the last pill adds a roll.
 - **⋯** : Hide rolls, Bonus and advantage (for dice picked by hand), Roll history, other players'
-  trays, export, import, about.
+  trays, Nimble rules, export, import, about.
 - **+** (after the last pill) adds a roll to the open tab: a name, the roll (filled in from the command
   line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
   the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
@@ -260,11 +260,14 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the ⚡ of the tab open in the
   panel (remembered even with the panel closed).
-- **Highlights:** once a roll lands, the leftmost die of each dice term glows faintly
-  (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray. Handy for systems with a key die.
-- **Explode a die:** right-click a landed die on your tray (touch: hold it half a second). A new die of
-  the same size pops out of it and adds to that term; right-click the new one to chain. Everyone sees
-  the same dice and total. Rolls with `e` / `!` still explode by themselves.
+- **Nimble rules** (⋯ → Nimble rules, off by default):
+  - Once a roll lands, the die of each dice term that landed **furthest left** glows faintly
+    (`1d6+2d6`: two glows; one per `!rr` repeat), on everyone's tray.
+  - **Right-click a landed die** (touch: hold it half a second) to start an explosion chain: a new die
+    pops out of it, and every new die that shows its max explodes again by itself. Everyone sees the
+    same dice and total.
+  - Nothing is automatic: read hits and misses from the dice.
+- Rolls with `e` / `!` (`1d6!`, `2d6e6`) explode by themselves, Nimble or not.
 - The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)

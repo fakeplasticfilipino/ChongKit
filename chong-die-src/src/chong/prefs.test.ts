@@ -17,20 +17,20 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
   } as unknown as Storage;
 }
 
-test("default prefs: panel open", () =>
-  expect(loadPrefs(fakeStorage())).toEqual({ panelOpen: true }));
+test("default prefs: Nimble off, panel open", () =>
+  expect(loadPrefs(fakeStorage())).toEqual({ nimble: false, panelOpen: true }));
 
 test("prefs round trip", () => {
   const storage = fakeStorage();
-  savePrefs({ panelOpen: false }, storage);
-  expect(loadPrefs(storage)).toEqual({ panelOpen: false });
+  savePrefs({ nimble: true, panelOpen: false }, storage);
+  expect(loadPrefs(storage)).toEqual({ nimble: true, panelOpen: false });
 });
 
 test("bad prefs fall back to the defaults", () => {
-  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ panelOpen: true });
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ nimble: false, panelOpen: true });
   expect(
-    loadPrefs(fakeStorage({ [PREFS_KEY]: '{"panelOpen":"no"}' }))
-  ).toEqual({ panelOpen: true });
+    loadPrefs(fakeStorage({ [PREFS_KEY]: '{"nimble":"yes","panelOpen":"no"}' }))
+  ).toEqual({ nimble: false, panelOpen: true });
 });
 
 const die = (id: string, type: Die["type"]): Die => ({ id, type, style: "GALAXY" });

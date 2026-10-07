@@ -4,8 +4,9 @@ import { immer } from "zustand/middleware/immer";
 import { loadPrefs, Prefs, PREFS_KEY, savePrefs } from "./prefs";
 
 interface PrefsState {
-  /** Rolls panel open (saved in this browser) */
+  /** Nimble, Rolls panel open (saved in this browser) */
   prefs: Prefs;
+  setNimble: (on: boolean) => void;
   setPanelOpen: (open: boolean) => void;
   /** Read the prefs again (another window changed them) */
   reload: (storage?: Storage) => void;
@@ -14,6 +15,11 @@ interface PrefsState {
 export const usePrefsStore = create<PrefsState>()(
   immer((set) => ({
     prefs: loadPrefs(),
+    setNimble(on) {
+      set((state) => {
+        state.prefs.nimble = on;
+      });
+    },
     setPanelOpen(open) {
       set((state) => {
         state.prefs.panelOpen = open;
