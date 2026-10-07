@@ -54,7 +54,7 @@ type Source = "crit" | "range" | "explode";
 function canCrit(d: RolledDie, g: GroupPlan, primary: number | null): boolean {
   if (!d.kept || g.crit === "none") return false;
   if (d.kind === "chain") return true;
-  if (g.crit === "each") return d.kind === "start";
+  if (g.crit === "each") return d.kind === "start" || d.kind === "adv";
   return d.id === primary;
 }
 

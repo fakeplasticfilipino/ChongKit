@@ -135,3 +135,11 @@ test("a start die that explodes and is at max: crit wins, one follow-up", () => 
   expect(r.dice).toHaveLength(2);
   expect(r.dice[1].kind).toBe("chain");
 });
+
+test("crit each: a kept adv die of the first throw can crit and chain too", () => {
+  const r = roll(parse("2d10 adv crit each"), seq([3, 5, 10, 4])).reps[0];
+  const adv = r.dice.find((d) => d.kind === "adv")!;
+  expect(adv.crit).toBe(true);
+  const chain = r.dice.find((d) => d.kind === "chain")!;
+  expect(chain.parent).toBe(adv.id);
+});
