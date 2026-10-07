@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { InteractiveTray } from "./tray/InteractiveTray";
 import { RollPanel } from "./chong/RollPanel";
-import { IncomingRolls } from "./chong/IncomingRolls";
 import { usePrefsStore } from "./chong/prefsStore";
 import { PANEL_FADE_MS, PANEL_WIDTH } from "./chong/layout";
 import { LINE } from "./chong/look";
@@ -90,7 +89,6 @@ export function App() {
       <PluginGate>
         <DiceRollSync />
         <PartyTrays />
-        <IncomingRolls />
         <PluginResizeObserver wide={panel.shown} />
       </PluginGate>
     </Stack>
