@@ -131,7 +131,9 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 ## Chong Die (Owlbear Rodeo dice)
 
 A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
-line and saved-roll pills. System-agnostic; spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`.
+line and saved-roll pills. System-agnostic, with **one exception: optional Nimble rules** (off by
+default, ⋯ → Nimble rules; see 5 below). This is a deliberate choice for our table: don't add other
+systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`.
 
 1. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
    built with Vite. Source in `chong-die-src/` (off the site via `_config.yml`, public on GitHub);
