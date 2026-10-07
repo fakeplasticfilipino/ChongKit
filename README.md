@@ -273,7 +273,7 @@ rules follow the group they belong to: in `1d4 nimble + 2d6 + 3` only the dagger
 | `adv`, `adv2`, `dis`, `dis3` | Advantage / disadvantage counters; they cancel first. Net n adds n dice, then drops the n lowest (highest for `dis`); ties drop from the left | `2d6 adv3` |
 | `keep 3`, `keep low 1`, `drop 1` | Keep the highest / lowest, drop the lowest | `4d6 keep 3` |
 | `crit` | Can-crit dice crit on their max and add chain dice | `1d8 crit` |
-| `crit each` | Every kept die of the first throw can crit | `3d10 crit each` |
+| `crit each` | Every kept die of the first throw can crit, advantage dice included | `3d10 crit each` |
 | `miss <range>` | Mark MISS when the Primary Die is in range | `2d6 crit miss 4-` |
 | `chain <range>` | The Primary Die in range adds a chain die | `1d10 crit chain 5+` |
 | `chain adv`, `chain adv2` | Chain dice roll with advantage | `1d10 crit chain adv` |

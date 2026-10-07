@@ -1,11 +1,11 @@
 {
   "name": "Chong Die",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "manifest_version": 1,
   "author": "ChongKit",
   "homepage_url": "https://fakeplasticfilipino.github.io/ChongKit/chong-die/",
   "icon": "/ChongKit/chong-die/logo.png",
-  "description": "3D dice with an Avrae-style command line and saved rolls. Based on Owlbear Rodeo Dice (GPL-3.0).",
+  "description": "3D dice with a plain-words command line and saved rolls. Based on Owlbear Rodeo Dice (GPL-3.0).",
   "action": {
     "title": "Chong Die",
     "icon": "/ChongKit/chong-die/icon.svg",
