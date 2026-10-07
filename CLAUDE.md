@@ -175,8 +175,8 @@ chongs-tracker/              Owlbear extension → /chongs-tracker/ (install: ma
 chong-die/                   Built Chong Die (committed) → /chong-die/ (install: manifest.json)
   TRACKER.md                 Its status and backlog (not published)
 chong-die-src/               Chong Die source: fork of owlbear-rodeo/dice (GPL-3.0, not published)
-  src/engine/                Roll engine: expand, parse, roll, record, format, faces (+ Vitest tests)
-  src/chong/                 Command line, panel, pills, saved rolls and names, roll runner, outlines
+  src/engine/                Roll engine: parse, roll, record, format, faces (+ Vitest tests)
+  src/chong/                 Command line, panel, pills, saved rolls, roll runner, outlines
   DESIGN.md                  How Chong Die works (keep it current)
 docs/rules-reference.md      Rules tables with page numbers → /docs/rules-reference.html
 source/                      The GM Guide PDF (not published)

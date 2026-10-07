@@ -6,7 +6,7 @@ const DICE = /^(\d*)d(\d+|%)$/i;
 const WORD = /^(critadv|adv|dis|crit|miss)(\d+(?:-\d+)?)?$/i;
 const TIMES = /^x(\d+)$/i;
 /** A sign; a crit/miss range glued whole (its - is the range's); else a run of anything but spaces and signs */
-const TOKEN = /\s*(?:([+-])|((?:crit|miss)\d+-\d+)(?=[\s+-]|$)|([^\s+-]+))/iy;
+const TOKEN = /\s*(?:([+-])|((?:crit|miss)\d+-[^\s+-]+)|([^\s+-]+))/iy;
 
 const bad = (m: string) => new EngineError(m);
 

@@ -21,7 +21,7 @@ export function placeCounts(command: string): Record<string, number> {
 }
 
 /**
- * A custom roll (typed, a pill, Chong's Tracker, history): its dice go on the tray to be held and
+ * A custom roll (typed, a pill, history): its dice go on the tray to be held and
  * thrown with Roll, like dice picked by hand; the tray keeps the typed command. A command with
  * no 3D dice rolls now. Throws `EngineError`.
  */

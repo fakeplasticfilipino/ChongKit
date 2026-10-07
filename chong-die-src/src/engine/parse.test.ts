@@ -25,6 +25,8 @@ test("numbers and ranges glued to words", () => {
 test("a range's - belongs to it; a spaced - subtracts", () => {
   expect(parse("1d10 crit5 -2")).toMatchObject({ crit: { min: 5, max: 5 }, modifier: -2 });
   expect(parse("1d10 miss1-4+2")).toMatchObject({ miss: { min: 1, max: 4 }, modifier: 2 });
+  expect(parse("1d10\tcrit5-10-2")).toMatchObject({ crit: { min: 5, max: 10 }, modifier: -2 });
+  expect(parse("1d10 crit-5")).toMatchObject({ crit: { min: 10, max: 10 }, modifier: -5 });
 });
 test("words act on the first dice; other dice and numbers add", () => {
   const p = parse("1d10 + 1d6 - 1d4 + 3 crit adv");
@@ -66,6 +68,7 @@ test.each([
   ["1d10 crit 10", /Put a \+ or - before "10"/],
   ["1d10 +", /A trailing "\+" needs dice or a number after it/],
   ["1d10 crit5-", /A trailing "-"/],
+  ["1d10 crit5-10d6", /Unknown word "crit5-10d6"/],
   ["1d10 + + 2", /"\+" needs dice or a number after it/],
   ["1d10 + crit", /"\+" needs dice or a number after it/],
   ["3", /No dice/],

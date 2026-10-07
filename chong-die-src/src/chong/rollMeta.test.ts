@@ -21,6 +21,14 @@ test("an old-format roll shows as text", () => {
   expect(getRollDisplay({ dice: [], chong: { foo: 1 } } as any)).toEqual({ total: "Old roll", lines: [] });
 });
 
+test("a 3.x roll shows its record's text", () => {
+  const chong = { v: 3, record: { text: "1d10 crit miss 1 +3" }, parts: {}, faces: {}, stage: 0 };
+  expect(getRollDisplay({ dice: [], chong } as any)).toEqual({
+    total: "Old roll",
+    lines: ["1d10 crit miss 1 +3"],
+  });
+});
+
 test("a roll with no chong shows nothing", () =>
   expect(getRollDisplay({ dice: [], combination: "NONE" })).toBeNull());
 

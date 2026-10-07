@@ -90,18 +90,9 @@ export function partId(meta: ChongRollMeta, rep: number, die: number): string | 
   });
 }
 
-/** A group's Primary Dice; records made before 3.0.2 have no `primaries`: just the primary */
-function primariesOf(group: GroupResult): number[] {
-  if (Array.isArray(group.primaries)) {
-    return group.primaries;
-  }
-  return group.primary === null ? [] : [group.primary];
-}
-
 /**
  * For each dice group (and repeat) rolled with `crit` or `miss`, the 3D dice of its Primary Dice
- * (one, or with `crit each` every kept die of the first throw; a d100 by its first part), for the
- * outline. Old rolls have none.
+ * (a d100 by its first part), for the outline. Old rolls have none.
  */
 export function highlightedDice(roll: DiceRoll): string[] {
   const meta = roll.chong;
@@ -114,7 +105,7 @@ export function highlightedDice(roll: DiceRoll): string[] {
       if (!(group.usesCrit || group.usesMiss)) {
         continue;
       }
-      for (const die of primariesOf(group)) {
+      for (const die of group.primaries) {
         const id = partId(meta, r, die);
         if (id) {
           ids.push(id);
@@ -125,7 +116,7 @@ export function highlightedDice(roll: DiceRoll): string[] {
   return ids;
 }
 
-/** 3D dice whose record die isn't kept (advantage, keep/drop, a chain pick's lower die): shown faded */
+/** 3D dice whose record die isn't kept (advantage, a chain pick's lower die): shown faded */
 export function fadedDice(roll: DiceRoll): string[] {
   const meta = roll.chong;
   if (!isCurrentMeta(meta)) {
@@ -172,8 +163,9 @@ export function getRollDisplay(
     return null;
   }
   if (!isCurrentMeta(meta)) {
-    const command = (meta as { command?: unknown }).command;
-    return { total: "Old roll", lines: typeof command === "string" ? [command] : [] };
+    const m = meta as { command?: unknown; record?: { text?: unknown } };
+    const text = m.command ?? m.record?.text;
+    return { total: "Old roll", lines: typeof text === "string" ? [text] : [] };
   }
   if (meta.stage < lastStage(meta.record)) {
     return null;

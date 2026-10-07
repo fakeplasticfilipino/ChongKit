@@ -15,6 +15,8 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Dice land on the record's face naturally (3.1.0): each throw is pre-simulated out of sight and played back with the model already turned, so there's no turn after landing; sounds replay from the simulation
 - Libraries in six `vendor-*` chunks: a new MUI / drei part rewrites only that chunk (~250 KB), never Rapier (2 MB) or three.js
 - Hold to roll for every custom roll (typed, pills, history): dice wait on the tray, hold and release Roll
+
+## History
 - 3.0.2: a sign glued after a name or range (`atk+3`, `nimble-1`, `miss 4-+3`) counts; the `# note` ends the result's first line; `crit each` outlines every kept first-throw die; `nimble` lives in `chong/savedRolls.ts` (none in the engine); "Saved atk" is a plain notice, not red
 - Removed in 3.0: Avrae syntax, waves, right-click exploding, the Nimble switch
 - Removed in 2.7: the ⚡ Instant switch, bonus / advantage, the fairness tester and debug store

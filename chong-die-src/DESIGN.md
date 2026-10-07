@@ -18,7 +18,7 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
   tray, thrown with the tray's Roll button), a faint line, then the tab's pills and a + pill.
 - **⋯** (`chong/MoreMenu.tsx`): hide rolls, roll history, other players' trays, export / import,
   about.
-- Owlbear plumbing (roll sync, tracker rolls, resize) is in `App`, so it runs with the panel closed.
+- Owlbear plumbing (roll sync, resize) is in `App`, so it runs with the panel closed.
 - **Look = Chong's Tracker** (`chong/look.ts` copies `chongs-tracker/style.css`): transparent body
   (Owlbear's glass shows through), translucent white surfaces, no outlines, 8 px corners, round
   transparent icon buttons, purple when on.
@@ -29,7 +29,7 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
 The engine decides every number; the tray acts the result out. Spec: `docs/2026-10-08-command-language-v4-design.md` (language), `docs/2026-10-07-roll-engine-design.md` (engine).
 
 - Everything rolls as a command, even dice picked by hand (`rollPickedDice` → `countsToCommand`).
-  `startCommandRoll` (`chong/rollRunner.ts`) expands, parses and rolls the command, then throws stage 0.
+  `startCommandRoll` (`chong/rollRunner.ts`) parses and rolls the command, then throws stage 0.
 - **Hold to roll:** custom rolls (typed, pills, history, Reroll) never throw right
   away: `placeCommand` (`chong/place.ts`) puts their first stage's dice on the tray as picked dice
   and keeps the command in `trayStore.placed`; holding Roll shakes them, releasing throws the

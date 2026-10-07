@@ -141,6 +141,11 @@ test("old pills without a description load unchanged", () => {
   expect(v!.tabs[0].pills[0]).toEqual({ id: "a", name: "A", command: "1d4" });
 });
 
+test("old saves lose their saved names", () =>
+  expect(
+    validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], history: [], names: { atk: "1d10" } })
+  ).not.toHaveProperty("names"));
+
 test("old saves with Instant switches and an active tab still load", () =>
   expect(
     validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", instant: true, pills: [] }], history: [], activeTabId: "a" })

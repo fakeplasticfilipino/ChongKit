@@ -103,7 +103,7 @@ function DicePickedControls() {
   );
 
   /**
-   * Throw what's on the tray: a placed command (typed, a pill, Chong's Tracker) rolls as itself,
+   * Throw what's on the tray: a placed command (typed, a pill) rolls as itself,
    * dice picked by hand roll as a command too (everything rolls through the engine).
    * The longer Roll is held, the harder the throw
    */
