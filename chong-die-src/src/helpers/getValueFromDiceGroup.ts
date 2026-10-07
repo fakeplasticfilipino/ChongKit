@@ -35,3 +35,30 @@ export function getValueFromDiceGroup(parent: THREE.Group): number {
   }
   return highestNumber;
 }
+
+
+/**
+ * Chong Die: every face's locator direction on a 3D dice group, in the group's own frame (from the
+ * model's origin, as `getValueFromDiceGroup` measures them), for turning the die onto a face
+ */
+export function getLocatorsFromDiceGroup(
+  parent: THREE.Group
+): { face: number; dir: THREE.Vector3 }[] {
+  const dice = parent.getObjectByName("dice");
+  const mesh = dice?.children[0];
+  if (!mesh) {
+    return [];
+  }
+  const toLocal = parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const origin = mesh.getWorldPosition(new THREE.Vector3());
+  return mesh.children
+    .filter((locator) => locator.name.includes("_locator_"))
+    .map((locator) => ({
+      face: parseInt(locator.name.slice(12)),
+      dir: locator
+        .getWorldPosition(new THREE.Vector3())
+        .sub(origin)
+        .normalize()
+        .applyQuaternion(toLocal),
+    }));
+}

@@ -1,9 +1,7 @@
 import { ConvexHullCollider } from "@react-three/rapier";
+import { COLLIDER_VERTICES } from "./colliderVertices";
 
-const vertices = [
-  -0.8, -0.8, 0.8, -0.8, 0.8, 0.8, -0.8, -0.8, -0.8, -0.8, 0.8, -0.8, 0.8, -0.8,
-  0.8, 0.8, 0.8, 0.8, 0.8, -0.8, -0.8, 0.8, 0.8, -0.8,
-].map((n) => n / 10);
+const vertices = COLLIDER_VERTICES.D6.map((n) => n / 10);
 
 export function D6Collider() {
   return <ConvexHullCollider args={[vertices]} />;

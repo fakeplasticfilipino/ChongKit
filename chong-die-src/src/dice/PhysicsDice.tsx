@@ -7,8 +7,12 @@ import {
 } from "@react-three/rapier";
 
 import { Die } from "../types/Die";
-import { getValueFromDiceGroup } from "../helpers/getValueFromDiceGroup";
-import { useFrame } from "@react-three/fiber";
+import { DiceType } from "../types/DiceType";
+import {
+  getLocatorsFromDiceGroup,
+  getValueFromDiceGroup,
+} from "../helpers/getValueFromDiceGroup";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useAudioListener } from "../audio/AudioListenerProvider";
 import { getNextBuffer } from "../audio/getAudioBuffer";
 import { PhysicalMaterial } from "../types/PhysicalMaterial";
@@ -17,6 +21,13 @@ import { getDieDensity } from "../helpers/getDieDensity";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceTransform } from "../types/DiceTransform";
 import { DiceCollider } from "../colliders/DiceCollider";
+import {
+  diceRotationGroup,
+  pivotOffset,
+  symmetryOnto,
+  turnedPose,
+  turnPivot,
+} from "../helpers/faceSymmetry";
 
 /** Minium linear and angular speed before the dice roll is considered finished */
 const MIN_ROLL_FINISHED_SPEED = 0.005;
@@ -24,6 +35,11 @@ const MIN_ROLL_FINISHED_SPEED = 0.005;
 const AUDIO_COOLDOWN = 200;
 /** Force stop the physics roll after 5 seconds */
 const MAX_ROLL_TIME = 5000;
+/** Chong Die: how long a settled die takes to turn onto its record's face (DESIGN.md, Faces) */
+const TURN_TIME = 250;
+
+const easeInOut = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 function magnitude({ x, y, z }: { x: number; y: number; z: number }) {
   return Math.sqrt(x * x + y * y + z * z);
@@ -37,6 +53,7 @@ export function PhysicsDice({
   onRollFinished,
   children,
   fixedTransform,
+  forcedFace,
   ...props
 }: JSX.IntrinsicElements["group"] & {
   die: Die;
@@ -47,9 +64,22 @@ export function PhysicsDice({
     transform: DiceTransform
   ) => void;
   fixedTransform?: DiceTransform;
+  /**
+   * Chong Die: the face this die must show (the record's). Once it settles it turns onto it and
+   * reports it; a die placed by a fixed transform already shows it.
+   */
+  forcedFace?: number;
 }) {
   const ref = useRef<THREE.Group>(null);
   const rigidBodyRef = useRef<RapierRigidBody>(null);
+  const invalidate = useThree((state) => state.invalidate);
+  const [placed] = useState(() => Boolean(fixedTransform));
+  /** The turn onto the forced face under way: the model slerps from identity to `r` about `pivot` */
+  const turnRef = useRef<{
+    start: number;
+    r: THREE.Quaternion;
+    pivot: THREE.Vector3;
+  } | null>(null);
 
   // Convert dice throw into THREE values
   const [position] = useState<Vector3Array>(() => {
@@ -115,17 +145,72 @@ export function PhysicsDice({
               w: rotation.w,
             },
           };
+          // Chong Die: a die showing another face than the record's turns onto it, where it lies
+          const r =
+            forcedFace !== undefined && !placed && value !== forcedFace
+              ? findTurn(group, die.type, value, forcedFace)
+              : null;
+          if (r) {
+            lockDice();
+            turnRef.current = {
+              start: performance.now(),
+              r,
+              pivot: turnPivot(die.type),
+            };
+            invalidate();
+            return;
+          }
           onRollFinished?.(die.id, value, transform);
           lockDice();
         }
       }
     },
-    [die.id, lockDice]
+    [die.id, die.type, lockDice, forcedFace, placed, invalidate, onRollFinished]
   );
 
+  /** Chong Die: one frame of the turn; at its end the turned pose is what's reported (and synced) */
+  const stepTurn = useCallback(() => {
+    const turn = turnRef.current;
+    const group = ref.current;
+    const rigidBody = rigidBodyRef.current;
+    if (!turn || !group || !rigidBody) {
+      return;
+    }
+    const t = Math.min(1, (performance.now() - turn.start) / TURN_TIME);
+    const q = new THREE.Quaternion().slerp(turn.r, easeInOut(t));
+    group.quaternion.copy(q);
+    group.position.copy(pivotOffset(q, turn.pivot));
+    if (t < 1) {
+      invalidate();
+      return;
+    }
+    turnRef.current = null;
+    const p = rigidBody.translation();
+    const o = rigidBody.rotation();
+    const pose = turnedPose(
+      new THREE.Vector3(p.x, p.y, p.z),
+      new THREE.Quaternion(o.x, o.y, o.z, o.w),
+      turn.r,
+      turn.pivot
+    );
+    onRollFinished?.(die.id, forcedFace!, {
+      position: { x: pose.position.x, y: pose.position.y, z: pose.position.z },
+      rotation: {
+        x: pose.rotation.x,
+        y: pose.rotation.y,
+        z: pose.rotation.z,
+        w: pose.rotation.w,
+      },
+    });
+  }, [die.id, forcedFace, invalidate, onRollFinished]);
+
   const handleFrame = useCallback(() => {
-    checkRollFinished();
-  }, [checkRollFinished]);
+    if (turnRef.current) {
+      stepTurn();
+    } else {
+      checkRollFinished();
+    }
+  }, [checkRollFinished, stepTurn]);
   useFrame(handleFrame);
 
   // Lock the dice when we have a manual transform
@@ -210,4 +295,22 @@ export function PhysicsDice({
       </group>
     </RigidBody>
   );
+}
+
+/** Chong Die: the turn putting `forcedFace` where `landed` is, or null when the die can't make it */
+function findTurn(
+  group: THREE.Group,
+  type: DiceType,
+  landed: number,
+  forcedFace: number
+): THREE.Quaternion | null {
+  const locators = getLocatorsFromDiceGroup(group);
+  if (
+    !locators.some((l) => l.face === landed) ||
+    !locators.some((l) => l.face === forcedFace)
+  ) {
+    console.warn(`A ${type} has no face ${forcedFace}: left as it landed`);
+    return null;
+  }
+  return symmetryOnto(diceRotationGroup(type), locators, landed, forcedFace);
 }

@@ -25,3 +25,5 @@ under the same license.
 - Optional Nimble switch: a purple outline on each term's leftmost landed die (dark red on a 1,
   bright gold on the highest face);
   right-click / long-press a landed die to start an explosion chain (in everyone's result)
+- Dice land on the record's face: a settled die turns its model by a symmetry of the solid
+  (from the collider hull) onto the face the roll decided, and that pose is what other players see

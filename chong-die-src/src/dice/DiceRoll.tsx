@@ -9,7 +9,7 @@ import { Die } from "../types/Die";
 import { Dice as DefaultDice } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
 import { Highlights } from "../chong/Highlights";
-import { fadedDice } from "../chong/rollMeta";
+import { fadedDice, isCurrentMeta } from "../chong/rollMeta";
 
 export function DiceRoll({
   roll,
@@ -39,6 +39,8 @@ export function DiceRoll({
   const dice = useMemo(() => roll && getDieFromDice(roll), [roll]);
   // Chong Die: dice the roll dropped are drawn faded once they have landed
   const faded = useMemo(() => new Set(fadedDice(roll)), [roll]);
+  // Chong Die: each die lands on the record's face (every tray that has the record turns its dice)
+  const faces = isCurrentMeta(roll?.chong) ? roll.chong.faces : undefined;
 
   const emptyCallback = useCallback(() => {}, []);
 
@@ -110,6 +112,7 @@ export function DiceRoll({
               dieThrow={dieThrow}
               onRollFinished={onRollFinished}
               fixedTransform={fixedTransform}
+              forcedFace={faces?.[die.id]}
             >
               {/* Override onClick event to make sure simulated dice can't be selected */}
               <Dice

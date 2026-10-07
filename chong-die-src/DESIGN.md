@@ -93,6 +93,17 @@ the landed face U is (`R · locator(T) ≈ locator(U)`, in the die's frame).
   top corner).
 - **Other players:** `R` is a symmetry of the collider and the model, so the final pose can carry
   `rotation · R` (d4: plus the pivot's shift) and their trays snap to it as now.
+- **In the code:** `helpers/faceSymmetry.ts` (pure, tested for every die and style: every landed
+  face turns to read every face) builds each type's group from `colliders/colliderVertices.ts`
+  (the hulls' vertices, shared with the colliders) and picks `R` from the locators read off the
+  die (`getLocatorsFromDiceGroup`, so the d20's rotated mesh is accounted for). `DiceRoll` hands
+  each `PhysicsDice` its `forcedFace` (`chong.faces[id]`; on every tray that has the record).
+  On settle, or at the 5 s cap where it lies, a die showing another face locks its body, turns its
+  `group` (250 ms; the hull is the same shape under `R`) and then reports the forced face with the pose
+  `rotation · R` (d4: the position moved by the pivot's shift, `turnedPose`). That pose is what
+  `finishDieRoll` stores and `DiceRollSync` sends, so the static dice of every tray, and a die
+  placed again by a fixed transform (which never turns), show the record's face. A die already
+  showing it, or one the record doesn't cover (non-command rolls), reports as before.
 - The spike's scripts (symmetry check, headless harness) are kept locally in
   `.superpowers/sdd/2026-10-07-roll-engine-plan/spike-harness/` (git-ignored).
 
