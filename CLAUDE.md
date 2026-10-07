@@ -136,10 +136,13 @@ default, ⋯ → Nimble rules; see 5 below). This is a deliberate choice for our
 systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the docked panel in
 `docs/superpowers/specs/2026-10-07-chong-die-docked-panel-design.md`.
 
-**One window, docked panel.** The toolbar button opens the tray (stock Owlbear Dice look: keep the
-Chong UI off the tray itself) with the **Rolls panel** (command line, tabs, pills, ⋯) docked to its
-right, 300 px. ▤ in the sidebar opens / closes it (`prefs.panelOpen`); the window width is
-`windowWidth(height, panelOpen)` (`layout.ts`) via `OBR.action.setWidth`. Don't try a separate
+**One window, docked panel.** The toolbar button opens the tray with the command line always on top
+and two round buttons beside it: ⚡ quick roll (the open tab's Instant) and ▤ Rolls. ▤ opens the
+**Rolls panel** docked to the right (360 px): upstream's dice sidebar on its left edge, then tabs and
+pills. Closed, the window is just the tray. `prefs.panelOpen`; window width `windowWidth(height,
+panelOpen)` (`layout.ts`) via `OBR.action.setWidth`. Owlbear plumbing (roll sync, tracker rolls,
+resize) lives in `App` so it runs with the panel closed. Match Owlbear's look (MUI theme, paper
+surfaces, round icon buttons). Don't try a separate
 tray popover again: in 2.0 it never appeared in Owlbear. Stores: `chongStore` (saved rolls, the only
 writer), `trayStore` (placed command, error banner), `prefsStore`.
 

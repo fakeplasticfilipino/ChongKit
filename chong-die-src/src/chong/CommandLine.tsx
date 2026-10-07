@@ -3,13 +3,22 @@ import { useState } from "react";
 import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 
 import { useDiceControlsStore } from "../controls/store";
+import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
 import { startCommandRoll } from "./rollRunner";
+import { InstantToggle } from "./InstantToggle";
+import { PanelToggle } from "./PanelToggle";
+import { COMMAND_LINE_HEIGHT } from "./layout";
 
-/** The `!r` box at the top of the Rolls panel: Enter rolls on the tray */
+/** The `!r` box always on top of the tray, with quick roll and Rolls beside it: Enter rolls */
 export function CommandLine() {
+  const theme = useTheme();
+  const rolling = useDiceRollStore((state) =>
+    Object.values(state.rollValues).some((v) => v === null)
+  );
   const text = useChongStore((state) => state.draft);
   const setText = useChongStore((state) => state.setDraft);
   // Position while stepping through history with ↑ / ↓ (null = typing)
@@ -50,50 +59,74 @@ export function CommandLine() {
   }
 
   return (
-    <Box component="div" sx={{ p: 1.5, pb: 0.5 }}>
-      <Box
-        component="div"
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          height: 40,
-          px: 1.5,
-          borderRadius: "20px",
-          bgcolor: "background.default",
-          border: 1,
-          borderColor: error ? "error.main" : "divider",
-        }}
-      >
-        <InputBase
-          fullWidth
-          autoFocus
-          placeholder="!r 1d20+5"
-          value={text}
-          inputProps={{ "aria-label": "Roll command", spellCheck: false }}
-          onChange={(e) => {
-            setText(e.target.value);
-            setHistoryIndex(null);
-            if (error) {
-              setError(null);
-            }
+    <Box
+      component="div"
+      sx={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 3,
+        p: 1,
+        // Out of the way while dice roll; back when you point at it
+        opacity: rolling ? 0.4 : 1,
+        transition: theme.transitions.create("opacity"),
+        ":hover, :focus-within": { opacity: 1 },
+      }}
+    >
+      <Box component="div" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          component="div"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flex: 1,
+            minWidth: 0,
+            height: COMMAND_LINE_HEIGHT - 16,
+            px: 1.5,
+            borderRadius: "18px",
+            bgcolor: "background.paper",
+            border: 1,
+            borderColor: error ? "error.main" : "divider",
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              roll();
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              step(-1);
-            } else if (e.key === "ArrowDown") {
-              e.preventDefault();
-              step(1);
-            }
-          }}
-          sx={{ fontFamily: "monospace" }}
-        />
+        >
+          <InputBase
+            fullWidth
+            placeholder="!r 1d20+5"
+            value={text}
+            inputProps={{ "aria-label": "Roll command", spellCheck: false }}
+            onChange={(e) => {
+              setText(e.target.value);
+              setHistoryIndex(null);
+              if (error) {
+                setError(null);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                roll();
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                step(-1);
+              } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                step(1);
+              }
+            }}
+            sx={{ fontFamily: "monospace" }}
+          />
+        </Box>
+        <InstantToggle />
+        <PanelToggle />
       </Box>
       {error && (
-        <Typography variant="caption" color="error" role="alert" sx={{ display: "block", px: 1.5, pt: 0.5 }}>
+        <Typography
+          variant="caption"
+          color="error"
+          role="alert"
+          sx={{ display: "block", mt: 0.5, px: 1.5, py: 0.25, bgcolor: "background.paper", borderRadius: 1 }}
+        >
           {error}
         </Typography>
       )}

@@ -49,7 +49,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Panel rolls on the tray directly (`runPill`, tested); tracker rolls via the background → action (the v1 path)
 - [x] Browser check (local): layout 60 | 350 | 300, typo error, roll recorded, panel toggle
 
+## ✅ v2.2.0
+- [x] Command line always on top of the tray, ⚡ quick roll (Instant) and ▤ Rolls beside it (round, Owlbear-style)
+- [x] Upstream's dice sidebar moved into the Rolls panel (360 px); closed, the window is just the tray (tested width)
+- [x] Browser check (local): layout, quick roll toggles the tab's Instant, typo error under the line, ▤ closes/opens the panel
+
 ## 📋 Next up
+- [ ] Owlbear, v2.2: the window narrows to just the tray with the panel closed; another player's roll popover with the panel closed (its focus listener lives in the sidebar)
 - [ ] Owlbear, v2.1: the window widens / narrows with ▤; a panel roll and a placed pill on the tray; a tracker roll with the window closed and open; phone width (the window may be wider than the screen)
 - [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker

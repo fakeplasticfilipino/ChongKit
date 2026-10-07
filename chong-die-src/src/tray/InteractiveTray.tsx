@@ -19,6 +19,8 @@ import { PreviewDiceRoll } from "../dice/PreviewDiceRoll";
 import { FairnessTester } from "../tests/FairnessTester";
 import { useWaveRunner } from "../chong/rollRunner";
 import { TrayError } from "../chong/TrayError";
+import { CommandLine } from "../chong/CommandLine";
+import { COMMAND_LINE_HEIGHT } from "../chong/layout";
 
 /** Dice tray that controls the dice roll store */
 export function InteractiveTray() {
@@ -67,9 +69,24 @@ export function InteractiveTray() {
           </AudioListenerProvider>
         </Canvas>
       </TraySuspense>
-      <DiceRollControls />
+      {/* Upstream overlays sit below the command line */}
+      <Box
+        component="div"
+        sx={{
+          position: "absolute",
+          top: COMMAND_LINE_HEIGHT,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: "none",
+          "& > *": { pointerEvents: "auto" },
+        }}
+      >
+        <DiceRollControls />
+      </Box>
       <FairnessTester />
       <TrayError />
+      <CommandLine />
     </Box>
   );
 }

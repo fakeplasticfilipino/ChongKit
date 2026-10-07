@@ -240,18 +240,19 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 `https://fakeplasticfilipino.github.io/ChongKit/chong-die/manifest.json`, then turn it on in your room.
 
 **Using it**
-- **Rolls panel:** docked to the right of the tray. **▤** in the sidebar opens or closes it (the
-  window widens and narrows with it; closed, it's the plain Owlbear Dice tray). It remembers.
-- **Command line** (top of the panel): type a roll and press Enter. `!r` is optional.
-  ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled.
-- **Tabs of pills** (saved rolls) under it. The small **+** after the tabs adds a tab;
-  double-click renames, **×** deletes, drag to reorder. At the end of the row: **⚡**, **+** and
-  **⋯** (Nimble rules, export, import, about).
+- **Command line** (always on top of the tray): type a roll and press Enter. `!r` is optional.
+  ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled. It fades
+  while dice roll. Beside it: **⚡ Quick roll** (the open tab's Instant switch, below) and **▤ Rolls**.
+- **▤ Rolls** opens the panel docked to the right of the tray (the window widens; closed, it's just
+  the tray). It remembers. On its left edge: the dice sidebar (dice style, dice to pick by hand,
+  hide roll, bonus / advantage, history). Then the tabs of **pills** (saved rolls): the small **+**
+  after the tabs adds a tab; double-click renames, **×** deletes, drag to reorder; **+** adds a roll,
+  **⋯** has Nimble rules, export, import, about.
 - **+** adds a roll to the open tab: a name, the roll (filled in from the command
   line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
   the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
   to edit or delete it.
-- **⚡** is the tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
+- **⚡ Quick roll** is the open tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the ⚡ of the tab open in the
   panel (remembered even with the panel closed).

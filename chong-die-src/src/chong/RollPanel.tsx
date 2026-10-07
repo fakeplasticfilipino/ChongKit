@@ -9,7 +9,6 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import AddIcon from "@mui/icons-material/AddRounded";
-import BoltIcon from "@mui/icons-material/BoltRounded";
 
 import { useChongStore } from "./chongStore";
 import { MoreMenu } from "./MoreMenu";
@@ -26,31 +25,18 @@ export function RollPanel() {
   const tabs = useChongStore((state) => state.saved.tabs);
   const activeTabId = useChongStore((state) => state.activeTabId);
   const tab = tabs.find((t) => t.id === activeTabId) || tabs[0];
-  const setInstant = useChongStore((state) => state.setInstant);
   const draft = useChongStore((state) => state.draft);
   const addPill = useChongStore((state) => state.addPill);
   const [adding, setAdding] = useState(false);
 
   return (
     <Box component="div" sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      {/* Tabs, then Instant, add roll and ⋯ on the same row */}
+      {/* Tabs, then add roll and ⋯ on the same row (quick roll is beside the command line) */}
       <Box
         component="div"
         sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, borderBottom: 1, borderColor: "divider" }}
       >
         <TabStrip />
-        <Tooltip title="Instant" disableInteractive>
-          <IconButton
-            size="small"
-            aria-label="Instant"
-            aria-pressed={tab.instant}
-            color={tab.instant ? "primary" : "default"}
-            sx={{ opacity: tab.instant ? 1 : 0.5 }}
-            onClick={() => setInstant(tab.id, !tab.instant)}
-          >
-            <BoltIcon />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="Add roll" disableInteractive>
           <IconButton size="small" aria-label="Add roll" onClick={() => setAdding(true)}>
             <AddIcon />

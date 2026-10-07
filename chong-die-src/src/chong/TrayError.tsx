@@ -1,8 +1,9 @@
 import Typography from "@mui/material/Typography";
 
 import { useTrayStore } from "./trayStore";
+import { COMMAND_LINE_HEIGHT } from "./layout";
 
-/** Why the tray couldn't roll what it was sent, at the top of the tray until the next roll */
+/** Why the tray couldn't roll what it was sent, under the command line until the next roll */
 export function TrayError() {
   const error = useTrayStore((state) => state.error);
   if (!error) {
@@ -15,7 +16,7 @@ export function TrayError() {
       role="alert"
       sx={{
         position: "absolute",
-        top: 8,
+        top: COMMAND_LINE_HEIGHT,
         left: 8,
         right: 8,
         zIndex: 2,
