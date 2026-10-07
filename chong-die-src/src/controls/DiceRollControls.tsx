@@ -24,7 +24,7 @@ import { DiceType } from "../types/DiceType";
 import { useDiceHistoryStore } from "./history";
 import { Die } from "../types/Die";
 import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
-import { useChongStore } from "../chong/chongStore";
+import { useTrayStore } from "../chong/trayStore";
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -105,7 +105,7 @@ function DicePickedControls() {
   );
 
   const pushRecentRoll = useDiceHistoryStore((state) => state.pushRecentRoll);
-  const placed = useChongStore((state) => state.placed);
+  const placed = useTrayStore((state) => state.placed);
 
   function handleRoll() {
     if (hasDice && rollPressTime && placed) {
@@ -115,7 +115,7 @@ function DicePickedControls() {
       try {
         startCommandRoll(placed, { hidden, speedMultiplier });
       } catch (e) {
-        useChongStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+        useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
       }
       handleReset();
     } else if (

@@ -1,5 +1,6 @@
 import { useDiceControlsStore } from "../controls/store";
 import { useChongStore } from "./chongStore";
+import { useTrayStore } from "./trayStore";
 import { placeCommand } from "./place";
 import { startCommandRoll } from "./rollRunner";
 
@@ -20,10 +21,10 @@ export function handleIncomingRoll(command: string): "rolled" | "placed" | "erro
       startCommandRoll(command, { hidden: useDiceControlsStore.getState().diceHidden });
       chong.setPanelOpen(false);
     }
-    chong.setError(null);
+    useTrayStore.getState().setError(null);
     return outcome;
   } catch (e) {
-    chong.setError(e instanceof Error ? e.message : "Can't roll this");
+    useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
     return "error";
   }
 }

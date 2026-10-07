@@ -19,7 +19,7 @@ import { DiceThrow } from "../types/DiceThrow";
 import { DiceType } from "../types/DiceType";
 import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
 import { RollError } from "../roll";
-import { useChongStore } from "./chongStore";
+import { usePrefsStore } from "./prefsStore";
 import { countsToCommand, isPrimaryKey, resolvePrimaryStyle } from "./prefs";
 
 /**
@@ -36,7 +36,7 @@ export function startCommandRoll(
     parts: {},
     virtual: {},
     capped: false,
-    nimble: useChongStore.getState().prefs.nimble,
+    nimble: usePrefsStore.getState().prefs.nimble,
   };
   const wave = nextWave(cmd, meta, {});
   if (meta.error) {
@@ -54,7 +54,6 @@ export function startCommandRoll(
   useDiceRollStore
     .getState()
     .startRoll({ dice, combination: "NONE", hidden: opts.hidden, chong: meta }, opts.speedMultiplier);
-  useChongStore.getState().recordHistory(command);
   useDiceHistoryStore.getState().pushRecentRoll({
     counts: {},
     bonus: 0,
@@ -124,7 +123,7 @@ export function nextWave(
 function styleFor(type: DiceType, key: string) {
   const set = useDiceControlsStore.getState().diceSet;
   const style = (set.dice.find((d) => d.type === type) || set.dice[0]).style;
-  const { primaryStyle, nimble } = useChongStore.getState().prefs;
+  const { primaryStyle, nimble } = usePrefsStore.getState().prefs;
   if (nimble && isPrimaryKey(key)) {
     return resolvePrimaryStyle(primaryStyle, style);
   }

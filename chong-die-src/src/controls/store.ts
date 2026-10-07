@@ -5,7 +5,7 @@ import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
-import { useChongStore } from "../chong/chongStore";
+import { useTrayStore } from "../chong/trayStore";
 
 let placing = false;
 
@@ -21,8 +21,8 @@ export function whilePlacing(fn: () => void) {
 
 /** Changing dice by hand drops a placed command: the roll is a normal one again */
 function dropPlaced() {
-  if (!placing && useChongStore.getState().placed !== null) {
-    useChongStore.getState().setPlaced(null);
+  if (!placing && useTrayStore.getState().placed !== null) {
+    useTrayStore.getState().setPlaced(null);
   }
 }
 

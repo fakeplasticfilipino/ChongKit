@@ -10,24 +10,16 @@ import {
   saveSaved,
   SavedRolls,
 } from "./savedRolls";
-import { loadPrefs, Prefs, savePrefs } from "./prefs";
-import { DiceStyle } from "../types/DiceStyle";
 
 interface ChongState {
   saved: SavedRolls;
   activeTabId: string;
   panelOpen: boolean;
-  /** Command whose dice are placed on the tray, waiting to be thrown */
-  placed: string | null;
   /** Message shown under the command line */
   error: string | null;
   /** What's typed in the command line (the + button starts a pill from it) */
   draft: string;
   setDraft: (text: string) => void;
-  /** Primary die style and Nimble rules (saved in this browser) */
-  prefs: Prefs;
-  setPrimaryStyle: (style: DiceStyle | null) => void;
-  setNimble: (on: boolean) => void;
   addTab: () => void;
   renameTab: (id: string, name: string) => void;
   deleteTab: (id: string) => void;
@@ -39,7 +31,6 @@ interface ChongState {
   deletePill: (id: string) => void;
   movePill: (id: string, toTabId: string, toIndex: number) => void;
   setPanelOpen: (open: boolean) => void;
-  setPlaced: (cmd: string | null) => void;
   setError: (msg: string | null) => void;
   recordHistory: (cmd: string) => void;
   replaceSaved: (s: SavedRolls) => void;
@@ -64,20 +55,8 @@ export const useChongStore = create<ChongState>()(
     saved: initial,
     activeTabId: initial.activeTabId ?? initial.tabs[0].id,
     panelOpen: true,
-    placed: null,
     error: null,
     draft: "",
-    prefs: loadPrefs(),
-    setPrimaryStyle(style) {
-      set((state) => {
-        state.prefs.primaryStyle = style;
-      });
-    },
-    setNimble(on) {
-      set((state) => {
-        state.prefs.nimble = on;
-      });
-    },
     setDraft(text) {
       set((state) => {
         state.draft = text;
@@ -188,11 +167,6 @@ export const useChongStore = create<ChongState>()(
         state.panelOpen = open;
       });
     },
-    setPlaced(cmd) {
-      set((state) => {
-        state.placed = cmd;
-      });
-    },
     setError(msg) {
       set((state) => {
         state.error = msg;
@@ -216,8 +190,5 @@ export const useChongStore = create<ChongState>()(
 useChongStore.subscribe((state, prev) => {
   if (state.saved !== prev.saved || state.activeTabId !== prev.activeTabId) {
     saveSaved({ ...state.saved, activeTabId: state.activeTabId });
-  }
-  if (state.prefs !== prev.prefs) {
-    savePrefs(state.prefs);
   }
 });

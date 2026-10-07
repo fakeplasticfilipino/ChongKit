@@ -9,7 +9,7 @@ import { DiceHidden } from "./DiceHidden";
 import { DiceHistory } from "./DiceHistory";
 import { PanelToggle } from "../chong/PanelToggle";
 import { PrimaryDiePicker } from "../chong/PrimaryDiePicker";
-import { useChongStore } from "../chong/chongStore";
+import { usePrefsStore } from "../chong/prefsStore";
 import { IncomingRolls } from "../chong/IncomingRolls";
 
 import { FairnessTesterButton } from "../tests/FairnessTesterButton";
@@ -21,7 +21,7 @@ import { ResizeObserver as PluginResizeObserver } from "../plugin/ResizeObserver
 
 export function Sidebar() {
   // The primary die only matters with Nimble rules on (⋯ menu in the panel)
-  const nimble = useChongStore((state) => state.prefs.nimble);
+  const nimble = usePrefsStore((state) => state.prefs.nimble);
   return (
     <SimpleBar
       style={{

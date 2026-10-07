@@ -8,15 +8,15 @@ import { styled } from "@mui/material/styles";
 
 import { standardPreviews } from "../sets/diceSets";
 import { useDiceControlsStore } from "../controls/store";
-import { useChongStore } from "./chongStore";
+import { usePrefsStore } from "./prefsStore";
 import { resolvePrimaryStyle, STYLES } from "./prefs";
 
 const PreviewImage = styled("img")({ width: "24px", height: "24px" });
 
 /** Sidebar button (under the dice style picker) choosing the primary die's style */
 export function PrimaryDiePicker() {
-  const choice = useChongStore((state) => state.prefs.primaryStyle);
-  const setPrimaryStyle = useChongStore((state) => state.setPrimaryStyle);
+  const choice = usePrefsStore((state) => state.prefs.primaryStyle);
+  const setPrimaryStyle = usePrefsStore((state) => state.setPrimaryStyle);
   const diceStyle = useDiceControlsStore((state) => state.diceSet.dice[0].style);
   const style = resolvePrimaryStyle(choice, diceStyle);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);

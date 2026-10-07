@@ -4,11 +4,13 @@ import { nextWave, rollPickedDice, startCommandRoll } from "./rollRunner";
 import { ChongRollMeta } from "./rollMeta";
 import { placeCommand } from "./place";
 import { useChongStore } from "./chongStore";
+import { usePrefsStore } from "./prefsStore";
+import { useTrayStore } from "./trayStore";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 
 beforeEach(() => {
-  useChongStore.getState().setPlaced(null);
+  useTrayStore.getState().setPlaced(null);
   useDiceControlsStore.getState().resetDiceCounts();
   useDiceRollStore.getState().clearRoll();
 });
@@ -35,7 +37,7 @@ test("a typed roll clears placed dice", () => {
   startCommandRoll("1d20", { hidden: false });
   const { diceSet, diceCounts } = useDiceControlsStore.getState();
   const d6 = diceSet.dice.find((d) => d.type === "D6")!;
-  expect(useChongStore.getState().placed).toBeNull();
+  expect(useTrayStore.getState().placed).toBeNull();
   expect(diceCounts[d6.id]).toBe(0);
 });
 
@@ -52,8 +54,8 @@ test("rethrowing one die of a command roll keeps it in the roll", () => {
 });
 
 test("the first die of each roll uses the primary style, and Nimble is recorded", () => {
-  useChongStore.getState().setPrimaryStyle("SUNSET");
-  useChongStore.getState().setNimble(true);
+  usePrefsStore.getState().setPrimaryStyle("SUNSET");
+  usePrefsStore.getState().setNimble(true);
   startCommandRoll("!rr 2 2d6", { hidden: false });
   const roll = useDiceRollStore.getState().roll!;
   const styleByKey: Record<string, string> = {};
@@ -64,8 +66,8 @@ test("the first die of each roll uses the primary style, and Nimble is recorded"
   expect(styleByKey["0.0.0"]).toBe("SUNSET");
   expect(styleByKey["1.0.0"]).toBe("SUNSET");
   expect(styleByKey["0.0.1"]).not.toBe("SUNSET");
-  useChongStore.getState().setNimble(false);
-  useChongStore.getState().setPrimaryStyle(null);
+  usePrefsStore.getState().setNimble(false);
+  usePrefsStore.getState().setPrimaryStyle(null);
 });
 
 test("dice picked by hand roll as a command with a primary die", () => {
@@ -77,10 +79,16 @@ test("dice picked by hand roll as a command with a primary die", () => {
 });
 
 test("with Nimble off the first die keeps the normal style", () => {
-  useChongStore.getState().setPrimaryStyle("SUNSET");
-  useChongStore.getState().setNimble(false);
+  usePrefsStore.getState().setPrimaryStyle("SUNSET");
+  usePrefsStore.getState().setNimble(false);
   startCommandRoll("2d6", { hidden: false });
   const roll = useDiceRollStore.getState().roll!;
   expect((roll.dice as { style: string }[]).map((d) => d.style)).not.toContain("SUNSET");
-  useChongStore.getState().setPrimaryStyle(null);
+  usePrefsStore.getState().setPrimaryStyle(null);
+});
+
+test("rolling on the tray leaves the saved rolls alone (only the Rolls window writes them)", () => {
+  const before = useChongStore.getState().saved;
+  startCommandRoll("1d20+3", { hidden: false });
+  expect(useChongStore.getState().saved).toBe(before);
 });

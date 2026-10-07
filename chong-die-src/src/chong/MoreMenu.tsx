@@ -17,6 +17,7 @@ import MoreIcon from "@mui/icons-material/MoreVertRounded";
 import CheckIcon from "@mui/icons-material/CheckRounded";
 
 import { useChongStore } from "./chongStore";
+import { usePrefsStore } from "./prefsStore";
 import { importSaved, SavedRolls } from "./savedRolls";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -28,8 +29,8 @@ export function MoreMenu() {
   const fileRef = useRef<HTMLInputElement>(null);
   const setError = useChongStore((state) => state.setError);
   const replaceSaved = useChongStore((state) => state.replaceSaved);
-  const nimble = useChongStore((state) => state.prefs.nimble);
-  const setNimble = useChongStore((state) => state.setNimble);
+  const nimble = usePrefsStore((state) => state.prefs.nimble);
+  const setNimble = usePrefsStore((state) => state.setNimble);
 
   function exportRolls() {
     const saved = useChongStore.getState().saved;

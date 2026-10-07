@@ -1,6 +1,7 @@
 import { beforeEach, expect, test } from "vitest";
 import { createRunDeduper, handleIncomingRoll } from "./incoming";
 import { useChongStore } from "./chongStore";
+import { useTrayStore } from "./trayStore";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 
@@ -10,8 +11,8 @@ function setInstant(on: boolean) {
 }
 
 beforeEach(() => {
-  useChongStore.getState().setPlaced(null);
-  useChongStore.getState().setError(null);
+  useTrayStore.getState().setPlaced(null);
+  useTrayStore.getState().setError(null);
   useDiceControlsStore.getState().resetDiceCounts();
   useDiceRollStore.getState().clearRoll();
 });
@@ -25,7 +26,7 @@ test("instant tab rolls the command now", () => {
 test("place tab puts the dice on the tray", () => {
   setInstant(false);
   expect(handleIncomingRoll("2d6")).toBe("placed");
-  expect(useChongStore.getState().placed).toBe("2d6");
+  expect(useTrayStore.getState().placed).toBe("2d6");
 });
 
 test("place tab rolls a command with only virtual dice", () => {
@@ -36,7 +37,7 @@ test("place tab rolls a command with only virtual dice", () => {
 test("a command that can't roll shows its error", () => {
   setInstant(true);
   expect(handleIncomingRoll("1d0")).toBe("error");
-  expect(useChongStore.getState().error).toBe("Unknown die d0");
+  expect(useTrayStore.getState().error).toBe("Unknown die d0");
 });
 
 test("a re-sent message rolls once", () => {

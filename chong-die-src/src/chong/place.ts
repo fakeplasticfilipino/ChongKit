@@ -1,6 +1,6 @@
 import { evaluate, parseCommand, toPhysical } from "../roll";
 import { useDiceControlsStore, whilePlacing } from "../controls/store";
-import { useChongStore } from "./chongStore";
+import { useTrayStore } from "./trayStore";
 
 /**
  * How many of each 3D die the command's first throw needs, as the tray's
@@ -40,8 +40,6 @@ export function placeCommand(command: string): boolean {
       }
     }
   });
-  const chong = useChongStore.getState();
-  chong.setPlaced(command.trim());
-  chong.setPanelOpen(false);
+  useTrayStore.getState().setPlaced(command.trim());
   return true;
 }
