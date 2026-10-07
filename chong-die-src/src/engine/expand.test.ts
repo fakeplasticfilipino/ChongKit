@@ -47,3 +47,15 @@ test("parseDefinition", () => {
   expect(parseDefinition("two words = 1d4")).toBeNull();
   expect(parseDefinition("2d6 = 1d4")).toBeNull();
 });
+
+test("a name's note moves to the end", () => {
+  const n = { atk: "1d10 crit # sword", big: "atk +1 # big", plain: "1d4" };
+  expect(expand("atk +3", n)).toBe("1d10 crit +3 # sword");
+  expect(expand("atk +3 # first", n)).toBe("1d10 crit +3 # first · sword");
+  expect(expand("big +2", n)).toBe("1d10 crit +1 +2 # sword · big");
+  expect(expand("plain +1", n)).toBe("1d4 +1");
+});
+
+test("a diamond is not a loop", () => {
+  expect(expand("a", { a: "b +c", b: "d", c: "d", d: "1d4" })).toBe("1d4 +1d4");
+});

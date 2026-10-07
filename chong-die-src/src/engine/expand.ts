@@ -17,27 +17,44 @@ export function checkName(name: string): string | null {
 
 const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 
-function expandText(text: string, names: Record<string, string>, chain: string[]): string {
+function expandText(
+  text: string,
+  names: Record<string, string>,
+  chain: string[],
+  notes: string[],
+): string {
   const hash = text.indexOf("#");
   const body = hash < 0 ? text : text.slice(0, hash);
-  const rest = hash < 0 ? "" : text.slice(hash);
+  const note = hash < 0 ? "" : text.slice(hash + 1).trim();
   let out = "";
   for (const piece of body.split(/(\s+|[+-])/)) {
     const key = piece.toLowerCase();
     if (piece && has(names, key) && !/^[\s+-]/.test(piece)) {
       if (chain.includes(key)) {
-        throw new EngineError(`Saved names loop: ${[...chain, key].join(" → ")}`);
+        throw new EngineError("Saved names loop: " + [...chain, key].join(" → "));
       }
-      out += expandText(names[key], names, [...chain, key]);
+      out += expandText(names[key], names, [...chain, key], notes);
     } else out += piece;
     if (out.length > MAX_EXPANDED) throw new EngineError("Saved names are too long once expanded");
   }
-  return out + rest;
+  if (note && chain.length) notes.push(note);
+  return out;
 }
 
-/** Replace every whole-word saved name (case-insensitive, recursively); text after `#` is left alone. */
+/**
+ * Replace every whole-word saved name (case-insensitive, recursively). Text after the command's
+ * own # is never expanded; a name's own # note moves to the end: command note first, then the
+ * names' notes in order of use, joined by " · ".
+ */
 export function expand(text: string, names: Record<string, string>): string {
-  const out = expandText(text, names, []).replace(/\s+/g, " ").trim();
+  const hash = text.indexOf("#");
+  const cmdNote = hash < 0 ? "" : text.slice(hash + 1).trim();
+  const notes: string[] = [];
+  const body = expandText(hash < 0 ? text : text.slice(0, hash), names, [], notes)
+    .replace(/\s+/g, " ")
+    .trim();
+  const all = [cmdNote, ...notes].filter(Boolean);
+  const out = all.length ? (body + " # " + all.join(" · ")).trim() : body;
   if (out.length > MAX_EXPANDED) throw new EngineError("Saved names are too long once expanded");
   return out;
 }
