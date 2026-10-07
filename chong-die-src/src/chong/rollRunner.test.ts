@@ -92,3 +92,9 @@ test("rolling on the tray leaves the saved rolls alone (only the Rolls window wr
   startCommandRoll("1d20+3", { hidden: false });
   expect(useChongStore.getState().saved).toBe(before);
 });
+
+test("the next roll clears the tray's error banner", () => {
+  useTrayStore.getState().setError("Unknown die d0");
+  startCommandRoll("1d20", { hidden: false });
+  expect(useTrayStore.getState().error).toBeNull();
+});

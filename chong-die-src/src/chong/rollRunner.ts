@@ -20,6 +20,7 @@ import { DiceType } from "../types/DiceType";
 import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
 import { RollError } from "../roll";
 import { usePrefsStore } from "./prefsStore";
+import { useTrayStore } from "./trayStore";
 import { countsToCommand, isPrimaryKey, resolvePrimaryStyle } from "./prefs";
 
 /**
@@ -54,6 +55,7 @@ export function startCommandRoll(
   useDiceRollStore
     .getState()
     .startRoll({ dice, combination: "NONE", hidden: opts.hidden, chong: meta }, opts.speedMultiplier);
+  useTrayStore.getState().setError(null);
   useDiceHistoryStore.getState().pushRecentRoll({
     counts: {},
     bonus: 0,

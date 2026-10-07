@@ -2,16 +2,17 @@ import OBR from "@owlbear-rodeo/sdk";
 import { useEffect } from "react";
 import throttle from "lodash.throttle";
 
+import { TRAY_ID, trayWidth } from "../chong/trayWindow";
+
 const THROTTLE_TIME = 100;
-const SIDEBAR_WIDTH = 60;
 
 /**
- * Observe window resize and make sure the plugin keeps its aspect ratio
+ * Observe window resize and make sure the tray window keeps its aspect ratio
  */
 export function ResizeObserver() {
   useEffect(() => {
     const handleResize = throttle(() => {
-      OBR.action.setWidth(window.innerHeight / 2 + SIDEBAR_WIDTH);
+      OBR.popover.setWidth(TRAY_ID, trayWidth(window.innerHeight));
     }, THROTTLE_TIME);
 
     handleResize();
