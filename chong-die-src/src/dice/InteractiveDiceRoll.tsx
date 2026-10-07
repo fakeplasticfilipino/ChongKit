@@ -9,7 +9,6 @@ export function InteractiveDiceRoll() {
   const roll = useDiceRollStore((state) => state.roll);
   const rollThrows = useDiceRollStore((state) => state.rollThrows);
   const finishDieRoll = useDiceRollStore((state) => state.finishDieRoll);
-  const rollValues = useDiceRollStore((state) => state.rollValues);
 
   const finishedTransforms = useDiceRollStore((state) => {
     const values = Object.values(state.rollTransforms);
@@ -39,7 +38,6 @@ export function InteractiveDiceRoll() {
       roll={roll}
       rollThrows={rollThrows}
       finishedTransforms={finishedTransforms}
-      rollValues={rollValues}
       onRollFinished={finishDieRoll}
       Dice={InteractiveDice}
       transformsRef={transformsRef}

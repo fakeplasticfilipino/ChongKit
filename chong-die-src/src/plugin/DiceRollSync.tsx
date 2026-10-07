@@ -40,8 +40,13 @@ export function DiceRollSync() {
           const transforms = state.roll?.hidden
             ? undefined
             : state.rollTransforms;
+          // A hidden command roll's record holds every value: keep it to this tray
+          const roll =
+            state.roll?.hidden && state.roll.chong
+              ? { ...state.roll, chong: undefined }
+              : state.roll;
           OBR.player.setMetadata({
-            [getPluginId("roll")]: state.roll,
+            [getPluginId("roll")]: roll,
             [getPluginId("rollThrows")]: throws,
             [getPluginId("rollValues")]: values,
             [getPluginId("rollTransforms")]: transforms,

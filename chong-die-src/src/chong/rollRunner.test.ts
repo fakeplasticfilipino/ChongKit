@@ -1,36 +1,87 @@
 import { beforeEach, expect, test } from "vitest";
-import { parseCommand } from "../roll";
-import { explodeDie, nextWave, rollPickedDice, startCommandRoll } from "./rollRunner";
-import { ChongRollMeta } from "./rollMeta";
+import { revealNext, rollPickedDice, startCommandRoll } from "./rollRunner";
+import { getRollDisplay } from "./rollMeta";
 import { useChongStore } from "./chongStore";
 import { useTrayStore } from "./trayStore";
-import { usePrefsStore } from "./prefsStore";
+import { emptySaved } from "./savedRolls";
 import { useDiceControlsStore } from "../controls/store";
+import { useDiceHistoryStore } from "../controls/history";
 import { useDiceRollStore } from "../dice/store";
+import { getDieFromDice } from "../helpers/getDieFromDice";
 
 const LANDED = { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } };
 
+const trayIds = () => getDieFromDice(useDiceRollStore.getState().roll!).map((d) => d.id);
+const settleAll = () => {
+  for (const id of trayIds()) {
+    if (useDiceRollStore.getState().rollValues[id] === null) {
+      useDiceRollStore.getState().finishDieRoll(id, 1, LANDED);
+    }
+  }
+};
+
 beforeEach(() => {
+  useChongStore.getState().replaceSaved(emptySaved());
   useDiceControlsStore.getState().resetDiceCounts();
   useDiceRollStore.getState().clearRoll();
 });
 
-test("dividing by zero after landing ends the roll with an error", () => {
-  const meta: ChongRollMeta = {
-    command: "1d6/(1d2-1)",
-    parts: {
-      a: { key: "0.0.0", size: 6, part: 0 },
-      b: { key: "0.1.0", size: 2, part: 0 },
-    },
-    virtual: {},
-    capped: false,
-  };
-  expect(nextWave(parseCommand(meta.command), meta, { a: 3, b: 1 })).toEqual([]);
-  expect(meta.error).toBe("Can't divide by zero");
+test("a command roll puts stage 0 on the tray and records the faces", () => {
+  startCommandRoll("2d6 adv", { hidden: false });
+  const { roll } = useDiceRollStore.getState();
+  expect(roll!.chong!.v).toBe(3);
+  expect(Object.keys(roll!.chong!.parts)).toHaveLength(3);
+  expect(Object.keys(roll!.chong!.faces)).toHaveLength(3);
+  expect(trayIds()).toHaveLength(3);
+  expect(roll!.chong!.stage).toBe(0);
 });
 
-test("a typed roll that can't work is refused before rolling", () =>
-  expect(() => startCommandRoll("1/0", { hidden: false })).toThrow("Can't divide by zero"));
+test("chain dice wait for their parent to settle", () => {
+  // chain 1+: the Primary Die always adds a chain die
+  startCommandRoll("1d6 crit chain 1+", { hidden: false });
+  expect(trayIds()).toHaveLength(1);
+  revealNext();
+  expect(trayIds()).toHaveLength(1);
+  useDiceRollStore.getState().finishDieRoll(trayIds()[0], 2, LANDED);
+  revealNext();
+  expect(trayIds()).toHaveLength(2);
+  expect(useDiceRollStore.getState().roll!.chong!.stage).toBe(1);
+  // The chain die pops out of its parent
+  const [, child] = trayIds();
+  expect(useDiceRollStore.getState().rollThrows[child].position.y).toBeCloseTo(0.6);
+});
+
+test("the result shows once every stage has settled, from the record", () => {
+  startCommandRoll("1d6 crit chain 1+ + 2", { hidden: false });
+  for (let i = 0; i < 30 && !getRollDisplay(useDiceRollStore.getState().roll!, useDiceRollStore.getState().rollValues); i++) {
+    settleAll();
+    revealNext();
+  }
+  const { roll, rollValues } = useDiceRollStore.getState();
+  const display = getRollDisplay(roll!, rollValues)!;
+  expect(display.total).toBe(String(roll!.chong!.record.reps[0].total));
+  expect(display.lines[0]).toMatch(/^1d6 \(\**\d\**\) \+ chain/);
+});
+
+test("a roll of dice with no 3D model finishes at once", () => {
+  startCommandRoll("1d7 + 1", { hidden: false });
+  const { roll, rollValues } = useDiceRollStore.getState();
+  expect(trayIds()).toHaveLength(0);
+  expect(getRollDisplay(roll!, rollValues)).not.toBeNull();
+});
+
+test("saved names expand before rolling, and the expanded text is what rolls", () => {
+  useChongStore.getState().setName("atk", "1d10 nimble # sword");
+  startCommandRoll("atk +3", { hidden: false });
+  const { record } = useDiceRollStore.getState().roll!.chong!;
+  expect(record.text).toBe("1d10 crit miss 1 +3 # sword");
+  expect(useDiceHistoryStore.getState().recentRolls.slice(-1)[0].command).toBe("1d10 crit miss 1 +3 # sword");
+});
+
+test("a typed roll that can't work is refused before rolling", () => {
+  expect(() => startCommandRoll("1d20 frob", { hidden: false })).toThrow(/frob/);
+  expect(useDiceRollStore.getState().roll).toBeNull();
+});
 
 test("a typed roll clears dice picked by hand", () => {
   const { diceSet, changeDieCount } = useDiceControlsStore.getState();
@@ -40,16 +91,18 @@ test("a typed roll clears dice picked by hand", () => {
   expect(useDiceControlsStore.getState().diceCounts[d6.id]).toBe(0);
 });
 
-test("rethrowing one die of a command roll keeps it in the roll", () => {
+test("rethrowing one die of a command roll keeps it in the roll, with its face", () => {
   startCommandRoll("1d20+5", { hidden: false });
   const store = useDiceRollStore.getState();
   const [oldId] = Object.keys(store.roll!.chong!.parts);
-  store.finishDieRoll(oldId, 7, { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+  const face = store.roll!.chong!.faces[oldId];
+  store.finishDieRoll(oldId, 7, LANDED);
   useDiceRollStore.getState().reroll([oldId]);
-  const parts = useDiceRollStore.getState().roll!.chong!.parts;
+  const { parts, faces } = useDiceRollStore.getState().roll!.chong!;
   expect(Object.keys(parts)).toHaveLength(1);
   expect(parts[oldId]).toBeUndefined();
-  expect(Object.values(parts)[0].key).toBe("0.0.0");
+  expect(Object.values(parts)[0]).toEqual({ rep: 0, die: 0, part: 0 });
+  expect(Object.values(faces)).toEqual([face]);
 });
 
 test("dice picked by hand roll as a command", () => {
@@ -57,7 +110,7 @@ test("dice picked by hand roll as a command", () => {
   const d8 = controls.diceSet.dice.find((d) => d.type === "D8")!;
   controls.changeDieCount(d8.id, 2);
   rollPickedDice({ hidden: false });
-  expect(useDiceRollStore.getState().roll!.chong!.command).toBe("2d8");
+  expect(useDiceRollStore.getState().roll!.chong!.record.text).toBe("2d8");
 });
 
 test("rolling on the tray leaves the saved rolls alone (only the Rolls window writes them)", () => {
@@ -70,55 +123,4 @@ test("the next roll clears the tray's error banner", () => {
   useTrayStore.getState().setError("Unknown die d0");
   startCommandRoll("1d20", { hidden: false });
   expect(useTrayStore.getState().error).toBeNull();
-});
-
-
-test("a roll records whether Nimble was on", () => {
-  usePrefsStore.getState().setNimble(true);
-  startCommandRoll("1d6", { hidden: false });
-  expect(useDiceRollStore.getState().roll!.chong!.nimble).toBe(true);
-  usePrefsStore.getState().setNimble(false);
-  startCommandRoll("1d6", { hidden: false });
-  expect(useDiceRollStore.getState().roll!.chong!.nimble).toBe(false);
-});
-
-test("without Nimble a die can't be exploded", () => {
-  usePrefsStore.getState().setNimble(false);
-  startCommandRoll("1d6", { hidden: false });
-  const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
-  useDiceRollStore.getState().finishDieRoll(id, 2, LANDED);
-  expect(explodeDie(id)).toBe(false);
-});
-
-test("exploding a landed die records it and throws a new die out of it", () => {
-  usePrefsStore.getState().setNimble(true);
-  startCommandRoll("1d6+2d6", { hidden: false });
-  const store = useDiceRollStore.getState();
-  const parts = store.roll!.chong!.parts;
-  for (const id of Object.keys(parts)) {
-    useDiceRollStore.getState().finishDieRoll(id, 3, LANDED);
-  }
-  const id = Object.keys(parts).find((i) => parts[i].key === "0.1.0")!;
-  expect(explodeDie(id)).toBe(true);
-  const roll = useDiceRollStore.getState().roll!;
-  expect(roll.chong!.manual).toEqual(["0.1.0"]);
-  expect(Object.values(roll.chong!.parts).map((p) => p.key)).toContain("0.1.0m");
-});
-
-test("a die still rolling can't be exploded", () => {
-  usePrefsStore.getState().setNimble(true);
-  startCommandRoll("1d6", { hidden: false });
-  const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
-  expect(explodeDie(id)).toBe(false);
-  expect(useDiceRollStore.getState().roll!.chong!.manual).toBeUndefined();
-});
-
-test("exploding the same die twice does nothing the second time", () => {
-  usePrefsStore.getState().setNimble(true);
-  startCommandRoll("1d6", { hidden: false });
-  const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
-  useDiceRollStore.getState().finishDieRoll(id, 2, LANDED);
-  expect(explodeDie(id)).toBe(true);
-  expect(explodeDie(id)).toBe(false);
-  expect(useDiceRollStore.getState().roll!.chong!.manual).toEqual(["0.0.0"]);
 });

@@ -1,6 +1,7 @@
 import create from "zustand";
 import { immer } from "zustand/middleware/immer";
 
+import { checkName } from "../engine";
 import {
   emptySaved,
   loadSaved,
@@ -31,6 +32,8 @@ interface ChongState {
   setError: (msg: string | null) => void;
   recordHistory: (cmd: string) => void;
   replaceSaved: (s: SavedRolls) => void;
+  /** Save a name (`atk = 1d10 nimble`), or with empty text delete it; names `checkName` refuses are ignored */
+  setName: (name: string, text: string) => void;
 }
 
 const newId = () => Math.random().toString(36).slice(2, 10);
@@ -159,6 +162,19 @@ export const useChongStore = create<ChongState>()(
     recordHistory(cmd) {
       set((state) => {
         state.saved.history = pushHistory(state.saved.history, cmd);
+      });
+    },
+    setName(name, text) {
+      const key = name.trim().toLowerCase();
+      if (checkName(key) !== null) {
+        return;
+      }
+      set((state) => {
+        if (text.trim()) {
+          state.saved.names[key] = text.trim();
+        } else {
+          delete state.saved.names[key];
+        }
       });
     },
     replaceSaved(s) {

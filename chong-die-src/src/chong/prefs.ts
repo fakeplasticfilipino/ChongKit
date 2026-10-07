@@ -2,15 +2,13 @@ import { Die } from "../types/Die";
 
 /** This browser's settings */
 export interface Prefs {
-  /** Nimble: each term's leftmost die glows, right-click a die to start a chain of explosions */
-  nimble: boolean;
   /** The Rolls panel docked beside the tray is open */
   panelOpen: boolean;
 }
 
 export const PREFS_KEY = "chongkit.chongdie.prefs";
 
-const DEFAULTS: Prefs = { nimble: false, panelOpen: true };
+const DEFAULTS: Prefs = { panelOpen: true };
 
 function defaultStorage(): Storage | undefined {
   try {
@@ -24,10 +22,8 @@ export function loadPrefs(storage = defaultStorage()): Prefs {
   try {
     const raw = JSON.parse(storage?.getItem(PREFS_KEY) || "null");
     if (raw && typeof raw === "object") {
-      return {
-        nimble: raw.nimble === true,
-        panelOpen: raw.panelOpen !== false,
-      };
+      // Older prefs also held the 2.x Nimble switch: it's dropped
+      return { panelOpen: raw.panelOpen !== false };
     }
   } catch {
     // Blocked or corrupt storage: defaults
@@ -43,7 +39,7 @@ export function savePrefs(prefs: Prefs, storage = defaultStorage()): void {
   }
 }
 
-/** Dice picked by hand on the tray, as a command (so they get highlights and can be exploded) */
+/** Dice picked by hand on the tray, as a command (everything rolls through the engine) */
 export function countsToCommand(
   counts: Record<string, number>,
   diceById: Record<string, Die>,

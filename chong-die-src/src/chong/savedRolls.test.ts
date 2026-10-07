@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import {
+  allNames,
   emptySaved,
   importSaved,
   loadSaved,
@@ -58,8 +59,9 @@ test("save that throws is ignored", () => {
 test("round trip", () => {
   const storage = fakeStorage();
   const s = emptySaved();
-  s.tabs[0].pills.push({ id: "p1", name: "Sword", command: "!r 1d20+5" });
+  s.tabs[0].pills.push({ id: "p1", name: "Sword", command: "1d20+5" });
   s.history = ["1d6"];
+  s.names = { atk: "1d10 nimble" };
   saveSaved(s, storage);
   expect(loadSaved(storage)).toEqual(s);
 });
@@ -73,7 +75,7 @@ test("validate drops pills without a command, keeps unparseable ones", () => {
         name: "A",
         pills: [
           { id: "a", name: "No command" },
-          { id: "b", name: "Broken", command: "1d0" },
+          { id: "b", name: "Broken", command: "!r 1d20kh1" },
         ],
       },
     ],
@@ -89,10 +91,37 @@ test("validate rejects non-objects and missing tabs", () => {
 });
 
 test("pill error", () => {
-  expect(pillError({ id: "x", name: "x", command: "1d0" })).toBe(
-    "Unknown die d0"
-  );
-  expect(pillError({ id: "x", name: "x", command: "!r 1d20" })).toBeNull();
+  expect(pillError({ id: "x", name: "x", command: "1d20 frob" })).toMatch(/frob/);
+  expect(pillError({ id: "x", name: "x", command: "1d20 + 5" })).toBeNull();
+  // An old Avrae command is just text: it fails with a visible error
+  expect(pillError({ id: "x", name: "x", command: "!r 1d20" })).not.toBeNull();
+});
+
+test("pill error expands saved names", () => {
+  const names = allNames({ ...emptySaved(), names: { atk: "1d10 nimble" } });
+  expect(pillError({ id: "x", name: "x", command: "atk + 3" }, names)).toBeNull();
+  expect(pillError({ id: "x", name: "x", command: "atk + 3" })).not.toBeNull();
+});
+
+test("saved data without names loads with none", () =>
+  expect(validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], history: [] })!.names).toEqual({}));
+
+test("names are checked: bad names and non-text dropped, kept lower case", () =>
+  expect(
+    validateSavedRolls({
+      version: 1,
+      tabs: [{ id: "a", name: "A", pills: [] }],
+      history: [],
+      names: { Atk: "1d10 crit", crit: "x", "2d6": "y", "bad name": "z", n: 5, ok: "" },
+    })!.names
+  ).toEqual({ atk: "1d10 crit" }));
+
+test("names that aren't an object are ignored", () =>
+  expect(validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], names: ["x"] })!.names).toEqual({}));
+
+test("built-in names sit under the user's: a user's nimble wins", () => {
+  expect(allNames(emptySaved()).nimble).toBe("crit miss 1");
+  expect(allNames({ ...emptySaved(), names: { nimble: "crit" } }).nimble).toBe("crit");
 });
 
 test("history keeps the last 50 and skips an immediate repeat", () => {
@@ -144,4 +173,4 @@ test("old pills without a description load unchanged", () => {
 test("old saves with Instant switches and an active tab still load", () =>
   expect(
     validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", instant: true, pills: [] }], history: [], activeTabId: "a" })
-  ).toEqual({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], history: [] }));
+  ).toEqual({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], history: [], names: {} }));

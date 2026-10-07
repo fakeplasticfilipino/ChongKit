@@ -11,14 +11,14 @@ beforeEach(() => {
 });
 
 test("a roll from Chong's Tracker waits on the tray to be thrown", () => {
-  expect(handleIncomingRoll("!rr 2 1d6!+1d6+3")).toBe("placed");
-  expect(useTrayStore.getState().placed).toBe("!rr 2 1d6!+1d6+3");
+  expect(handleIncomingRoll("1d6 explode + 1d6 + 3 x2")).toBe("placed");
+  expect(useTrayStore.getState().placed).toBe("1d6 explode + 1d6 + 3 x2");
   expect(useDiceRollStore.getState().roll).toBeNull();
 });
 
 test("a command that can't roll shows its error on the tray", () => {
   expect(handleIncomingRoll("1d0")).toBe("error");
-  expect(useTrayStore.getState().error).toBe("Unknown die d0");
+  expect(useTrayStore.getState().error).toBe('"1d0" must have 1 to 1000 sides');
 });
 
 test("a re-sent message rolls once", () => {

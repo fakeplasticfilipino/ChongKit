@@ -17,21 +17,22 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
   } as unknown as Storage;
 }
 
-test("default prefs: Nimble off, panel open", () =>
-  expect(loadPrefs(fakeStorage())).toEqual({ nimble: false, panelOpen: true }));
+test("default prefs: panel open", () =>
+  expect(loadPrefs(fakeStorage())).toEqual({ panelOpen: true }));
 
 test("prefs round trip", () => {
   const storage = fakeStorage();
-  savePrefs({ nimble: true, panelOpen: false }, storage);
-  expect(loadPrefs(storage)).toEqual({ nimble: true, panelOpen: false });
+  savePrefs({ panelOpen: false }, storage);
+  expect(loadPrefs(storage)).toEqual({ panelOpen: false });
 });
 
 test("bad prefs fall back to the defaults", () => {
-  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ nimble: false, panelOpen: true });
-  expect(
-    loadPrefs(fakeStorage({ [PREFS_KEY]: '{"nimble":"yes","panelOpen":"no"}' }))
-  ).toEqual({ nimble: false, panelOpen: true });
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ panelOpen: true });
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: '{"panelOpen":"no"}' }))).toEqual({ panelOpen: true });
 });
+
+test("prefs saved with the old Nimble switch load without it", () =>
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: '{"nimble":true,"panelOpen":false}' }))).toEqual({ panelOpen: false }));
 
 const die = (id: string, type: Die["type"]): Die => ({ id, type, style: "GALAXY" });
 

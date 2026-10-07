@@ -1,54 +1,41 @@
 import { useEffect } from "react";
 
-import {
-  Command,
-  evaluate,
-  LogicalDie,
-  parseCommand,
-  rollVirtual,
-  toPhysical,
-} from "../roll";
+import { expand, parse, roll, rollFair, toPhysical } from "../engine";
 import { useDiceRollStore } from "../dice/store";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceHistoryStore } from "../controls/history";
-import { generateDiceId } from "../helpers/generateDiceId";
 import { getRandomDiceThrow } from "../helpers/DiceThrower";
 import { Dice } from "../types/Dice";
 import { Die } from "../types/Die";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceType } from "../types/DiceType";
-import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
-import { RollError } from "../roll";
+import { buildMeta, ChongRollMeta, isCurrentMeta, lastStage, partId, popThrow, stageIds } from "./rollMeta";
 import { useTrayStore } from "./trayStore";
 import { countsToCommand } from "./prefs";
-import { usePrefsStore } from "./prefsStore";
+import { useChongStore } from "./chongStore";
+import { allNames } from "./savedRolls";
+
+/** A command with the saved names put in: the text that rolls. Throws `EngineError`. */
+export function expandCommand(input: string): string {
+  return expand(input.trim(), allNames(useChongStore.getState().saved));
+}
 
 /**
- * Roll a command now. Throws `RollError` when it can't be rolled.
+ * Roll a command now: the engine rolls every die up front, then the tray acts the record out,
+ * stage 0 first. Throws `EngineError` when it can't be rolled.
  */
 export function startCommandRoll(
   input: string,
   opts: { hidden: boolean; speedMultiplier?: number }
 ): void {
-  const command = input.trim();
-  const cmd = parseCommand(command);
-  const meta: ChongRollMeta = {
-    command,
-    parts: {},
-    virtual: {},
-    capped: false,
-    nimble: usePrefsStore.getState().prefs.nimble,
-  };
-  const wave = nextWave(cmd, meta, {});
-  if (meta.error) {
-    throw new RollError(meta.error);
-  }
-  const dice = makeDice(wave, meta);
+  const text = expandCommand(input);
+  const record = roll(parse(text), rollFair);
+  const meta = buildMeta(record);
+  const dice = makeDice(meta, stageIds(meta, 0));
 
   // A command roll replaces any dice picked by hand,
   // otherwise the tray keeps showing them instead of this roll's result
-  const controls = useDiceControlsStore.getState();
-  controls.resetDiceCounts();
+  useDiceControlsStore.getState().resetDiceCounts();
 
   useDiceRollStore
     .getState()
@@ -59,13 +46,15 @@ export function startCommandRoll(
     bonus: 0,
     advantage: null,
     diceById: {},
-    command,
+    command: record.text,
   });
+  // Stage 0 may have no 3D dice at all (`1d7`): move on now
+  revealNext();
 }
 
 /**
- * Dice picked by hand on the tray roll as a command too, so they get highlights and can be
- * exploded. Returns false when no dice are picked.
+ * Dice picked by hand on the tray roll as a command too. Returns false when no dice are picked.
+ * Throws `EngineError`.
  */
 export function rollPickedDice(opts: { hidden: boolean; speedMultiplier?: number }): boolean {
   const { diceCounts, diceById } = useDiceControlsStore.getState();
@@ -77,139 +66,76 @@ export function rollPickedDice(opts: { hidden: boolean; speedMultiplier?: number
   return true;
 }
 
-/**
- * The next physical dice a command needs. Rolls any virtual dice
- * (sizes with no 3D model) on the way and records them in `meta`.
- * Returns [] when the command is finished, or when it can't go on
- * (then `meta.error` says why).
- */
-export function nextWave(
-  cmd: Command,
-  meta: ChongRollMeta,
-  rollValues: Record<string, number | null>
-): LogicalDie[] {
-  for (;;) {
-    let ev;
-    try {
-      ev = evaluate(
-        cmd,
-        { ...logicalValues(meta, rollValues), ...meta.virtual },
-        { manual: meta.manual }
-      );
-    } catch (e) {
-      meta.error = e instanceof Error ? e.message : "Can't roll this";
-      return [];
-    }
-    if (ev.result) {
-      meta.capped = ev.result.capped;
-      return [];
-    }
-    const physical = ev.needed.filter((d) => toPhysical(d.size));
-    for (const d of ev.needed) {
-      if (!toPhysical(d.size)) {
-        meta.virtual[d.key] = rollVirtual(d.size);
-      }
-    }
-    if (physical.length > 0) {
-      return physical;
-    }
-  }
-}
-
 /** The dice set's style for this die */
 function styleFor(type: DiceType) {
   const set = useDiceControlsStore.getState().diceSet;
   return (set.dice.find((d) => d.type === type) || set.dice[0]).style;
 }
 
-/** Upstream dice for logical dice; records each part in `meta.parts` */
-function makeDice(wave: LogicalDie[], meta: ChongRollMeta): (Die | Dice)[] {
-  return wave.map((logical) => {
-    const parts: Die[] = toPhysical(logical.size)!.map((type, part) => {
-      const die: Die = { id: generateDiceId(), style: styleFor(type), type };
-      meta.parts[die.id] = { key: logical.key, size: logical.size, part };
-      return die;
-    });
-    return parts.length === 1 ? parts[0] : { dice: parts };
-  });
+/** Upstream dice for these 3D ids (a d100's two parts as one pair) */
+function makeDice(meta: ChongRollMeta, ids: string[]): (Die | Dice)[] {
+  const out: (Die | Dice)[] = [];
+  let pair: Die[] | null = null;
+  for (const id of ids) {
+    const { rep, die: dieId, part } = meta.parts[id];
+    const size = meta.record.reps[rep].dice[dieId].size;
+    const physical = toPhysical(size)!;
+    const die: Die = { id, style: styleFor(physical[part]), type: physical[part] };
+    if (physical.length === 1) {
+      out.push(die);
+    } else {
+      if (part === 0) {
+        pair = [];
+        out.push({ dice: pair });
+      }
+      pair?.push(die);
+    }
+  }
+  return out;
 }
 
-/**
- * Nimble: explode a landed die of your command roll by hand (right-click / long-press). It's
- * recorded in the roll and starts a chain: a new die pops out of it, and every new die on its max
- * explodes again. False when it can't (Nimble off, still rolling, already exploded).
- */
-export function explodeDie(dieId: string): boolean {
-  const { roll, rollValues, setChong } = useDiceRollStore.getState();
-  const part = roll?.chong?.parts[dieId];
-  if (!roll?.chong?.nimble || !part || rollValues[dieId] === null || rollValues[dieId] === undefined) {
-    return false;
-  }
-  const manual = roll.chong.manual || [];
-  const exploded = Object.values(roll.chong.parts).some((p) => p.key === part.key + "m");
-  if (manual.includes(part.key) || exploded) {
-    return false;
-  }
-  setChong({ ...roll.chong, manual: [...manual, part.key] });
-  // With the tray open the runner already did this; then it's a no-op (the new die is rolling)
-  throwNextWave();
-  return true;
-}
-
-/** Where a follow-up die starts: popping out of its parent when it exploded */
-function waveThrows(
-  wave: LogicalDie[],
-  dice: (Die | Dice)[],
-  meta: ChongRollMeta
-): Record<string, DiceThrow> {
+/** Chain dice pop out of the die that made them (both dice of an advantage pick from the same parent) */
+function stageThrows(meta: ChongRollMeta, ids: string[]): Record<string, DiceThrow> {
   const { rollTransforms } = useDiceRollStore.getState();
   const throws: Record<string, DiceThrow> = {};
-  wave.forEach((logical, i) => {
-    const entry = dice[i];
-    const ids = "id" in entry ? [entry.id] : (entry.dice as Die[]).map((d) => d.id);
-    let parentTransform = null;
-    if (logical.reason === "explode" && logical.parent) {
-      const parentId = Object.keys(meta.parts).find(
-        (id) => meta.parts[id].key === logical.parent && meta.parts[id].part === 0
-      );
-      parentTransform = parentId ? rollTransforms[parentId] : null;
-    }
-    for (const id of ids) {
-      throws[id] = parentTransform ? popThrow(parentTransform) : getRandomDiceThrow();
-    }
-  });
+  for (const id of ids) {
+    const { rep, die } = meta.parts[id];
+    const parent = meta.record.reps[rep].dice[die].parent;
+    const parentId = parent === null ? undefined : partId(meta, rep, parent);
+    const transform = parentId ? rollTransforms[parentId] : null;
+    throws[id] = transform ? popThrow(transform) : getRandomDiceThrow();
+  }
   return throws;
 }
 
-/** When every die of a command roll has landed, throw the next wave if there is one */
-export function throwNextWave(): void {
+/**
+ * When every 3D die on the tray has settled, show the next stage: its dice pop out of their
+ * parents. Stages with no 3D dice (`1d7`'s chain dice) pass at once. The roller's tray only.
+ */
+export function revealNext(): void {
   const state = useDiceRollStore.getState();
-  const roll = state.roll;
-  if (!roll?.chong) {
+  const meta = state.roll?.chong;
+  if (!isCurrentMeta(meta)) {
     return;
   }
-  const values = Object.values(state.rollValues);
-  if (values.some((v) => v === null)) {
+  if (Object.values(state.rollValues).some((v) => v === null)) {
     return;
   }
-  let cmd: Command;
-  try {
-    cmd = parseCommand(roll.chong.command);
-  } catch {
-    return;
+  const last = lastStage(meta.record);
+  for (let stage = meta.stage + 1; stage <= last; stage++) {
+    const ids = stageIds(meta, stage);
+    if (ids.length > 0) {
+      const next = { ...meta, stage };
+      state.addDice(makeDice(next, ids), stageThrows(next, ids), next);
+      return;
+    }
   }
-  // The store's copy is frozen
-  const meta: ChongRollMeta = JSON.parse(JSON.stringify(roll.chong));
-  const wave = nextWave(cmd, meta, state.rollValues);
-  if (wave.length > 0) {
-    const dice = makeDice(wave, meta);
-    state.addDice(dice, waveThrows(wave, dice, meta), meta);
-  } else if (JSON.stringify(meta) !== JSON.stringify(roll.chong)) {
-    state.setChong(meta);
+  if (meta.stage !== last) {
+    state.setChong({ ...meta, stage: last });
   }
 }
 
-/** Runs `throwNextWave` on every change to the roll (the roller's tray only) */
-export function useWaveRunner(): void {
-  useEffect(() => useDiceRollStore.subscribe(() => throwNextWave()), []);
+/** Runs `revealNext` on every change to the roll (the roller's tray only) */
+export function useRevealRunner(): void {
+  useEffect(() => useDiceRollStore.subscribe(() => revealNext()), []);
 }

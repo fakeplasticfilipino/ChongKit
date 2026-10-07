@@ -24,6 +24,16 @@ import { DiceType } from "../types/DiceType";
 import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
 import { placeCommand } from "../chong/place";
 import { useTrayStore } from "../chong/trayStore";
+import { ChongRollMeta, isCurrentMeta } from "../chong/rollMeta";
+
+/** The command a roll was made from (an older roll's text, which may no longer parse) */
+function commandOf(meta: ChongRollMeta): string {
+  if (isCurrentMeta(meta)) {
+    return meta.record.text;
+  }
+  const command = (meta as { command?: unknown }).command;
+  return typeof command === "string" ? command : "";
+}
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -94,7 +104,7 @@ function DicePickedControls() {
 
   /**
    * Throw what's on the tray: a placed command (typed, a pill, Chong's Tracker) rolls as itself,
-   * dice picked by hand roll as a command too (so Nimble highlights and explosions work).
+   * dice picked by hand roll as a command too (everything rolls through the engine).
    * The longer Roll is held, the harder the throw
    */
   function handleRoll() {
@@ -108,8 +118,15 @@ function DicePickedControls() {
           useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
           handleReset();
         }
-      } else if (rollPickedDice({ hidden, speedMultiplier })) {
-        handleReset();
+      } else {
+        try {
+          if (rollPickedDice({ hidden, speedMultiplier })) {
+            handleReset();
+          }
+        } catch (e) {
+          // e.g. more dice than a roll can hold
+          useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+        }
       }
     }
     setRollPressTime(null);
@@ -321,9 +338,9 @@ function FinishedRollControls() {
             <IconButton
               onClick={() => {
                 if (roll?.chong) {
-                  // Waves and keys belong to the old roll: its dice go back on the tray to throw again
+                  // The record belongs to the old roll: its command goes back on the tray to throw again
                   try {
-                    placeCommand(roll.chong.command, { hidden: Boolean(roll.hidden) });
+                    placeCommand(commandOf(roll.chong), { hidden: Boolean(roll.hidden) });
                   } catch (e) {
                     useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
                   }

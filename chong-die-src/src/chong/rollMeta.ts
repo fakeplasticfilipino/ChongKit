@@ -1,137 +1,162 @@
-import { evaluate, formatResult, FormattedResult, parseCommand, readLogical } from "../roll";
+import {
+  facesFor,
+  formatRecord,
+  FormattedResult,
+  revealStages,
+  rollFair,
+  RollRecord,
+  Rng,
+  toPhysical,
+} from "../engine";
+import { generateDiceId } from "../helpers/generateDiceId";
 import { DiceRoll } from "../types/DiceRoll";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceTransform } from "../types/DiceTransform";
 
+/** One 3D die of a command roll: the record's die it shows (a d100 has two parts) */
+export interface ChongPart {
+  rep: number;
+  /** The die's `id` in its repetition */
+  die: number;
+  part: number;
+}
+
 /**
- * What a Chong Die command roll carries alongside the upstream dice.
- * Synced with the roll, so every player can work out the same result.
+ * What a Chong Die command roll carries alongside the upstream dice. The record is the roll:
+ * every player's tray acts it out, and totals, marks and highlights all come from it.
  */
 export interface ChongRollMeta {
-  command: string;
-  /** Upstream die id → the logical die it belongs to (a d100 has two parts) */
-  parts: Record<string, { key: string; size: number; part: number }>;
-  /** Values of dice with no 3D model, by logical key */
-  virtual: Record<string, number>;
-  capped: boolean;
-  /** Set when the roll can't finish (e.g. it divides by zero once the dice land) */
-  error?: string;
-  /** Dice the roller exploded by hand (right-click / long-press), by logical key: each starts a chain */
-  manual?: string[];
-  /** Rolled with Nimble on: leftmost dice glow, dice can be exploded by hand */
-  nimble?: boolean;
+  v: 3;
+  record: RollRecord;
+  /** 3D die id → the record's die and its part (every 3D die of the roll, shown or not yet) */
+  parts: Record<string, ChongPart>;
+  /** 3D die id → the face it must land on (forced in a later step; the record is the truth) */
+  faces: Record<string, number>;
+  /** The reveal stage shown so far: stage 0 is the first throw, then the chain dice by generation */
+  stage: number;
 }
 
-/** Logical die values from the 3D dice; dice with any part unfinished are left out */
-export function logicalValues(
-  meta: ChongRollMeta,
-  rollValues: Record<string, number | null | undefined>
-): Record<string, number> {
-  const groups: Record<string, { size: number; raw: (number | null)[] }> = {};
-  for (const [id, { key, size, part }] of Object.entries(meta.parts)) {
-    const group = (groups[key] ||= { size, raw: [] });
-    const value = rollValues[id];
-    group.raw[part] = value === undefined ? null : value;
-  }
-  const values: Record<string, number> = {};
-  for (const [key, { size, raw }] of Object.entries(groups)) {
-    if (raw.every((v) => v !== null && v !== undefined)) {
-      values[key] = readLogical(size, raw as number[]);
+/** A synced roll in this format (other players may still send an older one) */
+export function isCurrentMeta(meta: unknown): meta is ChongRollMeta {
+  return Boolean(meta && typeof meta === "object" && (meta as { v?: unknown }).v === 3);
+}
+
+/** A record's metadata: an id and a face for every 3D part of every die, stage 0 shown */
+export function buildMeta(record: RollRecord, rng: Rng = rollFair): ChongRollMeta {
+  const parts: ChongRollMeta["parts"] = {};
+  const faces: ChongRollMeta["faces"] = {};
+  record.reps.forEach((rep, r) => {
+    for (const die of rep.dice) {
+      const physical = toPhysical(die.size);
+      if (!physical) {
+        continue;
+      }
+      const dieFaces = facesFor(die.size, die.value, rng);
+      physical.forEach((_, part) => {
+        const id = generateDiceId();
+        parts[id] = { rep: r, die: die.id, part };
+        faces[id] = dieFaces[part];
+      });
     }
-  }
-  return values;
+  });
+  return { v: 3, record, parts, faces, stage: 0 };
+}
+
+/** The last reveal stage of a record (0 when nothing chains) */
+export function lastStage(record: RollRecord): number {
+  return Math.max(0, ...record.reps.map((rep) => revealStages(rep).length - 1));
+}
+
+const byOrder = (meta: ChongRollMeta) => (a: string, b: string) => {
+  const p = meta.parts[a];
+  const q = meta.parts[b];
+  return p.rep - q.rep || p.die - q.die || p.part - q.part;
+};
+
+/** The 3D ids of one reveal stage, in rolling order (a d100's parts together) */
+export function stageIds(meta: ChongRollMeta, stage: number): string[] {
+  const inStage = meta.record.reps.map((rep) => new Set(revealStages(rep)[stage] || []));
+  return Object.keys(meta.parts)
+    .filter((id) => inStage[meta.parts[id].rep]?.has(meta.parts[id].die))
+    .sort(byOrder(meta));
+}
+
+/** The 3D id of a record die's first part, or undefined when it has no 3D model */
+export function partId(meta: ChongRollMeta, rep: number, die: number): string | undefined {
+  return Object.keys(meta.parts).find((id) => {
+    const p = meta.parts[id];
+    return p.rep === rep && p.die === die && p.part === 0;
+  });
 }
 
 /**
- * Nimble: for each dice term (`1d6+2d6` has two; one per `!rr` repeat), the die that landed
- * furthest left on the tray, as the 3D die to glow under (a d100 goes by its first part).
- * Dice that exploded out of others don't count, nor dice replaced by a reroll.
+ * For each dice group (and repeat) that crit or missed, the 3D die of its Primary Die
+ * (a d100 by its first part), for the outline. Old rolls have none.
  */
-export function highlightedDice(
-  roll: DiceRoll,
-  transforms: Record<string, DiceTransform | null | undefined>
-): string[] {
+export function highlightedDice(roll: DiceRoll): string[] {
   const meta = roll.chong;
-  if (!meta?.nimble) {
+  if (!isCurrentMeta(meta)) {
     return [];
   }
-  const keys = new Set(Object.values(meta.parts).map((p) => p.key));
-  // Logical key → its first 3D die
-  const first = new Map<string, string>();
-  for (const [id, { key, part }] of Object.entries(meta.parts)) {
-    if (part === 0) {
-      first.set(key, id);
+  const ids: string[] = [];
+  meta.record.reps.forEach((rep, r) => {
+    for (const group of rep.groups) {
+      if ((group.crit || group.miss) && group.primary !== null) {
+        const id = partId(meta, r, group.primary);
+        if (id) {
+          ids.push(id);
+        }
+      }
     }
+  });
+  return ids;
+}
+
+/** The outline of a highlighted die: dark red when its group missed, gold when it crit, else purple */
+export function highlightTone(roll: DiceRoll, id: string): "plain" | "miss" | "crit" {
+  const meta = roll.chong;
+  const part = isCurrentMeta(meta) ? meta.parts[id] : undefined;
+  if (!isCurrentMeta(meta) || !part) {
+    return "plain";
   }
-  // Term (`<rep>.<dice id>`) → its dice: first throws and rerolls, not explosions
-  const terms = new Map<string, string[]>();
-  for (const key of keys) {
-    const match = /^(\d+\.\d+)\.\d+(r\d*)*$/.exec(key);
-    // Rerolled: a die keyed `<key>r` (or `<key>r1` …) took its place
-    const replaced = [...keys].some((k) => k !== key && /^r\d*$/.test(k.slice(key.length)) && k.startsWith(key));
-    if (match && !replaced) {
-      terms.set(match[1], [...(terms.get(match[1]) || []), key]);
-    }
+  const rep = meta.record.reps[part.rep];
+  const die = rep?.dice[part.die];
+  if (!die) {
+    return "plain";
   }
-  const result: [string, string][] = [];
-  for (const [term, dice] of terms) {
-    const ids = dice.map((key) => first.get(key)!);
-    if (ids.some((id) => !id || !transforms[id])) {
-      continue;
-    }
-    const leftmost = ids.reduce((a, b) => (transforms[b]!.position.x < transforms[a]!.position.x ? b : a));
-    result.push([term, leftmost]);
+  if (rep.groups[die.group]?.miss) {
+    return "miss";
   }
-  return result
-    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
-    .map(([, id]) => id);
+  return die.crit ? "crit" : "plain";
 }
 
 /**
- * Nimble: how a highlighted die landed: "miss" on a 1, "crit" on its highest face (a d100 goes by
- * its whole value), else "plain" (also while any of its parts is still rolling)
+ * The total and breakdown of a command roll, from its record, once every stage is on the tray and
+ * (given the landed values) every 3D die has settled; else null. A roll in an older format shows
+ * as its command text.
  */
-export function highlightTone(
-  meta: ChongRollMeta,
-  id: string,
-  rollValues: Record<string, number | null | undefined>
-): "plain" | "miss" | "crit" {
-  const die = meta.parts[id];
-  const value = die && logicalValues(meta, rollValues)[die.key];
-  if (value === 1) {
-    return "miss";
-  }
-  return die && value === die.size ? "crit" : "plain";
-}
-
-/** The total and breakdown of a finished command roll, or null */
 export function getRollDisplay(
   roll: DiceRoll,
-  rollValues: Record<string, number | null> | undefined
+  rollValues?: Record<string, number | null | undefined>
 ): FormattedResult | null {
-  const meta = roll.chong;
-  if (!meta || !rollValues) {
+  const meta = roll.chong as unknown;
+  if (!meta) {
     return null;
   }
-  if (meta.error) {
-    return { total: "Error", lines: [meta.error] };
+  if (!isCurrentMeta(meta)) {
+    const command = (meta as { command?: unknown }).command;
+    return { total: "Old roll", lines: typeof command === "string" ? [command] : [] };
   }
-  if (Object.keys(meta.parts).some((id) => rollValues[id] == null)) {
+  if (meta.stage < lastStage(meta.record)) {
     return null;
   }
-  try {
-    const { result } = evaluate(
-      parseCommand(meta.command),
-      { ...logicalValues(meta, rollValues), ...meta.virtual },
-      { manual: meta.manual }
-    );
-    return result ? formatResult(result) : null;
-  } catch {
+  if (rollValues && Object.keys(meta.parts).some((id) => rollValues[id] == null)) {
     return null;
   }
+  return formatRecord(meta.record);
 }
 
-/** A throw that pops a new die up out of the die that exploded */
+/** A throw that pops a new die up out of the die that made it */
 export function popThrow(
   parent: DiceTransform,
   rand: () => number = Math.random
@@ -145,8 +170,8 @@ export function popThrow(
   const b = Math.sqrt(u1);
   // Start clear of the parent and fly off sideways, so the new die doesn't
   // land back on the locked parent and wobble there. It shoots up high and
-  // spins hard (peaking near 1.3, under the tray's roof at 1.5) so an
-  // explosion feels like hitting the jackpot.
+  // spins hard (peaking near 1.3, under the tray's roof at 1.5) so a
+  // chain die feels like hitting the jackpot.
   const angle = rand() * 2 * Math.PI;
   return {
     position: { x: p.x, y: p.y + 0.6, z: p.z },

@@ -1,6 +1,40 @@
 import { beforeEach, expect, test } from "vitest";
 import { useChongStore } from "./chongStore";
-import { emptySaved } from "./savedRolls";
+import { allNames, emptySaved } from "./savedRolls";
+import { expand } from "../engine";
+
+const names = () => useChongStore.getState().saved.names;
+
+test("`atk = …` saves a name and `atk +3` rolls its text", () => {
+  useChongStore.getState().setName("atk", "1d10 nimble chain 5+ chain adv");
+  expect(expand("atk +3", allNames(useChongStore.getState().saved))).toBe(
+    "1d10 crit miss 1 chain 5+ chain adv +3"
+  );
+});
+
+test("empty text deletes a name", () => {
+  useChongStore.getState().setName("atk", "1d10");
+  useChongStore.getState().setName("atk", "");
+  expect(names()).toEqual({});
+});
+
+test("deleting the user's nimble restores the built-in", () => {
+  useChongStore.getState().setName("nimble", "crit");
+  expect(allNames(useChongStore.getState().saved).nimble).toBe("crit");
+  useChongStore.getState().setName("nimble", "");
+  expect(allNames(useChongStore.getState().saved).nimble).toBe("crit miss 1");
+});
+
+test("names that can't be saved are refused", () => {
+  useChongStore.getState().setName("crit", "1d6");
+  useChongStore.getState().setName("2d6", "1d6");
+  expect(names()).toEqual({});
+});
+
+test("names are saved lower case", () => {
+  useChongStore.getState().setName("Atk", " 1d10 ");
+  expect(names()).toEqual({ atk: "1d10" });
+});
 
 const ids = () => useChongStore.getState().saved.tabs.map((t) => t.id);
 

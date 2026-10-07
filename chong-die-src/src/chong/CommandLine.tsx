@@ -9,11 +9,30 @@ import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
 import { placeCommand } from "./place";
+import { allNames } from "./savedRolls";
+import { checkName, expand, parseDefinition } from "../engine";
 import { PanelToggle } from "./PanelToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
 import { FIELD, HOVER } from "./look";
 
-/** The `!r` box always on top of the tray, with the Rolls button beside it: Enter puts the roll on the tray */
+/** Why `name = text` can't be saved (a bad name, or names that would loop), or null */
+function nameProblem(name: string, text: string): string | null {
+  const bad = checkName(name);
+  if (bad) {
+    return bad;
+  }
+  if (!text) {
+    return null;
+  }
+  try {
+    expand(name, { ...allNames(useChongStore.getState().saved), [name]: text });
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : "Can't save this name";
+  }
+}
+
+/** The command box always on top of the tray, with the Rolls button beside it: Enter puts the roll on the tray */
 export function CommandLine() {
   const theme = useTheme();
   const rolling = useDiceRollStore((state) =>
@@ -28,11 +47,27 @@ export function CommandLine() {
   const error = useChongStore((state) => state.error);
   const setError = useChongStore((state) => state.setError);
   const recordHistory = useChongStore((state) => state.recordHistory);
+  const setName = useChongStore((state) => state.setName);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
 
   function roll() {
     const command = text.trim();
     if (!command) {
+      return;
+    }
+    // `atk = 1d10 nimble` saves a name (`atk =` deletes it) instead of rolling
+    const definition = parseDefinition(command);
+    if (definition) {
+      const problem = nameProblem(definition.name, definition.text);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+      setName(definition.name, definition.text);
+      recordHistory(command);
+      setText("");
+      setHistoryIndex(null);
+      setError(definition.text ? `Saved ${definition.name}` : `Deleted ${definition.name}`);
       return;
     }
     try {
@@ -99,7 +134,7 @@ export function CommandLine() {
         >
           <InputBase
             fullWidth
-            placeholder="!r 1d20+5"
+            placeholder="1d20+5"
             value={text}
             inputProps={{ "aria-label": "Roll command", spellCheck: false }}
             onChange={(e) => {

@@ -8,8 +8,8 @@ import { highlightedDice, highlightTone } from "./rollMeta";
 
 /**
  * The outline: the die's own shape, a little larger, drawn inside out in a solid color, so only a
- * rim shows around the die (shown as is: no lighting, no tone mapping). Purple, dark red on a 1,
- * bright gold on the highest face.
+ * rim shows around the die (shown as is: no lighting, no tone mapping). Purple, dark red on a miss,
+ * bright gold on a crit (both from the record).
  */
 const outline = (color: string) =>
   new THREE.MeshBasicMaterial({ color, side: THREE.BackSide, toneMapped: false });
@@ -32,24 +32,19 @@ function findDie(scene: THREE.Object3D, id: string): THREE.Object3D | undefined 
 }
 
 /**
- * Nimble: an outline around the leftmost die of each dice term, once the roll has landed
- * (every player's copy of the tray). Command rolls only.
+ * An outline around the Primary Die of each dice group that crit or missed, placed by the record,
+ * once that die has landed (every player's copy of the tray). Command rolls only.
  */
 export function Highlights({
   roll,
   transforms,
-  values,
 }: {
   roll: DiceRoll;
   transforms: Record<string, DiceTransform>;
-  values?: Record<string, number | null>;
 }) {
   const { scene, invalidate } = useThree();
-  const ids = useMemo(() => highlightedDice(roll, transforms), [roll, transforms]);
-  const tones = useMemo(
-    () => ids.map((id) => (roll.chong && values ? highlightTone(roll.chong, id, values) : "plain")).join(),
-    [ids, roll, values]
-  );
+  const ids = useMemo(() => highlightedDice(roll).filter((id) => transforms[id]), [roll, transforms]);
+  const tones = useMemo(() => ids.map((id) => highlightTone(roll, id)).join(), [ids, roll]);
 
   useEffect(() => {
     const outlines: THREE.Mesh[] = [];

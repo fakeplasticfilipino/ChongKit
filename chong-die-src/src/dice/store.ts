@@ -12,7 +12,7 @@ import { generateDiceId } from "../helpers/generateDiceId";
 import { DiceThrow } from "../types/DiceThrow";
 import { Die } from "../types/Die";
 import { Dice } from "../types/Dice";
-import type { ChongRollMeta } from "../chong/rollMeta";
+import { isCurrentMeta, type ChongRollMeta } from "../chong/rollMeta";
 
 interface DiceRollState {
   roll: DiceRoll | null;
@@ -35,13 +35,13 @@ interface DiceRollState {
   /** Reroll select ids of dice or reroll all dice by passing `undefined` */
   reroll: (ids?: string[], manualThrows?: Record<string, DiceThrow>) => void;
   finishDieRoll: (id: string, number: number, transform: DiceTransform) => void;
-  /** Add a follow-up wave of dice to the current roll (Chong Die rerolls and explosions) */
+  /** Add the next reveal stage of a command roll (Chong Die chain dice) to the current roll */
   addDice: (
     dice: (Die | Dice)[],
     throws: Record<string, DiceThrow>,
     chong: ChongRollMeta
   ) => void;
-  /** Update a command roll's metadata (e.g. newly rolled virtual dice) */
+  /** Update a command roll's metadata (e.g. a stage with no 3D dice was passed) */
   setChong: (chong: ChongRollMeta) => void;
 }
 
@@ -82,7 +82,7 @@ export const useDiceRollStore = create<DiceRollState>()(
             state.rollValues,
             state.rollTransforms,
             state.rollThrows,
-            state.roll.chong?.parts
+            state.roll.chong
           );
         }
       });
@@ -125,8 +125,8 @@ function rerollDraft(
   rollValues: WritableDraft<Record<string, number | null>>,
   rollTransforms: WritableDraft<Record<string, DiceTransform | null>>,
   rollThrows: WritableDraft<Record<string, DiceThrow>>,
-  /** Chong Die command roll: die id → logical die, kept for the new id */
-  parts?: WritableDraft<ChongRollMeta["parts"]>
+  /** Chong Die command roll: the record die and face of a die id, kept for the new id */
+  chong?: WritableDraft<ChongRollMeta>
 ) {
   for (let dieOrDice of diceRoll.dice) {
     if (isDie(dieOrDice)) {
@@ -136,10 +136,12 @@ function rerollDraft(
         delete rollThrows[dieOrDice.id];
         const manualThrow = manualThrows?.[dieOrDice.id];
         const id = generateDiceId();
-        // Chong Die: the rethrown die stays the same logical die
-        if (parts && parts[dieOrDice.id]) {
-          parts[id] = parts[dieOrDice.id];
-          delete parts[dieOrDice.id];
+        // Chong Die: the rethrown die still shows the same record die
+        if (isCurrentMeta(chong) && chong.parts[dieOrDice.id]) {
+          chong.parts[id] = chong.parts[dieOrDice.id];
+          delete chong.parts[dieOrDice.id];
+          chong.faces[id] = chong.faces[dieOrDice.id];
+          delete chong.faces[dieOrDice.id];
         }
         dieOrDice.id = id;
         rollValues[id] = null;
@@ -158,7 +160,7 @@ function rerollDraft(
         rollValues,
         rollTransforms,
         rollThrows,
-        parts
+        chong
       );
     }
   }

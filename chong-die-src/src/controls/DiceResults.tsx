@@ -32,7 +32,7 @@ export function DiceResults({
   );
   const finalValue = useMemo(() => {
     if (diceRoll.chong) {
-      // Still waiting for a follow-up wave
+      // Still waiting for chain dice to land
       return display ? display.total : "…";
     }
     return getCombinedDiceValue(diceRoll, rollValues);

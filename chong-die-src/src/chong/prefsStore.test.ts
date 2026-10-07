@@ -14,7 +14,7 @@ function fakeStorage(): Storage {
 
 test("reload picks up prefs another window saved", () => {
   const storage = fakeStorage();
-  savePrefs({ nimble: true, panelOpen: false }, storage);
+  savePrefs({ panelOpen: false }, storage);
   usePrefsStore.getState().reload(storage);
-  expect(usePrefsStore.getState().prefs).toEqual({ nimble: true, panelOpen: false });
+  expect(usePrefsStore.getState().prefs).toEqual({ panelOpen: false });
 });

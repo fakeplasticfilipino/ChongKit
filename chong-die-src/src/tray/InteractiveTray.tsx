@@ -14,14 +14,14 @@ import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "./Tray";
 import { TraySuspense } from "./TraySuspense";
 import { PreviewDiceRoll } from "../dice/PreviewDiceRoll";
-import { useWaveRunner } from "../chong/rollRunner";
+import { useRevealRunner } from "../chong/rollRunner";
 import { TrayError } from "../chong/TrayError";
 import { CommandLine } from "../chong/CommandLine";
 import { COMMAND_LINE_HEIGHT } from "../chong/layout";
 
 /** Dice tray that controls the dice roll store */
 export function InteractiveTray() {
-  useWaveRunner();
+  useRevealRunner();
 
   return (
     <Box
@@ -32,8 +32,6 @@ export function InteractiveTray() {
       overflow="hidden"
       position="relative"
       id="interactive-tray"
-      // Right-click explodes a die: no browser menu over the tray
-      onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
       sx={{
         "& canvas": {
           touchAction: "manipulation",

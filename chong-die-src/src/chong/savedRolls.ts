@@ -1,4 +1,4 @@
-import { parseCommand } from "../roll/parse";
+import { BUILT_IN_NAMES, checkName, expand, parse } from "../engine";
 
 export interface Pill {
   id: string;
@@ -19,6 +19,8 @@ export interface SavedRolls {
   tabs: RollTab[];
   /** Typed commands, oldest first */
   history: string[];
+  /** The user's saved names (`atk = 1d10 nimble`), lower case; the built-in names sit under them */
+  names: Record<string, string>;
 }
 
 export const STORAGE_KEY = "chongkit.chongdie";
@@ -30,7 +32,28 @@ export function emptySaved(): SavedRolls {
     version: 1,
     tabs: [{ id: "rolls", name: "Rolls", pills: [] }],
     history: [],
+    names: {},
   };
+}
+
+/** Every name a command can use: the built-in names, overridden by the user's */
+export function allNames(saved: SavedRolls): Record<string, string> {
+  return { ...BUILT_IN_NAMES, ...saved.names };
+}
+
+/** The saved names that can be used: valid names (lower case) with text */
+function validateNames(raw: unknown): Record<string, string> {
+  const names: Record<string, string> = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return names;
+  }
+  for (const [key, text] of Object.entries(raw as Record<string, unknown>)) {
+    const name = key.toLowerCase();
+    if (isText(text) && text.trim() && checkName(name) === null) {
+      names[name] = text.trim();
+    }
+  }
+  return names;
 }
 
 function defaultStorage(): Storage | undefined {
@@ -75,7 +98,7 @@ export function validateSavedRolls(data: unknown): SavedRolls | null {
   const history = Array.isArray(raw.history)
     ? raw.history.filter(isText).slice(-MAX_HISTORY)
     : [];
-  return { version: 1, tabs, history };
+  return { version: 1, tabs, history, names: validateNames(raw.names) };
 }
 
 export function loadSaved(storage = defaultStorage()): SavedRolls {
@@ -105,10 +128,10 @@ export function pushHistory(history: string[], cmd: string): string[] {
   return [...history, cmd].slice(-MAX_HISTORY);
 }
 
-/** Why a pill's command can't roll, or null when it can */
-export function pillError(p: Pill): string | null {
+/** Why a pill's command can't roll (with these saved names), or null when it can */
+export function pillError(p: Pill, names: Record<string, string> = {}): string | null {
   try {
-    parseCommand(p.command);
+    parse(expand(p.command, names));
     return null;
   } catch (e) {
     return e instanceof Error ? e.message : "Can't roll this";

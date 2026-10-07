@@ -14,21 +14,16 @@ import {
   randomLinearVelocityFromDirection,
   randomRotation,
 } from "../helpers/DiceThrower";
-import { explodeDie } from "../chong/rollRunner";
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
 const DRAG_HEIGHT = 0.5;
 const DRAG_HISTORY_WINDOW_SIZE = 5;
-/** Touch: hold a die this long to explode it (Chong Die) */
-const LONG_PRESS_MS = 500;
-/** Moving further than this (px) is a drag, not a long press */
-const LONG_PRESS_SLOP = 8;
 
 type DragState = { p: { x: number; z: number }; t: number };
 
-/** Custom dice can be dragged to re-roll; right-click (touch: long-press) explodes one (Chong Die) */
+/** Custom dice can be dragged to re-roll */
 export function InteractiveDice(
   props: JSX.IntrinsicElements["group"] & {
     die: Die;
@@ -42,33 +37,11 @@ export function InteractiveDice(
   const pointerDownPositionRef = useRef({ x: 0, y: 0 });
   /** Keep a history of previous drag positions so we can calculate the throw direction and speed */
   const dragHistoryRef = useRef<DragState[]>([]);
-  const longPressRef = useRef<number | null>(null);
-
-  const cancelLongPress = useCallback(() => {
-    if (longPressRef.current !== null) {
-      window.clearTimeout(longPressRef.current);
-      longPressRef.current = null;
-    }
-  }, []);
 
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      // Right button is for exploding (onContextMenu), not for picking up
-      if (e.button === 2) {
-        return;
-      }
       const dice = diceRef.current;
       if (dice) {
-        if (e.pointerType === "touch") {
-          cancelLongPress();
-          const id = props.die.id;
-          longPressRef.current = window.setTimeout(() => {
-            longPressRef.current = null;
-            // Put the die down instead of throwing it, and explode it
-            setDragAnchor(null);
-            explodeDie(id);
-          }, LONG_PRESS_MS);
-        }
         // Find the initial drag position
         const x = Math.min(Math.max(e.offsetX, 0), size.width);
         const y = Math.min(Math.max(e.offsetY, 0), size.height);
@@ -91,16 +64,7 @@ export function InteractiveDice(
         pointerDownPositionRef.current = { x: e.offsetX, y: e.offsetY };
       }
     },
-    [size.width, size.height, props.die.id, cancelLongPress]
-  );
-
-  const handleContextMenu = useCallback(
-    (e: ThreeEvent<MouseEvent>) => {
-      e.stopPropagation();
-      e.nativeEvent.preventDefault();
-      explodeDie(props.die.id);
-    },
-    [props.die.id]
+    [size.width, size.height]
   );
 
   const reroll = useDiceRollStore((state) => state.reroll);
@@ -108,7 +72,6 @@ export function InteractiveDice(
   useEffect(() => {
     if (dragAnchor) {
       const handleUp = (e: PointerEvent) => {
-        cancelLongPress();
         setDragAnchor(null);
         const dice = diceRef.current;
 
@@ -151,12 +114,6 @@ export function InteractiveDice(
 
       const handleMove = (e: PointerEvent) => {
         const dice = diceRef.current;
-        if (
-          Math.abs(pointerDownPositionRef.current.x - e.offsetX) > LONG_PRESS_SLOP ||
-          Math.abs(pointerDownPositionRef.current.y - e.offsetY) > LONG_PRESS_SLOP
-        ) {
-          cancelLongPress();
-        }
         if (dragAnchor && dice && e.target instanceof HTMLCanvasElement) {
           // Find pointer location in world space
           const x = Math.min(Math.max(e.offsetX, 0), size.width);
@@ -207,10 +164,7 @@ export function InteractiveDice(
     reroll,
     props.die.id,
     invalidate,
-    cancelLongPress,
   ]);
-
-  useEffect(() => cancelLongPress, [cancelLongPress]);
 
   useEffect(() => {
     invalidate();
@@ -230,7 +184,6 @@ export function InteractiveDice(
     <animated.group position={position}>
       <Dice
         onPointerDown={handlePointerDown}
-        onContextMenu={handleContextMenu}
         ref={diceRef}
         {...props}
       ></Dice>
