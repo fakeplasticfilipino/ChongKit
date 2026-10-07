@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { parse, roll, seq, RollRecord } from "../engine";
 import { DiceRoll } from "../types/DiceRoll";
-import { buildMeta, getRollDisplay, highlightedDice, highlightTone, lastStage, popThrow, stageIds } from "./rollMeta";
+import { buildMeta, fadedDice, getRollDisplay, highlightedDice, highlightTone, lastStage, popThrow, stageIds } from "./rollMeta";
 
 /** A command roll with these dice values, every stage shown */
 function rolled(text: string, values: number[], stage?: number): DiceRoll {
@@ -68,12 +68,14 @@ test("stages list the 3D ids of each stage", () => {
   expect(lastStage(r.chong!.record)).toBe(1);
 });
 
-test("the primary is highlighted only when the group has crit or miss", () => {
+test("the primary is outlined whenever its group uses crit or miss", () => {
   expect(highlightedDice(rolled("1d6", [6]))).toEqual([]);
-  expect(highlightedDice(rolled("1d6 crit", [5]))).toEqual([]);
+  const plain = rolled("1d6 crit", [5]);
+  expect(highlightedDice(plain)).toEqual([Object.keys(plain.chong!.parts)[0]]);
   const crit = rolled("1d6 crit", [6, 3]);
   expect(highlightedDice(crit)).toEqual([Object.keys(crit.chong!.parts)[0]]);
-  const miss = rolled("2d6 miss 1 + 1d8 crit", [1, 4, 5]);
+  // Only the group using miss: its primary (the first d6), not the plain d8
+  const miss = rolled("2d6 miss 1 + 1d8", [4, 1, 5]);
   expect(highlightedDice(miss)).toEqual([Object.keys(miss.chong!.parts)[0]]);
 });
 
@@ -87,15 +89,34 @@ test("a d100's highlight goes on its first part; each repeat has its own", () =>
 test("old rolls have no highlights", () =>
   expect(highlightedDice({ dice: [], chong: { command: "1d6", nimble: true } } as any)).toEqual([]));
 
-test("the outline tone comes from the record", () => {
-  const crit = rolled("1d6 crit", [6, 3]);
-  expect(highlightTone(crit, Object.keys(crit.chong!.parts)[0])).toBe("crit");
-  const miss = rolled("1d6 crit miss 1", [1]);
-  expect(highlightTone(miss, Object.keys(miss.chong!.parts)[0])).toBe("miss");
-  // A chain die crit, not the primary: the primary's outline stays plain
-  const chain = rolled("1d6 crit chain 5+", [5, 6, 2]);
-  expect(highlightTone(chain, Object.keys(chain.chong!.parts)[0])).toBe("plain");
-  expect(highlightTone(chain, "nope")).toBe("plain");
+const toneOfPrimary = (text: string, values: number[]) => {
+  const r = rolled(text, values);
+  return highlightTone(r, Object.keys(r.chong!.parts)[0]);
+};
+
+test("a primary that crits is gold", () => expect(toneOfPrimary("1d6 crit", [6, 3])).toBe("crit"));
+test("a primary in the miss range is dark red", () => expect(toneOfPrimary("1d6 crit miss 1", [1])).toBe("miss"));
+test("a primary with no crit and no miss is purple", () => expect(toneOfPrimary("1d6 crit miss 1", [4])).toBe("plain"));
+test("a chain die's crit leaves the primary purple", () => {
+  expect(toneOfPrimary("1d6 crit chain 5+", [5, 6, 2])).toBe("plain");
+  expect(highlightTone(rolled("1d6 crit", [6, 3]), "nope")).toBe("plain");
+});
+
+test("dropped dice fade: adv/dis drops, keep/drop, and a chain pick's dropped die", () => {
+  const adv = rolled("1d20 adv", [4, 17]);
+  expect(fadedDice(adv)).toEqual([Object.keys(adv.chong!.parts)[0]]);
+  const keep = rolled("4d6 keep 3", [5, 2, 6, 4]);
+  expect(fadedDice(keep)).toEqual([Object.keys(keep.chong!.parts)[1]]);
+  // 10 crits: a chain pick of 2d10, keep the higher (7), drop the 3
+  const chain = rolled("1d10 crit chain adv", [10, 3, 7]);
+  expect(fadedDice(chain)).toEqual([Object.keys(chain.chong!.parts)[1]]);
+  expect(fadedDice(rolled("2d6", [1, 2]))).toEqual([]);
+});
+
+test("a dropped d100 fades both parts; old rolls fade nothing", () => {
+  const r = rolled("1d100 dis", [90, 20]);
+  expect(fadedDice(r)).toEqual(Object.keys(r.chong!.parts).slice(0, 2));
+  expect(fadedDice({ dice: [], chong: { command: "1d6" } } as any)).toEqual([]);
 });
 
 test("pop-out throw starts clear above the parent and flies up and sideways", () => {

@@ -9,6 +9,7 @@ import { Die } from "../types/Die";
 import { Dice as DefaultDice } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
 import { Highlights } from "../chong/Highlights";
+import { fadedDice } from "../chong/rollMeta";
 
 export function DiceRoll({
   roll,
@@ -32,10 +33,12 @@ export function DiceRoll({
     DiceTransform | null
   > | null>;
   /** Override to provide a custom Dice component  */
-  Dice: React.FC<JSX.IntrinsicElements["group"] & { die: Die }>;
+  Dice: React.FC<JSX.IntrinsicElements["group"] & { die: Die; faded?: boolean }>;
 }) {
 
   const dice = useMemo(() => roll && getDieFromDice(roll), [roll]);
+  // Chong Die: dice the roll dropped are drawn faded once they have landed
+  const faded = useMemo(() => new Set(fadedDice(roll)), [roll]);
 
   const emptyCallback = useCallback(() => {}, []);
 
@@ -71,6 +74,7 @@ export function DiceRoll({
               die={die}
               position={[p.x, p.y, p.z]}
               quaternion={[r.x, r.y, r.z, r.w]}
+              faded={faded.has(die.id)}
             />
           );
         })}
@@ -112,6 +116,7 @@ export function DiceRoll({
                 die={die}
                 onClick={emptyCallback}
                 onPointerDown={emptyCallback}
+                faded={Boolean(fixedTransform) && faded.has(die.id)}
               />
             </PhysicsDice>
           );

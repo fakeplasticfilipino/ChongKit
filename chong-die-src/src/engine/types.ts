@@ -63,8 +63,14 @@ export interface GroupResult {
   label: string;
   /** The `id` of the group's Primary Die, or null when no start/adv die is kept. */
   primary: number | null;
+  /** The Primary Die landed in the miss range (an outcome). */
   miss: boolean;
+  /** A die of the group crit (an outcome). */
   crit: boolean;
+  /** The group was rolled with `crit` (or `crit each`), whatever the dice show. */
+  usesCrit: boolean;
+  /** The group was rolled with a `miss` range, whatever the dice show. */
+  usesMiss: boolean;
 }
 
 export interface RepRecord {

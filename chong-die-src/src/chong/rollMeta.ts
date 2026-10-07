@@ -90,7 +90,7 @@ export function partId(meta: ChongRollMeta, rep: number, die: number): string | 
 }
 
 /**
- * For each dice group (and repeat) that crit or missed, the 3D die of its Primary Die
+ * For each dice group (and repeat) rolled with `crit` or `miss`, the 3D die of its Primary Die
  * (a d100 by its first part), for the outline. Old rolls have none.
  */
 export function highlightedDice(roll: DiceRoll): string[] {
@@ -101,7 +101,7 @@ export function highlightedDice(roll: DiceRoll): string[] {
   const ids: string[] = [];
   meta.record.reps.forEach((rep, r) => {
     for (const group of rep.groups) {
-      if ((group.crit || group.miss) && group.primary !== null) {
+      if ((group.usesCrit || group.usesMiss) && group.primary !== null) {
         const id = partId(meta, r, group.primary);
         if (id) {
           ids.push(id);
@@ -112,7 +112,21 @@ export function highlightedDice(roll: DiceRoll): string[] {
   return ids;
 }
 
-/** The outline of a highlighted die: dark red when its group missed, gold when it crit, else purple */
+/** 3D dice whose record die isn't kept (advantage, keep/drop, a chain pick's lower die): shown faded */
+export function fadedDice(roll: DiceRoll): string[] {
+  const meta = roll.chong;
+  if (!isCurrentMeta(meta)) {
+    return [];
+  }
+  return Object.keys(meta.parts)
+    .filter((id) => {
+      const { rep, die } = meta.parts[id];
+      return meta.record.reps[rep]?.dice[die]?.kept === false;
+    })
+    .sort(byOrder(meta));
+}
+
+/** The outline of a highlighted die: gold when it crit, else dark red when its group missed, else purple */
 export function highlightTone(roll: DiceRoll, id: string): "plain" | "miss" | "crit" {
   const meta = roll.chong;
   const part = isCurrentMeta(meta) ? meta.parts[id] : undefined;
@@ -124,10 +138,10 @@ export function highlightTone(roll: DiceRoll, id: string): "plain" | "miss" | "c
   if (!die) {
     return "plain";
   }
-  if (rep.groups[die.group]?.miss) {
-    return "miss";
+  if (die.crit) {
+    return "crit";
   }
-  return die.crit ? "crit" : "plain";
+  return rep.groups[die.group]?.miss ? "miss" : "plain";
 }
 
 /**

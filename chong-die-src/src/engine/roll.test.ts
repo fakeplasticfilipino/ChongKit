@@ -130,6 +130,15 @@ test("crit needs the group's crit; a group's crit flag", () => {
   const r = roll(parse("1d6 + 1d6 crit"), seq([6, 6, 1])).reps[0];
   expect(r.groups.map((g) => g.crit)).toEqual([false, true]);
 });
+test("a group records whether it uses crit and miss, whatever the dice show", () => {
+  const r = roll(parse("1d6 + 1d6 crit + 1d6 miss 1 + 1d6 crit each miss 2-"), seq([3, 3, 3, 3])).reps[0];
+  expect(r.groups.map((g) => [g.usesCrit, g.usesMiss])).toEqual([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ]);
+});
 test("a start die that explodes and is at max: crit wins, one follow-up", () => {
   const r = roll(parse("1d6 crit explode"), seq([6, 2])).reps[0];
   expect(r.dice).toHaveLength(2);

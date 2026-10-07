@@ -8,24 +8,33 @@ import { SunriseMaterial } from "./sunrise/SunriseMaterial";
 import { SunsetMaterial } from "./sunset/SunsetMaterial";
 import { WalnutMaterial } from "./walnut/WalnutMaterial";
 
-export function DiceMaterial({ diceStyle }: { diceStyle: DiceStyle }) {
+/** Extra material props (e.g. a faded die's opacity) pass through to the style's material */
+export function DiceMaterial({
+  diceStyle,
+  ...props
+}: {
+  diceStyle: DiceStyle;
+  transparent?: boolean;
+  opacity?: number;
+  depthWrite?: boolean;
+}) {
   switch (diceStyle) {
     case "GALAXY":
-      return <GalaxyMaterial />;
+      return <GalaxyMaterial {...props} />;
     case "GEMSTONE":
-      return <GemstoneMaterial />;
+      return <GemstoneMaterial {...props} />;
     case "GLASS":
-      return <GlassMaterial />;
+      return <GlassMaterial {...props} />;
     case "IRON":
-      return <IronMaterial />;
+      return <IronMaterial {...props} />;
     case "NEBULA":
-      return <NebulaMaterial />;
+      return <NebulaMaterial {...props} />;
     case "SUNRISE":
-      return <SunriseMaterial />;
+      return <SunriseMaterial {...props} />;
     case "SUNSET":
-      return <SunsetMaterial />;
+      return <SunsetMaterial {...props} />;
     case "WALNUT":
-      return <WalnutMaterial />;
+      return <WalnutMaterial {...props} />;
     default:
       throw Error(`Dice style ${diceStyle} error: not implemented`);
   }

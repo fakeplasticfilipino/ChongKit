@@ -27,6 +27,8 @@ type DragState = { p: { x: number; z: number }; t: number };
 export function InteractiveDice(
   props: JSX.IntrinsicElements["group"] & {
     die: Die;
+    /** A dropped die of a command roll, drawn faded */
+    faded?: boolean;
   }
 ) {
   const diceRef = useRef<THREE.Group>(null);
