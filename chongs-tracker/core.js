@@ -412,11 +412,37 @@
 
   // Dice rolls in note text, for clicking them into Chong Die. A roll is a dice term (`1d8`, `d20`,
   // `d%`, with Avrae ops like `!`, `kh1`, `rr<2`) followed by more dice or numbers joined by + / -.
-  // A repeat like `(2×)` or `(2x)` before it makes it `!rr 2 …` (one roll per attack), but only for
+  // `toCommand` writes it in Chong Die 3.0's words (`!` → explode, kh1 → keep 1, d% → 1d100); ops with
+  // no 3.0 word (rerolls, min/max, drop highest, selectors) make no roll. A repeat like `(2×)` or
+  // `(2x)` before it adds ` x2` (one roll per attack), but only for
   // the first roll after the marker: "Ravage (2×). 1d10. OR: Shoot. 1d10." rolls the Shoot once.
   const DICE_TERM = String.raw`\d*d(?:\d+|%)(?:!|(?:kh|kl|ph|pl|rr|ro|ra|mi|ma|k|p|e)[<>]?\d+)*`;
   const ROLL_RE = new RegExp(String.raw`(?<![\w!.%])${DICE_TERM}(?:[+-](?:${DICE_TERM}|\d+(?!\w)))*(?![\w%!])`, 'g');
   const REPEAT_RE = /\((\d+)\s*[×x]\)/g;
+
+  const TERM_RE = /^(\d*)d(\d+|%)((?:!|(?:kh|kl|ph|pl|rr|ro|ra|mi|ma|k|p|e)[<>]?\d+)*)$/;
+  const OP_RE = /!|(kh|kl|ph|pl|rr|ro|ra|mi|ma|k|p|e)([<>]?)(\d+)/g;
+  const OP_WORD = { kh: (n) => ` keep ${n}`, kl: (n) => ` keep low ${n}`, pl: (n) => ` drop ${n}` };
+
+  // The note's dice text as a Chong Die 3.0 command, or null when an op has no 3.0 word.
+  function toCommand(expr, times) {
+    const out = String(expr).split(/(?=[+-])/).map((part) => {
+      const sign = /^[+-]/.test(part) ? part[0] : '';
+      const body = sign ? part.slice(1) : part;
+      if (/^\d+$/.test(body)) return part;
+      const m = TERM_RE.exec(body);
+      if (!m) return null;
+      let text = (m[2] === '%' ? `${m[1] || 1}d100` : `${m[1]}d${m[2]}`);
+      for (const op of m[3].matchAll(OP_RE)) {
+        if (op[0] === '!') text += ' explode';
+        else if (op[2] === '' && OP_WORD[op[1]]) text += OP_WORD[op[1]](op[3]);
+        else return null;
+      }
+      return sign + text;
+    });
+    if (out.includes(null)) return null;
+    return out.join('') + (times > 1 ? ` x${times}` : '');
+  }
 
   function findRolls(line) {
     const text = String(line || '');
@@ -427,17 +453,15 @@
       for (const r of text.slice(from, m.index).matchAll(REPEAT_RE)) times = Number(r[1]);
       from = m.index + m[0].length;
       const expr = m[0];
-      rolls.push({
-        start: m.index,
-        end: m.index + expr.length,
-        command: times > 1 ? `!rr ${times} ${expr}` : `!r ${expr}`,
-      });
+      const command = toCommand(expr, times);
+      if (command === null) continue;
+      rolls.push({ start: m.index, end: m.index + expr.length, command });
     }
     return rolls;
   }
 
   const api = {
-    NS, KEYS, PLAYERS_TAB, uid, findRolls,
+    NS, KEYS, PLAYERS_TAB, uid, findRolls, toCommand,
     evalExpr, readInput, applyHp,
     parseCommand, rowsToEntries, acFrom, addNote,
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,

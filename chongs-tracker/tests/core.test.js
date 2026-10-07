@@ -262,8 +262,28 @@ test("findRolls: shared examples (generator lines, repeats, no false rolls)", ()
 });
 
 test("findRolls: positions of a roll in its line", () => {
-  assert.deepStrictEqual(C.findRolls("Damage: 1d8!+3d8+2"), [{ start: 8, end: 18, command: "!r 1d8!+3d8+2" }]);
+  assert.deepStrictEqual(C.findRolls("Damage: 1d8!+3d8+2"), [{ start: 8, end: 18, command: "1d8 explode+3d8+2" }]);
   assert.deepStrictEqual(C.findRolls(""), []);
+});
+
+test("toCommand: Avrae-style note dice become Chong Die 3.0 words", () => {
+  assert.strictEqual(C.toCommand("1d8!+3d8+2", 1), "1d8 explode+3d8+2");
+  assert.strictEqual(C.toCommand("3d10+1", 2), "3d10+1 x2");
+  assert.strictEqual(C.toCommand("1d20kh1", 1), "1d20 keep 1");
+  assert.strictEqual(C.toCommand("4d6kh3", 1), "4d6 keep 3");
+  assert.strictEqual(C.toCommand("2d20kl1", 1), "2d20 keep low 1");
+  assert.strictEqual(C.toCommand("4d6pl1", 1), "4d6 drop 1");
+  assert.strictEqual(C.toCommand("d%", 1), "1d100");
+  assert.strictEqual(C.toCommand("2d%+1", 1), "2d100+1");
+  assert.strictEqual(C.toCommand("d20", 1), "d20");
+  assert.strictEqual(C.toCommand("1d6!", 3), "1d6 explode x3");
+});
+
+test("toCommand: ops with no 3.0 word give null, and findRolls leaves those unmarked", () => {
+  for (const e of ["1d6rr1", "1d6ro<2", "1d6mi2", "1d6ma5", "4d6ph1", "3d6k<3", "1d6e6", "1d20ra1"]) {
+    assert.strictEqual(C.toCommand(e, 1), null, e);
+  }
+  assert.deepStrictEqual(C.findRolls("Hits 1d6rr1 or 2d6+1"), [{ start: 15, end: 20, command: "2d6+1" }]);
 });
 
 test('paste: Avrae Version damage stays in the entry note', () => {

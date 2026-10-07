@@ -50,6 +50,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Dice in entry and tab notes are underlined (`findRolls`, tested); click → Chong Die (LOCAL broadcast), `(2×)` → `!rr 2`; no Chong Die → notification
 - [x] Notes show as text; click elsewhere in a note to edit it
 - [x] Browser check (fake SDK): paste, underline, click sends, no-ack notification, edit + Escape
+- [x] v1.9.0: note rolls are sent in Chong Die 3.0's syntax (`toCommand`: `!` → explode, kh1 → keep 1, `(2×)` → x2, d% → 1d100); dice with ops that have no 3.0 word (rerolls, min/max, drop highest) are no longer underlined
 
 ## ✅ Checked in a real Owlbear room
 - [x] Note rolls into Chong Die (open, closed, not installed)
