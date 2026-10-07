@@ -82,3 +82,26 @@ test("over 100 dice is refused before rolling", () => {
   expect(() => parse("30d6 x4")).toThrow(/100/);
   expect(stageZeroSizes(parse("2d6 adv3 x2"))).toEqual([6, 6, 6, 6, 6, 6, 6, 6, 6, 6]);
 });
+
+test("huge counts are refused without building dice", () => {
+  expect(() => parse("1000000000d6")).toThrow(/100/);
+  expect(() => parse("99999999999d6")).toThrow(/100/);
+  expect(() => parse("2d6 adv999999999999")).toThrow(/100/);
+  expect(() => parse("2d6 dis999999999999")).toThrow(/100/);
+  expect(() => parse("1d10 crit chain 5+ chain adv999999999999")).toThrow(/100/);
+  expect(() => parse("1d6 x25 + 5d6 x25".replace(" x25 +", " +"))).toThrow(/100/);
+  expect(() => parse("1d6 x999999999999")).toThrow(EngineError);
+});
+
+test("keep and drop stay within the dice", () => {
+  expect(() => parse("4d6 keep 0")).toThrow(/keep 0/);
+  expect(() => parse("4d6 keep 5")).toThrow(/keep 5/);
+  expect(() => parse("4d6 drop 0")).toThrow(/drop 0/);
+  expect(() => parse("4d6 drop 4")).toThrow(/drop 4/);
+  expect(parse("4d6 keep 4").groups[0].keep).toEqual({ n: 4, low: false });
+  expect(parse("4d6 drop 3").groups[0].drop).toBe(3);
+});
+
+test("a command needs dice", () => {
+  for (const t of ["3", "+3", "x3"]) expect(() => parse(t)).toThrow(/No dice/);
+});

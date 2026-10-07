@@ -47,6 +47,7 @@ function parseGroup(sign: 1 | -1, words: Tok[]): GroupPlan {
   const count = m[1] === "" ? 1 : +m[1];
   const size = m[2] === "%" ? 100 : +m[2];
   if (count < 1) throw bad(`"${words[0].text}" needs at least 1 die`);
+  if (count > MAX_DICE) throw bad(`More than ${MAX_DICE} dice`);
   if (size < 1 || size > MAX_SIDES) {
     throw bad(`"${words[0].text}" must have 1 to ${MAX_SIDES} sides`);
   }
@@ -72,8 +73,11 @@ function parseGroup(sign: 1 | -1, words: Tok[]): GroupPlan {
         i++;
       }
       g.keep = { n: num(words[++i]?.text, "keep"), low };
-    } else if (lw === "drop") g.drop += num(words[++i]?.text, "drop");
-    else if (lw === "crit") {
+    } else if (lw === "drop") {
+      const n = num(words[++i]?.text, "drop");
+      if (n < 1) throw bad(`"drop ${n}" must drop 1 to ${count - 1} dice`);
+      g.drop += n;
+    } else if (lw === "crit") {
       if (words[i + 1]?.text.toLowerCase() === "each") {
         g.crit = "each";
         i++;
@@ -94,6 +98,15 @@ function parseGroup(sign: 1 | -1, words: Tok[]): GroupPlan {
       else g.chain.push(r);
     } else if (lw === "explode") g.explode = true;
     else throw bad(`Unknown word "${w}"`);
+  }
+  if (g.adv > MAX_DICE || g.dis > MAX_DICE || g.chainAdv > MAX_DICE) {
+    throw bad(`More than ${MAX_DICE} dice`);
+  }
+  if (g.keep && !(g.keep.n >= 1 && g.keep.n <= count)) {
+    throw bad(`"keep ${g.keep.n}" must keep 1 to ${count} dice`);
+  }
+  if (g.drop && !(g.drop >= 1 && g.drop < count)) {
+    throw bad(`"drop ${g.drop}" must drop 1 to ${count - 1} dice`);
   }
   if ((g.adv || g.dis) && (g.keep || g.drop)) {
     throw bad("adv or dis can't be used with keep or drop in one group");
@@ -163,6 +176,10 @@ export function parse(input: string): Plan {
     }
   }
   if (trailing) throw bad(`A trailing "${symbol()}" needs something after it`);
+  if (!groups.length) throw bad("No dice");
+  let total = 0;
+  for (const g of groups) total += g.count + Math.abs(g.adv - g.dis);
+  if (total * (times || 1) > MAX_DICE) throw bad(`More than ${MAX_DICE} dice`);
   const plan: Plan = { text, groups, modifier, times: times || 1, note };
   if (stageZeroSizes(plan).length > MAX_DICE) throw bad(`More than ${MAX_DICE} dice`);
   return plan;
