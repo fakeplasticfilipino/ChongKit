@@ -5,8 +5,8 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v2.8.0)
-- One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right
+## ✅ Now (v2.9.0)
+- One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right and glides open / closed (the tray never squeezes)
 - Rolls tab with dice pills (each click adds a die to the tray) and the dice style; saved-roll pills that always roll; ⋯ for hide, history, players' trays, Nimble, export / import
 - Chong's Tracker's look (transparent, translucent surfaces)
 - Avrae roll engine with reroll / explosion waves; same total on every player's tray
