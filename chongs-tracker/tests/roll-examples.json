@@ -11,6 +11,7 @@
     { "line": "Damage: Ravage (2×). 1d10. OR: Shoot. (Range 12) 1d10.", "commands": ["1d10 x2", "1d10"] },
     { "line": "Damage: Smash (2×). 1d6+15. OR: Boulder! 1d6+20", "commands": ["1d6+15 x2", "1d6+20"] },
     { "line": "HP: 30, Save DC 13, Range 8", "commands": [] },
+    { "line": "Stats: 4d6!kh3 each", "commands": ["4d6 explode keep 3"] },
     { "line": "5d6x and d20s and add20", "commands": [] }
   ]
 }

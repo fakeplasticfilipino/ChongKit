@@ -99,7 +99,10 @@ function rollRep(plan: Plan, rng: Rng, budget: Budget): RepRecord {
     for (const d of own) d.crit = canCrit(d, g, primary) && d.value === d.size;
     dice.push(...own);
     const pd = own.find((d) => d.id === primary);
-    groups.push({ sign: g.sign, label: labelOf(g, own), primary, miss: !!(pd && g.miss && inRange(pd.value, g.miss)), crit: false,
+    const primaries = g.crit === "each"
+      ? own.filter((d) => d.kept && (d.kind === "start" || d.kind === "adv")).map((d) => d.id)
+      : primary === null ? [] : [primary];
+    groups.push({ sign: g.sign, label: labelOf(g, own), primary, primaries, miss: !!(pd && g.miss && inRange(pd.value, g.miss)), crit: false,
       usesCrit: g.crit !== "none", usesMiss: g.miss !== null });
   });
   // Follow-ups, breadth-first in id order; each gets the next ids.

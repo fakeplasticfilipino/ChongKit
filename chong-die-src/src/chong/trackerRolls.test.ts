@@ -8,8 +8,6 @@ const examples: { line: string; commands: string[] }[] = JSON.parse(
   readFileSync(new URL("../../../chongs-tracker/tests/roll-examples.json", import.meta.url), "utf8")
 ).lines;
 
-// Skipped until Task 9 of the 3.0 plan (.superpowers/sdd/2026-10-07-roll-engine-plan): the shared
-// examples are still in Avrae syntax; Task 9 moves them and the tracker's findRolls to the new words.
 test("every roll Chong's Tracker sends can be rolled", () => {
   const commands = examples.flatMap((e) => e.commands);
   expect(commands.length).toBeGreaterThan(5);

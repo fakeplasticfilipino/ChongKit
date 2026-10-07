@@ -152,3 +152,12 @@ test("crit each: a kept adv die of the first throw can crit and chain too", () =
   const chain = r.dice.find((d) => d.kind === "chain")!;
   expect(chain.parent).toBe(adv.id);
 });
+
+test("primaries: every kept first-throw die with crit each, else the primary", () => {
+  const each = roll(parse("3d10 crit each"), seq([4, 10, 6, 2])).reps[0];
+  expect(each.groups[0].primaries).toEqual([0, 1, 2]);
+  const adv = roll(parse("2d10 crit each adv"), seq([1, 7, 9])).reps[0];
+  expect(adv.groups[0].primaries).toEqual([1, 2]);
+  expect(roll(parse("3d10 crit"), seq([4, 5, 6])).reps[0].groups[0].primaries).toEqual([0]);
+  expect(roll(parse("2d6"), seq([4, 5])).reps[0].groups[0].primaries).toEqual([0]);
+});

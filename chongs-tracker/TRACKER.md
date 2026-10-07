@@ -51,6 +51,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Notes show as text; click elsewhere in a note to edit it
 - [x] Browser check (fake SDK): paste, underline, click sends, no-ack notification, edit + Escape
 - [x] v1.9.0: note rolls are sent in Chong Die 3.0's syntax (`toCommand`: `!` → explode, kh1 → keep 1, `(2×)` → x2, d% → 1d100); dice with ops that have no 3.0 word (rerolls, min/max, drop highest) are no longer underlined
+- [x] v1.9.1: Avrae `eN` becomes `explode` only when N is the die's size; keep / drop Chong Die would refuse (`2d6kh3`, `2d6pl2`, two in one term) is not underlined; `4d6!kh3` added to the shared examples
 
 ## ✅ Checked in a real Owlbear room
 - [x] Note rolls into Chong Die (open, closed, not installed)

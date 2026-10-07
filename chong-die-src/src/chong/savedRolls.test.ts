@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   allNames,
+  BUILT_IN_NAMES,
   emptySaved,
   importSaved,
   loadSaved,
@@ -174,3 +175,12 @@ test("old saves with Instant switches and an active tab still load", () =>
   expect(
     validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", instant: true, pills: [] }], history: [], activeTabId: "a" })
   ).toEqual({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], history: [], names: {} }));
+
+test("the built-in names live here, frozen, under the user's", () => {
+  expect(BUILT_IN_NAMES).toEqual({ nimble: "crit miss 1" });
+  expect(Object.isFrozen(BUILT_IN_NAMES)).toBe(true);
+  const s = emptySaved();
+  expect(allNames(s).nimble).toBe("crit miss 1");
+  s.names = { nimble: "crit" };
+  expect(allNames(s).nimble).toBe("crit");
+});

@@ -33,6 +33,20 @@ test("ranges keep their + and -", () => {
   expect(parse("1d10 crit chain adv2").groups[0].chainAdv).toBe(2);
 });
 
+test("a sign glued after a range or chain adv", () => {
+  const a = parse("2d6 crit miss 4-+3");
+  expect(a.groups[0].miss).toEqual({ min: -Infinity, max: 4 });
+  expect(a.modifier).toBe(3);
+  expect(parse("1d10 crit chain 5+-1")).toMatchObject({ modifier: -1 });
+  expect(parse("1d10 crit chain 1-2+3").groups[0].chain).toEqual([{ min: 1, max: 2 }]);
+  const b = parse("1d10 crit chain adv+3");
+  expect(b.groups[0].chainAdv).toBe(1);
+  expect(b.modifier).toBe(3);
+  expect(parse("1d10 crit chain adv2-1")).toMatchObject({ modifier: -1, groups: [{ chainAdv: 2 }] });
+  expect(() => parse("1d10 crit miss 1+3")).toThrow(EngineError);
+  expect(() => parse("1d10 crit miss 1+3")).toThrow(/space/);
+});
+
 test("no spaces and capitals", () => {
   expect(parse("2D6+3")).toMatchObject({ modifier: 3, groups: [{ count: 2, size: 6 }] });
   expect(parse("1d20-2")).toMatchObject({ modifier: -2 });

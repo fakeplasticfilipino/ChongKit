@@ -63,6 +63,11 @@ export interface GroupResult {
   label: string;
   /** The `id` of the group's Primary Die, or null when no start/adv die is kept. */
   primary: number | null;
+  /**
+   * The dice outlined as Primary Dice: with `crit each`, every kept start/adv die; else `[primary]`
+   * (empty when none). Records made before 3.0.2 lack it: read it as `[primary]`.
+   */
+  primaries: number[];
   /** The Primary Die landed in the miss range (an outcome). */
   miss: boolean;
   /** A die of the group crit (an outcome). */

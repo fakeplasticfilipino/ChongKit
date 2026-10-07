@@ -30,15 +30,34 @@ export function isLanguageWord(token: string): boolean {
 
 const bad = (m: string) => new EngineError(m);
 
+/**
+ * The range word after miss/chain, and what is glued after it. A whole word that is a range is
+ * the range. Else the longest range at its start, when a sign follows it (`4-+3` → `4-` then
+ * `+3`). Anything else is left whole for parseGroup to refuse.
+ */
+function splitRange(raw: string): { range: string; rest: string } {
+  if (parseRange(raw)) return { range: raw, rest: "" };
+  for (let n = raw.length - 1; n > 0; n--) {
+    if (parseRange(raw.slice(0, n))) {
+      return /^[+-]/.test(raw.slice(n)) ? { range: raw.slice(0, n), rest: raw.slice(n) } : { range: raw, rest: "" };
+    }
+  }
+  return { range: raw, rest: "" };
+}
+
 /** Whitespace-split; + and - split groups, except inside the range after miss/chain. */
 function tokenize(body: string): Item[] {
   const items: Item[] = [];
   let prev = "";
-  for (const raw of body.split(/\s+/).filter(Boolean)) {
-    if ((prev === "miss" || prev === "chain") && !/^adv\d*$/i.test(raw)) {
-      items.push({ text: raw, range: true });
-      prev = raw.toLowerCase();
-      continue;
+  for (const word of body.split(/\s+/).filter(Boolean)) {
+    let raw = word;
+    // `chain adv+3`: adv with a glued sign is split like any other word
+    if ((prev === "miss" || prev === "chain") && !/^adv\d*($|[+-])/i.test(raw)) {
+      const { range, rest } = splitRange(raw);
+      items.push({ text: range, range: true });
+      prev = range.toLowerCase();
+      if (!rest) continue;
+      raw = rest;
     }
     for (const part of raw.split(/([+-])/).filter(Boolean)) {
       if (part === "+" || part === "-") {
@@ -102,7 +121,10 @@ function parseGroup(sign: 1 | -1, words: Tok[]): GroupPlan {
       }
       if (!next) throw bad(`${lw} needs a range`);
       const r = parseRange(next.text);
-      if (!r) throw bad(`"${next.text}" is not a range`);
+      if (!r) {
+        const glued = /\d[+-]+\d/.test(next.text) ? ` (put a space before a + or -)` : "";
+        throw bad(`"${next.text}" is not a range${glued}`);
+      }
       i++;
       if (lw === "miss") g.miss = r;
       else g.chain.push(r);

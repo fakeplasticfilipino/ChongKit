@@ -4,14 +4,15 @@ import { RepRecord, RolledDie, RollRecord } from "./types";
 export interface FormattedResult {
   /** The big number: the repetitions' totals joined by `, ` */
   total: string;
-  /** One line per repetition, Avrae-style: `~~x~~` dropped, `**x**` a crit or a 1 */
+  /** One line per repetition: `~~x~~` dropped, `**x**` a crit or a 1; the first ends with ` # note` */
   lines: string[];
 }
 
 function dieText(d: RolledDie): string {
   const v = String(d.value);
   if (!d.kept) return `~~${v}~~`;
-  return d.crit || d.value === 1 ? `**${v}**` : v;
+  // A d1 always shows 1: not a low roll, so not bold
+  return d.crit || (d.value === 1 && d.size > 1) ? `**${v}**` : v;
 }
 
 function groupText(rep: RepRecord, group: number): string {
@@ -48,6 +49,8 @@ function lineOf(rep: RepRecord, modifier: number): string {
 export function formatRecord(record: RollRecord): FormattedResult {
   return {
     total: record.reps.map((r) => String(r.total)).join(", "),
-    lines: record.reps.map((rep) => lineOf(rep, record.modifier)),
+    // The note (`# sword`) ends the first line, as it was typed
+    lines: record.reps.map((rep, i) =>
+      lineOf(rep, record.modifier) + (i === 0 && record.note ? ` # ${record.note}` : "")),
   };
 }

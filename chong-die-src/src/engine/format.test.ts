@@ -44,3 +44,13 @@ test("miss and crit together", () => {
 test("a tied disadvantage still reads kl", () => {
   expect(f("2d6 dis", [4, 4, 4]).lines[0]).toMatch(/^3d6kl2 /);
 });
+
+test("the note ends the first line", () => {
+  const r = roll(parse("1d10 crit x2 # sword"), seq([4, 5]));
+  expect(formatRecord(r).lines).toEqual(["1d10 (4) = 4 # sword", "1d10 (5) = 5"]);
+  expect(f("1d10 crit # ", [4]).lines[0]).toBe("1d10 (4) = 4");
+  expect(f("1d20 miss 1 # axe", [1]).lines[0]).toBe("1d20 (**1**) = 1 · MISS # axe");
+});
+test("a d1's 1 is not bold", () => {
+  expect(f("1d1", [1]).lines[0]).toBe("1d1 (1) = 1");
+});

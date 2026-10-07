@@ -132,3 +132,26 @@ test("pop-out throw starts clear above the parent and flies up and sideways", ()
   expect(t.linearVelocity.y).toBeCloseTo(3.5);
   expect(t.angularVelocity).toEqual({ x: 9, y: 9, z: 9 });
 });
+
+test("crit each outlines every kept first-throw die, each with its own tone", () => {
+  // 3d10 crit each miss 1: 1 (the primary, missed), 10 (crit → a chain die 2), 6
+  const r = rolled("3d10 crit each miss 1", [1, 10, 6, 2]);
+  const ids = Object.keys(r.chong!.parts);
+  expect(highlightedDice(r)).toEqual([ids[0], ids[1], ids[2]]);
+  expect(highlightTone(r, ids[0])).toBe("miss");
+  expect(highlightTone(r, ids[1])).toBe("crit");
+  expect(highlightTone(r, ids[2])).toBe("plain");
+});
+
+test("a non-primary die of a missed group is purple, not dark red", () => {
+  const r = rolled("2d6 crit each miss 1", [1, 3]);
+  const ids = Object.keys(r.chong!.parts);
+  expect(highlightTone(r, ids[0])).toBe("miss");
+  expect(highlightTone(r, ids[1])).toBe("plain");
+});
+
+test("a v3 record without primaries outlines its primary", () => {
+  const r = rolled("3d10 crit each", [4, 5, 6]);
+  for (const g of r.chong!.record.reps[0].groups) delete (g as { primaries?: number[] }).primaries;
+  expect(highlightedDice(r)).toEqual([Object.keys(r.chong!.parts)[0]]);
+});

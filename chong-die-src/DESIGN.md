@@ -39,14 +39,18 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
 - **Roll engine** (`src/engine/`, pure TS, Vitest): `expand` (saved names, repeated; a loop is an
   error) → `parse` (the only module that knows the words) → `roll` (plan + random source: the
   browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept,
-  crit, parent and source; each group's Primary Die; marks; total) → `format` (the result text).
+  crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the
+  result text; the first line ends with ` # note`). `expand` pads each name with spaces, so a glued sign
+  (`atk+3`) starts the next part; after `miss`/`chain`, `adv+3` splits, and a range takes its longest
+  valid start when a sign follows (`4-+3` → `4-`, `+3`); `1+3` is an error asking for a space.
   `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray
   shows. Errors are `EngineError`, shown under the command line.
 - **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CRIT and
   CAPPED are marks beside it. Caps: 100 dice per roll (checked before rolling) and 20 chain dice
   (a `chain adv` pick counts as one); hitting either marks the roll CAPPED.
 - **Saved names** (`name = text` saves, `name =` deletes; `chong/chongStore.ts`, `chong/savedRolls.ts`):
-  names expand where used and may use names. The built-in `nimble = crit miss 1` sits under the
+  names expand where used and may use names. The built-in `nimble = crit miss 1` (`BUILT_IN_NAMES`,
+  frozen, in `chong/savedRolls.ts`) sits under the
   user's names: a user's `nimble` wins, and deleting it restores the built-in. A name's own `# note`
   moves to the end of the expanded command. The expanded text is what rolls, syncs and goes into
   history. The engine contains no Nimble.
@@ -67,12 +71,13 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
 ## Primary Die outlines
 
 Placed by the record, not by where a die lands, and shown whenever a group uses `crit` or `miss`
-(`usesCrit` / `usesMiss`); there is no switch. The Primary Die is the first die of a group still kept
-(with `crit each`, every starting die).
+(`usesCrit` / `usesMiss`); there is no switch. The Primary Die is the first die of a group still kept;
+the outlined dice are the group's `primaries` (with `crit each`, every kept die of the first throw;
+records from before 3.0.2 lack it and outline just the Primary Die).
 
 - `chong/Highlights.tsx` draws the outline: the die's own geometry, scaled 1.08, inside out
-  (`BackSide`), unlit. Purple; dark red when the die is in the `miss` range; gold when the Primary
-  Die crit.
+  (`BackSide`), unlit. Per die: gold when it crit; dark red when it is the group's Primary Die and
+  the group missed; else purple.
 - Chain dice aren't outlined; the CRIT mark is in the result text.
 
 ## Faces (3.0: landing on the record's face)

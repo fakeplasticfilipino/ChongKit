@@ -413,7 +413,8 @@
   // Dice rolls in note text, for clicking them into Chong Die. A roll is a dice term (`1d8`, `d20`,
   // `d%`, with Avrae ops like `!`, `kh1`, `rr<2`) followed by more dice or numbers joined by + / -.
   // `toCommand` writes it in Chong Die 3.0's words (`!` → explode, kh1 → keep 1, d% → 1d100); ops with
-  // no 3.0 word (rerolls, min/max, drop highest, selectors) make no roll. A repeat like `(2×)` or
+  // no 3.0 word (rerolls, min/max, drop highest, selectors, eN below the die's size) and keep/drop
+  // Chong Die would refuse (keep more than rolled, drop them all) make no roll. A repeat like `(2×)` or
   // `(2x)` before it adds ` x2` (one roll per attack), but only for
   // the first roll after the marker: "Ravage (2×). 1d10. OR: Shoot. 1d10." rolls the Shoot once.
   const DICE_TERM = String.raw`\d*d(?:\d+|%)(?:!|(?:kh|kl|ph|pl|rr|ro|ra|mi|ma|k|p|e)[<>]?\d+)*`;
@@ -433,10 +434,20 @@
       const m = TERM_RE.exec(body);
       if (!m) return null;
       let text = (m[2] === '%' ? `${m[1] || 1}d100` : `${m[1]}d${m[2]}`);
+      const count = m[1] === '' ? 1 : Number(m[1]);
+      const size = m[2] === '%' ? 100 : Number(m[2]);
+      let kept = false; // one keep or drop per group (Chong Die refuses two)
       for (const op of m[3].matchAll(OP_RE)) {
+        const n = Number(op[3]);
         if (op[0] === '!') text += ' explode';
-        else if (op[2] === '' && OP_WORD[op[1]]) text += OP_WORD[op[1]](op[3]);
-        else return null;
+        // Avrae eN explodes on N; Chong Die explodes on the max face only
+        else if (op[1] === 'e' && op[2] === '' && n === size) text += ' explode';
+        else if (op[2] === '' && OP_WORD[op[1]]) {
+          // Chong Die keeps 1..count and drops 1..count-1
+          if (kept || (op[1] === 'pl' ? !(n >= 1 && n < count) : !(n >= 1 && n <= count))) return null;
+          kept = true;
+          text += OP_WORD[op[1]](op[3]);
+        } else return null;
       }
       return sign + text;
     });

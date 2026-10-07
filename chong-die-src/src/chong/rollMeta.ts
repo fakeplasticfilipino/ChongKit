@@ -2,6 +2,7 @@ import {
   facesFor,
   formatRecord,
   FormattedResult,
+  GroupResult,
   revealStages,
   rollFair,
   RollRecord,
@@ -89,9 +90,18 @@ export function partId(meta: ChongRollMeta, rep: number, die: number): string | 
   });
 }
 
+/** A group's Primary Dice; records made before 3.0.2 have no `primaries`: just the primary */
+function primariesOf(group: GroupResult): number[] {
+  if (Array.isArray(group.primaries)) {
+    return group.primaries;
+  }
+  return group.primary === null ? [] : [group.primary];
+}
+
 /**
- * For each dice group (and repeat) rolled with `crit` or `miss`, the 3D die of its Primary Die
- * (a d100 by its first part), for the outline. Old rolls have none.
+ * For each dice group (and repeat) rolled with `crit` or `miss`, the 3D dice of its Primary Dice
+ * (one, or with `crit each` every kept die of the first throw; a d100 by its first part), for the
+ * outline. Old rolls have none.
  */
 export function highlightedDice(roll: DiceRoll): string[] {
   const meta = roll.chong;
@@ -101,8 +111,11 @@ export function highlightedDice(roll: DiceRoll): string[] {
   const ids: string[] = [];
   meta.record.reps.forEach((rep, r) => {
     for (const group of rep.groups) {
-      if ((group.usesCrit || group.usesMiss) && group.primary !== null) {
-        const id = partId(meta, r, group.primary);
+      if (!(group.usesCrit || group.usesMiss)) {
+        continue;
+      }
+      for (const die of primariesOf(group)) {
+        const id = partId(meta, r, die);
         if (id) {
           ids.push(id);
         }
@@ -126,7 +139,7 @@ export function fadedDice(roll: DiceRoll): string[] {
     .sort(byOrder(meta));
 }
 
-/** The outline of a highlighted die: gold when it crit, else dark red when its group missed, else purple */
+/** The outline of a highlighted die: gold when it crit, else dark red when it is its group's primary and the group missed, else purple */
 export function highlightTone(roll: DiceRoll, id: string): "plain" | "miss" | "crit" {
   const meta = roll.chong;
   const part = isCurrentMeta(meta) ? meta.parts[id] : undefined;
@@ -141,7 +154,8 @@ export function highlightTone(roll: DiceRoll, id: string): "plain" | "miss" | "c
   if (die.crit) {
     return "crit";
   }
-  return rep.groups[die.group]?.miss ? "miss" : "plain";
+  const group = rep.groups[die.group];
+  return group?.miss && group.primary === die.id ? "miss" : "plain";
 }
 
 /**

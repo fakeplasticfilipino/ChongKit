@@ -1,4 +1,7 @@
-import { BUILT_IN_NAMES, checkName, expand, parse } from "../engine";
+import { checkName, expand, parse } from "../engine";
+
+/** Names that come with the tool (the engine knows no game system); a user name of the same name wins */
+export const BUILT_IN_NAMES: Readonly<Record<string, string>> = Object.freeze({ nimble: "crit miss 1" });
 
 export interface Pill {
   id: string;

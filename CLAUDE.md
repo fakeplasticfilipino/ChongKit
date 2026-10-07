@@ -136,7 +136,7 @@ line, an engine that decides every roll, and saved-roll pills. How it works: `ch
 
 1. **System-agnostic.** The engine knows general words only (`crit`, `miss`, `chain`, `explode`,
    `adv` …), never a game system. Nimble lives in the editable `nimble` saved name (built in,
-   `crit miss 1`); other systems' rules may be added as words, never as built-in behaviour.
+   `crit miss 1`, in `src/chong/savedRolls.ts`); other systems' rules may be added as words, never as built-in behaviour.
 2. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
    built with Vite. Source in `chong-die-src/` (off the site, public on GitHub);
    `npx yarn@1.22.22 build` writes `chong-die/`, which is committed. **Rebuild and commit

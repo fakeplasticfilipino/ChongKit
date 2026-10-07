@@ -1,9 +1,6 @@
 import { isDice, isLanguageWord } from "./parse";
 import { EngineError } from "./types";
 
-/** Names that come with the tool. */
-export const BUILT_IN_NAMES: Record<string, string> = { nimble: "crit miss 1" };
-
 const MAX_EXPANDED = 10000;
 const NAME = /^[a-z][a-z0-9_]*$/i;
 
@@ -33,7 +30,8 @@ function expandText(
       if (chain.includes(key)) {
         throw new EngineError("Saved names loop: " + [...chain, key].join(" → "));
       }
-      out += expandText(names[key], names, [...chain, key], notes);
+      // Padded so a glued sign (`nimble+3`) stays its own part; spaces collapse afterwards
+      out += " " + expandText(names[key], names, [...chain, key], notes) + " ";
     } else out += piece;
     if (out.length > MAX_EXPANDED) throw new EngineError("Saved names are too long once expanded");
   }

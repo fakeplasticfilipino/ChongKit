@@ -13,7 +13,7 @@ import { allNames } from "./savedRolls";
 import { checkName, expand, parseDefinition } from "../engine";
 import { PanelToggle } from "./PanelToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
-import { FIELD, HOVER } from "./look";
+import { FIELD, HOVER, TEXT2 } from "./look";
 
 /** Why `name = text` can't be saved (a bad name, or names that would loop), or null */
 function nameProblem(name: string, text: string): string | null {
@@ -42,6 +42,8 @@ export function CommandLine() {
   const setText = useChongStore((state) => state.setDraft);
   // Position while stepping through history with ↑ / ↓ (null = typing)
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  // "Saved atk" / "Deleted atk": news, not an error (no red); cleared on typing like an error
+  const [notice, setNotice] = useState<string | null>(null);
 
   const history = useChongStore((state) => state.saved.history);
   const error = useChongStore((state) => state.error);
@@ -55,6 +57,7 @@ export function CommandLine() {
     if (!command) {
       return;
     }
+    setNotice(null);
     // `atk = 1d10 nimble` saves a name (`atk =` deletes it) instead of rolling
     const definition = parseDefinition(command);
     if (definition) {
@@ -67,7 +70,8 @@ export function CommandLine() {
       recordHistory(command);
       setText("");
       setHistoryIndex(null);
-      setError(definition.text ? `Saved ${definition.name}` : `Deleted ${definition.name}`);
+      setError(null);
+      setNotice(definition.text ? `Saved ${definition.name}` : `Deleted ${definition.name}`);
       return;
     }
     try {
@@ -143,6 +147,7 @@ export function CommandLine() {
               if (error) {
                 setError(null);
               }
+              setNotice(null);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -169,6 +174,15 @@ export function CommandLine() {
           sx={{ display: "block", mt: 0.5, px: 1.25, py: 0.25, bgcolor: FIELD, backdropFilter: "blur(8px)", borderRadius: "8px" }}
         >
           {error}
+        </Typography>
+      )}
+      {notice && !error && (
+        <Typography
+          variant="caption"
+          role="status"
+          sx={{ display: "block", mt: 0.5, px: 1.25, py: 0.25, color: TEXT2, bgcolor: FIELD, backdropFilter: "blur(8px)", borderRadius: "8px" }}
+        >
+          {notice}
         </Typography>
       )}
     </Box>

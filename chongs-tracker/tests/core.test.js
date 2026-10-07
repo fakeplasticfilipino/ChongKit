@@ -279,8 +279,25 @@ test("toCommand: Avrae-style note dice become Chong Die 3.0 words", () => {
   assert.strictEqual(C.toCommand("1d6!", 3), "1d6 explode x3");
 });
 
+test("toCommand: eN explodes only on the die's own size", () => {
+  assert.strictEqual(C.toCommand("1d6e6", 1), "1d6 explode");
+  assert.strictEqual(C.toCommand("d%e100", 1), "1d100 explode");
+  assert.strictEqual(C.toCommand("1d8e6", 1), null);
+  assert.strictEqual(C.toCommand("1d6e>5", 1), null);
+});
+
+test("toCommand: keep and drop Chong Die would refuse give null", () => {
+  for (const e of ["2d6kh3", "2d6kl3", "2d6pl2", "2d6pl3", "2d6kh0", "4d6pl0", "d20kh2", "4d6kh3pl1"]) {
+    assert.strictEqual(C.toCommand(e, 1), null, e);
+  }
+  assert.strictEqual(C.toCommand("2d6kh2", 1), "2d6 keep 2");
+  assert.strictEqual(C.toCommand("2d6pl1", 1), "2d6 drop 1");
+  assert.strictEqual(C.toCommand("4d6!kh3", 1), "4d6 explode keep 3");
+  assert.deepStrictEqual(C.findRolls("Roll 2d6kh3 or 2d6"), [{ start: 15, end: 18, command: "2d6" }]);
+});
+
 test("toCommand: ops with no 3.0 word give null, and findRolls leaves those unmarked", () => {
-  for (const e of ["1d6rr1", "1d6ro<2", "1d6mi2", "1d6ma5", "4d6ph1", "3d6k<3", "1d6e6", "1d20ra1"]) {
+  for (const e of ["1d6rr1", "1d6ro<2", "1d6mi2", "1d6ma5", "4d6ph1", "3d6k<3", "1d20ra1"]) {
     assert.strictEqual(C.toCommand(e, 1), null, e);
   }
   assert.deepStrictEqual(C.findRolls("Hits 1d6rr1 or 2d6+1"), [{ start: 15, end: 20, command: "2d6+1" }]);

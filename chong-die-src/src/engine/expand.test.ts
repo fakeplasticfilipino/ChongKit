@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
-import { BUILT_IN_NAMES, EngineError, checkName, expand, parseDefinition } from "./index";
+import { EngineError, checkName, expand, parse, parseDefinition, roll, seq } from "./index";
 
-const names = { ...BUILT_IN_NAMES, atk: "1d10 nimble chain 5+ chain adv" };
+// The engine knows no system: this test map defines its own `nimble`.
+const names = { nimble: "crit miss 1", atk: "1d10 nimble chain 5+ chain adv", gs: "2d6 crit miss 4-" };
 
 test("expands names recursively and collapses spaces", () => {
   expect(expand("atk +3", names)).toBe("1d10 crit miss 1 chain 5+ chain adv +3");
@@ -14,9 +15,9 @@ test("notes are untouched", () => {
 });
 
 test("names are whole words delimited by space, + or -, any case", () => {
-  expect(expand("atk+3", names)).toBe("1d10 crit miss 1 chain 5+ chain adv+3");
+  expect(expand("atk+3", names)).toBe("1d10 crit miss 1 chain 5+ chain adv +3");
   expect(expand("ATK", { atk: "1d4" })).toBe("1d4");
-  expect(expand("atkx 2d6-atk", { atk: "1d4" })).toBe("atkx 2d6-1d4");
+  expect(expand("atkx 2d6-atk", { atk: "1d4" })).toBe("atkx 2d6- 1d4");
 });
 
 test("loops throw naming the chain", () => {
@@ -57,5 +58,23 @@ test("a name's note moves to the end", () => {
 });
 
 test("a diamond is not a loop", () => {
-  expect(expand("a", { a: "b +c", b: "d", c: "d", d: "1d4" })).toBe("1d4 +1d4");
+  expect(expand("a", { a: "b +c", b: "d", c: "d", d: "1d4" })).toBe("1d4 + 1d4");
+});
+
+test("a sign glued after a name stays its own part", () => {
+  expect(expand("1d10 nimble+3", names)).toBe("1d10 crit miss 1 +3");
+  expect(expand("1d10 nimble-1", names)).toBe("1d10 crit miss 1 -1");
+  expect(expand("gs+2", names)).toBe("2d6 crit miss 4- +2");
+});
+
+const total = (cmd: string, vals: number[]) => roll(parse(expand(cmd, names)), seq(vals)).reps[0].total;
+
+test("glued signs after names and ranges count in the total", () => {
+  expect(total("1d10 nimble+3", [5])).toBe(8);
+  expect(total("1d10 nimble-1", [5])).toBe(4);
+  expect(parse(expand("1d10 nimble-1", names)).groups[0].miss).toEqual({ min: 1, max: 1 });
+  expect(total("atk+3", [4])).toBe(7);
+  expect(total("atk-1", [4])).toBe(3);
+  expect(total("gs+2", [5, 6])).toBe(13);
+  expect(total("2d6 crit miss 4-+3", [5, 6])).toBe(14);
 });

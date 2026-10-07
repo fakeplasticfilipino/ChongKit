@@ -258,7 +258,8 @@ the faces the roll decided). It is a modified version of
   rolls and names live in this browser only), about.
 - Rolls clicked in **Chong's Tracker** notes land on this tray, ready to throw.
 - **Outline:** whenever a roll uses `crit` or `miss`, the Primary Die (the first die of a group still
-  kept) gets a **purple outline**, dark red when it is in the `miss` range, gold when it crit. A
+  kept; with `crit each`, every kept die of the first throw) gets a **purple outline**, dark red
+  when the Primary Die is in the `miss` range, gold when that die crit. A
   die the roll dropped (advantage, `keep`, `drop`) fades once it lands. Chain dice pop out of the
   die that made them after it settles.
 - **Marks, not verdicts:** the total is always the real sum; **MISS**, **CRIT** and **CAPPED** are
@@ -282,7 +283,7 @@ rules follow the group they belong to: in `1d4 nimble + 2d6 + 3` only the dagger
 | `# text` | A note shown with the roll | `1d10 crit # longsword` |
 
 Ranges are written one way everywhere: `5+` (5 or more), `4-` (4 or less), `1-2` (1 to 2), `6`
-(exactly 6). The Primary Die is the first die of a group still kept; with `crit`, it and every chain
+(exactly 6); a `+` or `-` right after a range starts the next part (`miss 4-+3`). The Primary Die is the first die of a group still kept; with `crit`, it and every chain
 die can crit. A chain die is one more die of the same size added to the total (with `chain adv`, an
 advantage pick of that size); a die that meets several reasons at once adds one chain die. Errors
 show under the command line: `keep` with `drop`, `adv`/`dis` with `keep`/`drop`, `chain` without

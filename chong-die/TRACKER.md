@@ -5,7 +5,7 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v3.0.1)
+## ✅ Now (v3.0.2)
 - One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right and fades in / out as it opens / closes (the tray never squeezes)
 - Rolls tab with dice pills (each click adds a die to the tray) and the dice style; saved-roll pills that always roll; ⋯ for hide, history, players' trays, export / import
 - Chong's Tracker's look (transparent, translucent surfaces)
@@ -16,6 +16,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Libraries in six `vendor-*` chunks: a new MUI / drei part rewrites only that chunk (~250 KB), never Rapier (2 MB) or three.js
 - Rolls from Chong's Tracker (converted to the new words); shared examples tested by both sides; `npm test` runs everything
 - Hold to roll for every custom roll (typed, pills, tracker, history): dice wait on the tray, hold and release Roll
+- 3.0.2: a sign glued after a name or range (`atk+3`, `nimble-1`, `miss 4-+3`) counts; the `# note` ends the result's first line; `crit each` outlines every kept first-throw die; `nimble` lives in `chong/savedRolls.ts` (none in the engine); "Saved atk" is a plain notice, not red
 - Removed in 3.0: Avrae syntax, waves, right-click exploding, the Nimble switch
 - Removed in 2.7: the ⚡ Instant switch, bonus / advantage, the fairness tester and debug store
 
@@ -28,6 +29,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [ ] ⋯ → Hide rolls: the other player sees the backdrop and no total; the turned faces still show
 - [ ] Pill, tracker note roll (`(2×) 1d8!+1d8+2`) and history replay wait on the tray; with Chong Die closed the tracker says "Install Chong Die to roll"
 - [ ] `1d7` rolls at once; `1d20 frob` shows the error banner
+- [ ] `100d6`: rolls and syncs (metadata size); `1d10 nimble+3` adds the 3; `3d10 crit each`: each die outlined; `1d10 crit # sword`: the note shows on the other player's tray
 
 ## ✅ Checked in a real Owlbear room (two players)
 - [x] Install from the manifest; the window narrows / widens with ▤; phone width
@@ -40,9 +42,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
 ## 💡 Backlog
 - A die popped out next to a wall can come to rest wedged on the wall or its parent: aim `popThrow` away from the nearest wall
-- A pill over the dice limits (`!rr 25 5d6`) isn't outlined red; it errors only on click
 - Import keeps duplicate tab / pill ids: regenerate them
 - Pills can't be dragged on touch screens; a pill's tooltip can show on top of its long-press menu
 - Virtual dice (d7, d30 …) show only in the text, not as a chip
 - Two tracker rolls in flight: the background's per-roll ack listeners can unsubscribe each other (harmless, deduped)
-- Hidden rolls still put the command and virtual-die values in player metadata (accepted)
