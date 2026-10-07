@@ -7,7 +7,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | Tool | Status | What it does |
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
-| [Chong Die](chong-die/) | ✅ v2 | Owlbear Rodeo 3D dice with an Avrae-style command line and saved rolls in their own window. Fork of Owlbear Rodeo Dice (GPL-3.0). |
+| [Chong Die](chong-die/) | ✅ v2 | Owlbear Rodeo 3D dice with an Avrae-style command line and saved rolls in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
 | [Character Sheet](character-sheet/) | ✅ v3 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, notes; add more of any box, remove any; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
@@ -240,15 +240,13 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 `https://fakeplasticfilipino.github.io/ChongKit/chong-die/manifest.json`, then turn it on in your room.
 
 **Using it**
-- **Two windows.** The toolbar button opens the **Rolls window** (command line and saved rolls).
-  Rolling opens the **dice tray** at the top right of the screen, the stock Owlbear Dice tray. The
-  tray stays open until you close it (**×** at the bottom of its sidebar, or **🎲** in the Rolls
-  window), so clicking the map never cuts a roll short. **🎲** also opens it to pick dice by hand.
-- **Command line** (top of the Rolls window): type a roll and press Enter. `!r` is optional.
+- **Rolls panel:** docked to the right of the tray. **▤** in the sidebar opens or closes it (the
+  window widens and narrows with it; closed, it's the plain Owlbear Dice tray). It remembers.
+- **Command line** (top of the panel): type a roll and press Enter. `!r` is optional.
   ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled.
 - **Tabs of pills** (saved rolls) under it. The small **+** after the tabs adds a tab;
-  double-click renames, **×** deletes, drag to reorder. At the end of the row: **⚡**, **+**,
-  **🎲** (tray) and **⋯** (Nimble rules, export, import, about).
+  double-click renames, **×** deletes, drag to reorder. At the end of the row: **⚡**, **+** and
+  **⋯** (Nimble rules, export, import, about).
 - **+** adds a roll to the open tab: a name, the roll (filled in from the command
   line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
   the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
@@ -256,7 +254,7 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 - **⚡** is the tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the ⚡ of the tab open in the
-  Rolls window (remembered even with the window closed).
+  panel (remembered even with the panel closed).
 - **Nimble rules** (⋯ menu → Nimble rules): the first die of every roll is the **primary die** (one
   per roll with `!rr`). It explodes on its max and a 1 on it is a **Miss**. Off: plain Avrae
   rolling. Dice picked by hand on the tray follow it too (except with advantage / disadvantage).

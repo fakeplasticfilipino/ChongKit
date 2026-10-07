@@ -133,15 +133,15 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
 line and saved-roll pills. System-agnostic, with **one exception: optional Nimble rules** (off by
 default, ⋯ → Nimble rules; see 5 below). This is a deliberate choice for our table: don't add other
-systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the two windows in
-`docs/superpowers/specs/2026-10-07-chong-die-split-windows-design.md`.
+systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the docked panel in
+`docs/superpowers/specs/2026-10-07-chong-die-docked-panel-design.md`.
 
-**Two windows, one extension.** The toolbar button opens the **Rolls window** (`index.html` →
-`src/rolls.tsx`: command line, history, tabs, pills, ⋯). The **tray** (`tray.html` → `src/main.tsx`)
-is a popover `com.chongkit.chongdie/tray` opened by `openTray()` (`src/chong/trayWindow.ts`), top
-right, not closed by clicking the map; it looks like stock Owlbear Dice (keep the Chong UI off it).
-Only the Rolls window writes saved rolls (`chongStore`); the tray has `trayStore` (placed command,
-error banner); prefs are `prefsStore`, shared through localStorage + the `storage` event.
+**One window, docked panel.** The toolbar button opens the tray (stock Owlbear Dice look: keep the
+Chong UI off the tray itself) with the **Rolls panel** (command line, tabs, pills, ⋯) docked to its
+right, 300 px. ▤ in the sidebar opens / closes it (`prefs.panelOpen`); the window width is
+`windowWidth(height, panelOpen)` (`layout.ts`) via `OBR.action.setWidth`. Don't try a separate
+tray popover again: in 2.0 it never appeared in Owlbear. Stores: `chongStore` (saved rolls, the only
+writer), `trayStore` (placed command, error banner), `prefsStore`.
 
 1. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
    built with Vite. Source in `chong-die-src/` (off the site via `_config.yml`, public on GitHub);
@@ -157,15 +157,15 @@ error banner); prefs are `prefsStore`, shared through localStorage + the `storag
 5. **Rolls carry `chong` metadata** (`ChongRollMeta`: command, die id → logical die, virtual dice)
    so every player recomputes the same result from the synced values. Only the roller's
    `useWaveRunner` throws new waves. Plugin id prefix `com.chongkit.chongdie/`.
-   Owlbear SDK 3.x. **Every roll** (Rolls window and Chong's Tracker) is `{ id, command, place? }`
-   on `…/roll`: the background acks, opens the tray if it's closed (never re-opens an open one: that
-   reloads it mid-roll) and re-sends `…/run` until the tray's `…/run-ack` (`channels.ts`,
-   `incoming.ts`). `place` missing (the tracker) = follow the saved active tab's Instant switch.
+   Owlbear SDK 3.x. The panel rolls on the tray directly (`runPill`, `startCommandRoll`). Rolls from
+   Chong's Tracker are `{ id, command, place? }` on `…/roll`: the background acks, opens the action
+   and re-sends `…/run` until the window's `…/run-ack` (`channels.ts`, `incoming.ts`). `place`
+   missing (the tracker) = follow the saved active tab's Instant switch.
    Primary die = each roll's first die (`<rep>.0.0`, plus its `e` chain), drawn in the chosen style;
    Nimble rules live in `evaluate(…, { nimble })` and the roll records `chong.nimble`. Both settings
    are in localStorage `chongkit.chongdie.prefs` (`prefs.ts`, tested).
 6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested), with the
-   Rolls window's `activeTabId`.
+   panel's `activeTabId`.
 7. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names,
    so no `?v=` is needed. Libraries build into their own `vendor` chunk so rebuilds stay small.
 8. Status and backlog: `chong-die/TRACKER.md`. Pulling upstream fixes: diff the upstream repo

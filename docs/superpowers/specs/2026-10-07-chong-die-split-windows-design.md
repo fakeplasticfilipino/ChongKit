@@ -1,6 +1,6 @@
 # Chong Die: Rolls window + stock tray (design)
 
-Date: 2026-10-07 · Status: approved in chat (architecture), spec awaiting review
+Date: 2026-10-07 · Status: **superseded** by `2026-10-07-chong-die-docked-panel-design.md` (the tray popover never appeared in Owlbear)
 
 ## Why
 
