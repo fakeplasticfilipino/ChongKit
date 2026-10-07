@@ -36,3 +36,44 @@ export const MAX_DICE = 100;
 export const MAX_FOLLOW = 20;
 export const MAX_TIMES = 25;
 export const MAX_SIDES = 1000;
+
+/** A random source: returns a whole number from 1 to `size`. */
+export type Rng = (size: number) => number;
+
+export type DieKind = "start" | "adv" | "chain" | "explode";
+
+export interface RolledDie {
+  /** The die's place in its repetition's rolling order, from 0. */
+  id: number;
+  group: number;
+  size: number;
+  value: number;
+  kind: DieKind;
+  kept: boolean;
+  crit: boolean;
+  parent: number | null;
+  /** Groups the dice of one advantage chain pick. */
+  pick: number | null;
+  source: "crit" | "range" | "explode" | null;
+}
+
+export interface GroupResult {
+  /** The `id` of the group's Primary Die, or null when no start/adv die is kept. */
+  primary: number | null;
+  miss: boolean;
+  crit: boolean;
+}
+
+export interface RepRecord {
+  dice: RolledDie[];
+  groups: GroupResult[];
+  total: number;
+  capped: boolean;
+}
+
+export interface RollRecord {
+  v: 3;
+  text: string;
+  note: string | null;
+  reps: RepRecord[];
+}
