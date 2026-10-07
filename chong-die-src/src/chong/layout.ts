@@ -1,5 +1,5 @@
 /** The Rolls panel docked to the right of the tray: tabs, dice and pills */
-export const PANEL_WIDTH = 360;
+export const PANEL_WIDTH = 280;
 /** The command line on top of the tray (its box is 32 px, with 8 px around it, + a little air) */
 export const COMMAND_LINE_HEIGHT = 52;
 
