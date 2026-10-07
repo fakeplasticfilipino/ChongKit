@@ -14,7 +14,7 @@ function fakeStorage(): Storage {
 
 test("reload picks up prefs another window saved", () => {
   const storage = fakeStorage();
-  savePrefs({ primaryStyle: "SUNSET", nimble: true }, storage);
+  savePrefs({ primaryStyle: "SUNSET", nimble: true, panelOpen: false }, storage);
   usePrefsStore.getState().reload(storage);
-  expect(usePrefsStore.getState().prefs).toEqual({ primaryStyle: "SUNSET", nimble: true });
+  expect(usePrefsStore.getState().prefs).toEqual({ primaryStyle: "SUNSET", nimble: true, panelOpen: false });
 });

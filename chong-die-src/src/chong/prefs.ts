@@ -1,12 +1,14 @@
 import { DiceStyle } from "../types/DiceStyle";
 import { Die } from "../types/Die";
 
-/** This browser's dice settings: the primary die's style and Nimble rules */
+/** This browser's dice settings: the primary die's style, Nimble rules and the Rolls panel */
 export interface Prefs {
   /** null = not chosen: the first style that differs from the dice */
   primaryStyle: DiceStyle | null;
   /** Primary die explodes on its max; a 1 on it is a miss */
   nimble: boolean;
+  /** The Rolls panel docked beside the tray is open */
+  panelOpen: boolean;
 }
 
 export const PREFS_KEY = "chongkit.chongdie.prefs";
@@ -22,7 +24,7 @@ export const STYLES: DiceStyle[] = [
   "WALNUT",
 ];
 
-const DEFAULTS: Prefs = { primaryStyle: null, nimble: false };
+const DEFAULTS: Prefs = { primaryStyle: null, nimble: false, panelOpen: true };
 
 function defaultStorage(): Storage | undefined {
   try {
@@ -39,6 +41,7 @@ export function loadPrefs(storage = defaultStorage()): Prefs {
       return {
         primaryStyle: STYLES.includes(raw.primaryStyle) ? raw.primaryStyle : null,
         nimble: raw.nimble === true,
+        panelOpen: raw.panelOpen !== false,
       };
     }
   } catch {

@@ -19,21 +19,20 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
   } as unknown as Storage;
 }
 
-test("default prefs: no primary style chosen, Nimble off", () =>
-  expect(loadPrefs(fakeStorage())).toEqual({ primaryStyle: null, nimble: false }));
+test("default prefs: no primary style chosen, Nimble off, panel open", () =>
+  expect(loadPrefs(fakeStorage())).toEqual({ primaryStyle: null, nimble: false, panelOpen: true }));
 
 test("prefs round trip", () => {
   const storage = fakeStorage();
-  savePrefs({ primaryStyle: "SUNSET", nimble: true }, storage);
-  expect(loadPrefs(storage)).toEqual({ primaryStyle: "SUNSET", nimble: true });
+  savePrefs({ primaryStyle: "SUNSET", nimble: true, panelOpen: false }, storage);
+  expect(loadPrefs(storage)).toEqual({ primaryStyle: "SUNSET", nimble: true, panelOpen: false });
 });
 
 test("bad prefs fall back to the defaults", () => {
-  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ primaryStyle: null, nimble: false });
-  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: '{"primaryStyle":"PLAID","nimble":"yes"}' }))).toEqual({
-    primaryStyle: null,
-    nimble: false,
-  });
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ primaryStyle: null, nimble: false, panelOpen: true });
+  expect(
+    loadPrefs(fakeStorage({ [PREFS_KEY]: '{"primaryStyle":"PLAID","nimble":"yes","panelOpen":"no"}' }))
+  ).toEqual({ primaryStyle: null, nimble: false, panelOpen: true });
 });
 
 test("unchosen primary style differs from the dice style", () => {
@@ -63,3 +62,6 @@ test("picker counts become a command", () => {
 
 test("picker d100 becomes 1d100", () =>
   expect(countsToCommand({ x: 1 }, { x: die("x", "D100") }, 0)).toBe("1d100"));
+
+test("prefs saved before the panel setting open the panel", () =>
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: '{"primaryStyle":null,"nimble":true}' })).panelOpen).toBe(true));

@@ -5,10 +5,11 @@ import { loadPrefs, Prefs, PREFS_KEY, savePrefs } from "./prefs";
 import { DiceStyle } from "../types/DiceStyle";
 
 interface PrefsState {
-  /** Primary die style and Nimble rules (saved in this browser, shared by both windows) */
+  /** Primary die style, Nimble rules, Rolls panel open (saved in this browser) */
   prefs: Prefs;
   setPrimaryStyle: (style: DiceStyle | null) => void;
   setNimble: (on: boolean) => void;
+  setPanelOpen: (open: boolean) => void;
   /** Read the prefs again (another window changed them) */
   reload: (storage?: Storage) => void;
 }
@@ -26,6 +27,11 @@ export const usePrefsStore = create<PrefsState>()(
         state.prefs.nimble = on;
       });
     },
+    setPanelOpen(open) {
+      set((state) => {
+        state.prefs.panelOpen = open;
+      });
+    },
     reload(storage) {
       set((state) => {
         state.prefs = loadPrefs(storage);
@@ -40,7 +46,7 @@ usePrefsStore.subscribe((state, prev) => {
   }
 });
 
-/** Follow prefs changed in the other window (Nimble in the Rolls window, primary style on the tray) */
+/** Follow prefs changed in another Owlbear tab of this browser */
 export function listenForPrefChanges(): () => void {
   const onStorage = (e: StorageEvent) => {
     if (e.key === PREFS_KEY) {
