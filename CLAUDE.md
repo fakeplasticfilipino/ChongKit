@@ -123,67 +123,39 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
    script/stylesheet link in `index.html` and `background.html`. GitHub Pages lets browsers cache each
    file for 10 minutes, so without it Owlbear can mix old and new files (e.g. a new `app.js` with an
    old `core.js`) and the panel breaks.
-9. **Rolls in notes go to Chong Die.** `findRolls` (core.js, tested) finds dice in note text; a click
+9. **Rolls in notes go to Chong Die.** `findRolls` (core.js) finds dice in note text; a click
    sends `{ id, command }` on `com.chongkit.chongdie/roll` as a LOCAL broadcast (this player only)
-   and waits 1 s for `…/ack`, else "Install Chong Die to roll". Don't change the channel names
+   and waits 1 s for `…/ack`, else "Install Chong Die to roll". Examples live in
+   `tests/roll-examples.json`, which Chong Die's tests check too. Don't change the channel names
    without changing Chong Die (`src/chong/channels.ts`).
 
 ## Chong Die (Owlbear Rodeo dice)
 
 A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
-line and saved-roll pills. System-agnostic, with **one exception: an optional,
-deliberately simple Nimble switch** (⋯ → Nimble rules, off by default): the top number of each
-term's leftmost landed die glows purple and right-click / long-press starts an explosion chain. Nothing automatic (no Miss,
-no auto-explode); don't add other systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the docked panel in
-`docs/superpowers/specs/2026-10-07-chong-die-docked-panel-design.md`.
+line and saved-roll pills. How it works: `chong-die-src/DESIGN.md` (keep it current).
 
-**One window, docked panel.** The toolbar button opens the tray with the command line always on top
-and two round buttons beside it: ⚡ quick roll (the open tab's Instant) and ▤ Rolls. ▤ opens the
-**Rolls panel** docked to the right (360 px): tabs + ⋯, then on the first tab (Rolls: can't be
-closed or moved) dice style on the left and a pill per die (each click adds one to the
-tray), a faint line, then the tab's pills and a + pill. No sidebar: upstream's dice settings (hide,
-bonus / advantage, history, players' trays) are in ⋯. Closed, the window is just the tray. `prefs.panelOpen`; window width `windowWidth(height,
-panelOpen)` (`layout.ts`) via `OBR.action.setWidth`. Owlbear plumbing (roll sync, tracker rolls,
-resize) lives in `App` so it runs with the panel closed. **Look = Chong's Tracker** (`src/chong/look.ts`):
-transparent window (Owlbear's glass shows through), translucent white surfaces, no outlines, 8 px
-corners, round transparent icon buttons, purple when on. Don't try a separate
-tray popover again: in 2.0 it never appeared in Owlbear. Stores: `chongStore` (saved rolls, the only
-writer), `trayStore` (placed command, error banner), `prefsStore`.
-
-1. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
-   built with Vite. Source in `chong-die-src/` (off the site via `_config.yml`, public on GitHub);
+1. **System-agnostic**, with one deliberate exception: an optional, simple Nimble switch (⋯ →
+   Nimble rules: purple outline on each term's leftmost landed die, right-click starts an explosion
+   chain). Nothing automatic; don't add other systems' rules.
+2. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
+   built with Vite. Source in `chong-die-src/` (off the site, public on GitHub);
    `npx yarn@1.22.22 build` writes `chong-die/`, which is committed. **Rebuild and commit
    `chong-die/` after every source change.** The build empties `chong-die/` except `TRACKER.md`.
-2. **GPL-3.0.** Keep `chong-die-src/LICENSE` and list every change in `chong-die-src/NOTICE.md`;
+3. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names, so no
+   `?v=`. After a push, browsers may keep the old files for 10 minutes.
+4. **GPL-3.0.** Keep `chong-die-src/LICENSE` and list every change in `chong-die-src/NOTICE.md`;
    the ⋯ → About credit stays.
-3. **Owlbear's look** (the upstream MUI theme), no `nimble.css`, no Nimble notice or footer.
-4. **The roll engine is pure TypeScript** in `src/roll/` (parser, evaluator, result text), covered
-   by Vitest (`npx yarn@1.22.22 test`). Avrae's `d20` syntax; operations apply in the order written.
-   Rerolls and explosions come back as waves of new dice (keys: `<rep>.<dice id>.<n>`, + `r` / `e`;
-   a later op following up the same die again adds its op index, e.g. `1d6!!` → `0.0.0e1`).
-5. **Rolls carry `chong` metadata** (`ChongRollMeta`: command, die id → logical die, virtual dice)
-   so every player recomputes the same result from the synced values. Only the roller's
-   `useWaveRunner` throws new waves. Plugin id prefix `com.chongkit.chongdie/`.
-   Owlbear SDK 3.x. The panel rolls on the tray directly (`runPill`, `startCommandRoll`). Rolls from
-   Chong's Tracker are `{ id, command, place? }` on `…/roll`: the background acks, opens the action
-   and re-sends `…/run` until the window's `…/run-ack` (`channels.ts`, `incoming.ts`). `place`
-   missing (the tracker) = follow the saved active tab's Instant switch.
-   **Nimble** (recorded as `chong.nimble`, so everyone sees the roller's setting): `explodeDie` adds
-   the die's key to `chong.manual`; `evaluate(…, { manual })` starts a chain there after the term's
-   own ops (`<parent>m`, then `…mm` while the new die shows its max; counted in the 20 extra dice);
-   `throwNextWave` pops each new die out of its parent. `highlightedDice` picks each term's die that
-   landed furthest left (lowest x; not explosion dice, not rerolled-away dice) → `Highlights.tsx`
-   lights its top number: a ray down onto the die gives the texture point, `findNumber`
-   (`numberMask.ts`, tested) finds the number nearest it in the glass style's number mask (every style
-   shares that texture layout), and the die gets a cloned material glowing there (shader edit blacks
-   out the number's own colour; not tone mapped). Prefs (`nimble`, `panelOpen`) in
-   localStorage `chongkit.chongdie.prefs` (`prefs.ts`, tested).
-6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested), with the
-   panel's `activeTabId`.
-7. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names,
-   so no `?v=` is needed. Libraries build into their own `vendor` chunk so rebuilds stay small.
-8. Status and backlog: `chong-die/TRACKER.md`. Pulling upstream fixes: diff the upstream repo
-   against `chong-die-src/` and port by hand.
+5. **Chong's Tracker's look** (`src/chong/look.ts` copies `chongs-tracker/style.css`: change both
+   together), no `nimble.css`, no Nimble notice or footer. Plugin id prefix `com.chongkit.chongdie/`.
+6. **Contracts with other tools** (change both sides together):
+   - Rolls from Chong's Tracker: `{ id, command }` LOCAL broadcast on `com.chongkit.chongdie/roll`,
+     answered on `…/ack` (`src/chong/channels.ts`).
+   - The commands the tracker makes from note text must parse here:
+     `chongs-tracker/tests/roll-examples.json` is tested by both sides.
+   - Rolls carry `chong` metadata that every player recomputes the same way: keep old rolls readable.
+7. Logic stays in pure, tested modules (`src/roll/`, `src/chong/*.ts`); `npm test` runs them.
+   Status and backlog: `chong-die/TRACKER.md`. Upstream fixes: diff the upstream repo against
+   `chong-die-src/` and port by hand.
 
 ## Layout
 
@@ -216,10 +188,12 @@ chong-die/                   Built Chong Die (committed) → /chong-die/ (instal
   TRACKER.md                 Its status and backlog (not published)
 chong-die-src/               Chong Die source: fork of owlbear-rodeo/dice (GPL-3.0, not published)
   src/roll/                  Roll engine: parser, evaluator, result text (+ Vitest tests)
-  src/chong/                 Command line, panel, pills, saved rolls, roll runner
+  src/chong/                 Command line, panel, pills, saved rolls, roll runner, Nimble
+  DESIGN.md                  How Chong Die works (keep it current)
 docs/rules-reference.md      Rules tables with page numbers → /docs/rules-reference.html
 source/                      The GM Guide PDF (not published)
 README.md                    What the tools are and how to use them
+package.json                 Only `npm test` (no dependencies; not published)
 TRACKER.md                   Status and backlog (not published)
 CLAUDE.md                    This file (not published)
 ```
@@ -229,8 +203,9 @@ CommonJS modules for Node tests.
 
 ## Commands
 
-- Test: `node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js` (Node 18+, no dependencies)
-- Chong Die: `cd chong-die-src && npx yarn@1.22.22 test` and `npx yarn@1.22.22 build` (needs `npx yarn@1.22.22` install first)
+- Test everything: `npm test` in the repo root (Node 22+; no dependencies, except Chong Die's: run
+  `npx yarn@1.22.22` in `chong-die-src/` once)
+- Build Chong Die: `cd chong-die-src && npx yarn@1.22.22 build`
 - Run: `python3 -m http.server` in the repo root, then open http://localhost:8000/ (this matches how GitHub Pages serves it). Opening a tool's `index.html` directly also works.
 
 ## Reading the PDF
@@ -246,4 +221,4 @@ against a rendered page image before transcribing.
 - **Always pull first.** Run `git pull --rebase origin main` at the start of every session and again before
   committing: work happens on several devices, so the local copy may be behind.
 - Update `TRACKER.md` (or `chongs-tracker/TRACKER.md` for the tracker) when a task starts/finishes.
-- Run the tests before committing, then push to `main`.
+- Run `npm test` before committing, then push to `main`.

@@ -173,8 +173,7 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 - **Notes:** the box under the add box is the tab's general note (GM tabs: GM only; players' tabs:
   everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note.
 - **Rolls in notes:** dice in a note (`1d8!+3d8+2`, `2d6+3`, `1d20`) are underlined. Click one to
-  roll it in **Chong Die** (it must be installed in the room): Chong Die's open tab decides whether it
-  rolls at once (⚡ on) or puts the dice on the tray. A `(2×)` before it on the line rolls it twice.
+  roll it in **Chong Die** (it must be installed in the room). A `(2×)` before it on the line rolls it twice.
   Click anywhere else in the note to edit it.
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
   "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
@@ -241,34 +240,23 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 
 **Using it**
 - **Command line** (always on top of the tray): type a roll and press Enter. `!r` is optional.
-  ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled. It fades
-  while dice roll. Beside it: **⚡ Quick roll** (the open tab's Instant switch, below) and **▤ Rolls**.
-- **▤ Rolls** opens the panel docked to the right of the tray (the window widens; closed, it's just
-  the tray). It remembers.
-- **Rolls tab** (always first; it can't be closed or moved): a pill per die (d4 … d100). Each click
-  puts one more on the tray (the pill shows ×2, ×3); throw them with the tray's Roll button. On the
-  left: the dice style. Your own pills sit under a faint line.
-- **Tabs of pills** (saved rolls): the small **+** after the tabs adds a tab; double-click renames,
-  **×** deletes, drag to reorder. The **+** after the last pill adds a roll.
-- **⋯** : Hide rolls, Bonus and advantage (for dice picked by hand), Roll history, other players'
-  trays, Nimble rules, export, import, about.
-- **+** (after the last pill) adds a roll to the open tab: a name, the roll (filled in from the command
-  line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
-  the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
-  to edit or delete it.
-- **⚡ Quick roll** is the open tab's Instant switch. On: clicking a pill rolls it. Off: the pill puts its dice on the
-  tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
-- Rolls clicked in **Chong's Tracker** notes come here and follow the ⚡ of the tab open in the
-  panel (remembered even with the panel closed).
-- **Nimble rules** (⋯ → Nimble rules, off by default):
-  - Once a roll lands, the **top number lights up purple** on the die of each dice term that landed
-    furthest left (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray.
-  - **Right-click a landed die** (touch: hold it half a second) to start an explosion chain: a new die
-    pops out of it, and every new die that shows its max explodes again by itself. Everyone sees the
-    same dice and total.
-  - Nothing is automatic: read hits and misses from the dice.
+  ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled.
+- **▤ Rolls** (beside the command line) opens the panel docked to the right of the tray; closed,
+  it's just the tray. It remembers.
+- **Rolls tab** (always first): the dice style, then a pill per die (d4 … d100). Each click puts one
+  more on the tray (the pill shows ×2, ×3); throw them with the tray's Roll button.
+- **Your pills** (saved rolls) sit under a faint line. Click one to roll it. **+** after the last pill
+  adds one (name, roll, optional description shown on hover / long-press); drag to reorder or onto
+  another tab; right-click (long-press) to edit or delete. Tabs: **+** adds, double-click renames,
+  **×** deletes, drag to reorder.
+- **⋯**: Hide rolls, Roll history, other players' trays, Nimble rules, export / import (your saved
+  rolls live in this browser only), about.
+- Rolls clicked in **Chong's Tracker** notes roll here.
+- **Nimble rules** (⋯, off by default): once a roll lands, a **purple outline** marks the die of each
+  dice term that landed furthest left (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray.
+  **Right-click a landed die** (touch: hold it half a second) to start an explosion chain: a new die
+  pops out, and every new die on its max explodes again. Nothing is automatic.
 - Rolls with `e` / `!` (`1d6!`, `2d6e6`) explode by themselves, Nimble or not.
-- The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)
 
@@ -289,7 +277,9 @@ per roll). d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …)
 a 3D die. Limits: 100 dice per throw, sides up to 1000, repeats up to 25.
 
 **Building:** `cd chong-die-src`, then `npx yarn@1.22.22` (install) and `npx yarn@1.22.22 build`,
-which writes the site files into `chong-die/`. Commit both folders. Tests: `npx yarn@1.22.22 test`.
+which writes the site files into `chong-die/`. Commit both folders. How it works: `chong-die-src/DESIGN.md`.
+
+**Tests:** `npm test` in the repo root runs every tool's tests.
 
 ## Hosting (GitHub Pages)
 

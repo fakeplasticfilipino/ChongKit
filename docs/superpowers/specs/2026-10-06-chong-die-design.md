@@ -1,6 +1,6 @@
 # Chong Die: design
 
-Date: 2026-10-06 · Status: approved in chat, awaiting spec review
+Date: 2026-10-06 · Status: **historical** (v1). The current design is in `chong-die-src/DESIGN.md`.
 
 ## What it is
 

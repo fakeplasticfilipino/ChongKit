@@ -1,6 +1,6 @@
 # Chong Die 2.1: one window, docked Rolls panel (design)
 
-Date: 2026-10-07 · Status: approved in chat · Replaces the two-window split
+Date: 2026-10-07 · Status: **historical** (v2.1; the current design is in `chong-die-src/DESIGN.md`) · Replaced the two-window split
 (`2026-10-07-chong-die-split-windows-design.md`): in Owlbear the separate tray popover never appeared.
 
 ## Layout

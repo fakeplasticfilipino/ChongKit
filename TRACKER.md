@@ -120,14 +120,7 @@ Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chong
 
 ## Chong Die (`chong-die/`)
 Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0) with an Avrae-style command line and saved-roll pills.
-- ✅ v1.0.0 built (plan: `docs/superpowers/plans/2026-10-06-chong-die.md`)
-- ✅ v2.0.0: Rolls window + stock tray as two windows (plan: `docs/superpowers/plans/2026-10-07-chong-die-split-windows.md`); the tray popover never appeared in Owlbear
-- ✅ v2.1.0: one window, Rolls panel docked beside the tray (plan: `docs/superpowers/plans/2026-10-07-chong-die-docked-panel.md`)
-- ✅ v2.2.0: command line always on the tray with ⚡ / ▤ beside it; the dice sidebar lives in the panel
-- ✅ v2.3.0: Chong's Tracker look; no sidebar (dice pills in the Rolls tab, settings in ⋯)
-- ✅ v2.4.0: Nimble rules removed; leftmost die of each term glows; right-click / long-press explodes a die
-- ✅ v2.5.0: simple Nimble switch (glow on each term's leftmost landed die, right-click starts a chain)
-- ✅ v2.6.0: the highlight is the primary die's top number glowing purple; status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
+- ✅ v2.7.0: one window, command line on the tray, Rolls panel with dice pills, optional Nimble switch (outline + right-click chains). Status, Owlbear checklist and backlog: [chong-die/TRACKER.md](chong-die/TRACKER.md); how it works: `chong-die-src/DESIGN.md`
 
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool
