@@ -70,7 +70,11 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Glow goes on the die that landed furthest left in each term, not the first in the command (tested; browser: 1d6+3d6)
 - [x] Right-click starts a chain: the new die explodes again on its max (tested; browser: one right-click, 17 → 25)
 
+## ✅ v2.6.0
+- [x] Nimble highlight is the top number itself, glowing purple (ray down → nearest number in the shared number mask; `findNumber` tested); browser: d6, d8, d10, d12, d20 incl. two-digit numbers
+
 ## 📋 Next up
+- [ ] Check the number glow on every dice style (only Galaxy checked) and on a d4 / d100
 - [ ] A die popped out next to a wall can come to rest wedged on the wall / its parent (seen in the browser): aim popThrow away from the nearest wall
 - [ ] Owlbear, v2.4: long-press on a phone explodes without throwing the die; another player sees the exploded die and the same total; glows on other players' trays
 - [ ] Owlbear, v2.3: Owlbear's glass shows through (transparent body); ⋯ → a player's tray; hidden rolls

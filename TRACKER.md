@@ -126,7 +126,8 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0) with an Avr
 - ✅ v2.2.0: command line always on the tray with ⚡ / ▤ beside it; the dice sidebar lives in the panel
 - ✅ v2.3.0: Chong's Tracker look; no sidebar (dice pills in the Rolls tab, settings in ⋯)
 - ✅ v2.4.0: Nimble rules removed; leftmost die of each term glows; right-click / long-press explodes a die
-- ✅ v2.5.0: simple Nimble switch (glow on each term's leftmost landed die, right-click starts a chain); status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
+- ✅ v2.5.0: simple Nimble switch (glow on each term's leftmost landed die, right-click starts a chain)
+- ✅ v2.6.0: the highlight is the primary die's top number glowing purple; status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
 
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool

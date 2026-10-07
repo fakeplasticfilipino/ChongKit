@@ -261,8 +261,8 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 - Rolls clicked in **Chong's Tracker** notes come here and follow the ⚡ of the tab open in the
   panel (remembered even with the panel closed).
 - **Nimble rules** (⋯ → Nimble rules, off by default):
-  - Once a roll lands, the die of each dice term that landed **furthest left** glows faintly
-    (`1d6+2d6`: two glows; one per `!rr` repeat), on everyone's tray.
+  - Once a roll lands, the **top number lights up purple** on the die of each dice term that landed
+    furthest left (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray.
   - **Right-click a landed die** (touch: hold it half a second) to start an explosion chain: a new die
     pops out of it, and every new die that shows its max explodes again by itself. Everyone sees the
     same dice and total.

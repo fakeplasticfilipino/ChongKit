@@ -132,8 +132,8 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 
 A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
 line and saved-roll pills. System-agnostic, with **one exception: an optional,
-deliberately simple Nimble switch** (⋯ → Nimble rules, off by default): the leftmost landed die of
-each term glows and right-click / long-press starts an explosion chain. Nothing automatic (no Miss,
+deliberately simple Nimble switch** (⋯ → Nimble rules, off by default): the top number of each
+term's leftmost landed die glows purple and right-click / long-press starts an explosion chain. Nothing automatic (no Miss,
 no auto-explode); don't add other systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the docked panel in
 `docs/superpowers/specs/2026-10-07-chong-die-docked-panel-design.md`.
 
@@ -172,8 +172,11 @@ writer), `trayStore` (placed command, error banner), `prefsStore`.
    the die's key to `chong.manual`; `evaluate(…, { manual })` starts a chain there after the term's
    own ops (`<parent>m`, then `…mm` while the new die shows its max; counted in the 20 extra dice);
    `throwNextWave` pops each new die out of its parent. `highlightedDice` picks each term's die that
-   landed furthest left (lowest x; not explosion dice, not rerolled-away dice) → `Highlights.tsx`, a
-   glow on the tray floor (y 0.007, above the floor collider). Prefs (`nimble`, `panelOpen`) in
+   landed furthest left (lowest x; not explosion dice, not rerolled-away dice) → `Highlights.tsx`
+   lights its top number: a ray down onto the die gives the texture point, `findNumber`
+   (`numberMask.ts`, tested) finds the number nearest it in the glass style's number mask (every style
+   shares that texture layout), and the die gets a cloned material glowing there (shader edit blacks
+   out the number's own colour; not tone mapped). Prefs (`nimble`, `panelOpen`) in
    localStorage `chongkit.chongdie.prefs` (`prefs.ts`, tested).
 6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested), with the
    panel's `activeTabId`.

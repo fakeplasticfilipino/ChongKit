@@ -19,5 +19,5 @@ under the same license.
 - Sidebar removed: dice are pills in the first tab, dice style beside them, the other
   settings (hide, bonus / advantage, history, players' trays) in the ⋯ menu; fairness tester button
   removed; Chong's Tracker look (transparent, translucent surfaces)
-- Optional Nimble switch: the leftmost landed die of each term glows on the tray floor;
+- Optional Nimble switch: the top number of each term's leftmost landed die lights up;
   right-click / long-press a landed die to start an explosion chain (in everyone's result)
