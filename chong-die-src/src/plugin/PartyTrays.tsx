@@ -1,5 +1,5 @@
-import OBR, { Player } from "@owlbear-rodeo/sdk";
-import { useEffect, useMemo, useState } from "react";
+import OBR from "@owlbear-rodeo/sdk";
+import { useEffect, useMemo } from "react";
 
 import Dialog from "@mui/material/Dialog";
 import Stack from "@mui/material/Stack";
@@ -10,12 +10,15 @@ import CloseIcon from "@mui/icons-material/ChevronLeftRounded";
 
 import { SlideTransition } from "../controls/SlideTransition";
 import { PlayerTray } from "./PlayerTray";
-import { PlayerAvatar } from "./PlayerAvatar";
 import { getPluginId } from "./getPluginId";
+import { usePartyStore } from "../chong/partyStore";
 
+/** Other players' trays: picked in the ⋯ menu (or their roll popover), shown full size */
 export function PartyTrays() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [focusedTray, setFocusTray] = useState<string | null>(null);
+  const players = usePartyStore((state) => state.players);
+  const setPlayers = usePartyStore((state) => state.setPlayers);
+  const focusedTray = usePartyStore((state) => state.focused);
+  const setFocusTray = usePartyStore((state) => state.setFocused);
 
   useEffect(() => {
     OBR.party.getPlayers().then(setPlayers);
@@ -43,7 +46,7 @@ export function PartyTrays() {
         channel.close();
       };
     }
-  }, []);
+  }, [setFocusTray]);
 
   if (players.length === 0) {
     return null;
@@ -51,13 +54,6 @@ export function PartyTrays() {
 
   return (
     <>
-      {players.map((player) => (
-        <PlayerAvatar
-          key={player.connectionId}
-          player={player}
-          onSelect={() => setFocusTray(player.connectionId)}
-        />
-      ))}
       <Dialog
         open={Boolean(focusedPlayer)}
         onClose={() => setFocusTray(null)}

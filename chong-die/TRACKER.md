@@ -54,7 +54,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Upstream's dice sidebar moved into the Rolls panel (360 px); closed, the window is just the tray (tested width)
 - [x] Browser check (local): layout, quick roll toggles the tab's Instant, typo error under the line, ▤ closes/opens the panel
 
+## ✅ v2.3.0
+- [x] Chong's Tracker look: transparent window, translucent surfaces, no outlines, round icon buttons
+- [x] Sidebar removed: dice pills (click adds one, count shown) at the top of the Rolls tab with dice style / primary die on the left; settings in ⋯ (hide, bonus / advantage, history, players' trays)
+- [x] Rolls tab can't be closed or moved (tested); + add roll is a pill after the last pill
+- [x] Browser check (local): dice pills put dice on the tray, ⋯ menu, layout
+
 ## 📋 Next up
+- [ ] Owlbear, v2.3: Owlbear's glass shows through (transparent body); ⋯ → a player's tray; hidden rolls
 - [ ] Owlbear, v2.2: the window narrows to just the tray with the panel closed; another player's roll popover with the panel closed (its focus listener lives in the sidebar)
 - [ ] Owlbear, v2.1: the window widens / narrows with ▤; a panel roll and a placed pill on the tray; a tracker roll with the window closed and open; phone width (the window may be wider than the screen)
 - [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss

@@ -7,10 +7,11 @@ import { styled } from "@mui/material/styles";
 
 import { diceSets } from "../sets/diceSets";
 import { useDiceControlsStore } from "./store";
+import { FIELD, HOVER } from "../chong/look";
 
 const PreviewImage = styled("img")({
-  width: "32px",
-  height: "32px",
+  width: "28px",
+  height: "28px",
 });
 
 export function DiceSetPicker() {
@@ -29,16 +30,14 @@ export function DiceSetPicker() {
   return (
     <>
       <IconButton
+        title="Dice style"
         aria-label="change dice set"
         id="dice-set-button"
         aria-controls={open ? "dice-set-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
         onClick={handleClick}
-        sx={{
-          padding: "4px",
-          backgroundColor: "rgba(255, 255, 255, 0.16) !important",
-        }}
+        sx={{ width: 36, height: 36, padding: 0, borderRadius: "8px", bgcolor: FIELD, "&:hover": { bgcolor: HOVER } }}
       >
         <PreviewImage src={diceSet.previewImage} />
       </IconButton>
@@ -50,14 +49,8 @@ export function DiceSetPicker() {
         MenuListProps={{
           "aria-labelledby": "dice-set-button",
         }}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
         sx={{ my: 1 }}
         marginThreshold={0}
       >

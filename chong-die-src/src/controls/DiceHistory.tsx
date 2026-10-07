@@ -1,13 +1,9 @@
-import { useState } from "react";
 
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Menu from "@mui/material/Menu";
 import Chip from "@mui/material/Chip";
 import Box from "@mui/material/Box";
-import Tooltip from "@mui/material/Tooltip";
 
-import HistoryIcon from "@mui/icons-material/SavedSearchRounded";
 import NoHistoryIcon from "@mui/icons-material/ManageSearchRounded";
 
 import { useDiceRollStore } from "../dice/store";
@@ -18,7 +14,8 @@ import Typography from "@mui/material/Typography";
 import { getDiceToRoll, useDiceControlsStore } from "./store";
 import { startCommandRoll } from "../chong/rollRunner";
 
-export function DiceHistory() {
+/** Recent rolls, click one to roll it again (⋯ → Roll history) */
+export function DiceHistoryMenu({ anchorEl, onClose }: { anchorEl: HTMLElement | null; onClose: () => void }) {
   const startRoll = useDiceRollStore((state) => state.startRoll);
 
   const hidden = useDiceControlsStore((state) => state.diceHidden);
@@ -46,14 +43,8 @@ export function DiceHistory() {
     handleClose();
   }
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
-    setAnchorEl(event.currentTarget);
-  }
-  function handleClose() {
-    setAnchorEl(null);
-  }
+  const handleClose = onClose;
 
   const recentRolls = useDiceHistoryStore((state) => state.recentRolls);
   const removeRecentRoll = useDiceHistoryStore(
@@ -62,33 +53,13 @@ export function DiceHistory() {
 
   return (
     <>
-      <Tooltip title="History" placement="top" disableInteractive>
-        <IconButton
-          id="history-button"
-          aria-controls={open ? "history-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-          onClick={handleClick}
-        >
-          <HistoryIcon />
-        </IconButton>
-      </Tooltip>
       <Menu
         id="history-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "history-button",
-        }}
-        anchorOrigin={{
-          vertical: "center",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "center",
-          horizontal: "left",
-        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Stack width="200px" px={1} gap={0.5}>
           {recentRolls.map((recentRoll, index) => (

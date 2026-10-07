@@ -11,6 +11,7 @@ import CloseIcon from "@mui/icons-material/CloseRounded";
 
 import { useChongStore } from "./chongStore";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { FIELD, HOVER, TEXT2 } from "./look";
 
 /** Drag data type for pills, shared with RollPanel */
 export const PILL_DRAG = "application/x-chongdie-pill";
@@ -19,6 +20,7 @@ const TAB_DRAG = "application/x-chongdie-tab";
 /**
  * Tabs like browser tabs: + adds, double-click renames, × deletes,
  * drag to reorder. Dropping a pill on a tab moves it there.
+ * The first tab (Rolls, with the dice) can't be deleted or moved.
  */
 export function TabStrip() {
   const tabs = useChongStore((state) => state.saved.tabs);
@@ -50,7 +52,7 @@ export function TabStrip() {
           <Box
             component="div"
             key={tab.id}
-            draggable={renaming !== tab.id}
+            draggable={index > 0 && renaming !== tab.id}
             onDragStart={(e) => e.dataTransfer.setData(TAB_DRAG, tab.id)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
@@ -67,9 +69,11 @@ export function TabStrip() {
               display: "flex",
               alignItems: "center",
               flexShrink: 0,
-              borderRadius: "12px",
-              bgcolor: active ? "action.selected" : "transparent",
-              pr: active ? 0.25 : 0,
+              borderRadius: "8px",
+              bgcolor: active ? HOVER : "transparent",
+              color: active ? "text.primary" : TEXT2,
+              "&:hover": { bgcolor: active ? HOVER : FIELD, color: "text.primary" },
+              pr: active && index > 0 ? 0.25 : 0,
             }}
           >
             {renaming === tab.id ? (
@@ -98,12 +102,12 @@ export function TabStrip() {
                   setDraft(tab.name);
                   setRenaming(tab.id);
                 }}
-                sx={{ px: 1.25, py: 0.75, fontSize: 14, fontWeight: active ? 600 : 400, borderRadius: "12px" }}
+                sx={{ px: 1.5, py: 0.75, fontSize: 14, fontWeight: 500, borderRadius: "8px" }}
               >
                 {tab.name}
               </ButtonBase>
             )}
-            {active && renaming !== tab.id && (
+            {active && index > 0 && renaming !== tab.id && (
               <IconButton size="small" aria-label="Delete tab" onClick={() => remove(tab.id)}>
                 <CloseIcon sx={{ fontSize: 16 }} />
               </IconButton>
@@ -112,8 +116,7 @@ export function TabStrip() {
         );
       })}
       <Tooltip title="New tab" disableInteractive>
-        {/* Small and dim: the panel's own + (add roll) is the main one */}
-        <IconButton size="small" aria-label="New tab" onClick={addTab} sx={{ flexShrink: 0, opacity: 0.6 }}>
+        <IconButton size="small" aria-label="New tab" onClick={addTab} sx={{ flexShrink: 0, color: TEXT2 }}>
           <AddIcon sx={{ fontSize: 16 }} />
         </IconButton>
       </Tooltip>

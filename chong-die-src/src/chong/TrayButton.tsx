@@ -3,7 +3,9 @@ import React from "react";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 
-/** A round button floating on the tray beside the command line, like Owlbear's map buttons */
+import { HOVER, TEXT2 } from "./look";
+
+/** A round icon button beside the command line, like Chong's Tracker's (transparent, purple when on) */
 export function TrayButton({
   title,
   pressed,
@@ -23,13 +25,11 @@ export function TrayButton({
         color={pressed ? "primary" : "default"}
         onClick={onClick}
         sx={{
-          width: 36,
-          height: 36,
+          width: 32,
+          height: 32,
           flexShrink: 0,
-          bgcolor: "background.paper",
-          border: 1,
-          borderColor: "divider",
-          "&:hover": { bgcolor: "background.paper", borderColor: "text.secondary" },
+          color: pressed ? "primary.main" : TEXT2,
+          "&:hover": { bgcolor: HOVER, color: pressed ? "primary.main" : "text.primary" },
         }}
       >
         {children}

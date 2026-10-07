@@ -1,17 +1,14 @@
-import { useState } from "react";
-
 import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Menu from "@mui/material/Menu";
-import Tooltip from "@mui/material/Tooltip";
 
 import { DieBonus } from "./DieBonus";
 import { DieAdvantage } from "./DieAdvantage";
 import { useDiceControlsStore } from "./store";
 import { useDiceRollStore } from "../dice/store";
 
-export function DiceExtras() {
+/** Bonus and advantage for dice picked by hand (⋯ → Bonus and advantage) */
+export function DiceExtrasMenu({ anchorEl, onClose }: { anchorEl: HTMLElement | null; onClose: () => void }) {
   const bonus = useDiceControlsStore((state) => state.diceBonus);
   const setBonus = useDiceControlsStore((state) => state.setDiceBonus);
   const advantage = useDiceControlsStore((state) => state.diceAdvantage);
@@ -25,47 +22,17 @@ export function DiceExtras() {
     }
   }
 
-  /** Controls (bonus and adv/dis) */
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
-  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
-    setAnchorEl(event.currentTarget);
-  }
-  function handleClose() {
-    setAnchorEl(null);
-  }
+  const handleClose = onClose;
 
   return (
     <>
-      <Tooltip title="Bonus" placement="top" disableInteractive>
-        <IconButton
-          aria-label="more"
-          id="more-button"
-          aria-controls={open ? "more-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-          onClick={handleClick}
-          sx={{ fontSize: "18px" }}
-        >
-          <span style={{ width: "24px", height: "24px" }}>+/-</span>
-        </IconButton>
-      </Tooltip>
       <Menu
-        id="more-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "more-button",
-        }}
-        anchorOrigin={{
-          vertical: "center",
-          horizontal: "right",
-        }}
-        transformOrigin={{
-          vertical: "center",
-          horizontal: "left",
-        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Stack>
           <DieBonus

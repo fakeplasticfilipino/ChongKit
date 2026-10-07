@@ -13,15 +13,30 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 
+import ListSubheader from "@mui/material/ListSubheader";
+
 import MoreIcon from "@mui/icons-material/MoreVertRounded";
 import CheckIcon from "@mui/icons-material/CheckRounded";
+import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
+import BonusIcon from "@mui/icons-material/ExposureRounded";
+import HistoryIcon from "@mui/icons-material/HistoryRounded";
+import PersonIcon from "@mui/icons-material/PersonRounded";
+import ExportIcon from "@mui/icons-material/FileDownloadRounded";
+import ImportIcon from "@mui/icons-material/FileUploadRounded";
+import AboutIcon from "@mui/icons-material/InfoOutlined";
+
+import { useDiceControlsStore } from "../controls/store";
+import { useDiceRollStore } from "../dice/store";
+import { DiceExtrasMenu } from "../controls/DiceExtras";
+import { DiceHistoryMenu } from "../controls/DiceHistory";
+import { usePartyStore } from "./partyStore";
 
 import { useChongStore } from "./chongStore";
 import { usePrefsStore } from "./prefsStore";
 import { importSaved, SavedRolls } from "./savedRolls";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-/** ⋯ menu: Nimble rules on/off, export / import saved rolls, about */
+/** ⋯ menu: the dice settings (hide, bonus / advantage, history, players' trays), Nimble rules, export / import, about */
 export function MoreMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [pending, setPending] = useState<SavedRolls | null>(null);
@@ -31,6 +46,20 @@ export function MoreMenu() {
   const replaceSaved = useChongStore((state) => state.replaceSaved);
   const nimble = usePrefsStore((state) => state.prefs.nimble);
   const setNimble = usePrefsStore((state) => state.setNimble);
+  const hidden = useDiceControlsStore((state) => state.diceHidden);
+  const toggleDiceHidden = useDiceControlsStore((state) => state.toggleDiceHidden);
+  const players = usePartyStore((state) => state.players);
+  const setFocused = usePartyStore((state) => state.setFocused);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  // A second menu opened from this one, anchored on the ⋯ button
+  const [sub, setSub] = useState<"extras" | "history" | null>(null);
+
+  function clearRollIfNeeded() {
+    const { roll, clearRoll } = useDiceRollStore.getState();
+    if (roll) {
+      clearRoll();
+    }
+  }
 
   function exportRolls() {
     const saved = useChongStore.getState().saved;
@@ -54,10 +83,66 @@ export function MoreMenu() {
 
   return (
     <>
-      <IconButton size="small" aria-label="More" onClick={(e) => setAnchor(e.currentTarget)}>
+      <IconButton ref={buttonRef} size="small" aria-label="More" onClick={(e) => setAnchor(e.currentTarget)}>
         <MoreIcon />
       </IconButton>
-      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+      <Menu
+        anchorEl={anchor}
+        open={Boolean(anchor)}
+        onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          role="menuitemcheckbox"
+          aria-checked={hidden}
+          onClick={() => {
+            toggleDiceHidden();
+            clearRollIfNeeded();
+            setAnchor(null);
+          }}
+        >
+          <ListItemIcon>{hidden ? <CheckIcon fontSize="small" /> : <HiddenIcon fontSize="small" />}</ListItemIcon>
+          Hide rolls
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            setSub("extras");
+          }}
+        >
+          <ListItemIcon>
+            <BonusIcon fontSize="small" />
+          </ListItemIcon>
+          Bonus and advantage
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchor(null);
+            setSub("history");
+          }}
+        >
+          <ListItemIcon>
+            <HistoryIcon fontSize="small" />
+          </ListItemIcon>
+          Roll history
+        </MenuItem>
+        {players.length > 0 && <ListSubheader sx={{ bgcolor: "transparent", lineHeight: "32px" }}>Players' trays</ListSubheader>}
+        {players.map((player) => (
+          <MenuItem
+            key={player.connectionId}
+            onClick={() => {
+              setFocused(player.connectionId);
+              setAnchor(null);
+            }}
+          >
+            <ListItemIcon>
+              <PersonIcon fontSize="small" sx={{ color: player.color }} />
+            </ListItemIcon>
+            {player.name}
+          </MenuItem>
+        ))}
+        <Divider />
         <MenuItem
           role="menuitemcheckbox"
           aria-checked={nimble}
@@ -76,6 +161,9 @@ export function MoreMenu() {
             setAnchor(null);
           }}
         >
+          <ListItemIcon>
+            <ExportIcon fontSize="small" />
+          </ListItemIcon>
           Export rolls
         </MenuItem>
         <MenuItem
@@ -84,6 +172,9 @@ export function MoreMenu() {
             setAnchor(null);
           }}
         >
+          <ListItemIcon>
+            <ImportIcon fontSize="small" />
+          </ListItemIcon>
           Import rolls
         </MenuItem>
         <MenuItem
@@ -92,9 +183,14 @@ export function MoreMenu() {
             setAnchor(null);
           }}
         >
+          <ListItemIcon>
+            <AboutIcon fontSize="small" />
+          </ListItemIcon>
           About
         </MenuItem>
       </Menu>
+      <DiceExtrasMenu anchorEl={sub === "extras" ? buttonRef.current : null} onClose={() => setSub(null)} />
+      <DiceHistoryMenu anchorEl={sub === "history" ? buttonRef.current : null} onClose={() => setSub(null)} />
       <input
         ref={fileRef}
         type="file"

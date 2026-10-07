@@ -8,6 +8,10 @@ export function GlobalStyles() {
 
   const styles = useMemo(() => {
     return {
+      // Transparent like Chong's Tracker: Owlbear's glass popover shows through
+      "html, body": {
+        background: "transparent",
+      },
       body: {
         overflow: "hidden",
       },

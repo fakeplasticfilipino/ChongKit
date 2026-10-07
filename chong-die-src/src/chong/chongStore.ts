@@ -82,7 +82,8 @@ export const useChongStore = create<ChongState>()(
     deleteTab(id) {
       set((state) => {
         const index = state.saved.tabs.findIndex((t) => t.id === id);
-        if (index < 0) {
+        // The first tab (Rolls, with the dice) stays
+        if (index <= 0) {
           return;
         }
         state.saved.tabs.splice(index, 1);
@@ -99,9 +100,10 @@ export const useChongStore = create<ChongState>()(
       set((state) => {
         const tabs = state.saved.tabs;
         const from = tabs.findIndex((t) => t.id === id);
-        if (from >= 0) {
+        // The first tab (Rolls, with the dice) stays first
+        if (from > 0) {
           const [tab] = tabs.splice(from, 1);
-          tabs.splice(Math.max(0, Math.min(toIndex, tabs.length)), 0, tab);
+          tabs.splice(Math.max(1, Math.min(toIndex, tabs.length)), 0, tab);
         }
       });
     },

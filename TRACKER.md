@@ -123,7 +123,8 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0) with an Avr
 - ✅ v1.0.0 built (plan: `docs/superpowers/plans/2026-10-06-chong-die.md`)
 - ✅ v2.0.0: Rolls window + stock tray as two windows (plan: `docs/superpowers/plans/2026-10-07-chong-die-split-windows.md`); the tray popover never appeared in Owlbear
 - ✅ v2.1.0: one window, Rolls panel docked beside the tray (plan: `docs/superpowers/plans/2026-10-07-chong-die-docked-panel.md`)
-- ✅ v2.2.0: command line always on the tray with ⚡ / ▤ beside it; the dice sidebar lives in the panel; status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
+- ✅ v2.2.0: command line always on the tray with ⚡ / ▤ beside it; the dice sidebar lives in the panel
+- ✅ v2.3.0: Chong's Tracker look; no sidebar (dice pills in the Rolls tab, settings in ⋯); status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
 
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool

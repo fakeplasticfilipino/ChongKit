@@ -22,8 +22,9 @@ export function TrayError() {
         zIndex: 2,
         px: 1.5,
         py: 0.5,
-        bgcolor: "background.paper",
-        borderRadius: 1,
+        bgcolor: "rgba(255, 255, 255, 0.08)",
+        backdropFilter: "blur(8px)",
+        borderRadius: "8px",
       }}
     >
       {error}

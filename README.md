@@ -244,11 +244,15 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
   ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled. It fades
   while dice roll. Beside it: **⚡ Quick roll** (the open tab's Instant switch, below) and **▤ Rolls**.
 - **▤ Rolls** opens the panel docked to the right of the tray (the window widens; closed, it's just
-  the tray). It remembers. On its left edge: the dice sidebar (dice style, dice to pick by hand,
-  hide roll, bonus / advantage, history). Then the tabs of **pills** (saved rolls): the small **+**
-  after the tabs adds a tab; double-click renames, **×** deletes, drag to reorder; **+** adds a roll,
-  **⋯** has Nimble rules, export, import, about.
-- **+** adds a roll to the open tab: a name, the roll (filled in from the command
+  the tray). It remembers.
+- **Rolls tab** (always first; it can't be closed or moved): a pill per die (d4 … d100). Each click
+  puts one more on the tray (the pill shows ×2, ×3); throw them with the tray's Roll button. On the
+  left: the dice style, and the primary die (Nimble on). Your own pills sit under a faint line.
+- **Tabs of pills** (saved rolls): the small **+** after the tabs adds a tab; double-click renames,
+  **×** deletes, drag to reorder. The **+** after the last pill adds a roll.
+- **⋯** : Hide rolls, Bonus and advantage (for dice picked by hand), Roll history, other players'
+  trays, Nimble rules, export, import, about.
+- **+** (after the last pill) adds a roll to the open tab: a name, the roll (filled in from the command
   line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
   the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
   to edit or delete it.

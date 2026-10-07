@@ -12,6 +12,7 @@ import { startCommandRoll } from "./rollRunner";
 import { InstantToggle } from "./InstantToggle";
 import { PanelToggle } from "./PanelToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
+import { FIELD, HOVER } from "./look";
 
 /** The `!r` box always on top of the tray, with quick roll and Rolls beside it: Enter rolls */
 export function CommandLine() {
@@ -74,7 +75,7 @@ export function CommandLine() {
         ":hover, :focus-within": { opacity: 1 },
       }}
     >
-      <Box component="div" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box component="div" sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
         <Box
           component="div"
           sx={{
@@ -82,12 +83,19 @@ export function CommandLine() {
             alignItems: "center",
             flex: 1,
             minWidth: 0,
-            height: COMMAND_LINE_HEIGHT - 16,
-            px: 1.5,
-            borderRadius: "18px",
-            bgcolor: "background.paper",
-            border: 1,
-            borderColor: error ? "error.main" : "divider",
+            height: COMMAND_LINE_HEIGHT - 20,
+            mr: 0.5,
+            px: 1.25,
+            borderRadius: "8px",
+            bgcolor: FIELD,
+            // Over the 3D tray: a little blur keeps the text readable
+            backdropFilter: "blur(8px)",
+            boxShadow: error ? `inset 0 0 0 1px ${theme.palette.error.main}` : "none",
+            "&:hover": { bgcolor: HOVER },
+            "&:focus-within": {
+              bgcolor: HOVER,
+              boxShadow: `inset 0 0 0 1px ${error ? theme.palette.error.main : theme.palette.primary.main}`,
+            },
           }}
         >
           <InputBase
@@ -114,7 +122,7 @@ export function CommandLine() {
                 step(1);
               }
             }}
-            sx={{ fontFamily: "monospace" }}
+            sx={{ fontFamily: "'Roboto Mono', Consolas, monospace", fontSize: 13 }}
           />
         </Box>
         <InstantToggle />
@@ -125,7 +133,7 @@ export function CommandLine() {
           variant="caption"
           color="error"
           role="alert"
-          sx={{ display: "block", mt: 0.5, px: 1.5, py: 0.25, bgcolor: "background.paper", borderRadius: 1 }}
+          sx={{ display: "block", mt: 0.5, px: 1.25, py: 0.25, bgcolor: FIELD, backdropFilter: "blur(8px)", borderRadius: "8px" }}
         >
           {error}
         </Typography>

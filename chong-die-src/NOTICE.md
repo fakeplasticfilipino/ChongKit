@@ -15,5 +15,8 @@ under the same license.
 - Follow-up dice waves for rerolls and exploding dice
 - Owlbear SDK upgraded from 1.3.9 to 3.x (for messages from Chong's Tracker)
 - Command line always on top of the tray, with quick roll and Rolls buttons beside it; the Rolls
-  panel (with upstream's dice sidebar moved inside it) docks to the right of the tray
+  panel docks to the right of the tray
+- Sidebar removed: dice are pills in the first tab, dice style / primary die beside them, the other
+  settings (hide, bonus / advantage, history, players' trays) in the ⋯ menu; fairness tester button
+  removed; Chong's Tracker look (transparent, translucent surfaces)
 - Primary die drawn in its own style and optional Nimble rules

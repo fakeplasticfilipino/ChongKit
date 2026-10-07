@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
-import IconButton from "@mui/material/IconButton";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
@@ -17,10 +16,12 @@ import { runPill } from "./runPill";
 import { Pill, pillError, RollTab } from "./savedRolls";
 import { PILL_DRAG, TabStrip } from "./TabStrip";
 import { useDiceControlsStore } from "../controls/store";
+import { DicePills } from "./DicePills";
+import { LINE, MUTED, pillSx } from "./look";
 
 const LONG_PRESS_MS = 500;
 
-/** Tabs of saved-roll pills, under the command line of the Rolls panel */
+/** The Rolls panel: tabs and ⋯, then (Rolls tab) the dice, then the tab's saved-roll pills */
 export function RollPanel() {
   const tabs = useChongStore((state) => state.saved.tabs);
   const activeTabId = useChongStore((state) => state.activeTabId);
@@ -30,21 +31,21 @@ export function RollPanel() {
   const [adding, setAdding] = useState(false);
 
   return (
-    <Box component="div" sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      {/* Tabs, then add roll and ⋯ on the same row (quick roll is beside the command line) */}
-      <Box
-        component="div"
-        sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, borderBottom: 1, borderColor: "divider" }}
-      >
+    <Box component="div" sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, minHeight: 0 }}>
+      <Box component="div" sx={{ display: "flex", alignItems: "center", gap: 0.5, pl: 1.5, pr: 1, pt: 1.5, pb: 0.5 }}>
         <TabStrip />
-        <Tooltip title="Add roll" disableInteractive>
-          <IconButton size="small" aria-label="Add roll" onClick={() => setAdding(true)}>
-            <AddIcon />
-          </IconButton>
-        </Tooltip>
         <MoreMenu />
       </Box>
-      <PillList tab={tab} />
+      <Box component="div" sx={{ overflowY: "auto", flex: 1, px: 1.5, pt: 0.5, pb: 1.5 }}>
+        {/* The first tab (Rolls) starts with the dice, set apart from your own rolls */}
+        {tab.id === tabs[0].id && (
+          <>
+            <DicePills />
+            <Box component="div" sx={{ borderTop: `1px solid ${LINE}`, my: 1.5 }} />
+          </>
+        )}
+        <PillList tab={tab} onAdd={() => setAdding(true)} />
+      </Box>
       <PillDialog
         open={adding}
         title="Add roll"
@@ -60,7 +61,7 @@ export function RollPanel() {
   );
 }
 
-function PillList({ tab }: { tab: RollTab }) {
+function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
   const hidden = useDiceControlsStore((state) => state.diceHidden);
   const { setError, movePill, editPill, deletePill } = useChongStore.getState();
 
@@ -93,7 +94,7 @@ function PillList({ tab }: { tab: RollTab }) {
   return (
     <Box
       component="div"
-      sx={{ display: "flex", flexWrap: "wrap", alignContent: "flex-start", gap: 1, p: 1.5, overflowY: "auto", flex: 1 }}
+      sx={{ display: "flex", flexWrap: "wrap", alignContent: "flex-start", gap: 0.75 }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         const id = e.dataTransfer.getData(PILL_DRAG);
@@ -112,14 +113,12 @@ function PillList({ tab }: { tab: RollTab }) {
                 {pill.name}
                 <Typography
                   component="span"
-                  sx={{ ml: 1, fontFamily: "monospace", fontSize: 12, opacity: 0.6 }}
+                  sx={{ ml: 1, fontFamily: "monospace", fontSize: 11, color: MUTED }}
                 >
                   {pill.command}
                 </Typography>
               </span>
             }
-            variant="outlined"
-            color={invalid ? "error" : "default"}
             draggable
             onDragStart={(e) => e.dataTransfer.setData(PILL_DRAG, pill.id)}
             onDragOver={(e) => e.preventDefault()}
@@ -155,11 +154,18 @@ function PillList({ tab }: { tab: RollTab }) {
             }}
             onPointerUp={cancelPress}
             onPointerLeave={cancelPress}
-            sx={{ fontSize: 15, height: 36, borderRadius: "18px", maxWidth: "100%" }}
+            sx={{
+              ...pillSx,
+              maxWidth: "100%",
+              boxShadow: invalid ? (theme) => `inset 0 0 0 1.5px ${theme.palette.error.main}` : undefined,
+            }}
           />
           </Tooltip>
         );
       })}
+      <Tooltip title="Add roll" disableInteractive>
+        <Chip aria-label="Add roll" icon={<AddIcon />} onClick={onAdd} sx={{ ...pillSx, bgcolor: "transparent", "& .MuiChip-label": { display: "none" }, "& .MuiChip-icon": { mx: 0.75 } }} />
+      </Tooltip>
       <Menu anchorEl={menu?.anchor} open={Boolean(menu)} onClose={() => setMenu(null)}>
         {menu?.pill.description && (
           <Typography variant="body2" sx={{ px: 2, py: 1, maxWidth: 260, opacity: 0.8 }}>

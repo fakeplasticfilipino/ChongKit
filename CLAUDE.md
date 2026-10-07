@@ -138,11 +138,14 @@ systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`;
 
 **One window, docked panel.** The toolbar button opens the tray with the command line always on top
 and two round buttons beside it: ⚡ quick roll (the open tab's Instant) and ▤ Rolls. ▤ opens the
-**Rolls panel** docked to the right (360 px): upstream's dice sidebar on its left edge, then tabs and
-pills. Closed, the window is just the tray. `prefs.panelOpen`; window width `windowWidth(height,
+**Rolls panel** docked to the right (360 px): tabs + ⋯, then on the first tab (Rolls: can't be
+closed or moved) dice style / primary die on the left and a pill per die (each click adds one to the
+tray), a faint line, then the tab's pills and a + pill. No sidebar: upstream's dice settings (hide,
+bonus / advantage, history, players' trays) are in ⋯. Closed, the window is just the tray. `prefs.panelOpen`; window width `windowWidth(height,
 panelOpen)` (`layout.ts`) via `OBR.action.setWidth`. Owlbear plumbing (roll sync, tracker rolls,
-resize) lives in `App` so it runs with the panel closed. Match Owlbear's look (MUI theme, paper
-surfaces, round icon buttons). Don't try a separate
+resize) lives in `App` so it runs with the panel closed. **Look = Chong's Tracker** (`src/chong/look.ts`):
+transparent window (Owlbear's glass shows through), translucent white surfaces, no outlines, 8 px
+corners, round transparent icon buttons, purple when on. Don't try a separate
 tray popover again: in 2.0 it never appeared in Owlbear. Stores: `chongStore` (saved rolls, the only
 writer), `trayStore` (placed command, error banner), `prefsStore`.
 
