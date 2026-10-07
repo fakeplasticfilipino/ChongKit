@@ -7,7 +7,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | Tool | Status | What it does |
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
-| [Chong Die](chong-die/) | ✅ v2 | Owlbear Rodeo 3D dice with an Avrae-style command line and saved rolls in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
+| [Chong Die](chong-die/) | ✅ v3 | Owlbear Rodeo 3D dice with a plain-words command line, saved rolls and names in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
 | [Character Sheet](character-sheet/) | ✅ v3 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, notes; add more of any box, remove any; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
@@ -174,6 +174,8 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note.
 - **Rolls in notes:** dice in a note (`1d8!+3d8+2`, `2d6+3`, `1d20`) are underlined. Click one to
   roll it in **Chong Die** (it must be installed in the room). A `(2×)` before it on the line rolls it twice.
+  The dice are converted to Chong Die's words when clicked (`1d8!` → `1d8 explode`, `4d6kh3` → `4d6 keep 3`,
+  `(2×)` → `x2`); Avrae operations with no Chong Die word aren't underlined.
   Click anywhere else in the note to edit it.
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
   "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
@@ -230,10 +232,11 @@ receives the scene data.
 
 ## Chong Die (Owlbear Rodeo)
 
-3D dice for [Owlbear Rodeo](https://www.owlbear.rodeo/) with an Avrae-style command line and
-saved rolls. It is a modified version of [Owlbear Rodeo Dice](https://github.com/owlbear-rodeo/dice)
-and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, changes listed in
-`chong-die-src/NOTICE.md`).
+3D dice for [Owlbear Rodeo](https://www.owlbear.rodeo/) with a plain-words command line and
+saved rolls. The engine rolls every number first and the tray acts the result out (the dice land on
+the faces the roll decided). It is a modified version of
+[Owlbear Rodeo Dice](https://github.com/owlbear-rodeo/dice) and, like it, licensed under the
+**GPL-3.0** (source in `chong-die-src/`, changes listed in `chong-die-src/NOTICE.md`).
 
 **To install:** in Owlbear, open your profile → **Extensions** → **Add Extension**, paste
 `https://fakeplasticfilipino.github.io/ChongKit/chong-die/manifest.json`, then turn it on in your room.
@@ -241,7 +244,7 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 **Using it**
 - **Hold to roll:** every roll waits on the tray. Its dice appear (the command shows under them);
   hold **Roll** to shake them, let go to throw. **×** clears them.
-- **Command line** (always on top of the tray): type a roll and press Enter. `!r` is optional.
+- **Command line** (always on top of the tray): type a roll and press Enter.
   ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled.
 - **▤ Rolls** (beside the command line) opens the panel docked to the right of the tray; closed,
   it's just the tray. It remembers.
@@ -251,33 +254,56 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
   adds one (name, roll, optional description shown on hover / long-press); drag to reorder or onto
   another tab; right-click (long-press) to edit or delete. Tabs: **+** adds, double-click renames,
   **×** deletes, drag to reorder.
-- **⋯**: Hide rolls, Roll history, other players' trays, Nimble rules, export / import (your saved
-  rolls live in this browser only), about.
+- **⋯**: Hide rolls, Roll history, other players' trays, export / import (your saved
+  rolls and names live in this browser only), about.
 - Rolls clicked in **Chong's Tracker** notes land on this tray, ready to throw.
-- **Nimble rules** (⋯, off by default): once a roll lands, a **purple outline** (dark red on a 1, bright gold on the
-  highest face) marks the die of each
-  dice term that landed furthest left (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray.
-  **Right-click a landed die** (touch: hold it half a second) to start an explosion chain: a new die
-  pops out, and every new die on its max explodes again. Nothing is automatic.
-- Rolls with `e` / `!` (`1d6!`, `2d6e6`) explode by themselves, Nimble or not.
+- **Outline:** whenever a roll uses `crit` or `miss`, the Primary Die (the first die of a group still
+  kept) gets a **purple outline**, dark red when it is in the `miss` range, gold when it crit. A
+  die the roll dropped (advantage, `keep`, `drop`) fades once it lands. Chain dice pop out of the
+  die that made them after it settles.
+- **Marks, not verdicts:** the total is always the real sum; **MISS**, **CRIT** and **CAPPED** are
+  shown beside it and the table decides what they mean.
 
-**Roll syntax** (Avrae's `d20` syntax)
+**Roll syntax** (a command is dice groups joined by `+` or `-`, with plain numbers as modifiers;
+rules follow the group they belong to: in `1d4 nimble + 2d6 + 3` only the dagger can crit)
 
-| Write | Means |
-|---|---|
-| `1d20+5`, `d%` | Dice and math: `+ - * / // %`, parentheses |
-| `4d6kh3`, `2d20kl1`, `8d6k>2`, `4d6p<3`, `3d6pl1` | Keep / drop highest, lowest, above, below |
-| `1d6rr1`, `2d6ro<3`, `1d6ra6` | Reroll until not / once / once and add |
-| `2d6e6`, `1d4!`, `3d10e>8` | Exploding dice (a new die pops out of the one that exploded) |
-| `4d6mi2`, `2d8ma6` | Minimum / maximum per die |
-| `1d6[fire]` | Label |
-| `1d20+5 adv Perception` | `adv` / `dis` turn the first d20 into 2d20kh1 / kl1; the rest is a comment |
-| `!rr 4 1d20+5` | Roll it 4 times |
-| `!rrr 4 1d20+5 15` | Roll it 4 times against DC 15 |
+| Word | Means | Example |
+|---|---|---|
+| `NdS` | N dice of S sides (`d20` is `1d20`, `d%` is `1d100`) | `2d6` |
+| `adv`, `adv2`, `dis`, `dis3` | Advantage / disadvantage counters; they cancel first. Net n adds n dice, then drops the n lowest (highest for `dis`); ties drop from the left | `2d6 adv3` |
+| `keep 3`, `keep low 1`, `drop 1` | Keep the highest / lowest, drop the lowest | `4d6 keep 3` |
+| `crit` | Can-crit dice crit on their max and add chain dice | `1d8 crit` |
+| `crit each` | Every kept die of the first throw can crit | `3d10 crit each` |
+| `miss <range>` | Mark MISS when the Primary Die is in range | `2d6 crit miss 4-` |
+| `chain <range>` | The Primary Die in range adds a chain die | `1d10 crit chain 5+` |
+| `chain adv`, `chain adv2` | Chain dice roll with advantage | `1d10 crit chain adv` |
+| `explode` | Dice roll one more on their max, which is not a crit | `1d6 explode` |
+| `xN` | Roll the whole command N times, separately (1 to 25) | `1d20+5 x3` |
+| `# text` | A note shown with the roll | `1d10 crit # longsword` |
 
-Operations apply in the order written. Rerolls and explosions are thrown as extra dice (at most 20
-per roll). d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …) are rolled without
-a 3D die. Limits: 100 dice per throw, sides up to 1000, repeats up to 25.
+Ranges are written one way everywhere: `5+` (5 or more), `4-` (4 or less), `1-2` (1 to 2), `6`
+(exactly 6). The Primary Die is the first die of a group still kept; with `crit`, it and every chain
+die can crit. A chain die is one more die of the same size added to the total (with `chain adv`, an
+advantage pick of that size); a die that meets several reasons at once adds one chain die. Errors
+show under the command line: `keep` with `drop`, `adv`/`dis` with `keep`/`drop`, `chain` without
+`crit`, `keep n` outside 1 to the dice count, `drop n` outside 1 to the dice count minus one, or a
+command with no dice. Limits: 100 dice per roll and 20 chain dice; a roll that hits either stops adding
+dice and is marked CAPPED. d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …) are
+rolled without a 3D die.
+
+**Saved names:** `name = text` saves a name and `name =` deletes it. A name expands where it is used,
+and names may use names (a loop is an error):
+
+```
+nimble = crit miss 1
+atk    = 1d10 nimble chain 5+ chain adv
+atk +3        rolls  1d10 crit miss 1 chain 5+ chain adv +3
+```
+
+`nimble` is built in as `crit miss 1` (Nimble's Primary Die: a 1 misses, its max crits); the engine
+itself contains no Nimble. Save your own `nimble` to change it, and delete it to get the built-in
+back. A name's own `# note` moves to the end of the command. Chong Die leaves out rerolls,
+multiplication and division, and target checks on purpose.
 
 **Building:** `cd chong-die-src`, then `npx yarn@1.22.22` (install) and `npx yarn@1.22.22 build`,
 which writes the site files into `chong-die/`. Commit both folders. How it works: `chong-die-src/DESIGN.md`.

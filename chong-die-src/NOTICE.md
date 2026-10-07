@@ -11,9 +11,9 @@ under the same license.
 - Built into `../chong-die/`, served from `/ChongKit/chong-die/` on GitHub Pages
 - Libraries split into `vendor-*` chunks by how often they change (Rapier, three.js, React, MUI,
   3D helpers, the rest), so a rebuild only rewrites what changed; Vitest added for tests
-- Avrae-style roll engine (`src/roll/`): parser, evaluator, result text
+- Avrae-style roll engine (`src/roll/`): parser, evaluator, result text (replaced in 3.0, see below)
 - Command line, saved-roll tabs and pills (`src/chong/`)
-- Follow-up dice waves for rerolls and exploding dice
+- Follow-up dice waves for rerolls and exploding dice (removed in 3.0)
 - Owlbear SDK upgraded from 1.3.9 to 3.x (for messages from Chong's Tracker)
 - Command line always on top of the tray, with a Rolls button beside it; the Rolls panel docks to
   the right of the tray; it fades in / out as it opens or closes
@@ -25,5 +25,22 @@ under the same license.
 - Optional Nimble switch: a purple outline on each term's leftmost landed die (dark red on a 1,
   bright gold on the highest face);
   right-click / long-press a landed die to start an explosion chain (in everyone's result)
+  (removed in 3.0)
 - Dice land on the record's face: a settled die turns its model by a symmetry of the solid
   (from the collider hull) onto the face the roll decided, and that pose is what other players see
+
+### 3.0
+
+- New roll engine (`src/engine/`) replacing the Avrae-style one: saved names expand, a plain-words
+  command parses to a plan, the plan rolls to a complete record (every die, its Primary Die, marks,
+  total), and the record is formatted as the result text. The Avrae syntax, the wave runner and
+  reading values back from the physics are removed
+- Words: `adv`/`dis` counters, `keep`/`drop`, `crit` (and `crit each`), `miss`, `chain` (and
+  `chain adv`), `explode`, `xN`, `# note`, with caps of 100 dice and 20 chain dice (CAPPED mark)
+- Saved names (`name = text`), with `nimble` built in and editable; replaces the Nimble switch
+- The roller's record is what every player's tray acts out (`chong` metadata, version 3); hidden
+  rolls sync without it
+- Tray: chain dice pop out in stages after their parent settles, dropped dice fade, and the Primary
+  Die outline is drawn from the record whenever a roll uses `crit` or `miss`; right-click / long-press
+  exploding removed
+- Dice turn onto the record's face by a 250 ms symmetry turn after settling (`helpers/faceSymmetry.ts`)

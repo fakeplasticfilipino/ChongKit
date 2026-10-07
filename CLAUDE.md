@@ -131,13 +131,12 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 
 ## Chong Die (Owlbear Rodeo dice)
 
-A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
-line and saved-roll pills. How it works: `chong-die-src/DESIGN.md` (keep it current).
+A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with a plain-words command
+line, an engine that decides every roll, and saved-roll pills. How it works: `chong-die-src/DESIGN.md` (keep it current).
 
-1. **System-agnostic**, with one deliberate exception: an optional, simple Nimble switch (⋯ →
-   Nimble rules: purple outline on each term's leftmost landed die, dark red on a 1 and gold on the
-   highest face; right-click starts an explosion
-   chain). Nothing automatic; don't add other systems' rules.
+1. **System-agnostic.** The engine knows general words only (`crit`, `miss`, `chain`, `explode`,
+   `adv` …), never a game system. Nimble lives in the editable `nimble` saved name (built in,
+   `crit miss 1`); other systems' rules may be added as words, never as built-in behaviour.
 2. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
    built with Vite. Source in `chong-die-src/` (off the site, public on GitHub);
    `npx yarn@1.22.22 build` writes `chong-die/`, which is committed. **Rebuild and commit
@@ -153,8 +152,9 @@ line and saved-roll pills. How it works: `chong-die-src/DESIGN.md` (keep it curr
      answered on `…/ack` (`src/chong/channels.ts`).
    - The commands the tracker makes from note text must parse here:
      `chongs-tracker/tests/roll-examples.json` is tested by both sides.
-   - Rolls carry `chong` metadata that every player recomputes the same way: keep old rolls readable.
-7. Logic stays in pure, tested modules (`src/roll/`, `src/chong/*.ts`); `npm test` runs them.
+   - Rolls carry the `chong` metadata (`v: 3`, the record every player's tray acts out): a roll in
+     another format must still show as text.
+7. Logic stays in pure, tested modules (`src/engine/`, `src/chong/*.ts`); `npm test` runs them.
    Status and backlog: `chong-die/TRACKER.md`. Upstream fixes: diff the upstream repo against
    `chong-die-src/` and port by hand.
 
@@ -188,8 +188,8 @@ chongs-tracker/              Owlbear extension → /chongs-tracker/ (install: ma
 chong-die/                   Built Chong Die (committed) → /chong-die/ (install: manifest.json)
   TRACKER.md                 Its status and backlog (not published)
 chong-die-src/               Chong Die source: fork of owlbear-rodeo/dice (GPL-3.0, not published)
-  src/roll/                  Roll engine: parser, evaluator, result text (+ Vitest tests)
-  src/chong/                 Command line, panel, pills, saved rolls, roll runner, Nimble
+  src/engine/                Roll engine: expand, parse, roll, record, format, faces (+ Vitest tests)
+  src/chong/                 Command line, panel, pills, saved rolls and names, roll runner, outlines
   DESIGN.md                  How Chong Die works (keep it current)
 docs/rules-reference.md      Rules tables with page numbers → /docs/rules-reference.html
 source/                      The GM Guide PDF (not published)

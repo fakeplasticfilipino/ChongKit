@@ -16,8 +16,8 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
   (`usePanelFade` in `App.tsx`, `PANEL_FADE_MS`). Tray and panel never shrink. Tabs + ⋯ on top; the first tab (Rolls: can't be closed or moved)
   starts with the dice style button and a pill per die (`DicePills`: each click adds one die to the
   tray, thrown with the tray's Roll button), a faint line, then the tab's pills and a + pill.
-- **⋯** (`chong/MoreMenu.tsx`): hide rolls, roll history, other players' trays, Nimble rules,
-  export / import, about.
+- **⋯** (`chong/MoreMenu.tsx`): hide rolls, roll history, other players' trays, export / import,
+  about.
 - Owlbear plumbing (roll sync, tracker rolls, resize) is in `App`, so it runs with the panel closed.
 - **Look = Chong's Tracker** (`chong/look.ts` copies `chongs-tracker/style.css`): transparent body
   (Owlbear's glass shows through), translucent white surfaces, no outlines, 8 px corners, round
@@ -26,51 +26,68 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
 
 ## Rolling
 
+The engine decides every number; the tray acts the result out. Spec: `docs/2026-10-07-roll-engine-design.md`.
+
 - Everything rolls as a command, even dice picked by hand (`rollPickedDice` → `countsToCommand`).
-  `startCommandRoll` (`chong/rollRunner.ts`) parses, evaluates and throws the first wave.
+  `startCommandRoll` (`chong/rollRunner.ts`) expands, parses and rolls the command, then throws stage 0.
 - **Hold to roll:** custom rolls (typed, pills, Chong's Tracker, history, Reroll) never throw right
-  away: `placeCommand` (`chong/place.ts`) puts their first wave's dice on the tray as picked dice
+  away: `placeCommand` (`chong/place.ts`) puts their first stage's dice on the tray as picked dice
   and keeps the command in `trayStore.placed`; holding Roll shakes them, releasing throws the
   command (`startCommandRoll` with the hold's `speedMultiplier`). Changing or clearing the dice by
   hand drops the command (`dropPlaced` in `controls/store.ts`). Commands with only virtual dice
-  (`1d7`) roll at once. Follow-up waves (rerolls, explosions) still throw by themselves.
-- **Roll engine** (`src/roll/`, pure TS, Vitest): Avrae's `d20` syntax, operations in the order
-  written. Rerolls and explosions come back as waves of new dice. Keys: `<rep>.<dice id>.<n>`, + `r`
-  (reroll) / `e` (explosion) / `m` (exploded by hand); a later op following up the same die again
-  adds its op index (`1d6!!` → `0.0.0e1`).
-- **Sync:** each roll carries `chong` metadata (`ChongRollMeta` in `chong/rollMeta.ts`: command,
-  3D die id → logical die, virtual dice, `manual`, `nimble`), so every player recomputes the same
-  total from the synced values. Only the roller's tray throws new waves (`throwNextWave`, run by
-  `useWaveRunner` on every change).
+  (`1d7`) roll at once.
+- **Roll engine** (`src/engine/`, pure TS, Vitest): `expand` (saved names, repeated; a loop is an
+  error) → `parse` (the only module that knows the words) → `roll` (plan + random source: the
+  browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept,
+  crit, parent and source; each group's Primary Die; marks; total) → `format` (the result text).
+  `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray
+  shows. Errors are `EngineError`, shown under the command line.
+- **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CRIT and
+  CAPPED are marks beside it. Caps: 100 dice per roll (checked before rolling) and 20 chain dice
+  (a `chain adv` pick counts as one); hitting either marks the roll CAPPED.
+- **Saved names** (`name = text` saves, `name =` deletes; `chong/chongStore.ts`, `chong/savedRolls.ts`):
+  names expand where used and may use names. The built-in `nimble = crit miss 1` sits under the
+  user's names: a user's `nimble` wins, and deleting it restores the built-in. A name's own `# note`
+  moves to the end of the expanded command. The expanded text is what rolls, syncs and goes into
+  history. The engine contains no Nimble.
+- **Sync:** each roll carries `chong` metadata (`ChongRollMeta` in `chong/rollMeta.ts`:
+  `{ v: 3, record, parts, faces, stage }`): the record, 3D die id → record die and part, 3D die id →
+  forced face, and the stage shown so far. Only the roller rolls; every tray acts out the same
+  record, with no recomputing and no waves. Hidden rolls sync without the record. A roll in another
+  format (`isCurrentMeta`) shows as its text with no dice, never as an error.
+- **Stages:** stage 0 is the first throw; each later stage holds the chain dice made by the one before
+  (`revealStages`). `revealNext` (run by `useRevealRunner`) waits until every die on the tray has
+  settled, then pops the next stage's dice out of their parents (`popThrow`); an advantage chain die
+  pops as a pair.
+- **Dropped dice** fade once they have landed (a die the record dropped: advantage, `keep`/`drop`,
+  a chain pick's lower die).
 - **From Chong's Tracker:** `{ id, command }` on `…/roll` → the background acks, opens the window and
   re-sends `…/run` until `…/run-ack` (`chong/channels.ts`, `background.ts`, `chong/incoming.ts`).
 
-## Nimble (⋯ → Nimble rules)
+## Primary Die outlines
 
-Recorded with the roll as `chong.nimble`, so everyone sees the roller's setting. Nothing automatic.
+Placed by the record, not by where a die lands, and shown whenever a group uses `crit` or `miss`
+(`usesCrit` / `usesMiss`); there is no switch. The Primary Die is the first die of a group still kept
+(with `crit each`, every starting die).
 
-- **Primary die:** `highlightedDice` picks, for each dice term, the die that landed furthest left
-  (lowest x; not explosion dice, not dice rerolled away). `chong/Highlights.tsx` draws an
-  outline: the die's own geometry, scaled 1.08, inside out (`BackSide`), unlit. Purple, or by
-  `highlightTone`: dark red when the die shows 1, bright gold on its highest face (a d100 by its
-  whole value; both trays pass their landed values).
-- **Explosion chains:** right-click (touch: long-press, `dice/InteractiveDice.tsx`) a landed die →
-  `explodeDie` adds its key to `chong.manual`; `evaluate(…, { manual })` starts a chain there after
-  the term's own ops (`<key>m`, then `…mm` while the new die shows its max; counted in the 20 extra
-  dice); `throwNextWave` pops each new die out of its parent (`popThrow`).
+- `chong/Highlights.tsx` draws the outline: the die's own geometry, scaled 1.08, inside out
+  (`BackSide`), unlit. Purple; dark red when the die is in the `miss` range; gold when the Primary
+  Die crit.
+- Chain dice aren't outlined; the CRIT mark is in the result text.
 
 ## Faces (3.0: landing on the record's face)
 
 Decided by a throwaway spike (Task 1 of the 3.0 plan). **Settle-then-turn:** the die rolls and
 settles as now; then its visible model (the `dice` group, never the collider) turns in a 250 ms
 slerp from identity to `R`, a rotation of the solid onto itself that puts the record's face T where
-the landed face U is (`R · locator(T) ≈ locator(U)`, in the die's frame).
+the landed face U is (T is the face the record wants, U the face the die landed on; a locator is a
+per-face marker in the die model, and the top one gives the face value; `R · locator(T) ≈ locator(U)`, in the die's frame).
 
 - **Why not pre-simulation.** Rapier does replay a throw exactly: a headless world
   (`@dimforge/rapier3d-compat` 0.11.2, the build `@react-three/rapier` 1.1.1 uses; fixed 1/120
   step; the tray's colliders; every die of the throw) gave the same top face on 20/20 throws of 1
   to 6 dice across two runs, poses bit-identical. But only a bit-exact copy works: moving the dice's
-  start by 1e-6 changed a top face on 4 to 7 throws of 20. Held: same WASM build, fixed step with
+  start by 1e-6 changed a top face on 5 to 8 throws of 20. Held: same WASM build, fixed step with
   `interpolate={false}` (frame rate only changes how many steps run per frame), same collider
   shapes, a fresh world per roll. Not shown: that the live world is built bit-identically (bodies
   come from `@react-three/rapier` through three.js transforms, the Euler round trip in
@@ -104,13 +121,14 @@ the landed face U is (`R · locator(T) ≈ locator(U)`, in the die's frame).
   `finishDieRoll` stores and `DiceRollSync` sends, so the static dice of every tray, and a die
   placed again by a fixed transform (which never turns), show the record's face. A die already
   showing it, or one the record doesn't cover (non-command rolls), reports as before.
-- The spike's scripts (symmetry check, headless harness) are kept locally in
-  `.superpowers/sdd/2026-10-07-roll-engine-plan/spike-harness/` (git-ignored).
+- **How the group is built:** the rotations that map the collider hull's face normals onto
+  themselves (tolerance 2e-3), then the element that moves T's locator closest to U's. Implemented in
+  `src/helpers/faceSymmetry.ts`.
 
 ## Storage (localStorage)
 
-- `chongkit.chongdie`: saved rolls (tabs, pills, typed history), `chong/savedRolls.ts`. Only
+- `chongkit.chongdie`: saved rolls (tabs, pills, typed history) and saved names, `chong/savedRolls.ts`. Only
   `chongStore` writes it.
-- `chongkit.chongdie.prefs`: `nimble`, `panelOpen` (`chong/prefs.ts`, `prefsStore`).
+- `chongkit.chongdie.prefs`: `panelOpen` (`chong/prefs.ts`, `prefsStore`); the 2.x `nimble` switch is dropped on load.
 - Stores: `chongStore` (saved rolls, tabs, draft, error), `trayStore` (tray error banner),
   `prefsStore`, `partyStore` (other players, the tray shown full size).
