@@ -14,3 +14,6 @@ under the same license.
 - Command line, saved-roll tabs and pills, Place/Instant (`src/chong/`)
 - Follow-up dice waves for rerolls and exploding dice
 - Owlbear SDK upgraded from 1.3.9 to 3.x (for messages from Chong's Tracker)
+- Two windows: the toolbar button opens a Rolls window (command line, saved rolls); the tray is a
+  separate popover (`tray.html`) opened by the background page, with a close button in its sidebar
+- Primary die drawn in its own style and optional Nimble rules

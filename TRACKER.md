@@ -120,7 +120,8 @@ Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chong
 
 ## Chong Die (`chong-die/`)
 Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0) with an Avrae-style command line and saved-roll pills.
-- ✅ v1.0.0 built (plan: `docs/superpowers/plans/2026-10-06-chong-die.md`); status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
+- ✅ v1.0.0 built (plan: `docs/superpowers/plans/2026-10-06-chong-die.md`)
+- ✅ v2.0.0: Rolls window + stock tray as two windows (plan: `docs/superpowers/plans/2026-10-07-chong-die-split-windows.md`); status and next steps in [chong-die/TRACKER.md](chong-die/TRACKER.md)
 
 ## Site (GitHub Pages)
 - [x] Landing page (`index.html`) with a card per tool

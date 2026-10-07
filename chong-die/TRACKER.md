@@ -38,7 +38,15 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ## ✅ v1.4.1
 - [x] Exploding dice pop out higher (peak ≈1.3, under the 1.5 roof) and spin harder (tested)
 
+## ✅ v2.0.0
+- [x] Two windows: the toolbar button opens the Rolls window (520 × 640: command line, tabs and the ⚡ + 🎲 ⋯ row, pills); the tray is its own popover, stock look, top right, × to close
+- [x] Every roll goes `…/roll` → background → tray (opened if closed, never re-opened); `place` in the message, tracker rolls follow the saved active tab (tested)
+- [x] Stores split: only the Rolls window writes saved rolls; prefs follow the other window via `storage` (tested)
+- [x] Browser check (local, no Owlbear): Rolls window layout, typo error not sent, history; tray page stock sidebar
+
 ## 📋 Next up
+- [ ] Owlbear, v2 windows: the tray opens top right beside the Rolls window and a second roll doesn't reload it; a tracker roll with the tray closed and open; clicking another player's roll popover opens the tray; Nimble toggled while the tray is open; 🎲 pressed state; `popover.getWidth` on a closed popover returns undefined (the open check relies on it)
+- [ ] Tune the tray's position and the Rolls window's size in a real room (phone width too)
 - [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker
 - [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays

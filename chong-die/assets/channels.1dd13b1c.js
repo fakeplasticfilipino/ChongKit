@@ -1,0 +1,1 @@
+const e={roll:"com.chongkit.chongdie/roll",ack:"com.chongkit.chongdie/ack",run:"com.chongkit.chongdie/run",runAck:"com.chongkit.chongdie/run-ack"};function i(n){const o=n;if(!o||typeof o.id!="string"||typeof o.command!="string")return null;const c={id:o.id,command:o.command};return typeof o.place=="boolean"&&(c.place=o.place),c}export{e as C,i as r};
