@@ -63,6 +63,7 @@ test("times and note", () => {
 test("errors name the problem", () => {
   expect(() => parse("1d10 chian 5+")).toThrow('Unknown word "chian"');
   expect(() => parse("2d6 adv keep 1")).toThrow(EngineError);
+  expect(() => parse("4d6 keep 2 drop 1")).toThrow(/keep and drop/);
   expect(() => parse("1d10 chain 5+")).toThrow(/crit/);
   expect(() => parse("crit 1d6")).toThrow(EngineError);
   expect(() => parse("1d6 +")).toThrow(EngineError);

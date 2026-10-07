@@ -118,6 +118,9 @@ function parseGroup(sign: 1 | -1, words: Tok[]): GroupPlan {
   if (g.drop && !(g.drop >= 1 && g.drop < count)) {
     throw bad(`"drop ${g.drop}" must drop 1 to ${count - 1} dice`);
   }
+  if (g.keep && g.drop) {
+    throw bad("keep and drop can't be used together in one group");
+  }
   if ((g.adv || g.dis) && (g.keep || g.drop)) {
     throw bad("adv or dis can't be used with keep or drop in one group");
   }
