@@ -58,6 +58,9 @@ export interface RolledDie {
 }
 
 export interface GroupResult {
+  sign: 1 | -1;
+  /** The dice label, e.g. `1d10`, `3d6kh2`, `2d20kl1`. */
+  label: string;
   /** The `id` of the group's Primary Die, or null when no start/adv die is kept. */
   primary: number | null;
   miss: boolean;
@@ -73,6 +76,7 @@ export interface RepRecord {
 
 export interface RollRecord {
   v: 3;
+  modifier: number;
   text: string;
   note: string | null;
   reps: RepRecord[];

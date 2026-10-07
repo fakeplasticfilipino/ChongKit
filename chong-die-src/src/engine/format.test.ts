@@ -41,3 +41,6 @@ test("miss and crit marks, repetitions and total", () => {
 test("miss and crit together", () => {
   expect(f("1d4 crit miss 4-", [4, 1]).lines[0]).toBe("1d4 (**4**) + chain (**1**) = 5 · MISS · CRIT");
 });
+test("a tied disadvantage still reads kl", () => {
+  expect(f("2d6 dis", [4, 4, 4]).lines[0]).toMatch(/^3d6kl2 /);
+});

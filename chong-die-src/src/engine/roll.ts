@@ -99,7 +99,7 @@ function rollRep(plan: Plan, rng: Rng, budget: Budget): RepRecord {
     for (const d of own) d.crit = canCrit(d, g, primary) && d.value === d.size;
     dice.push(...own);
     const pd = own.find((d) => d.id === primary);
-    groups.push({ primary, miss: !!(pd && g.miss && inRange(pd.value, g.miss)), crit: false });
+    groups.push({ sign: g.sign, label: labelOf(g, own), primary, miss: !!(pd && g.miss && inRange(pd.value, g.miss)), crit: false });
   });
   // Follow-ups, breadth-first in id order; each gets the next ids.
   let capped = false;
@@ -138,5 +138,13 @@ export function roll(plan: Plan, rng: Rng): RollRecord {
   const budget: Budget = { follow: 0, dice: start * plan.times };
   const reps: RepRecord[] = [];
   for (let i = 0; i < plan.times; i++) reps.push(rollRep(plan, rng, budget));
-  return { v: 3, text: plan.text, note: plan.note, reps };
+  return { v: 3, text: plan.text, note: plan.note, modifier: plan.modifier, reps };
+}
+
+/** The group's dice label: `NdS`, or how many were rolled and which kept (`3d6kh2`, `2d20kl1`). */
+function labelOf(g: GroupPlan, own: RolledDie[]): string {
+  const kept = own.filter((d) => d.kept).length;
+  if (kept === own.length) return `${own.length}d${g.size}`;
+  const low = g.keep ? g.keep.low : g.adv - g.dis < 0;
+  return `${own.length}d${g.size}${low ? "kl" : "kh"}${kept}`;
 }
