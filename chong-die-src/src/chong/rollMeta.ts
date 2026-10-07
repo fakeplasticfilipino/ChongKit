@@ -87,6 +87,23 @@ export function highlightedDice(
     .map(([, id]) => id);
 }
 
+/**
+ * Nimble: how a highlighted die landed: "miss" on a 1, "crit" on its highest face (a d100 goes by
+ * its whole value), else "plain" (also while any of its parts is still rolling)
+ */
+export function highlightTone(
+  meta: ChongRollMeta,
+  id: string,
+  rollValues: Record<string, number | null | undefined>
+): "plain" | "miss" | "crit" {
+  const die = meta.parts[id];
+  const value = die && logicalValues(meta, rollValues)[die.key];
+  if (value === 1) {
+    return "miss";
+  }
+  return die && value === die.size ? "crit" : "plain";
+}
+
 /** The total and breakdown of a finished command roll, or null */
 export function getRollDisplay(
   roll: DiceRoll,

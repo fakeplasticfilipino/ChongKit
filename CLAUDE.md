@@ -135,7 +135,8 @@ A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Av
 line and saved-roll pills. How it works: `chong-die-src/DESIGN.md` (keep it current).
 
 1. **System-agnostic**, with one deliberate exception: an optional, simple Nimble switch (⋯ →
-   Nimble rules: purple outline on each term's leftmost landed die, right-click starts an explosion
+   Nimble rules: purple outline on each term's leftmost landed die, dark red on a 1 and gold on the
+   highest face; right-click starts an explosion
    chain). Nothing automatic; don't add other systems' rules.
 2. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
    built with Vite. Source in `chong-die-src/` (off the site, public on GitHub);

@@ -252,7 +252,8 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 - **⋯**: Hide rolls, Roll history, other players' trays, Nimble rules, export / import (your saved
   rolls live in this browser only), about.
 - Rolls clicked in **Chong's Tracker** notes roll here.
-- **Nimble rules** (⋯, off by default): once a roll lands, a **purple outline** marks the die of each
+- **Nimble rules** (⋯, off by default): once a roll lands, a **purple outline** (dark red on a 1, bright gold on the
+  highest face) marks the die of each
   dice term that landed furthest left (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray.
   **Right-click a landed die** (touch: hold it half a second) to start an explosion chain: a new die
   pops out, and every new die on its max explodes again. Nothing is automatic.

@@ -7,6 +7,7 @@ export function PlayerDiceRoll({ player }: { player?: Player }) {
   const {
     diceRoll,
     rollThrows,
+    rollValues,
     finishedRollTransforms,
     finishedRolling,
     transformsRef,
@@ -21,6 +22,7 @@ export function PlayerDiceRoll({ player }: { player?: Player }) {
       roll={diceRoll}
       rollThrows={rollThrows}
       finishedTransforms={finishedRolling ? finishedRollTransforms : undefined}
+      rollValues={rollValues}
       transformsRef={transformsRef}
     />
   );

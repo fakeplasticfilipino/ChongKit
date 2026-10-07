@@ -15,6 +15,7 @@ export function DiceRoll({
   rollThrows,
   onRollFinished,
   finishedTransforms,
+  rollValues,
   transformsRef,
   Dice,
 }: {
@@ -26,6 +27,8 @@ export function DiceRoll({
     transform: DiceTransform
   ) => void;
   finishedTransforms?: Record<string, DiceTransform>;
+  /** Chong Die: the landed values, so the Nimble outline can show a 1 or the highest face */
+  rollValues?: Record<string, number | null>;
   /** An updated ref of the current dice transforms */
   transformsRef?: React.MutableRefObject<Record<
     string,
@@ -74,8 +77,8 @@ export function DiceRoll({
             />
           );
         })}
-        {/* Chong Die: the leftmost die of each term glows faintly */}
-        <Highlights roll={roll} transforms={finishedTransforms} />
+        {/* Chong Die: the leftmost die of each term gets an outline (red on a 1, gold on the top face) */}
+        <Highlights roll={roll} transforms={finishedTransforms} values={rollValues} />
       </group>
     );
   } else {

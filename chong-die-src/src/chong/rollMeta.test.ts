@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { DiceRoll } from "../types/DiceRoll";
-import { ChongRollMeta, getRollDisplay, highlightedDice, logicalValues, popThrow } from "./rollMeta";
+import { ChongRollMeta, getRollDisplay, highlightedDice, highlightTone, logicalValues, popThrow } from "./rollMeta";
 
 const advMeta: ChongRollMeta = {
   command: "!r 1d20+5 adv",
@@ -172,3 +172,22 @@ test("a roll with a chain shows it in the total", () =>
   expect(
     getRollDisplay({ ...twoTerms, chong: { ...twoTerms.chong!, manual: ["0.1.0"] } }, { a: 3, b: 2, c: 5, d: 4 })!.total
   ).toBe("14"));
+
+test("the outline turns red on a 1 and gold on the highest face", () => {
+  const meta = twoTerms.chong!;
+  expect(highlightTone(meta, "a", { a: 1 })).toBe("miss");
+  expect(highlightTone(meta, "a", { a: 6 })).toBe("crit");
+  expect(highlightTone(meta, "a", { a: 4 })).toBe("plain");
+  expect(highlightTone(meta, "a", { a: null })).toBe("plain");
+});
+
+test("a d100's tone goes by its whole value", () => {
+  const meta: ChongRollMeta = {
+    ...twoTerms.chong!,
+    parts: { a: { key: "0.0.0", size: 100, part: 0 }, b: { key: "0.0.0", size: 100, part: 1 } },
+  };
+  expect(highlightTone(meta, "a", { a: 0, b: 0 })).toBe("crit");
+  expect(highlightTone(meta, "a", { a: 0, b: 1 })).toBe("miss");
+  expect(highlightTone(meta, "a", { a: 10, b: 0 })).toBe("plain");
+  expect(highlightTone(meta, "a", { a: 0, b: null })).toBe("plain");
+});

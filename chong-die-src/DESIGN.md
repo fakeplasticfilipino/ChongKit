@@ -42,8 +42,10 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
 Recorded with the roll as `chong.nimble`, so everyone sees the roller's setting. Nothing automatic.
 
 - **Primary die:** `highlightedDice` picks, for each dice term, the die that landed furthest left
-  (lowest x; not explosion dice, not dice rerolled away). `chong/Highlights.tsx` draws a purple
-  outline: the die's own geometry, scaled 1.08, inside out (`BackSide`), unlit.
+  (lowest x; not explosion dice, not dice rerolled away). `chong/Highlights.tsx` draws an
+  outline: the die's own geometry, scaled 1.08, inside out (`BackSide`), unlit. Purple, or by
+  `highlightTone`: dark red when the die shows 1, bright gold on its highest face (a d100 by its
+  whole value; both trays pass their landed values).
 - **Explosion chains:** right-click (touch: long-press, `dice/InteractiveDice.tsx`) a landed die →
   `explodeDie` adds its key to `chong.manual`; `evaluate(…, { manual })` starts a chain there after
   the term's own ops (`<key>m`, then `…mm` while the new die shows its max; counted in the 20 extra
