@@ -9,28 +9,9 @@ import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
 import { placeCommand } from "./place";
-import { allNames } from "./savedRolls";
-import { checkName, expand, parseDefinition } from "../engine";
 import { PanelToggle } from "./PanelToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
-import { FIELD, HOVER, TEXT2 } from "./look";
-
-/** Why `name = text` can't be saved (a bad name, or names that would loop), or null */
-function nameProblem(name: string, text: string): string | null {
-  const bad = checkName(name);
-  if (bad) {
-    return bad;
-  }
-  if (!text) {
-    return null;
-  }
-  try {
-    expand(name, { ...allNames(useChongStore.getState().saved), [name]: text });
-    return null;
-  } catch (e) {
-    return e instanceof Error ? e.message : "Can't save this name";
-  }
-}
+import { FIELD, HOVER } from "./look";
 
 /** The command box always on top of the tray, with the Rolls button beside it: Enter puts the roll on the tray */
 export function CommandLine() {
@@ -42,36 +23,16 @@ export function CommandLine() {
   const setText = useChongStore((state) => state.setDraft);
   // Position while stepping through history with ↑ / ↓ (null = typing)
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
-  // "Saved atk" / "Deleted atk": news, not an error (no red); cleared on typing like an error
-  const [notice, setNotice] = useState<string | null>(null);
 
   const history = useChongStore((state) => state.saved.history);
   const error = useChongStore((state) => state.error);
   const setError = useChongStore((state) => state.setError);
   const recordHistory = useChongStore((state) => state.recordHistory);
-  const setName = useChongStore((state) => state.setName);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
 
   function roll() {
     const command = text.trim();
     if (!command) {
-      return;
-    }
-    setNotice(null);
-    // `atk = 1d10 nimble` saves a name (`atk =` deletes it) instead of rolling
-    const definition = parseDefinition(command);
-    if (definition) {
-      const problem = nameProblem(definition.name, definition.text);
-      if (problem) {
-        setError(problem);
-        return;
-      }
-      setName(definition.name, definition.text);
-      recordHistory(command);
-      setText("");
-      setHistoryIndex(null);
-      setError(null);
-      setNotice(definition.text ? `Saved ${definition.name}` : `Deleted ${definition.name}`);
       return;
     }
     try {
@@ -147,7 +108,6 @@ export function CommandLine() {
               if (error) {
                 setError(null);
               }
-              setNotice(null);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -174,15 +134,6 @@ export function CommandLine() {
           sx={{ display: "block", mt: 0.5, px: 1.25, py: 0.25, bgcolor: FIELD, backdropFilter: "blur(8px)", borderRadius: "8px" }}
         >
           {error}
-        </Typography>
-      )}
-      {notice && !error && (
-        <Typography
-          variant="caption"
-          role="status"
-          sx={{ display: "block", mt: 0.5, px: 1.25, py: 0.25, color: TEXT2, bgcolor: FIELD, backdropFilter: "blur(8px)", borderRadius: "8px" }}
-        >
-          {notice}
         </Typography>
       )}
     </Box>

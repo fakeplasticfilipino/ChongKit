@@ -27,7 +27,7 @@ export interface ChongPart {
  * every player's tray acts it out, and totals, marks and highlights all come from it.
  */
 export interface ChongRollMeta {
-  v: 3;
+  v: 4;
   record: RollRecord;
   /** 3D die id → the record's die and its part (every 3D die of the roll, shown or not yet) */
   parts: Record<string, ChongPart>;
@@ -39,7 +39,7 @@ export interface ChongRollMeta {
 
 /** A synced roll in this format (other players may still send an older one) */
 export function isCurrentMeta(meta: unknown): meta is ChongRollMeta {
-  return Boolean(meta && typeof meta === "object" && (meta as { v?: unknown }).v === 3);
+  return Boolean(meta && typeof meta === "object" && (meta as { v?: unknown }).v === 4);
 }
 
 /** A record's metadata: an id and a face for every 3D part of every die, stage 0 shown */
@@ -60,7 +60,7 @@ export function buildMeta(record: RollRecord, rng: Rng = rollFair): ChongRollMet
       });
     }
   });
-  return { v: 3, record, parts, faces, stage: 0 };
+  return { v: 4, record, parts, faces, stage: 0 };
 }
 
 /** The last reveal stage of a record (0 when nothing chains) */

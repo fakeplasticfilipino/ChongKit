@@ -11,8 +11,8 @@ beforeEach(() => {
 });
 
 test("a roll from Chong's Tracker waits on the tray to be thrown", () => {
-  expect(handleIncomingRoll("1d6 explode + 1d6 + 3 x2")).toBe("placed");
-  expect(useTrayStore.getState().placed).toBe("1d6 explode + 1d6 + 3 x2");
+  expect(handleIncomingRoll("1d6 crit + 1d6 + 3 x2")).toBe("placed");
+  expect(useTrayStore.getState().placed).toBe("1d6 crit + 1d6 + 3 x2");
   expect(useDiceRollStore.getState().roll).toBeNull();
 });
 

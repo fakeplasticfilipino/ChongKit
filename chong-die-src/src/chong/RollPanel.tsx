@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
@@ -13,7 +13,7 @@ import { useChongStore } from "./chongStore";
 import { MoreMenu } from "./MoreMenu";
 import { PillDialog } from "./PillDialog";
 import { placeCommand } from "./place";
-import { allNames, Pill, pillError, RollTab } from "./savedRolls";
+import { Pill, pillError, RollTab } from "./savedRolls";
 import { PILL_DRAG, TabStrip } from "./TabStrip";
 import { useDiceControlsStore } from "../controls/store";
 import { DicePills } from "./DicePills";
@@ -64,9 +64,6 @@ export function RollPanel() {
 function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
   const hidden = useDiceControlsStore((state) => state.diceHidden);
   const { setError, movePill, editPill, deletePill } = useChongStore.getState();
-  // The pills may use saved names
-  const saved = useChongStore((state) => state.saved);
-  const names = useMemo(() => allNames(saved), [saved]);
 
   const [menu, setMenu] = useState<{ pill: Pill; anchor: HTMLElement } | null>(null);
   const [editing, setEditing] = useState<Pill | null>(null);
@@ -74,7 +71,7 @@ function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
   const longPressed = useRef(false);
 
   function run(pill: Pill) {
-    const error = pillError(pill, names);
+    const error = pillError(pill);
     if (error) {
       setError(error);
       return;
@@ -107,7 +104,7 @@ function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
       }}
     >
       {tab.pills.map((pill, index) => {
-        const invalid = pillError(pill, names) !== null;
+        const invalid = pillError(pill) !== null;
         return (
           <Tooltip key={pill.id} title={pill.description || ""} disableInteractive>
           <Chip

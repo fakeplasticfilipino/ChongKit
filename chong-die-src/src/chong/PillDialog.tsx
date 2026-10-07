@@ -7,8 +7,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 
-import { allNames, pillError } from "./savedRolls";
-import { useChongStore } from "./chongStore";
+import { pillError } from "./savedRolls";
 
 /** Name and command of a pill, for saving a new one or editing one */
 export function PillDialog({
@@ -31,7 +30,6 @@ export function PillDialog({
   const [name, setName] = useState(initialName);
   const [command, setCommand] = useState(initialCommand);
   const [description, setDescription] = useState(initialDescription);
-  const saved = useChongStore((state) => state.saved);
 
   useEffect(() => {
     if (open) {
@@ -42,7 +40,7 @@ export function PillDialog({
   }, [open, initialName, initialCommand, initialDescription]);
 
   const error = command.trim()
-    ? pillError({ id: "", name, command }, allNames(saved))
+    ? pillError({ id: "", name, command })
     : "Type a roll";
 
   function save() {

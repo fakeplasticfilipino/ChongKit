@@ -21,21 +21,14 @@ const countOf = (type: string) => {
 };
 
 test("first-throw counts per 3D die type (virtual dice need none)", () =>
-  expect(placeCounts("2d20 keep 1 + 1d100 + 1d7 + 1d3")).toEqual({ D20: 2, D100: 1, D6: 1 }));
+  expect(placeCounts("2d20 + 1d100 + 1d7 + 1d3")).toEqual({ D20: 2, D100: 1, D6: 1 }));
 
 test("adv doubles the d20", () => expect(placeCounts("1d20 adv + 5")).toEqual({ D20: 2 }));
 
 test("placing counts advantage dice", () => expect(placeCounts("2d6 adv")).toEqual({ D6: 3 }));
 
 test("chain dice aren't placed: they pop out after the throw", () =>
-  expect(placeCounts("1d10 crit chain 1+")).toEqual({ D10: 1 }));
-
-test("saved names are expanded before counting and placing", () => {
-  useChongStore.getState().setName("atk", "1d10 nimble");
-  expect(placeCounts("atk + 3")).toEqual({ D10: 1 });
-  placeCommand("atk + 3", { hidden: false });
-  expect(useTrayStore.getState().placed).toBe("1d10 crit miss 1 + 3");
-});
+  expect(placeCounts("1d10 crit1-10")).toEqual({ D10: 1 }));
 
 test("a command that can't roll throws before anything is placed", () => {
   expect(() => placeCommand("1d20 frob", { hidden: false })).toThrow(/frob/);

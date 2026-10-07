@@ -1,17 +1,17 @@
 import { parse, stageZeroSizes, toPhysical } from "../engine";
 import { useDiceControlsStore, whilePlacing } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
-import { expandCommand, startCommandRoll } from "./rollRunner";
+import { startCommandRoll } from "./rollRunner";
 import { useTrayStore } from "./trayStore";
 
 /**
  * How many of each 3D die the command's first throw needs, as the tray's dice pills count them
- * (a d100 is one D100; dice with no 3D model need none). Saved names are expanded first.
+ * (a d100 is one D100; dice with no 3D model need none).
  * Throws `EngineError` when the command can't be rolled.
  */
 export function placeCounts(command: string): Record<string, number> {
   const counts: Record<string, number> = {};
-  for (const size of stageZeroSizes(parse(expandCommand(command)))) {
+  for (const size of stageZeroSizes(parse(command.trim()))) {
     const type = toPhysical(size)?.[0];
     if (type) {
       counts[type] = (counts[type] || 0) + 1;
@@ -22,11 +22,11 @@ export function placeCounts(command: string): Record<string, number> {
 
 /**
  * A custom roll (typed, a pill, Chong's Tracker, history): its dice go on the tray to be held and
- * thrown with Roll, like dice picked by hand; the tray keeps the expanded command. A command with
+ * thrown with Roll, like dice picked by hand; the tray keeps the typed command. A command with
  * no 3D dice rolls now. Throws `EngineError`.
  */
 export function placeCommand(input: string, opts: { hidden: boolean }): "placed" | "rolled" {
-  const command = expandCommand(input);
+  const command = input.trim();
   const counts = placeCounts(command);
   if (Object.keys(counts).length === 0) {
     startCommandRoll(command, opts);

@@ -5,7 +5,6 @@ import { useChongStore } from "./chongStore";
 import { useTrayStore } from "./trayStore";
 import { emptySaved } from "./savedRolls";
 import { useDiceControlsStore } from "../controls/store";
-import { useDiceHistoryStore } from "../controls/history";
 import { useDiceRollStore } from "../dice/store";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 
@@ -29,7 +28,7 @@ beforeEach(() => {
 test("a command roll puts stage 0 on the tray and records the faces", () => {
   startCommandRoll("2d6 adv", { hidden: false });
   const { roll } = useDiceRollStore.getState();
-  expect(roll!.chong!.v).toBe(3);
+  expect(roll!.chong!.v).toBe(4);
   expect(Object.keys(roll!.chong!.parts)).toHaveLength(3);
   expect(Object.keys(roll!.chong!.faces)).toHaveLength(3);
   expect(trayIds()).toHaveLength(3);
@@ -37,8 +36,8 @@ test("a command roll puts stage 0 on the tray and records the faces", () => {
 });
 
 test("chain dice wait for their parent to settle", () => {
-  // chain 1+: the Primary Die always adds a chain die
-  startCommandRoll("1d6 crit chain 1+", { hidden: false });
+  // crit1-6: the Primary Die always adds a chain die
+  startCommandRoll("1d6 crit1-6", { hidden: false });
   expect(trayIds()).toHaveLength(1);
   revealNext();
   expect(trayIds()).toHaveLength(1);
@@ -52,7 +51,7 @@ test("chain dice wait for their parent to settle", () => {
 });
 
 test("the result shows once every stage has settled, from the record", () => {
-  startCommandRoll("1d6 crit chain 1+ + 2", { hidden: false });
+  startCommandRoll("1d6 crit1-6 + 2", { hidden: false });
   for (let i = 0; i < 30 && !getRollDisplay(useDiceRollStore.getState().roll!, useDiceRollStore.getState().rollValues); i++) {
     settleAll();
     revealNext();
@@ -68,14 +67,6 @@ test("a roll of dice with no 3D model finishes at once", () => {
   const { roll, rollValues } = useDiceRollStore.getState();
   expect(trayIds()).toHaveLength(0);
   expect(getRollDisplay(roll!, rollValues)).not.toBeNull();
-});
-
-test("saved names expand before rolling, and the expanded text is what rolls", () => {
-  useChongStore.getState().setName("atk", "1d10 nimble # sword");
-  startCommandRoll("atk +3", { hidden: false });
-  const { record } = useDiceRollStore.getState().roll!.chong!;
-  expect(record.text).toBe("1d10 crit miss 1 +3 # sword");
-  expect(useDiceHistoryStore.getState().recentRolls.slice(-1)[0].command).toBe("1d10 crit miss 1 +3 # sword");
 });
 
 test("a typed roll that can't work is refused before rolling", () => {

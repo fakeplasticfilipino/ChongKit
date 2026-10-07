@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { expand, parse, roll, rollFair, toPhysical } from "../engine";
+import { parse, roll, rollFair, toPhysical } from "../engine";
 import { useDiceRollStore } from "../dice/store";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceHistoryStore } from "../controls/history";
@@ -12,13 +12,6 @@ import { DiceType } from "../types/DiceType";
 import { buildMeta, ChongRollMeta, isCurrentMeta, lastStage, partId, popThrow, stageIds } from "./rollMeta";
 import { useTrayStore } from "./trayStore";
 import { countsToCommand } from "./prefs";
-import { useChongStore } from "./chongStore";
-import { allNames } from "./savedRolls";
-
-/** A command with the saved names put in: the text that rolls. Throws `EngineError`. */
-export function expandCommand(input: string): string {
-  return expand(input.trim(), allNames(useChongStore.getState().saved));
-}
 
 /**
  * Roll a command now: the engine rolls every die up front, then the tray acts the record out,
@@ -28,7 +21,7 @@ export function startCommandRoll(
   input: string,
   opts: { hidden: boolean; speedMultiplier?: number }
 ): void {
-  const text = expandCommand(input);
+  const text = input.trim();
   const record = roll(parse(text), rollFair);
   const meta = buildMeta(record);
   const dice = makeDice(meta, stageIds(meta, 0));

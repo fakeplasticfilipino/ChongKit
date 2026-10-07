@@ -75,7 +75,7 @@ test("the primary is outlined whenever its group uses crit or miss", () => {
   const crit = rolled("1d6 crit", [6, 3]);
   expect(highlightedDice(crit)).toEqual([Object.keys(crit.chong!.parts)[0]]);
   // Only the group using miss: its primary (the first d6), not the plain d8
-  const miss = rolled("2d6 miss 1 + 1d8", [4, 1, 5]);
+  const miss = rolled("2d6 miss + 1d8", [4, 1, 5]);
   expect(highlightedDice(miss)).toEqual([Object.keys(miss.chong!.parts)[0]]);
 });
 
@@ -95,20 +95,18 @@ const toneOfPrimary = (text: string, values: number[]) => {
 };
 
 test("a primary that crits is gold", () => expect(toneOfPrimary("1d6 crit", [6, 3])).toBe("crit"));
-test("a primary in the miss range is dark red", () => expect(toneOfPrimary("1d6 crit miss 1", [1])).toBe("miss"));
-test("a primary with no crit and no miss is purple", () => expect(toneOfPrimary("1d6 crit miss 1", [4])).toBe("plain"));
-test("a chain die's crit leaves the primary purple", () => {
-  expect(toneOfPrimary("1d6 crit chain 5+", [5, 6, 2])).toBe("plain");
+test("a primary in the miss range is dark red", () => expect(toneOfPrimary("1d6 crit miss", [1])).toBe("miss"));
+test("a primary with no crit and no miss is purple", () => expect(toneOfPrimary("1d6 crit miss", [4])).toBe("plain"));
+test("a primary in the crit range is gold", () => {
+  expect(toneOfPrimary("1d6 crit5-6", [5, 3])).toBe("crit");
   expect(highlightTone(rolled("1d6 crit", [6, 3]), "nope")).toBe("plain");
 });
 
-test("dropped dice fade: adv/dis drops, keep/drop, and a chain pick's dropped die", () => {
+test("dropped dice fade: adv/dis drops and a critadv pick's dropped die", () => {
   const adv = rolled("1d20 adv", [4, 17]);
   expect(fadedDice(adv)).toEqual([Object.keys(adv.chong!.parts)[0]]);
-  const keep = rolled("4d6 keep 3", [5, 2, 6, 4]);
-  expect(fadedDice(keep)).toEqual([Object.keys(keep.chong!.parts)[1]]);
-  // 10 crits: a chain pick of 2d10, keep the higher (7), drop the 3
-  const chain = rolled("1d10 crit chain adv", [10, 3, 7]);
+  // 10 crits: a critadv pick of 2d10, keeping the higher (7), drop the 3
+  const chain = rolled("1d10 crit critadv", [10, 3, 7]);
   expect(fadedDice(chain)).toEqual([Object.keys(chain.chong!.parts)[1]]);
   expect(fadedDice(rolled("2d6", [1, 2]))).toEqual([]);
 });
@@ -133,25 +131,9 @@ test("pop-out throw starts clear above the parent and flies up and sideways", ()
   expect(t.angularVelocity).toEqual({ x: 9, y: 9, z: 9 });
 });
 
-test("crit each outlines every kept first-throw die, each with its own tone", () => {
-  // 3d10 crit each miss 1: 1 (the primary, missed), 10 (crit → a chain die 2), 6
-  const r = rolled("3d10 crit each miss 1", [1, 10, 6, 2]);
-  const ids = Object.keys(r.chong!.parts);
-  expect(highlightedDice(r)).toEqual([ids[0], ids[1], ids[2]]);
-  expect(highlightTone(r, ids[0])).toBe("miss");
-  expect(highlightTone(r, ids[1])).toBe("crit");
-  expect(highlightTone(r, ids[2])).toBe("plain");
-});
-
 test("a non-primary die of a missed group is purple, not dark red", () => {
-  const r = rolled("2d6 crit each miss 1", [1, 3]);
+  const r = rolled("2d6 crit miss", [1, 3]);
   const ids = Object.keys(r.chong!.parts);
   expect(highlightTone(r, ids[0])).toBe("miss");
   expect(highlightTone(r, ids[1])).toBe("plain");
-});
-
-test("a v3 record without primaries outlines its primary", () => {
-  const r = rolled("3d10 crit each", [4, 5, 6]);
-  for (const g of r.chong!.record.reps[0].groups) delete (g as { primaries?: number[] }).primaries;
-  expect(highlightedDice(r)).toEqual([Object.keys(r.chong!.parts)[0]]);
 });
