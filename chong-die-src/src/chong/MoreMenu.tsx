@@ -32,11 +32,10 @@ import { DiceHistoryMenu } from "../controls/DiceHistory";
 import { usePartyStore } from "./partyStore";
 
 import { useChongStore } from "./chongStore";
-import { usePrefsStore } from "./prefsStore";
 import { importSaved, SavedRolls } from "./savedRolls";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-/** ⋯ menu: the dice settings (hide, bonus / advantage, history, players' trays), Nimble rules, export / import, about */
+/** ⋯ menu: the dice settings (hide, bonus / advantage, history, players' trays), export / import, about */
 export function MoreMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [pending, setPending] = useState<SavedRolls | null>(null);
@@ -44,8 +43,6 @@ export function MoreMenu() {
   const fileRef = useRef<HTMLInputElement>(null);
   const setError = useChongStore((state) => state.setError);
   const replaceSaved = useChongStore((state) => state.replaceSaved);
-  const nimble = usePrefsStore((state) => state.prefs.nimble);
-  const setNimble = usePrefsStore((state) => state.setNimble);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
   const toggleDiceHidden = useDiceControlsStore((state) => state.toggleDiceHidden);
   const players = usePartyStore((state) => state.players);
@@ -142,18 +139,6 @@ export function MoreMenu() {
             {player.name}
           </MenuItem>
         ))}
-        <Divider />
-        <MenuItem
-          role="menuitemcheckbox"
-          aria-checked={nimble}
-          onClick={() => {
-            setNimble(!nimble);
-            setAnchor(null);
-          }}
-        >
-          <ListItemIcon>{nimble && <CheckIcon fontSize="small" />}</ListItemIcon>
-          Nimble rules
-        </MenuItem>
         <Divider />
         <MenuItem
           onClick={() => {

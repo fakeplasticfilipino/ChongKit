@@ -247,11 +247,11 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
   the tray). It remembers.
 - **Rolls tab** (always first; it can't be closed or moved): a pill per die (d4 … d100). Each click
   puts one more on the tray (the pill shows ×2, ×3); throw them with the tray's Roll button. On the
-  left: the dice style, and the primary die (Nimble on). Your own pills sit under a faint line.
+  left: the dice style. Your own pills sit under a faint line.
 - **Tabs of pills** (saved rolls): the small **+** after the tabs adds a tab; double-click renames,
   **×** deletes, drag to reorder. The **+** after the last pill adds a roll.
 - **⋯** : Hide rolls, Bonus and advantage (for dice picked by hand), Roll history, other players'
-  trays, Nimble rules, export, import, about.
+  trays, export, import, about.
 - **+** (after the last pill) adds a roll to the open tab: a name, the roll (filled in from the command
   line) and an optional description. Pills show the name and the dice; hover (or long-press) shows
   the description. Drag a pill to reorder it or onto another tab; right-click (long-press on touch)
@@ -260,12 +260,11 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
   tray and you throw them with the Roll button (changing dice by hand cancels the pill's roll).
 - Rolls clicked in **Chong's Tracker** notes come here and follow the ⚡ of the tab open in the
   panel (remembered even with the panel closed).
-- **Nimble rules** (⋯ menu → Nimble rules): the first die of every roll is the **primary die** (one
-  per roll with `!rr`). It explodes on its max and a 1 on it is a **Miss**. Off: plain Avrae
-  rolling. Dice picked by hand on the tray follow it too (except with advantage / disadvantage).
-  Write your own `e` on the first dice for a crit range: `1d6e>3+2d6` crits on 4–6.
-- **Primary die style:** with Nimble on, a button under the dice style picker picks the primary
-  die's style (it and the dice that explode out of it).
+- **Highlights:** once a roll lands, the leftmost die of each dice term glows faintly
+  (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray. Handy for systems with a key die.
+- **Explode a die:** right-click a landed die on your tray (touch: hold it half a second). A new die of
+  the same size pops out of it and adds to that term; right-click the new one to chain. Everyone sees
+  the same dice and total. Rolls with `e` / `!` still explode by themselves.
 - The ⋯ menu exports and imports your saved rolls as a file. They live in your browser only.
 
 **Roll syntax** (Avrae's `d20` syntax)

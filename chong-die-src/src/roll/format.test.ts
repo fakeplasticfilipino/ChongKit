@@ -58,13 +58,7 @@ test("capped note", () => {
   expect(out.lines[out.lines.length - 1]).toBe("(stopped at 20 extra dice)");
 });
 
-test("nimble miss shows Miss", () =>
-  expect(formatResult(evaluate(parseCommand("1d8+2"), { "0.0.0": 1 }, { nimble: true }).result!)).toEqual({
-    total: "Miss",
-    lines: ["1d8 (**1**) + 2 = Miss"],
-  }));
-
-test("nimble crit shows the exploded die", () =>
+test("an exploded die shows like any explosion", () =>
   expect(
-    formatResult(evaluate(parseCommand("1d6"), { "0.0.0": 6, "0.0.0e": 2 }, { nimble: true }).result!).lines[0]
-  ).toBe("1d6 (**6**!, 2) = 8"));
+    formatResult(evaluate(parseCommand("1d6"), { "0.0.0": 3, "0.0.0m": 2 }, { manual: ["0.0.0"] }).result!).lines[0]
+  ).toBe("1d6 (3!, 2) = 5"));

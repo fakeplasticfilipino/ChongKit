@@ -1,10 +1,9 @@
 import { beforeEach, expect, test } from "vitest";
 import { parseCommand } from "../roll";
-import { nextWave, rollPickedDice, startCommandRoll } from "./rollRunner";
+import { explodeDie, nextWave, rollPickedDice, startCommandRoll } from "./rollRunner";
 import { ChongRollMeta } from "./rollMeta";
 import { placeCommand } from "./place";
 import { useChongStore } from "./chongStore";
-import { usePrefsStore } from "./prefsStore";
 import { useTrayStore } from "./trayStore";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
@@ -53,38 +52,12 @@ test("rethrowing one die of a command roll keeps it in the roll", () => {
   expect(Object.values(parts)[0].key).toBe("0.0.0");
 });
 
-test("the first die of each roll uses the primary style, and Nimble is recorded", () => {
-  usePrefsStore.getState().setPrimaryStyle("SUNSET");
-  usePrefsStore.getState().setNimble(true);
-  startCommandRoll("!rr 2 2d6", { hidden: false });
-  const roll = useDiceRollStore.getState().roll!;
-  const styleByKey: Record<string, string> = {};
-  for (const die of roll.dice as { id: string; style: string }[]) {
-    styleByKey[roll.chong!.parts[die.id].key] = die.style;
-  }
-  expect(roll.chong!.nimble).toBe(true);
-  expect(styleByKey["0.0.0"]).toBe("SUNSET");
-  expect(styleByKey["1.0.0"]).toBe("SUNSET");
-  expect(styleByKey["0.0.1"]).not.toBe("SUNSET");
-  usePrefsStore.getState().setNimble(false);
-  usePrefsStore.getState().setPrimaryStyle(null);
-});
-
-test("dice picked by hand roll as a command with a primary die", () => {
+test("dice picked by hand roll as a command", () => {
   const controls = useDiceControlsStore.getState();
   const d8 = controls.diceSet.dice.find((d) => d.type === "D8")!;
   controls.changeDieCount(d8.id, 2);
   rollPickedDice({ hidden: false });
   expect(useDiceRollStore.getState().roll!.chong!.command).toBe("2d8");
-});
-
-test("with Nimble off the first die keeps the normal style", () => {
-  usePrefsStore.getState().setPrimaryStyle("SUNSET");
-  usePrefsStore.getState().setNimble(false);
-  startCommandRoll("2d6", { hidden: false });
-  const roll = useDiceRollStore.getState().roll!;
-  expect((roll.dice as { style: string }[]).map((d) => d.style)).not.toContain("SUNSET");
-  usePrefsStore.getState().setPrimaryStyle(null);
 });
 
 test("rolling on the tray leaves the saved rolls alone (only the Rolls window writes them)", () => {
@@ -97,4 +70,36 @@ test("the next roll clears the tray's error banner", () => {
   useTrayStore.getState().setError("Unknown die d0");
   startCommandRoll("1d20", { hidden: false });
   expect(useTrayStore.getState().error).toBeNull();
+});
+
+const LANDED = { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } };
+
+test("exploding a landed die records it and throws a new die out of it", () => {
+  startCommandRoll("1d6+2d6", { hidden: false });
+  const store = useDiceRollStore.getState();
+  const parts = store.roll!.chong!.parts;
+  for (const id of Object.keys(parts)) {
+    useDiceRollStore.getState().finishDieRoll(id, 3, LANDED);
+  }
+  const id = Object.keys(parts).find((i) => parts[i].key === "0.1.0")!;
+  expect(explodeDie(id)).toBe(true);
+  const roll = useDiceRollStore.getState().roll!;
+  expect(roll.chong!.manual).toEqual(["0.1.0"]);
+  expect(Object.values(roll.chong!.parts).map((p) => p.key)).toContain("0.1.0m");
+});
+
+test("a die still rolling can't be exploded", () => {
+  startCommandRoll("1d6", { hidden: false });
+  const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
+  expect(explodeDie(id)).toBe(false);
+  expect(useDiceRollStore.getState().roll!.chong!.manual).toBeUndefined();
+});
+
+test("exploding the same die twice does nothing the second time", () => {
+  startCommandRoll("1d6", { hidden: false });
+  const [id] = Object.keys(useDiceRollStore.getState().roll!.chong!.parts);
+  useDiceRollStore.getState().finishDieRoll(id, 2, LANDED);
+  expect(explodeDie(id)).toBe(true);
+  expect(explodeDie(id)).toBe(false);
+  expect(useDiceRollStore.getState().roll!.chong!.manual).toEqual(["0.0.0"]);
 });

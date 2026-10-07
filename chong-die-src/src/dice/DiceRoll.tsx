@@ -9,6 +9,7 @@ import { Die } from "../types/Die";
 import { Dice as DefaultDice } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
 import { useDebugStore } from "../debug/store";
+import { Highlights } from "../chong/Highlights";
 
 export function DiceRoll({
   roll,
@@ -75,6 +76,8 @@ export function DiceRoll({
             />
           );
         })}
+        {/* Chong Die: the leftmost die of each term glows faintly */}
+        <Highlights roll={roll} transforms={finishedTransforms} />
       </group>
     );
   } else {

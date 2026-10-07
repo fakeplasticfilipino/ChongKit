@@ -36,6 +36,8 @@ export function InteractiveTray() {
       overflow="hidden"
       position="relative"
       id="interactive-tray"
+      // Right-click explodes a die: no browser menu over the tray
+      onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
       sx={{
         "& canvas": {
           touchAction: "manipulation",

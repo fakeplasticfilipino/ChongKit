@@ -19,9 +19,8 @@ import { DiceThrow } from "../types/DiceThrow";
 import { DiceType } from "../types/DiceType";
 import { ChongRollMeta, logicalValues, popThrow } from "./rollMeta";
 import { RollError } from "../roll";
-import { usePrefsStore } from "./prefsStore";
 import { useTrayStore } from "./trayStore";
-import { countsToCommand, isPrimaryKey, resolvePrimaryStyle } from "./prefs";
+import { countsToCommand } from "./prefs";
 
 /**
  * Roll a command now. Throws `RollError` when it can't be rolled.
@@ -37,7 +36,6 @@ export function startCommandRoll(
     parts: {},
     virtual: {},
     capped: false,
-    nimble: usePrefsStore.getState().prefs.nimble,
   };
   const wave = nextWave(cmd, meta, {});
   if (meta.error) {
@@ -66,8 +64,8 @@ export function startCommandRoll(
 }
 
 /**
- * Dice picked by hand on the tray roll as a command too, so they get a primary die and Nimble
- * rules. Returns false (leaving it to the upstream roll) for advantage / disadvantage picks.
+ * Dice picked by hand on the tray roll as a command too, so they get highlights and can be
+ * exploded. Returns false (leaving it to the upstream roll) for advantage / disadvantage picks.
  */
 export function rollPickedDice(opts: { hidden: boolean; speedMultiplier?: number }): boolean {
   const { diceCounts, diceById, diceBonus, diceAdvantage } = useDiceControlsStore.getState();
@@ -99,7 +97,7 @@ export function nextWave(
       ev = evaluate(
         cmd,
         { ...logicalValues(meta, rollValues), ...meta.virtual },
-        { nimble: meta.nimble }
+        { manual: meta.manual }
       );
     } catch (e) {
       meta.error = e instanceof Error ? e.message : "Can't roll this";
@@ -121,27 +119,43 @@ export function nextWave(
   }
 }
 
-/** The dice set's style for this die; with Nimble on, the primary style for each roll's first die */
-function styleFor(type: DiceType, key: string) {
+/** The dice set's style for this die */
+function styleFor(type: DiceType) {
   const set = useDiceControlsStore.getState().diceSet;
-  const style = (set.dice.find((d) => d.type === type) || set.dice[0]).style;
-  const { primaryStyle, nimble } = usePrefsStore.getState().prefs;
-  if (nimble && isPrimaryKey(key)) {
-    return resolvePrimaryStyle(primaryStyle, style);
-  }
-  return style;
+  return (set.dice.find((d) => d.type === type) || set.dice[0]).style;
 }
 
 /** Upstream dice for logical dice; records each part in `meta.parts` */
 function makeDice(wave: LogicalDie[], meta: ChongRollMeta): (Die | Dice)[] {
   return wave.map((logical) => {
     const parts: Die[] = toPhysical(logical.size)!.map((type, part) => {
-      const die: Die = { id: generateDiceId(), style: styleFor(type, logical.key), type };
+      const die: Die = { id: generateDiceId(), style: styleFor(type), type };
       meta.parts[die.id] = { key: logical.key, size: logical.size, part };
       return die;
     });
     return parts.length === 1 ? parts[0] : { dice: parts };
   });
+}
+
+/**
+ * Explode a landed die of your command roll by hand (right-click / long-press): it's recorded in the
+ * roll and the wave runner throws a new die of its size out of it. False when it can't (not a
+ * command roll, still rolling, already exploded).
+ */
+export function explodeDie(dieId: string): boolean {
+  const { roll, rollValues, setChong } = useDiceRollStore.getState();
+  const part = roll?.chong?.parts[dieId];
+  if (!roll?.chong || !part || rollValues[dieId] === null || rollValues[dieId] === undefined) {
+    return false;
+  }
+  const manual = roll.chong.manual || [];
+  if (manual.includes(part.key)) {
+    return false;
+  }
+  setChong({ ...roll.chong, manual: [...manual, part.key] });
+  // With the tray open the runner already did this; then it's a no-op (the new die is rolling)
+  throwNextWave();
+  return true;
 }
 
 /** Where a follow-up die starts: popping out of its parent when it exploded */
@@ -170,34 +184,34 @@ function waveThrows(
 }
 
 /** When every die of a command roll has landed, throw the next wave if there is one */
+export function throwNextWave(): void {
+  const state = useDiceRollStore.getState();
+  const roll = state.roll;
+  if (!roll?.chong) {
+    return;
+  }
+  const values = Object.values(state.rollValues);
+  if (values.some((v) => v === null)) {
+    return;
+  }
+  let cmd: Command;
+  try {
+    cmd = parseCommand(roll.chong.command);
+  } catch {
+    return;
+  }
+  // The store's copy is frozen
+  const meta: ChongRollMeta = JSON.parse(JSON.stringify(roll.chong));
+  const wave = nextWave(cmd, meta, state.rollValues);
+  if (wave.length > 0) {
+    const dice = makeDice(wave, meta);
+    state.addDice(dice, waveThrows(wave, dice, meta), meta);
+  } else if (JSON.stringify(meta) !== JSON.stringify(roll.chong)) {
+    state.setChong(meta);
+  }
+}
+
+/** Runs `throwNextWave` on every change to the roll (the roller's tray only) */
 export function useWaveRunner(): void {
-  useEffect(
-    () =>
-      useDiceRollStore.subscribe((state) => {
-        const roll = state.roll;
-        if (!roll?.chong) {
-          return;
-        }
-        const values = Object.values(state.rollValues);
-        if (values.some((v) => v === null)) {
-          return;
-        }
-        let cmd: Command;
-        try {
-          cmd = parseCommand(roll.chong.command);
-        } catch {
-          return;
-        }
-        // The store's copy is frozen
-        const meta: ChongRollMeta = JSON.parse(JSON.stringify(roll.chong));
-        const wave = nextWave(cmd, meta, state.rollValues);
-        if (wave.length > 0) {
-          const dice = makeDice(wave, meta);
-          state.addDice(dice, waveThrows(wave, dice, meta), meta);
-        } else if (JSON.stringify(meta) !== JSON.stringify(roll.chong)) {
-          state.setChong(meta);
-        }
-      }),
-    []
-  );
+  useEffect(() => useDiceRollStore.subscribe(() => throwNextWave()), []);
 }

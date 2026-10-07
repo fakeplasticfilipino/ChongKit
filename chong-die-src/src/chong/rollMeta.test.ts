@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { DiceRoll } from "../types/DiceRoll";
-import { ChongRollMeta, getRollDisplay, logicalValues, popThrow } from "./rollMeta";
+import { ChongRollMeta, getRollDisplay, highlightedDice, logicalValues, popThrow } from "./rollMeta";
 
 const advMeta: ChongRollMeta = {
   command: "!r 1d20+5 adv",
@@ -106,3 +106,47 @@ test("a roll that failed after landing shows the error", () => {
   expect(getRollDisplay(roll, {})).toEqual({ total: "Error", lines: ["Can't divide by zero"] });
 });
 
+
+const twoTerms: DiceRoll = {
+  dice: [],
+  combination: "NONE",
+  chong: {
+    command: "1d6+2d6",
+    parts: {
+      a: { key: "0.0.0", size: 6, part: 0 },
+      b: { key: "0.1.0", size: 6, part: 0 },
+      c: { key: "0.1.1", size: 6, part: 0 },
+      d: { key: "0.1.0m", size: 6, part: 0 },
+    },
+    virtual: {},
+    capped: false,
+  },
+};
+
+test("the leftmost die of each term is highlighted once it has landed", () => {
+  expect(highlightedDice(twoTerms, { a: 3, b: 2, c: 5, d: 4 })).toEqual(["a", "b"]);
+  expect(highlightedDice(twoTerms, { a: null, b: 2, c: 5, d: null })).toEqual(["b"]);
+});
+
+test("each repeat has its own highlights; a d100 lights its first part", () => {
+  const roll: DiceRoll = {
+    dice: [],
+    combination: "NONE",
+    chong: {
+      command: "!rr 2 1d100",
+      parts: {
+        a: { key: "0.0.0", size: 100, part: 0 },
+        b: { key: "0.0.0", size: 100, part: 1 },
+        c: { key: "1.0.0", size: 100, part: 0 },
+        d: { key: "1.0.0", size: 100, part: 1 },
+      },
+      virtual: {},
+      capped: false,
+    },
+  };
+  expect(highlightedDice(roll, { a: 10, b: 3, c: 50, d: null })).toEqual(["a"]);
+  expect(highlightedDice(roll, { a: 10, b: 3, c: 50, d: 1 })).toEqual(["a", "c"]);
+});
+
+test("a roll with an explosion by hand shows it in the total", () =>
+  expect(getRollDisplay({ ...twoTerms, chong: { ...twoTerms.chong!, manual: ["0.1.0"] } }, { a: 3, b: 2, c: 5, d: 4 })!.total).toBe("14"));

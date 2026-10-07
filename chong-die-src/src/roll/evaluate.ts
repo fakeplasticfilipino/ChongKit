@@ -27,8 +27,6 @@ export interface DieResult {
 
 export interface RepResult {
   total: number;
-  /** Nimble: the primary die (first die of the roll) showed a 1 */
-  miss: boolean;
   /** Dice of each dice term, keyed by the term's id */
   terms: Map<number, DieResult[]>;
   success?: boolean;
@@ -42,10 +40,10 @@ export interface CommandResult {
 
 export interface EvaluateOptions {
   /**
-   * Nimble's primary die: the first die of each roll explodes on its max and a 1 on it is a miss
-   * (unless the roll already explodes that die's term).
+   * Dice the player exploded by hand (right-click on the tray), by key: each adds one die of its
+   * size to its term, keyed `<key>m`. Exploding that die too (`<key>mm`) makes a chain.
    */
-  nimble?: boolean;
+  manual?: string[];
 }
 
 export interface Evaluation {
@@ -60,7 +58,7 @@ export interface Evaluation {
  * Pure: the same values always give the same answer, so every player can
  * work out the result from the synced values.
  * Keys: `<rep>.<dice id>.<n>` for the first throw; a reroll appends `r`,
- * an explosion appends `e` to its parent's key.
+ * an explosion appends `e` (`m` when exploded by hand) to its parent's key.
  */
 export function evaluate(
   cmd: Command,
@@ -77,17 +75,15 @@ export function evaluate(
     needed: [],
     extra: 0,
     capped: false,
-    nimble: Boolean(options.nimble),
-    miss: false,
+    manual: new Set(options.manual || []),
   };
   const reps: RepResult[] = [];
   for (let rep = 0; rep < cmd.times; rep++) {
     const terms = new Map<number, DieResult[]>();
-    state.miss = false;
     const total = evalExpr(cmd.expr, rep, terms, state);
-    const result: RepResult = { total: total ?? NaN, miss: state.miss, terms };
+    const result: RepResult = { total: total ?? NaN, terms };
     if (cmd.kind === "rrr" && total !== null) {
-      result.success = !state.miss && total >= cmd.dc!;
+      result.success = total >= cmd.dc!;
     }
     reps.push(result);
   }
@@ -107,9 +103,8 @@ interface State {
   /** Follow-up dice seen so far (rerolls and explosions) */
   extra: number;
   capped: boolean;
-  nimble: boolean;
-  /** Nimble miss in the roll being evaluated */
-  miss: boolean;
+  /** Keys of dice exploded by hand */
+  manual: Set<string>;
 }
 
 function countDice(expr: Expr): number {
@@ -205,7 +200,7 @@ function evalDice(
   const issued = new Set<string>();
   const follow = (
     parent: DieResult,
-    reason: "reroll" | "explode",
+    reason: "reroll" | "explode" | "manual",
     opIndex: number
   ): Follow => {
     if (state.extra >= MAX_EXTRA_DICE) {
@@ -213,7 +208,7 @@ function evalDice(
       return "capped";
     }
     state.extra++;
-    let key = parent.key + (reason === "reroll" ? "r" : "e");
+    let key = parent.key + (reason === "reroll" ? "r" : reason === "manual" ? "m" : "e");
     if (issued.has(key)) {
       // A later op (`1d6!!`, `ra6ra6`) follows up the same die again: new die
       key += opIndex;
@@ -221,7 +216,12 @@ function evalDice(
     issued.add(key);
     const value = state.values[key];
     if (value === undefined) {
-      state.needed.push({ key, size: parent.size, parent: parent.key, reason });
+      state.needed.push({
+        key,
+        size: parent.size,
+        parent: parent.key,
+        reason: reason === "manual" ? "explode" : reason,
+      });
       return "missing";
     }
     const die = newDie(key, parent.size, value);
@@ -229,32 +229,30 @@ function evalDice(
     return die;
   };
 
-  // Nimble: the roll's first die is its primary die (its first dice term is id 0)
-  if (state.nimble && expr.id === 0 && dice.length > 0) {
-    const primary = dice[0];
-    if (primary.value === 1) {
-      state.miss = true;
-    }
-    if (!expr.ops.some((op) => op.op === "e")) {
-      let die = primary;
-      while (die.value === expr.size) {
-        const result = follow(die, "explode", -1);
-        if (result === "capped") {
-          break;
-        }
-        die.exploded = true;
-        if (result === "missing") {
-          return null;
-        }
-        die = result;
-      }
-    }
-  }
-
   for (const [i, op] of expr.ops.entries()) {
     if (!applyOp(op, dice, (parent, reason) => follow(parent, reason, i))) {
       return null;
     }
+  }
+
+  // Dice exploded by hand, after the roll's own operations; new dice can be exploded too (a chain)
+  let waiting = false;
+  for (let i = 0; i < dice.length && state.manual.size > 0; i++) {
+    const die = dice[i];
+    if (die.dropped || !state.manual.has(die.key)) {
+      continue;
+    }
+    const result = follow(die, "manual", -1);
+    if (result === "capped") {
+      break;
+    }
+    die.exploded = true;
+    if (result === "missing") {
+      waiting = true;
+    }
+  }
+  if (waiting) {
+    return null;
   }
 
   return dice.filter((d) => !d.dropped).reduce((sum, d) => sum + d.value, 0);

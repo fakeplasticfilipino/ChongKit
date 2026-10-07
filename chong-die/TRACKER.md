@@ -60,11 +60,16 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Rolls tab can't be closed or moved (tested); + add roll is a pill after the last pill
 - [x] Browser check (local): dice pills put dice on the tray, ⋯ menu, layout
 
+## ✅ v2.4.0
+- [x] Nimble rules and the primary-die style removed: fully system-agnostic again
+- [x] Leftmost die of each term glows on the tray floor (tested which dice; seen in the browser)
+- [x] Right-click a landed die (touch: long-press) explodes it: `chong.manual` + `<key>m` dice, chains, 20-dice cap (tested); browser: 9 → 13 with a die popping out
+
 ## 📋 Next up
+- [ ] Owlbear, v2.4: long-press on a phone explodes without throwing the die; another player sees the exploded die and the same total; glows on other players' trays
 - [ ] Owlbear, v2.3: Owlbear's glass shows through (transparent body); ⋯ → a player's tray; hidden rolls
 - [ ] Owlbear, v2.2: the window narrows to just the tray with the panel closed; another player's roll popover with the panel closed (its focus listener lives in the sidebar)
 - [ ] Owlbear, v2.1: the window widens / narrows with ▤; a panel roll and a placed pill on the tray; a tracker roll with the window closed and open; phone width (the window may be wider than the screen)
-- [ ] Owlbear: primary die colour on your tray and on others' trays; Nimble on: a crit chain and a Miss
 - [ ] Owlbear after the SDK 3 upgrade: party trays, other players' roll popovers, a roll clicked in the tracker
 - [ ] Install in a real Owlbear room and test with two players: same totals on both sides, hidden rolls, party trays
 - [ ] Watch an exploding die pop out with the window in front (the local check ran in a hidden pane, so physics only stepped on screenshots)

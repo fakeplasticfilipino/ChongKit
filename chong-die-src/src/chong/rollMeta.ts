@@ -16,8 +16,8 @@ export interface ChongRollMeta {
   capped: boolean;
   /** Set when the roll can't finish (e.g. it divides by zero once the dice land) */
   error?: string;
-  /** Rolled with Nimble rules on (primary die explodes on max, a 1 is a miss) */
-  nimble?: boolean;
+  /** Dice the roller exploded by hand (right-click / long-press), by logical key, in order */
+  manual?: string[];
 }
 
 /** Logical die values from the 3D dice; dice with any part unfinished are left out */
@@ -40,6 +40,33 @@ export function logicalValues(
   return values;
 }
 
+/**
+ * The leftmost die of each dice term (`.0` keys: `1d6+2d6` has two; one per `!rr` repeat) once it
+ * has landed, as the 3D die to glow under (a d100's first part)
+ */
+export function highlightedDice(
+  roll: DiceRoll,
+  rollValues: Record<string, number | null> | undefined
+): string[] {
+  const meta = roll.chong;
+  if (!meta || !rollValues) {
+    return [];
+  }
+  const groups = new Map<string, string[]>();
+  for (const [id, { key, part }] of Object.entries(meta.parts)) {
+    if (/^\d+\.\d+\.0$/.test(key)) {
+      const ids = groups.get(key) || [];
+      ids[part] = id;
+      groups.set(key, ids);
+    }
+  }
+  const landed = (id: string) => rollValues[id] !== null && rollValues[id] !== undefined;
+  return [...groups.entries()]
+    .filter(([, ids]) => ids.every(landed))
+    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+    .map(([, ids]) => ids[0]);
+}
+
 /** The total and breakdown of a finished command roll, or null */
 export function getRollDisplay(
   roll: DiceRoll,
@@ -59,7 +86,7 @@ export function getRollDisplay(
     const { result } = evaluate(
       parseCommand(meta.command),
       { ...logicalValues(meta, rollValues), ...meta.virtual },
-      { nimble: meta.nimble }
+      { manual: meta.manual }
     );
     return result ? formatResult(result) : null;
   } catch {

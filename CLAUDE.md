@@ -131,15 +131,15 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 ## Chong Die (Owlbear Rodeo dice)
 
 A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with an Avrae-style command
-line and saved-roll pills. System-agnostic, with **one exception: optional Nimble rules** (off by
-default, ⋯ → Nimble rules; see 5 below). This is a deliberate choice for our table: don't add other
-systems' rules. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the docked panel in
+line and saved-roll pills. **System-agnostic** (2.4 removed the
+Nimble rules: no game system's rules in it). Dice are manual: the leftmost die of each term glows,
+and right-click / long-press explodes any landed die. Spec in `docs/superpowers/specs/2026-10-06-chong-die-design.md`; the docked panel in
 `docs/superpowers/specs/2026-10-07-chong-die-docked-panel-design.md`.
 
 **One window, docked panel.** The toolbar button opens the tray with the command line always on top
 and two round buttons beside it: ⚡ quick roll (the open tab's Instant) and ▤ Rolls. ▤ opens the
 **Rolls panel** docked to the right (360 px): tabs + ⋯, then on the first tab (Rolls: can't be
-closed or moved) dice style / primary die on the left and a pill per die (each click adds one to the
+closed or moved) dice style on the left and a pill per die (each click adds one to the
 tray), a faint line, then the tab's pills and a + pill. No sidebar: upstream's dice settings (hide,
 bonus / advantage, history, players' trays) are in ⋯. Closed, the window is just the tray. `prefs.panelOpen`; window width `windowWidth(height,
 panelOpen)` (`layout.ts`) via `OBR.action.setWidth`. Owlbear plumbing (roll sync, tracker rolls,
@@ -167,9 +167,11 @@ writer), `trayStore` (placed command, error banner), `prefsStore`.
    Chong's Tracker are `{ id, command, place? }` on `…/roll`: the background acks, opens the action
    and re-sends `…/run` until the window's `…/run-ack` (`channels.ts`, `incoming.ts`). `place`
    missing (the tracker) = follow the saved active tab's Instant switch.
-   Primary die = each roll's first die (`<rep>.0.0`, plus its `e` chain), drawn in the chosen style;
-   Nimble rules live in `evaluate(…, { nimble })` and the roll records `chong.nimble`. Both settings
-   are in localStorage `chongkit.chongdie.prefs` (`prefs.ts`, tested).
+   **Explosions by hand:** `explodeDie` adds the die's key to `chong.manual`; `evaluate(…, { manual })`
+   adds one die per key after the term's own ops (key `<parent>m`, chains `…mm`, counted in the 20
+   extra dice), and `throwNextWave` pops it out of its parent. **Highlights:** `highlightedDice` (the
+   `.0` die of each term) → `Highlights.tsx`, a glow on the tray floor (y 0.007, above the floor
+   collider). Prefs (`panelOpen`) in localStorage `chongkit.chongdie.prefs` (`prefs.ts`, tested).
 6. Saved rolls: localStorage `chongkit.chongdie` (`src/chong/savedRolls.ts`, tested), with the
    panel's `activeTabId`.
 7. **Bump `public/manifest.json` → `version` on every change.** Built files have hashed names,

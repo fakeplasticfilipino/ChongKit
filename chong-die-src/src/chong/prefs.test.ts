@@ -1,10 +1,8 @@
 import { expect, test } from "vitest";
 import {
   countsToCommand,
-  isPrimaryKey,
   loadPrefs,
   PREFS_KEY,
-  resolvePrimaryStyle,
   savePrefs,
 } from "./prefs";
 import { Die } from "../types/Die";
@@ -19,36 +17,20 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
   } as unknown as Storage;
 }
 
-test("default prefs: no primary style chosen, Nimble off, panel open", () =>
-  expect(loadPrefs(fakeStorage())).toEqual({ primaryStyle: null, nimble: false, panelOpen: true }));
+test("default prefs: panel open", () =>
+  expect(loadPrefs(fakeStorage())).toEqual({ panelOpen: true }));
 
 test("prefs round trip", () => {
   const storage = fakeStorage();
-  savePrefs({ primaryStyle: "SUNSET", nimble: true, panelOpen: false }, storage);
-  expect(loadPrefs(storage)).toEqual({ primaryStyle: "SUNSET", nimble: true, panelOpen: false });
+  savePrefs({ panelOpen: false }, storage);
+  expect(loadPrefs(storage)).toEqual({ panelOpen: false });
 });
 
 test("bad prefs fall back to the defaults", () => {
-  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ primaryStyle: null, nimble: false, panelOpen: true });
+  expect(loadPrefs(fakeStorage({ [PREFS_KEY]: "{bad" }))).toEqual({ panelOpen: true });
   expect(
-    loadPrefs(fakeStorage({ [PREFS_KEY]: '{"primaryStyle":"PLAID","nimble":"yes","panelOpen":"no"}' }))
-  ).toEqual({ primaryStyle: null, nimble: false, panelOpen: true });
-});
-
-test("unchosen primary style differs from the dice style", () => {
-  expect(resolvePrimaryStyle(null, "GALAXY")).toBe("GEMSTONE");
-  expect(resolvePrimaryStyle(null, "GEMSTONE")).toBe("GALAXY");
-  expect(resolvePrimaryStyle("WALNUT", "GALAXY")).toBe("WALNUT");
-});
-
-test("primary keys: each roll's first die and its explosions", () => {
-  expect(isPrimaryKey("0.0.0")).toBe(true);
-  expect(isPrimaryKey("3.0.0")).toBe(true);
-  expect(isPrimaryKey("0.0.0e")).toBe(true);
-  expect(isPrimaryKey("0.0.0ee")).toBe(true);
-  expect(isPrimaryKey("0.0.1")).toBe(false);
-  expect(isPrimaryKey("0.1.0")).toBe(false);
-  expect(isPrimaryKey("0.0.0r")).toBe(false);
+    loadPrefs(fakeStorage({ [PREFS_KEY]: '{"panelOpen":"no"}' }))
+  ).toEqual({ panelOpen: true });
 });
 
 const die = (id: string, type: Die["type"]): Die => ({ id, type, style: "GALAXY" });
