@@ -5,12 +5,13 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v2.10.0)
+## ✅ Now (v2.10.1)
 - One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right and fades in / out as it opens / closes (the tray never squeezes)
 - Rolls tab with dice pills (each click adds a die to the tray) and the dice style; saved-roll pills that always roll; ⋯ for hide, history, players' trays, Nimble, export / import
 - Chong's Tracker's look (transparent, translucent surfaces)
 - Avrae roll engine with reroll / explosion waves; same total on every player's tray
 - Nimble switch: purple outline on each term's leftmost landed die (dark red on a 1, bright gold on the highest face); right-click / long-press starts an explosion chain
+- Libraries in six `vendor-*` chunks: a new MUI / drei part rewrites only that chunk (~250 KB), never Rapier (2 MB) or three.js
 - Rolls from Chong's Tracker; shared examples tested by both sides; `npm test` runs everything
 - Hold to roll for every custom roll (typed, pills, tracker, history): dice wait on the tray, hold and release Roll (2.10, no switch)
 - Removed in 2.7: the ⚡ Instant switch, bonus / advantage, the fairness tester and debug store
@@ -32,5 +33,4 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Pills can't be dragged on touch screens; a pill's tooltip can show on top of its long-press menu
 - Virtual dice (d7, d30 …) show only in the text, not as a chip
 - Two tracker rolls in flight: the background's per-roll ack listeners can unsubscribe each other (harmless, deduped)
-- The vendor chunk changes whenever a new library part is imported (~3.5 MB of git history each time): split three.js/Rapier from MUI, or build on GitHub Actions instead of committing `chong-die/`
 - Hidden rolls still put the command and virtual-die values in player metadata (accepted)

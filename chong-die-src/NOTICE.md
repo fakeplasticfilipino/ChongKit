@@ -9,7 +9,8 @@ under the same license.
 
 - Renamed to Chong Die; plugin id `com.chongkit.chongdie/` (was `rodeo.owlbear.dice/`)
 - Built into `../chong-die/`, served from `/ChongKit/chong-die/` on GitHub Pages
-- Libraries split into a separate `vendor` chunk; Vitest added for tests
+- Libraries split into `vendor-*` chunks by how often they change (Rapier, three.js, React, MUI,
+  3D helpers, the rest), so a rebuild only rewrites what changed; Vitest added for tests
 - Avrae-style roll engine (`src/roll/`): parser, evaluator, result text
 - Command line, saved-roll tabs and pills (`src/chong/`)
 - Follow-up dice waves for rerolls and exploding dice
