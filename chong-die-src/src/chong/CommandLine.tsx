@@ -4,11 +4,11 @@ import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Typography from "@mui/material/Typography";
 
-import { parseCommand } from "../roll";
+import { useDiceControlsStore } from "../controls/store";
 import { useChongStore } from "./chongStore";
-import { sendRoll } from "./sendRoll";
+import { startCommandRoll } from "./rollRunner";
 
-/** The `!r` box at the top of the Rolls window: Enter rolls on the tray */
+/** The `!r` box at the top of the Rolls panel: Enter rolls on the tray */
 export function CommandLine() {
   const text = useChongStore((state) => state.draft);
   const setText = useChongStore((state) => state.setDraft);
@@ -19,6 +19,7 @@ export function CommandLine() {
   const error = useChongStore((state) => state.error);
   const setError = useChongStore((state) => state.setError);
   const recordHistory = useChongStore((state) => state.recordHistory);
+  const hidden = useDiceControlsStore((state) => state.diceHidden);
 
   function roll() {
     const command = text.trim();
@@ -26,13 +27,12 @@ export function CommandLine() {
       return;
     }
     try {
-      // A typo shows here instead of going to the tray
-      parseCommand(command);
+      // A typo shows here and nothing rolls
+      startCommandRoll(command, { hidden });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Can't roll this");
       return;
     }
-    sendRoll(command, false);
     recordHistory(command);
     setText("");
     setHistoryIndex(null);

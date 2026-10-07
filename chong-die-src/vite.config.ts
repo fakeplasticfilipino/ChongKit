@@ -20,7 +20,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        tray: resolve(__dirname, "tray.html"),
         popover: resolve(__dirname, "popover.html"),
         background: resolve(__dirname, "background.html"),
       },

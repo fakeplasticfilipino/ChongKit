@@ -3,9 +3,12 @@ import { useEffect } from "react";
 
 import { CHANNELS, readRollMessage } from "./channels";
 import { createRunDeduper, handleIncomingRoll } from "./incoming";
+import { listenForPrefChanges } from "./prefsStore";
 
-/** Takes rolls from the Rolls window and Chong's Tracker (forwarded by the background page) */
+/** Takes rolls from Chong's Tracker (forwarded by the background page) */
 export function IncomingRolls() {
+  // Prefs changed in another Owlbear tab of this browser
+  useEffect(() => listenForPrefChanges(), []);
   useEffect(() => {
     const isNew = createRunDeduper();
     return OBR.broadcast.onMessage(CHANNELS.run, (event) => {

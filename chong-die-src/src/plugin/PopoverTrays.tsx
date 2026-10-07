@@ -5,9 +5,6 @@ import Box from "@mui/material/Box";
 
 import { PopoverTray } from "./PopoverTray";
 import { getPluginId } from "./getPluginId";
-import { openTray } from "../chong/trayWindow";
-
-const FOCUS_RETRY_MS = 1500;
 
 export function PopoverTrays() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -38,16 +35,10 @@ export function PopoverTrays() {
 
   function handleTrayOpen(connectionId: string) {
     if (window.BroadcastChannel) {
-      const focus = () => {
-        const channel = new BroadcastChannel(getPluginId("focused-tray"));
-        channel.postMessage(connectionId);
-        channel.close();
-      };
-      // A tray that was closed is still loading the first time: tell it again shortly
-      openTray().then(() => {
-        focus();
-        setTimeout(focus, FOCUS_RETRY_MS);
-      });
+      OBR.action.open();
+      const channel = new BroadcastChannel(getPluginId("focused-tray"));
+      channel.postMessage(connectionId);
+      channel.close();
     }
   }
 

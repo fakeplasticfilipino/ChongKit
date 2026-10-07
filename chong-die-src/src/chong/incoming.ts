@@ -8,7 +8,7 @@ export { CHANNELS } from "./channels";
 
 /**
  * A roll sent to the tray: `place` says whether its dice are placed on the tray or rolled now;
- * without it (Chong's Tracker) the Rolls window's open tab decides. A command with only virtual
+ * without it (Chong's Tracker) the Rolls panel's open tab decides. A command with only virtual
  * dice always rolls.
  */
 export function handleIncomingRoll(

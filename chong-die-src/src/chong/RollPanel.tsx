@@ -14,14 +14,14 @@ import BoltIcon from "@mui/icons-material/BoltRounded";
 import { useChongStore } from "./chongStore";
 import { MoreMenu } from "./MoreMenu";
 import { PillDialog } from "./PillDialog";
-import { sendRoll } from "./sendRoll";
+import { runPill } from "./runPill";
 import { Pill, pillError, RollTab } from "./savedRolls";
 import { PILL_DRAG, TabStrip } from "./TabStrip";
-import { TrayToggle } from "./TrayToggle";
+import { useDiceControlsStore } from "../controls/store";
 
 const LONG_PRESS_MS = 500;
 
-/** Tabs of saved-roll pills, under the command line of the Rolls window */
+/** Tabs of saved-roll pills, under the command line of the Rolls panel */
 export function RollPanel() {
   const tabs = useChongStore((state) => state.saved.tabs);
   const activeTabId = useChongStore((state) => state.activeTabId);
@@ -33,7 +33,7 @@ export function RollPanel() {
 
   return (
     <Box component="div" sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      {/* Tabs, then Instant, add roll, tray and ⋯ on the same row */}
+      {/* Tabs, then Instant, add roll and ⋯ on the same row */}
       <Box
         component="div"
         sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, borderBottom: 1, borderColor: "divider" }}
@@ -56,7 +56,6 @@ export function RollPanel() {
             <AddIcon />
           </IconButton>
         </Tooltip>
-        <TrayToggle />
         <MoreMenu />
       </Box>
       <PillList tab={tab} />
@@ -76,6 +75,7 @@ export function RollPanel() {
 }
 
 function PillList({ tab }: { tab: RollTab }) {
+  const hidden = useDiceControlsStore((state) => state.diceHidden);
   const { setError, movePill, editPill, deletePill } = useChongStore.getState();
 
   const [menu, setMenu] = useState<{ pill: Pill; anchor: HTMLElement } | null>(null);
@@ -89,9 +89,12 @@ function PillList({ tab }: { tab: RollTab }) {
       setError(error);
       return;
     }
-    // Instant rolls now; otherwise the dice are placed on the tray to throw
-    sendRoll(pill.command, !tab.instant);
-    setError(null);
+    try {
+      runPill(pill.command, tab.instant, hidden);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Can't roll this");
+    }
   }
 
   function cancelPress() {
