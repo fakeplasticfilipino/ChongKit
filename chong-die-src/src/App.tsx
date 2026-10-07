@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { InteractiveTray } from "./tray/InteractiveTray";
 import { RollPanel } from "./chong/RollPanel";
-import { usePrefsStore } from "./chong/prefsStore";
+import { usePrefsStore, listenForPrefChanges } from "./chong/prefsStore";
 import { PANEL_FADE_MS, PANEL_WIDTH } from "./chong/layout";
 import { LINE } from "./chong/look";
 
@@ -63,6 +63,9 @@ function usePanelFade(open: boolean) {
 export function App() {
   const panelOpen = usePrefsStore((state) => state.prefs.panelOpen);
   const panel = usePanelFade(panelOpen);
+
+  // Prefs changed in another Owlbear tab of this browser
+  useEffect(() => listenForPrefChanges(), []);
 
   return (
     <Stack direction="row" sx={{ height: "100vh", "& > *": { flexShrink: 0 } }}>
