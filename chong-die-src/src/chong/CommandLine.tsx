@@ -9,12 +9,11 @@ import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
 import { startCommandRoll } from "./rollRunner";
-import { InstantToggle } from "./InstantToggle";
 import { PanelToggle } from "./PanelToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
 import { FIELD, HOVER } from "./look";
 
-/** The `!r` box always on top of the tray, with quick roll and Rolls beside it: Enter rolls */
+/** The `!r` box always on top of the tray, with the Rolls button beside it: Enter rolls */
 export function CommandLine() {
   const theme = useTheme();
   const rolling = useDiceRollStore((state) =>
@@ -125,7 +124,6 @@ export function CommandLine() {
             sx={{ fontFamily: "'Roboto Mono', Consolas, monospace", fontSize: 13 }}
           />
         </Box>
-        <InstantToggle />
         <PanelToggle />
       </Box>
       {error && (

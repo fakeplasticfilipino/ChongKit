@@ -18,7 +18,7 @@ export function IncomingRolls() {
       }
       OBR.broadcast.sendMessage(CHANNELS.runAck, { id: msg.id }, { destination: "LOCAL" });
       if (isNew(msg.id)) {
-        handleIncomingRoll(msg.command, msg.place);
+        handleIncomingRoll(msg.command);
       }
     });
   }, []);

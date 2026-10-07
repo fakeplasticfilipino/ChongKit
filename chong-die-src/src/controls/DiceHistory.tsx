@@ -19,8 +19,6 @@ export function DiceHistoryMenu({ anchorEl, onClose }: { anchorEl: HTMLElement |
   const startRoll = useDiceRollStore((state) => state.startRoll);
 
   const hidden = useDiceControlsStore((state) => state.diceHidden);
-  const setBonus = useDiceControlsStore((state) => state.setDiceBonus);
-  const setAdvantage = useDiceControlsStore((state) => state.setDiceAdvantage);
   const resetDiceCounts = useDiceControlsStore(
     (state) => state.resetDiceCounts
   );
@@ -38,8 +36,6 @@ export function DiceHistoryMenu({ anchorEl, onClose }: { anchorEl: HTMLElement |
     const dice = getDiceToRoll(roll.counts, roll.advantage, roll.diceById);
     startRoll({ dice, bonus: roll.bonus, hidden });
     resetDiceCounts();
-    setBonus(0);
-    setAdvantage(null);
     handleClose();
   }
 

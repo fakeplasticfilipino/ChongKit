@@ -24,7 +24,6 @@ interface ChongState {
   deleteTab: (id: string) => void;
   moveTab: (id: string, toIndex: number) => void;
   setActiveTab: (id: string) => void;
-  setInstant: (id: string, on: boolean) => void;
   addPill: (tabId: string, name: string, command: string, description?: string) => void;
   editPill: (id: string, name: string, command: string, description?: string) => void;
   deletePill: (id: string) => void;
@@ -51,7 +50,7 @@ const initial = loadSaved();
 export const useChongStore = create<ChongState>()(
   immer((set) => ({
     saved: initial,
-    activeTabId: initial.activeTabId ?? initial.tabs[0].id,
+    activeTabId: initial.tabs[0].id,
     error: null,
     draft: "",
     setDraft(text) {
@@ -64,7 +63,6 @@ export const useChongStore = create<ChongState>()(
         const tab: RollTab = {
           id: newId(),
           name: "New tab",
-          instant: false,
           pills: [],
         };
         state.saved.tabs.push(tab);
@@ -110,14 +108,6 @@ export const useChongStore = create<ChongState>()(
     setActiveTab(id) {
       set((state) => {
         state.activeTabId = id;
-      });
-    },
-    setInstant(id, on) {
-      set((state) => {
-        const tab = state.saved.tabs.find((t) => t.id === id);
-        if (tab) {
-          tab.instant = on;
-        }
       });
     },
     addPill(tabId, name, command, description) {
@@ -182,7 +172,7 @@ export const useChongStore = create<ChongState>()(
 
 // Save on every change to the saved rolls
 useChongStore.subscribe((state, prev) => {
-  if (state.saved !== prev.saved || state.activeTabId !== prev.activeTabId) {
-    saveSaved({ ...state.saved, activeTabId: state.activeTabId });
+  if (state.saved !== prev.saved) {
+    saveSaved(state.saved);
   }
 });

@@ -2,7 +2,6 @@ import { Canvas } from "@react-three/fiber";
 import {
   ContactShadows,
   Environment,
-  OrbitControls,
   PerspectiveCamera,
 } from "@react-three/drei";
 
@@ -13,10 +12,8 @@ import { DiceRollControls } from "../controls/DiceRollControls";
 import environment from "../environment.hdr";
 import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "./Tray";
-import { useDebugStore } from "../debug/store";
 import { TraySuspense } from "./TraySuspense";
 import { PreviewDiceRoll } from "../dice/PreviewDiceRoll";
-import { FairnessTester } from "../tests/FairnessTester";
 import { useWaveRunner } from "../chong/rollRunner";
 import { TrayError } from "../chong/TrayError";
 import { CommandLine } from "../chong/CommandLine";
@@ -24,7 +21,6 @@ import { COMMAND_LINE_HEIGHT } from "../chong/layout";
 
 /** Dice tray that controls the dice roll store */
 export function InteractiveTray() {
-  const allowOrbit = useDebugStore((state) => state.allowOrbit);
   useWaveRunner();
 
   return (
@@ -67,7 +63,6 @@ export function InteractiveTray() {
               position={[0, 4.3, 0]}
               rotation={[-Math.PI / 2, 0, 0]}
             />
-            {allowOrbit && <OrbitControls />}
           </AudioListenerProvider>
         </Canvas>
       </TraySuspense>
@@ -86,7 +81,6 @@ export function InteractiveTray() {
       >
         <DiceRollControls />
       </Box>
-      <FairnessTester />
       <TrayError />
       <CommandLine />
     </Box>

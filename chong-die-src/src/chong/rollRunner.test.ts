@@ -2,7 +2,6 @@ import { beforeEach, expect, test } from "vitest";
 import { parseCommand } from "../roll";
 import { explodeDie, nextWave, rollPickedDice, startCommandRoll } from "./rollRunner";
 import { ChongRollMeta } from "./rollMeta";
-import { placeCommand } from "./place";
 import { useChongStore } from "./chongStore";
 import { useTrayStore } from "./trayStore";
 import { usePrefsStore } from "./prefsStore";
@@ -12,7 +11,6 @@ import { useDiceRollStore } from "../dice/store";
 const LANDED = { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } };
 
 beforeEach(() => {
-  useTrayStore.getState().setPlaced(null);
   useDiceControlsStore.getState().resetDiceCounts();
   useDiceRollStore.getState().clearRoll();
 });
@@ -34,13 +32,12 @@ test("dividing by zero after landing ends the roll with an error", () => {
 test("a typed roll that can't work is refused before rolling", () =>
   expect(() => startCommandRoll("1/0", { hidden: false })).toThrow("Can't divide by zero"));
 
-test("a typed roll clears placed dice", () => {
-  placeCommand("2d6");
-  startCommandRoll("1d20", { hidden: false });
-  const { diceSet, diceCounts } = useDiceControlsStore.getState();
+test("a typed roll clears dice picked by hand", () => {
+  const { diceSet, changeDieCount } = useDiceControlsStore.getState();
   const d6 = diceSet.dice.find((d) => d.type === "D6")!;
-  expect(useTrayStore.getState().placed).toBeNull();
-  expect(diceCounts[d6.id]).toBe(0);
+  changeDieCount(d6.id, 2);
+  startCommandRoll("1d20", { hidden: false });
+  expect(useDiceControlsStore.getState().diceCounts[d6.id]).toBe(0);
 });
 
 test("rethrowing one die of a command roll keeps it in the roll", () => {

@@ -8,7 +8,6 @@ import Fade from "@mui/material/Fade";
 import { useTheme, keyframes } from "@mui/material/styles";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
-import Typography from "@mui/material/Typography";
 
 import CloseIcon from "@mui/icons-material/CloseRounded";
 import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
@@ -19,12 +18,9 @@ import { RerollDiceIcon } from "../icons/RerollDiceIcon";
 import { GradientOverlay } from "./GradientOverlay";
 import { useDiceRollStore } from "../dice/store";
 import { DiceResults } from "./DiceResults";
-import { getDiceToRoll, useDiceControlsStore } from "./store";
+import { useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
-import { useDiceHistoryStore } from "./history";
-import { Die } from "../types/Die";
 import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
-import { useTrayStore } from "../chong/trayStore";
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -40,17 +36,13 @@ export function DiceRollControls() {
   );
 
   const counts = useDiceControlsStore((state) => state.diceCounts);
-  const bonus = useDiceControlsStore((state) => state.diceBonus);
-  const advantage = useDiceControlsStore((state) => state.diceAdvantage);
-  // Is currently the default dice state (all counts 0 and advantage/bonus defaults)
+  // No dice picked by hand
   const isDefault = useMemo(
     () =>
       Object.entries(defaultDiceCounts).every(
         ([type, count]) => counts[type as DiceType] === count
-      ) &&
-      advantage === null &&
-      bonus === 0,
-    [counts, defaultDiceCounts, advantage, bonus]
+      ),
+    [counts, defaultDiceCounts]
   );
 
   const rollValues = useDiceRollStore((state) => state.rollValues);
@@ -87,69 +79,29 @@ export function DiceRollControls() {
 }
 
 function DicePickedControls() {
-  const startRoll = useDiceRollStore((state) => state.startRoll);
-
   const defaultDiceCounts = useDiceControlsStore(
     (state) => state.defaultDiceCounts
   );
-  const diceById = useDiceControlsStore((state) => state.diceById);
   const counts = useDiceControlsStore((state) => state.diceCounts);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
-  const bonus = useDiceControlsStore((state) => state.diceBonus);
-  const setBonus = useDiceControlsStore((state) => state.setDiceBonus);
-  const advantage = useDiceControlsStore((state) => state.diceAdvantage);
-  const setAdvantage = useDiceControlsStore((state) => state.setDiceAdvantage);
-
   const resetDiceCounts = useDiceControlsStore(
     (state) => state.resetDiceCounts
   );
 
-  const pushRecentRoll = useDiceHistoryStore((state) => state.pushRecentRoll);
-  const placed = useTrayStore((state) => state.placed);
-
+  /** Dice picked by hand roll as a command (so Nimble highlights and explosions work) */
   function handleRoll() {
-    if (hasDice && rollPressTime && placed) {
-      // A placed command: throw its dice, the command works out the result
+    if (hasDice && rollPressTime) {
       const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
-      try {
-        startCommandRoll(placed, { hidden, speedMultiplier });
-      } catch (e) {
-        useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+      if (rollPickedDice({ hidden, speedMultiplier })) {
+        handleReset();
       }
-      handleReset();
-    } else if (
-      hasDice &&
-      rollPressTime &&
-      rollPickedDice({
-        hidden,
-        speedMultiplier: Math.max(1, Math.min(10, ((performance.now() - rollPressTime) / 1000) * 2)),
-      })
-    ) {
-      handleReset();
-    } else if (hasDice && rollPressTime) {
-      const dice = getDiceToRoll(counts, advantage, diceById);
-      const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
-      const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
-      startRoll({ dice, bonus, hidden }, speedMultiplier);
-
-      const rolledDiceById: Record<string, Die> = {};
-      for (const id of Object.keys(counts)) {
-        if (!(id in rolledDiceById)) {
-          rolledDiceById[id] = diceById[id];
-        }
-      }
-      pushRecentRoll({ advantage, counts, bonus, diceById: rolledDiceById });
-
-      handleReset();
     }
     setRollPressTime(null);
   }
 
   function handleReset() {
     resetDiceCounts();
-    setBonus(0);
-    setAdvantage(null);
   }
 
   const rollPressTime = useDiceControlsStore(
@@ -287,48 +239,6 @@ function DicePickedControls() {
             <CloseIcon />
           </IconButton>
         </Tooltip>
-      </Stack>
-      <Stack
-        sx={{
-          position: "absolute",
-          top: 12,
-          left: 24,
-        }}
-      >
-        {placed && (
-          <Typography textAlign="left" lineHeight="40px" color="white" variant="h6" noWrap maxWidth="120px">
-            {placed}
-          </Typography>
-        )}
-        {!placed && advantage && (
-          <Typography
-            textAlign="left"
-            lineHeight="40px"
-            color="white"
-            variant="h6"
-          >
-            {advantage === "ADVANTAGE" ? "Adv" : "Dis"}
-          </Typography>
-        )}
-      </Stack>
-      <Stack
-        sx={{
-          position: "absolute",
-          top: 12,
-          right: 24,
-        }}
-      >
-        {bonus !== 0 && (
-          <Typography
-            textAlign="right"
-            variant="h6"
-            lineHeight="40px"
-            color="white"
-          >
-            {bonus > 0 && "+"}
-            {bonus}
-          </Typography>
-        )}
       </Stack>
     </>
   );

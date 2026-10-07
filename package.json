@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "ChongKit: no dependencies here. `npm test` runs every tool's tests (Chong Die's need `npx yarn@1.22.22` in chong-die-src once).",
+  "scripts": {
+    "test": "node --test \"combat-generator/tests/*.test.js\" \"chongs-tracker/tests/*.test.js\" \"character-sheet/tests/*.test.js\" && cd chong-die-src && npx yarn@1.22.22 test"
+  }
+}

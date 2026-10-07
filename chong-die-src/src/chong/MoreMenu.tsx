@@ -18,7 +18,6 @@ import ListSubheader from "@mui/material/ListSubheader";
 import MoreIcon from "@mui/icons-material/MoreVertRounded";
 import CheckIcon from "@mui/icons-material/CheckRounded";
 import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
-import BonusIcon from "@mui/icons-material/ExposureRounded";
 import HistoryIcon from "@mui/icons-material/HistoryRounded";
 import PersonIcon from "@mui/icons-material/PersonRounded";
 import ExportIcon from "@mui/icons-material/FileDownloadRounded";
@@ -27,7 +26,6 @@ import AboutIcon from "@mui/icons-material/InfoOutlined";
 
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
-import { DiceExtrasMenu } from "../controls/DiceExtras";
 import { DiceHistoryMenu } from "../controls/DiceHistory";
 import { usePartyStore } from "./partyStore";
 import { usePrefsStore } from "./prefsStore";
@@ -36,7 +34,7 @@ import { useChongStore } from "./chongStore";
 import { importSaved, SavedRolls } from "./savedRolls";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-/** ⋯ menu: the dice settings (hide, bonus / advantage, history, players' trays), Nimble rules, export / import, about */
+/** ⋯ menu: the dice settings (hide, history, players' trays), Nimble rules, export / import, about */
 export function MoreMenu() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [pending, setPending] = useState<SavedRolls | null>(null);
@@ -52,7 +50,7 @@ export function MoreMenu() {
   const setFocused = usePartyStore((state) => state.setFocused);
   const buttonRef = useRef<HTMLButtonElement>(null);
   // A second menu opened from this one, anchored on the ⋯ button
-  const [sub, setSub] = useState<"extras" | "history" | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   function clearRollIfNeeded() {
     const { roll, clearRoll } = useDiceRollStore.getState();
@@ -108,18 +106,7 @@ export function MoreMenu() {
         <MenuItem
           onClick={() => {
             setAnchor(null);
-            setSub("extras");
-          }}
-        >
-          <ListItemIcon>
-            <BonusIcon fontSize="small" />
-          </ListItemIcon>
-          Bonus and advantage
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setAnchor(null);
-            setSub("history");
+            setHistoryOpen(true);
           }}
         >
           <ListItemIcon>
@@ -189,8 +176,7 @@ export function MoreMenu() {
           About
         </MenuItem>
       </Menu>
-      <DiceExtrasMenu anchorEl={sub === "extras" ? buttonRef.current : null} onClose={() => setSub(null)} />
-      <DiceHistoryMenu anchorEl={sub === "history" ? buttonRef.current : null} onClose={() => setSub(null)} />
+      <DiceHistoryMenu anchorEl={historyOpen ? buttonRef.current : null} onClose={() => setHistoryOpen(false)} />
       <input
         ref={fileRef}
         type="file"

@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   ContactShadows,
   Environment,
-  OrbitControls,
   PerspectiveCamera,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
@@ -24,7 +23,6 @@ import { usePlayerDice } from "./usePlayerDice";
 import { PlayerDiceRoll } from "./PlayerDiceRoll";
 import { AudioListenerProvider } from "../audio/AudioListenerProvider";
 import { Tray } from "../tray/Tray";
-import { useDebugStore } from "../debug/store";
 import { TraySuspense } from "../tray/TraySuspense";
 
 export function PlayerTray({
@@ -32,7 +30,6 @@ export function PlayerTray({
 }: {
   player?: Player; // Make player optional to allow for preloading of the tray
 }) {
-  const allowOrbit = useDebugStore((state) => state.allowOrbit);
 
   return (
     <Box component="div" position="relative" display="flex">
@@ -65,7 +62,6 @@ export function PlayerTray({
                 position={[0, 4.3, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
               />
-              {allowOrbit && <OrbitControls />}
             </AudioListenerProvider>
           </Canvas>
         </TraySuspense>

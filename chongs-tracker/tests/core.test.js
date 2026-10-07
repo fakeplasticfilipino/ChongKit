@@ -252,25 +252,18 @@ test('HP bar fill', () => {
   assert.strictEqual(C.hpFraction({ hp: 7, max: null }), 1);
 });
 
-test('findRolls: generator damage lines', () => {
-  assert.deepStrictEqual(C.findRolls('Damage: 1d8!+3d8+2'), [{ start: 8, end: 18, command: '!r 1d8!+3d8+2' }]);
-  assert.deepStrictEqual(C.findRolls('Damage: (2×) 3d10+1').map((r) => r.command), ['!rr 2 3d10+1']);
-  assert.deepStrictEqual(C.findRolls('Damage: Stab (2×). 1d4+2 (or Sling, Range 8).').map((r) => r.command), ['!rr 2 1d4+2']);
-  assert.deepStrictEqual(C.findRolls('Damage: 2d6+3 (move & hit) or 4d8 (big hit)').map((r) => r.command), ['!r 2d6+3', '!r 4d8']);
-  assert.deepStrictEqual(C.findRolls('Damage: Stab. 1d4 (no crits, miss on a 1)').map((r) => r.command), ['!r 1d4']);
-  assert.deepStrictEqual(C.findRolls('Roll d20 then 1d20kh1 and d%').map((r) => r.command), ['!r d20', '!r 1d20kh1', '!r d%']);
-  assert.deepStrictEqual(C.findRolls('Slice (3x). 1d8+1').map((r) => r.command), ['!rr 3 1d8+1']);
+// The same lines are checked against Chong Die's parser (chong-die-src/src/chong/trackerRolls.test.ts)
+const ROLL_EXAMPLES = require("./roll-examples.json").lines;
+
+test("findRolls: shared examples (generator lines, repeats, no false rolls)", () => {
+  for (const { line, commands } of ROLL_EXAMPLES) {
+    assert.deepStrictEqual(C.findRolls(line).map((r) => r.command), commands, line);
+  }
 });
 
-test('findRolls: no false rolls', () => {
-  assert.deepStrictEqual(C.findRolls('HP: 30, Save DC 13, Range 8'), []);
-  assert.deepStrictEqual(C.findRolls('5d6x and d20s and add20'), []);
-  assert.deepStrictEqual(C.findRolls(''), []);
-});
-
-test('findRolls: a repeat only applies to the roll right after it', () => {
-  assert.deepStrictEqual(C.findRolls('Damage: Ravage (2×). 1d10. OR: Shoot. (Range 12) 1d10.').map((r) => r.command), ['!rr 2 1d10', '!r 1d10']);
-  assert.deepStrictEqual(C.findRolls('Damage: Smash (2×). 1d6+15. OR: Boulder! 1d6+20').map((r) => r.command), ['!rr 2 1d6+15', '!r 1d6+20']);
+test("findRolls: positions of a roll in its line", () => {
+  assert.deepStrictEqual(C.findRolls("Damage: 1d8!+3d8+2"), [{ start: 8, end: 18, command: "!r 1d8!+3d8+2" }]);
+  assert.deepStrictEqual(C.findRolls(""), []);
 });
 
 test('paste: Avrae Version damage stays in the entry note', () => {

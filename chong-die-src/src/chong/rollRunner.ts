@@ -45,12 +45,10 @@ export function startCommandRoll(
   }
   const dice = makeDice(wave, meta);
 
-  // A typed roll or Instant pill replaces any dice placed or picked by hand,
+  // A command roll replaces any dice picked by hand,
   // otherwise the tray keeps showing them instead of this roll's result
   const controls = useDiceControlsStore.getState();
   controls.resetDiceCounts();
-  controls.setDiceBonus(0);
-  controls.setDiceAdvantage(null);
 
   useDiceRollStore
     .getState()
@@ -67,14 +65,11 @@ export function startCommandRoll(
 
 /**
  * Dice picked by hand on the tray roll as a command too, so they get highlights and can be
- * exploded. Returns false (leaving it to the upstream roll) for advantage / disadvantage picks.
+ * exploded. Returns false when no dice are picked.
  */
 export function rollPickedDice(opts: { hidden: boolean; speedMultiplier?: number }): boolean {
-  const { diceCounts, diceById, diceBonus, diceAdvantage } = useDiceControlsStore.getState();
-  if (diceAdvantage !== null) {
-    return false;
-  }
-  const command = countsToCommand(diceCounts, diceById, diceBonus);
+  const { diceCounts, diceById } = useDiceControlsStore.getState();
+  const command = countsToCommand(diceCounts, diceById, 0);
   if (!command) {
     return false;
   }

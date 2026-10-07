@@ -5,27 +5,6 @@ import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
-import { useTrayStore } from "../chong/trayStore";
-
-let placing = false;
-
-/** Run tray changes that belong to placing a command (they keep it placed) */
-export function whilePlacing(fn: () => void) {
-  placing = true;
-  try {
-    fn();
-  } finally {
-    placing = false;
-  }
-}
-
-/** Changing dice by hand drops a placed command: the roll is a normal one again */
-function dropPlaced() {
-  if (!placing && useTrayStore.getState().placed !== null) {
-    useTrayStore.getState().setPlaced(null);
-  }
-}
-
 export type Advantage = "ADVANTAGE" | "DISADVANTAGE" | null;
 export type DiceCounts = Record<string, number>;
 
@@ -34,21 +13,15 @@ interface DiceControlsState {
   diceById: Record<string, Die>;
   defaultDiceCounts: DiceCounts;
   diceCounts: DiceCounts;
-  diceBonus: number;
-  diceAdvantage: Advantage;
   diceHidden: boolean;
   diceRollPressTime: number | null;
-  fairnessTesterOpen: boolean;
   changeDiceSet: (diceSet: DiceSet) => void;
   resetDiceCounts: () => void;
   changeDieCount: (id: string, count: number) => void;
   incrementDieCount: (id: string) => void;
   decrementDieCount: (id: string) => void;
-  setDiceAdvantage: (advantage: Advantage) => void;
-  setDiceBonus: (bonus: number) => void;
   toggleDiceHidden: () => void;
   setDiceRollPressTime: (time: number | null) => void;
-  toggleFairnessTester: () => void;
 }
 
 const initialSet = diceSets[0];
@@ -61,11 +34,8 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     diceById: initialDiceById,
     defaultDiceCounts: initialDiceCounts,
     diceCounts: initialDiceCounts,
-    diceBonus: 0,
-    diceAdvantage: null,
     diceHidden: false,
     diceRollPressTime: null,
-    fairnessTesterOpen: false,
     changeDiceSet(diceSet) {
       set((state) => {
         const counts: DiceCounts = {};
@@ -88,13 +58,11 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     resetDiceCounts() {
-      dropPlaced();
       set((state) => {
         state.diceCounts = state.defaultDiceCounts;
       });
     },
     changeDieCount(id, count) {
-      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] = count;
@@ -102,7 +70,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     incrementDieCount(id) {
-      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] += 1;
@@ -110,23 +77,10 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     decrementDieCount(id) {
-      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] -= 1;
         }
-      });
-    },
-    setDiceBonus(bonus) {
-      dropPlaced();
-      set((state) => {
-        state.diceBonus = bonus;
-      });
-    },
-    setDiceAdvantage(advantage) {
-      dropPlaced();
-      set((state) => {
-        state.diceAdvantage = advantage;
       });
     },
     toggleDiceHidden() {
@@ -137,11 +91,6 @@ export const useDiceControlsStore = create<DiceControlsState>()(
     setDiceRollPressTime(time) {
       set((state) => {
         state.diceRollPressTime = time;
-      });
-    },
-    toggleFairnessTester() {
-      set((state) => {
-        state.fairnessTesterOpen = !state.fairnessTesterOpen;
       });
     },
   }))

@@ -8,7 +8,6 @@ import { DiceTransform } from "../types/DiceTransform";
 import { Die } from "../types/Die";
 import { Dice as DefaultDice } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
-import { useDebugStore } from "../debug/store";
 import { Highlights } from "../chong/Highlights";
 
 export function DiceRoll({
@@ -35,7 +34,6 @@ export function DiceRoll({
   /** Override to provide a custom Dice component  */
   Dice: React.FC<JSX.IntrinsicElements["group"] & { die: Die }>;
 }) {
-  const allowPhysicsDebug = useDebugStore((state) => state.allowPhysicsDebug);
 
   const dice = useMemo(() => roll && getDieFromDice(roll), [roll]);
 
@@ -91,7 +89,6 @@ export function DiceRoll({
         colliders={false}
         interpolate={false}
         timeStep={1 / 120}
-        debug={allowPhysicsDebug}
         updateLoop="independent"
         paused={paused}
       >

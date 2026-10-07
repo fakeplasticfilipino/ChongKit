@@ -1,7 +1,6 @@
 import { expect, test } from "vitest";
 import {
   emptySaved,
-  instantFor,
   importSaved,
   loadSaved,
   pillError,
@@ -30,9 +29,7 @@ function fakeStorage(initial: Record<string, string> = {}): Storage {
 test("empty storage gives one Rolls tab", () => {
   const s = loadSaved(fakeStorage());
   expect(s).toEqual(emptySaved());
-  expect(s.tabs.map((t) => [t.name, t.instant, t.pills.length])).toEqual([
-    ["Rolls", false, 0],
-  ]);
+  expect(s.tabs.map((t) => [t.name, t.pills.length])).toEqual([["Rolls", 0]]);
 });
 
 test("corrupt data gives the empty state", () =>
@@ -62,7 +59,6 @@ test("round trip", () => {
   const storage = fakeStorage();
   const s = emptySaved();
   s.tabs[0].pills.push({ id: "p1", name: "Sword", command: "!r 1d20+5" });
-  s.tabs[0].instant = true;
   s.history = ["1d6"];
   saveSaved(s, storage);
   expect(loadSaved(storage)).toEqual(s);
@@ -75,7 +71,6 @@ test("validate drops pills without a command, keeps unparseable ones", () => {
       {
         id: "t",
         name: "A",
-        instant: false,
         pills: [
           { id: "a", name: "No command" },
           { id: "b", name: "Broken", command: "1d0" },
@@ -131,7 +126,7 @@ test("a pill's description survives a round trip", () => {
 test("a non-text description is dropped, the pill kept", () => {
   const v = validateSavedRolls({
     version: 1,
-    tabs: [{ id: "t", name: "A", instant: false, pills: [{ id: "a", name: "A", command: "1d4", description: 5 }] }],
+    tabs: [{ id: "t", name: "A", pills: [{ id: "a", name: "A", command: "1d4", description: 5 }] }],
     history: [],
   });
   expect(v!.tabs[0].pills[0]).toEqual({ id: "a", name: "A", command: "1d4" });
@@ -140,29 +135,13 @@ test("a non-text description is dropped, the pill kept", () => {
 test("old pills without a description load unchanged", () => {
   const v = validateSavedRolls({
     version: 1,
-    tabs: [{ id: "t", name: "A", instant: false, pills: [{ id: "a", name: "A", command: "1d4" }] }],
+    tabs: [{ id: "t", name: "A", pills: [{ id: "a", name: "A", command: "1d4" }] }],
     history: [],
   });
   expect(v!.tabs[0].pills[0]).toEqual({ id: "a", name: "A", command: "1d4" });
 });
 
-const twoTabs = {
-  version: 1,
-  tabs: [
-    { id: "a", name: "A", instant: false, pills: [] },
-    { id: "b", name: "B", instant: true, pills: [] },
-  ],
-  history: [],
-};
-
-test("the active tab is kept when it names a tab", () =>
-  expect(validateSavedRolls({ ...twoTabs, activeTabId: "b" })!.activeTabId).toBe("b"));
-
-test("an active tab that no longer exists is dropped", () =>
-  expect(validateSavedRolls({ ...twoTabs, activeTabId: "gone" })!.activeTabId).toBeUndefined());
-
-test("instantFor follows the active tab", () =>
-  expect(instantFor(validateSavedRolls({ ...twoTabs, activeTabId: "b" })!)).toBe(true));
-
-test("instantFor falls back to the first tab", () =>
-  expect(instantFor(validateSavedRolls(twoTabs)!)).toBe(false));
+test("old saves with Instant switches and an active tab still load", () =>
+  expect(
+    validateSavedRolls({ version: 1, tabs: [{ id: "a", name: "A", instant: true, pills: [] }], history: [], activeTabId: "a" })
+  ).toEqual({ version: 1, tabs: [{ id: "a", name: "A", pills: [] }], history: [] }));

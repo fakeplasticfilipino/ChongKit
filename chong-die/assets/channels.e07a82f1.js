@@ -1,0 +1,1 @@
+const c={roll:"com.chongkit.chongdie/roll",ack:"com.chongkit.chongdie/ack",run:"com.chongkit.chongdie/run",runAck:"com.chongkit.chongdie/run-ack"};function r(o){const n=o;return!n||typeof n.id!="string"||typeof n.command!="string"?null:{id:n.id,command:n.command}}export{c as C,r};
