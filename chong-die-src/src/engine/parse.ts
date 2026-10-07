@@ -16,7 +16,17 @@ interface Tok {
 type Item = { sign: 1 | -1 } | Tok;
 
 const DICE = /^(\d*)d(\d+|%)$/i;
-const KEYWORDS = /^(adv\d*|dis\d*|keep|drop|crit|miss|chain|explode|x\d+)$/i;
+const WORDS = /^(adv\d*|dis\d*|keep|low|drop|crit|each|miss|chain|explode|x\d+)$/i;
+
+/** True for dice words: `2d6`, `d20`, `d%`. */
+export function isDice(token: string): boolean {
+  return DICE.test(token);
+}
+
+/** True for a word of the roll language (the only list of them), e.g. `crit`, `adv2`, `x3`. */
+export function isLanguageWord(token: string): boolean {
+  return WORDS.test(token);
+}
 
 const bad = (m: string) => new EngineError(m);
 
@@ -167,9 +177,9 @@ export function parse(input: string): Plan {
     if (/^\d+$/.test(first)) {
       if (words.length > 1) throw bad(`Unexpected "${words[1].text}" after ${first}`);
       modifier += seg.sign * +first;
-    } else if (DICE.test(first)) {
+    } else if (isDice(first)) {
       groups.push(parseGroup(seg.sign, words));
-    } else if (KEYWORDS.test(first)) {
+    } else if (isLanguageWord(first)) {
       throw bad(`"${first}" comes before any dice`);
     } else {
       throw bad(`"${first}" is not dice or a word`);
