@@ -1,6 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "./plugin/getPluginId";
-import { CHANNELS, RollMessage } from "./chong/channels";
+import { CHANNELS, readRollMessage } from "./chong/channels";
+import { openTray } from "./chong/trayWindow";
 
 OBR.onReady(() => {
   OBR.popover.open({
@@ -16,20 +17,20 @@ OBR.onReady(() => {
   });
 });
 
-// Rolls clicked in Chong's Tracker: answer it, open the dice window and hand the command over,
-// re-sending until the window says it has it (it may still be loading).
+// Rolls from the Rolls window or Chong's Tracker: answer, open the dice tray if it's closed and hand
+// the command over, re-sending until the tray says it has it (it may still be loading).
 const RESEND_MS = 250;
 // Long enough for a cold window to load the 3D libraries and subscribe; re-sends are deduped
 const GIVE_UP_MS = 15000;
 
 OBR.onReady(() => {
   OBR.broadcast.onMessage(CHANNELS.roll, (event) => {
-    const msg = event.data as RollMessage | undefined;
-    if (!msg || typeof msg.id !== "string" || typeof msg.command !== "string") {
+    const msg = readRollMessage(event.data);
+    if (!msg) {
       return;
     }
     OBR.broadcast.sendMessage(CHANNELS.ack, { id: msg.id }, { destination: "LOCAL" });
-    OBR.action.open();
+    openTray();
 
     let done = false;
     const stopListening = OBR.broadcast.onMessage(CHANNELS.runAck, (ack) => {

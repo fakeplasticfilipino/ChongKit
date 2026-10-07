@@ -1,30 +1,33 @@
 import { useDiceControlsStore } from "../controls/store";
-import { useChongStore } from "./chongStore";
 import { useTrayStore } from "./trayStore";
+import { instantFor, loadSaved, SavedRolls } from "./savedRolls";
 import { placeCommand } from "./place";
 import { startCommandRoll } from "./rollRunner";
 
 export { CHANNELS } from "./channels";
 
 /**
- * A roll clicked in Chong's Tracker: the open tab's Instant switch decides whether it rolls now
- * or its dice are placed on the tray. A command with only virtual dice always rolls.
+ * A roll sent to the tray: `place` says whether its dice are placed on the tray or rolled now;
+ * without it (Chong's Tracker) the Rolls window's open tab decides. A command with only virtual
+ * dice always rolls.
  */
-export function handleIncomingRoll(command: string): "rolled" | "placed" | "error" {
-  const chong = useChongStore.getState();
-  const tab = chong.saved.tabs.find((t) => t.id === chong.activeTabId) || chong.saved.tabs[0];
+export function handleIncomingRoll(
+  command: string,
+  place?: boolean,
+  saved: SavedRolls = loadSaved()
+): "rolled" | "placed" | "error" {
+  const tray = useTrayStore.getState();
   try {
     let outcome: "rolled" | "placed" = "rolled";
-    if (!tab.instant && placeCommand(command)) {
+    if ((place ?? !instantFor(saved)) && placeCommand(command)) {
       outcome = "placed";
     } else {
       startCommandRoll(command, { hidden: useDiceControlsStore.getState().diceHidden });
-      chong.setPanelOpen(false);
     }
-    useTrayStore.getState().setError(null);
+    tray.setError(null);
     return outcome;
   } catch (e) {
-    useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+    tray.setError(e instanceof Error ? e.message : "Can't roll this");
     return "error";
   }
 }
