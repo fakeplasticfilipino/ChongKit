@@ -1,16 +1,16 @@
 import { useDiceControlsStore } from "../controls/store";
 import { useTrayStore } from "./trayStore";
-import { startCommandRoll } from "./rollRunner";
+import { placeCommand } from "./place";
 
 export { CHANNELS } from "./channels";
 
-/** A roll sent to the tray (from Chong's Tracker): rolls it now */
-export function handleIncomingRoll(command: string): "rolled" | "error" {
+/** A roll sent to the tray (from Chong's Tracker): its dice wait on the tray to be thrown */
+export function handleIncomingRoll(command: string): "placed" | "rolled" | "error" {
   const tray = useTrayStore.getState();
   try {
-    startCommandRoll(command, { hidden: useDiceControlsStore.getState().diceHidden });
+    const outcome = placeCommand(command, { hidden: useDiceControlsStore.getState().diceHidden });
     tray.setError(null);
-    return "rolled";
+    return outcome;
   } catch (e) {
     tray.setError(e instanceof Error ? e.message : "Can't roll this");
     return "error";

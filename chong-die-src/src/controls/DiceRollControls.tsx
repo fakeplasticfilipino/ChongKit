@@ -8,6 +8,7 @@ import Fade from "@mui/material/Fade";
 import { useTheme, keyframes } from "@mui/material/styles";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
+import Typography from "@mui/material/Typography";
 
 import CloseIcon from "@mui/icons-material/CloseRounded";
 import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
@@ -21,6 +22,8 @@ import { DiceResults } from "./DiceResults";
 import { useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
 import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
+import { placeCommand } from "../chong/place";
+import { useTrayStore } from "../chong/trayStore";
 
 const jiggle = keyframes`
 0% { transform: translate(0, 0) rotate(0deg); }
@@ -84,16 +87,28 @@ function DicePickedControls() {
   );
   const counts = useDiceControlsStore((state) => state.diceCounts);
   const hidden = useDiceControlsStore((state) => state.diceHidden);
+  const placed = useTrayStore((state) => state.placed);
   const resetDiceCounts = useDiceControlsStore(
     (state) => state.resetDiceCounts
   );
 
-  /** Dice picked by hand roll as a command (so Nimble highlights and explosions work) */
+  /**
+   * Throw what's on the tray: a placed command (typed, a pill, Chong's Tracker) rolls as itself,
+   * dice picked by hand roll as a command too (so Nimble highlights and explosions work).
+   * The longer Roll is held, the harder the throw
+   */
   function handleRoll() {
     if (hasDice && rollPressTime) {
       const activeTimeSeconds = (performance.now() - rollPressTime) / 1000;
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
-      if (rollPickedDice({ hidden, speedMultiplier })) {
+      if (placed) {
+        try {
+          startCommandRoll(placed, { hidden, speedMultiplier });
+        } catch (e) {
+          useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+          handleReset();
+        }
+      } else if (rollPickedDice({ hidden, speedMultiplier })) {
         handleReset();
       }
     }
@@ -240,6 +255,26 @@ function DicePickedControls() {
           </IconButton>
         </Tooltip>
       </Stack>
+      {/* The command waiting to be thrown */}
+      {placed && (
+        <Typography
+          noWrap
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            right: 16,
+            textAlign: "center",
+            color: "white",
+            fontFamily: "'Roboto Mono', Consolas, monospace",
+            fontSize: 13,
+            textShadow: "0 1px 3px rgba(0, 0, 0, 0.8)",
+            pointerEvents: "none",
+          }}
+        >
+          {placed}
+        </Typography>
+      )}
     </>
   );
 }
@@ -286,8 +321,12 @@ function FinishedRollControls() {
             <IconButton
               onClick={() => {
                 if (roll?.chong) {
-                  // Waves and keys belong to the old roll: roll the command again
-                  startCommandRoll(roll.chong.command, { hidden: Boolean(roll.hidden) });
+                  // Waves and keys belong to the old roll: its dice go back on the tray to throw again
+                  try {
+                    placeCommand(roll.chong.command, { hidden: Boolean(roll.hidden) });
+                  } catch (e) {
+                    useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
+                  }
                 } else {
                   reroll();
                 }

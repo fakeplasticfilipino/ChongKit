@@ -5,14 +5,15 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v2.9.1)
+## ✅ Now (v2.10.0)
 - One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right and fades in / out as it opens / closes (the tray never squeezes)
 - Rolls tab with dice pills (each click adds a die to the tray) and the dice style; saved-roll pills that always roll; ⋯ for hide, history, players' trays, Nimble, export / import
 - Chong's Tracker's look (transparent, translucent surfaces)
 - Avrae roll engine with reroll / explosion waves; same total on every player's tray
 - Nimble switch: purple outline on each term's leftmost landed die (dark red on a 1, bright gold on the highest face); right-click / long-press starts an explosion chain
 - Rolls from Chong's Tracker; shared examples tested by both sides; `npm test` runs everything
-- Removed in 2.7: Place mode (and the ⚡ switch), bonus / advantage, the fairness tester and debug store
+- Hold to roll for every custom roll (typed, pills, tracker, history): dice wait on the tray, hold and release Roll (2.10, no switch)
+- Removed in 2.7: the ⚡ Instant switch, bonus / advantage, the fairness tester and debug store
 
 ## ✅ Checked in a real Owlbear room (two players)
 - [x] Install from the manifest; the window narrows / widens with ▤; phone width

@@ -28,6 +28,12 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
 
 - Everything rolls as a command, even dice picked by hand (`rollPickedDice` → `countsToCommand`).
   `startCommandRoll` (`chong/rollRunner.ts`) parses, evaluates and throws the first wave.
+- **Hold to roll:** custom rolls (typed, pills, Chong's Tracker, history, Reroll) never throw right
+  away: `placeCommand` (`chong/place.ts`) puts their first wave's dice on the tray as picked dice
+  and keeps the command in `trayStore.placed`; holding Roll shakes them, releasing throws the
+  command (`startCommandRoll` with the hold's `speedMultiplier`). Changing or clearing the dice by
+  hand drops the command (`dropPlaced` in `controls/store.ts`). Commands with only virtual dice
+  (`1d7`) roll at once. Follow-up waves (rerolls, explosions) still throw by themselves.
 - **Roll engine** (`src/roll/`, pure TS, Vitest): Avrae's `d20` syntax, operations in the order
   written. Rerolls and explosions come back as waves of new dice. Keys: `<rep>.<dice id>.<n>`, + `r`
   (reroll) / `e` (explosion) / `m` (exploded by hand); a later op following up the same die again

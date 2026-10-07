@@ -8,12 +8,12 @@ import { useTheme } from "@mui/material/styles";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
-import { startCommandRoll } from "./rollRunner";
+import { placeCommand } from "./place";
 import { PanelToggle } from "./PanelToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
 import { FIELD, HOVER } from "./look";
 
-/** The `!r` box always on top of the tray, with the Rolls button beside it: Enter rolls */
+/** The `!r` box always on top of the tray, with the Rolls button beside it: Enter puts the roll on the tray */
 export function CommandLine() {
   const theme = useTheme();
   const rolling = useDiceRollStore((state) =>
@@ -37,7 +37,7 @@ export function CommandLine() {
     }
     try {
       // A typo shows here and nothing rolls
-      startCommandRoll(command, { hidden });
+      placeCommand(command, { hidden });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Can't roll this");
       return;

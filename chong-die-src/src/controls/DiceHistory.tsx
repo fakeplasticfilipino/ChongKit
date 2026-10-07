@@ -12,7 +12,7 @@ import { DicePreview } from "../previews/DicePreview";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { getDiceToRoll, useDiceControlsStore } from "./store";
-import { startCommandRoll } from "../chong/rollRunner";
+import { placeCommand } from "../chong/place";
 
 /** Recent rolls, click one to roll it again (⋯ → Roll history) */
 export function DiceHistoryMenu({ anchorEl, onClose }: { anchorEl: HTMLElement | null; onClose: () => void }) {
@@ -26,7 +26,7 @@ export function DiceHistoryMenu({ anchorEl, onClose }: { anchorEl: HTMLElement |
   function handleRoll(roll: RecentRoll) {
     if (roll.command) {
       try {
-        startCommandRoll(roll.command, { hidden });
+        placeCommand(roll.command, { hidden });
       } catch {
         // A command that no longer parses: leave it
       }

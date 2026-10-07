@@ -12,7 +12,7 @@ import AddIcon from "@mui/icons-material/AddRounded";
 import { useChongStore } from "./chongStore";
 import { MoreMenu } from "./MoreMenu";
 import { PillDialog } from "./PillDialog";
-import { startCommandRoll } from "./rollRunner";
+import { placeCommand } from "./place";
 import { Pill, pillError, RollTab } from "./savedRolls";
 import { PILL_DRAG, TabStrip } from "./TabStrip";
 import { useDiceControlsStore } from "../controls/store";
@@ -77,7 +77,7 @@ function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
       return;
     }
     try {
-      startCommandRoll(pill.command, { hidden });
+      placeCommand(pill.command, { hidden });
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Can't roll this");

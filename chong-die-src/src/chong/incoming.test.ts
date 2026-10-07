@@ -10,9 +10,10 @@ beforeEach(() => {
   useDiceRollStore.getState().clearRoll();
 });
 
-test("a roll from Chong's Tracker rolls now", () => {
-  expect(handleIncomingRoll("!rr 2 1d6!+1d6+3")).toBe("rolled");
-  expect(useDiceRollStore.getState().roll?.chong?.command).toBe("!rr 2 1d6!+1d6+3");
+test("a roll from Chong's Tracker waits on the tray to be thrown", () => {
+  expect(handleIncomingRoll("!rr 2 1d6!+1d6+3")).toBe("placed");
+  expect(useTrayStore.getState().placed).toBe("!rr 2 1d6!+1d6+3");
+  expect(useDiceRollStore.getState().roll).toBeNull();
 });
 
 test("a command that can't roll shows its error on the tray", () => {

@@ -5,6 +5,27 @@ import { Dice } from "../types/Dice";
 import { DiceSet } from "../types/DiceSet";
 import { Die } from "../types/Die";
 import { generateDiceId } from "../helpers/generateDiceId";
+import { useTrayStore } from "../chong/trayStore";
+
+let placing = false;
+
+/** Run tray changes that belong to placing a command (they keep it placed) */
+export function whilePlacing(fn: () => void) {
+  placing = true;
+  try {
+    fn();
+  } finally {
+    placing = false;
+  }
+}
+
+/** Changing or clearing the dice by hand drops a placed command: Roll throws plain dice again */
+function dropPlaced() {
+  if (!placing && useTrayStore.getState().placed !== null) {
+    useTrayStore.getState().setPlaced(null);
+  }
+}
+
 export type Advantage = "ADVANTAGE" | "DISADVANTAGE" | null;
 export type DiceCounts = Record<string, number>;
 
@@ -58,11 +79,13 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     resetDiceCounts() {
+      dropPlaced();
       set((state) => {
         state.diceCounts = state.defaultDiceCounts;
       });
     },
     changeDieCount(id, count) {
+      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] = count;
@@ -70,6 +93,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     incrementDieCount(id) {
+      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] += 1;
@@ -77,6 +101,7 @@ export const useDiceControlsStore = create<DiceControlsState>()(
       });
     },
     decrementDieCount(id) {
+      dropPlaced();
       set((state) => {
         if (id in state.diceCounts) {
           state.diceCounts[id] -= 1;

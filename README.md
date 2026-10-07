@@ -239,19 +239,21 @@ and, like it, licensed under the **GPL-3.0** (source in `chong-die-src/`, change
 `https://fakeplasticfilipino.github.io/ChongKit/chong-die/manifest.json`, then turn it on in your room.
 
 **Using it**
+- **Hold to roll:** every roll waits on the tray. Its dice appear (the command shows under them);
+  hold **Roll** to shake them, let go to throw. **×** clears them.
 - **Command line** (always on top of the tray): type a roll and press Enter. `!r` is optional.
   ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled.
 - **▤ Rolls** (beside the command line) opens the panel docked to the right of the tray; closed,
   it's just the tray. It remembers.
 - **Rolls tab** (always first): the dice style, then a pill per die (d4 … d100). Each click puts one
   more on the tray (the pill shows ×2, ×3); throw them with the tray's Roll button.
-- **Your pills** (saved rolls) sit under a faint line. Click one to roll it. **+** after the last pill
+- **Your pills** (saved rolls) sit under a faint line. Click one to put it on the tray. **+** after the last pill
   adds one (name, roll, optional description shown on hover / long-press); drag to reorder or onto
   another tab; right-click (long-press) to edit or delete. Tabs: **+** adds, double-click renames,
   **×** deletes, drag to reorder.
 - **⋯**: Hide rolls, Roll history, other players' trays, Nimble rules, export / import (your saved
   rolls live in this browser only), about.
-- Rolls clicked in **Chong's Tracker** notes roll here.
+- Rolls clicked in **Chong's Tracker** notes land on this tray, ready to throw.
 - **Nimble rules** (⋯, off by default): once a roll lands, a **purple outline** (dark red on a 1, bright gold on the
   highest face) marks the die of each
   dice term that landed furthest left (`1d6+2d6`: two; one per `!rr` repeat), on everyone's tray.
