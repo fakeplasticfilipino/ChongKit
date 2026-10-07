@@ -14,8 +14,7 @@ import {
 interface ChongState {
   saved: SavedRolls;
   activeTabId: string;
-  panelOpen: boolean;
-  /** Message shown under the command line */
+  /** Message shown under the command line of the Rolls window */
   error: string | null;
   /** What's typed in the command line (the + button starts a pill from it) */
   draft: string;
@@ -30,7 +29,6 @@ interface ChongState {
   editPill: (id: string, name: string, command: string, description?: string) => void;
   deletePill: (id: string) => void;
   movePill: (id: string, toTabId: string, toIndex: number) => void;
-  setPanelOpen: (open: boolean) => void;
   setError: (msg: string | null) => void;
   recordHistory: (cmd: string) => void;
   replaceSaved: (s: SavedRolls) => void;
@@ -54,7 +52,6 @@ export const useChongStore = create<ChongState>()(
   immer((set) => ({
     saved: initial,
     activeTabId: initial.activeTabId ?? initial.tabs[0].id,
-    panelOpen: true,
     error: null,
     draft: "",
     setDraft(text) {
@@ -160,11 +157,6 @@ export const useChongStore = create<ChongState>()(
           const [pill] = found.tab.pills.splice(found.index, 1);
           to.pills.splice(Math.max(0, Math.min(toIndex, to.pills.length)), 0, pill);
         }
-      });
-    },
-    setPanelOpen(open) {
-      set((state) => {
-        state.panelOpen = open;
       });
     },
     setError(msg) {

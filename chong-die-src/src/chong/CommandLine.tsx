@@ -3,19 +3,13 @@ import { useState } from "react";
 import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/material/styles";
 
-import { useDiceRollStore } from "../dice/store";
-import { useDiceControlsStore } from "../controls/store";
+import { parseCommand } from "../roll";
 import { useChongStore } from "./chongStore";
-import { startCommandRoll } from "./rollRunner";
-import { PanelToggle } from "./PanelToggle";
+import { sendRoll } from "./sendRoll";
 
-export const COMMAND_LINE_HEIGHT = 52;
-
-/** Always-visible `!r` box at the top of the tray */
+/** The `!r` box at the top of the Rolls window: Enter rolls on the tray */
 export function CommandLine() {
-  const theme = useTheme();
   const text = useChongStore((state) => state.draft);
   const setText = useChongStore((state) => state.setDraft);
   // Position while stepping through history with ↑ / ↓ (null = typing)
@@ -24,26 +18,25 @@ export function CommandLine() {
   const history = useChongStore((state) => state.saved.history);
   const error = useChongStore((state) => state.error);
   const setError = useChongStore((state) => state.setError);
-  const setPanelOpen = useChongStore((state) => state.setPanelOpen);
-  const hidden = useDiceControlsStore((state) => state.diceHidden);
-
-  const rolling = useDiceRollStore((state) =>
-    Object.values(state.rollValues).some((v) => v === null)
-  );
+  const recordHistory = useChongStore((state) => state.recordHistory);
 
   function roll() {
-    if (!text.trim()) {
+    const command = text.trim();
+    if (!command) {
       return;
     }
     try {
-      startCommandRoll(text, { hidden });
-      setText("");
-      setHistoryIndex(null);
-      setError(null);
-      setPanelOpen(false);
+      // A typo shows here instead of going to the tray
+      parseCommand(command);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Can't roll this");
+      return;
     }
+    sendRoll(command, false);
+    recordHistory(command);
+    setText("");
+    setHistoryIndex(null);
+    setError(null);
   }
 
   function step(direction: -1 | 1) {
@@ -57,36 +50,23 @@ export function CommandLine() {
   }
 
   return (
-    <Box
-      component="div"
-      sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 3,
-        p: 1,
-        opacity: rolling ? 0.4 : 1,
-        transition: theme.transitions.create("opacity"),
-        ":hover, :focus-within": { opacity: 1 },
-      }}
-    >
+    <Box component="div" sx={{ p: 1.5, pb: 0.5 }}>
       <Box
         component="div"
         sx={{
           display: "flex",
           alignItems: "center",
-          height: COMMAND_LINE_HEIGHT - 16,
-          pl: 1.5,
-          pr: 0.5,
-          borderRadius: "18px",
-          bgcolor: "background.paper",
+          height: 40,
+          px: 1.5,
+          borderRadius: "20px",
+          bgcolor: "background.default",
           border: 1,
           borderColor: error ? "error.main" : "divider",
         }}
       >
         <InputBase
           fullWidth
+          autoFocus
           placeholder="!r 1d20+5"
           value={text}
           inputProps={{ "aria-label": "Roll command", spellCheck: false }}
@@ -111,14 +91,9 @@ export function CommandLine() {
           }}
           sx={{ fontFamily: "monospace" }}
         />
-        <PanelToggle size="small" />
       </Box>
       {error && (
-        <Typography
-          variant="caption"
-          color="error"
-          sx={{ display: "block", px: 1.5, pt: 0.5, bgcolor: "background.paper", borderRadius: 1 }}
-        >
+        <Typography variant="caption" color="error" role="alert" sx={{ display: "block", px: 1.5, pt: 0.5 }}>
           {error}
         </Typography>
       )}
