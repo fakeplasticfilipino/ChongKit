@@ -1,122 +1,79 @@
 import { expect, test } from "vitest";
 import { EngineError, parse, stageZeroSizes } from "./index";
 
-test("the chain player's attack", () => {
-  const p = parse("1d10 crit chain 5+ chain adv +3 # longsword");
+test("Nimble's attack: bare crit is the die's max, bare miss is 1", () => {
+  const p = parse("1d10+3 crit miss");
+  expect(p.groups).toEqual([{ sign: 1, count: 1, size: 10 }]);
+  expect(p).toMatchObject({
+    text: "1d10+3 crit miss", modifier: 3, times: 1, adv: 0, dis: 0, critAdv: 0,
+    crit: { min: 10, max: 10 }, miss: { min: 1, max: 1 },
+  });
+});
+test("words after the modifier; signs glued or spaced", () => {
+  const a = parse("1d10 + 3 crit miss adv3");
+  const b = parse("1d10+3 crit miss adv3");
+  expect(a.groups).toEqual(b.groups);
+  expect([a.modifier, a.adv, b.modifier, b.adv]).toEqual([3, 3, 3, 3]);
+});
+test("numbers and ranges glued to words", () => {
+  expect(parse("1d10 crit5-10 miss1-4 critadv2 dis2 x3")).toMatchObject({
+    crit: { min: 5, max: 10 }, miss: { min: 1, max: 4 }, critAdv: 2, dis: 2, times: 3,
+  });
+  expect(parse("1d10 crit critadv").critAdv).toBe(1);
+  expect(parse("1d20 adv").adv).toBe(1);
+});
+test("a range's - belongs to it; a spaced - subtracts", () => {
+  expect(parse("1d10 crit5 -2")).toMatchObject({ crit: { min: 5, max: 5 }, modifier: -2 });
+  expect(parse("1d10 miss1-4+2")).toMatchObject({ miss: { min: 1, max: 4 }, modifier: 2 });
+});
+test("words act on the first dice; other dice and numbers add", () => {
+  const p = parse("1d10 + 1d6 - 1d4 + 3 crit adv");
   expect(p.groups).toEqual([
-    {
-      sign: 1, count: 1, size: 10, adv: 0, dis: 0, keep: null, drop: 0,
-      crit: "primary", miss: null, chain: [{ min: 5, max: Infinity }], chainAdv: 1, explode: false,
-    },
+    { sign: 1, count: 1, size: 10 }, { sign: 1, count: 1, size: 6 }, { sign: -1, count: 1, size: 4 },
   ]);
-  expect(p.modifier).toBe(3);
-  expect(p.note).toBe("longsword");
-  expect(p.times).toBe(1);
-  expect(p.text).toBe("1d10 crit chain 5+ chain adv +3 # longsword");
+  expect(p.crit).toEqual({ min: 10, max: 10 });
+  expect(stageZeroSizes(p)).toEqual([10, 10, 6, 4]);
 });
-
-test("groups, signs and modifiers", () => {
-  const p = parse("1d4 crit miss 1 + 2d6 - 1d4 + 3");
-  expect(p.groups.map((g) => [g.sign, g.count, g.size, g.crit])).toEqual([
-    [1, 1, 4, "primary"], [1, 2, 6, "none"], [-1, 1, 4, "none"],
-  ]);
-  expect(p.groups[0].miss).toEqual({ min: 1, max: 1 });
-  expect(p.modifier).toBe(3);
+test("d20, d% and any case", () => {
+  expect(parse("d20").groups[0]).toEqual({ sign: 1, count: 1, size: 20 });
+  expect(parse("2d%").groups[0].size).toBe(100);
+  expect(parse("1D10 CRIT MISS").crit).toEqual({ min: 10, max: 10 });
 });
-
-test("ranges keep their + and -", () => {
-  const a = parse("2d6 crit miss 4- + 3");
-  expect(a.groups[0].miss).toEqual({ min: -Infinity, max: 4 });
-  expect(a.modifier).toBe(3);
-  expect(parse("1d10 crit chain 1-2").groups[0].chain).toEqual([{ min: 1, max: 2 }]);
-  expect(parse("1d10 crit chain 5+ chain 1").groups[0].chain).toHaveLength(2);
-  expect(parse("1d10 crit chain adv2").groups[0].chainAdv).toBe(2);
+test("x repeats the whole roll", () => {
+  expect(stageZeroSizes(parse("1d10 adv x2"))).toEqual([10, 10, 10, 10]);
 });
-
-test("a sign glued after a range or chain adv", () => {
-  const a = parse("2d6 crit miss 4-+3");
-  expect(a.groups[0].miss).toEqual({ min: -Infinity, max: 4 });
-  expect(a.modifier).toBe(3);
-  expect(parse("1d10 crit chain 5+-1")).toMatchObject({ modifier: -1 });
-  expect(parse("1d10 crit chain 1-2+3").groups[0].chain).toEqual([{ min: 1, max: 2 }]);
-  const b = parse("1d10 crit chain adv+3");
-  expect(b.groups[0].chainAdv).toBe(1);
-  expect(b.modifier).toBe(3);
-  expect(parse("1d10 crit chain adv2-1")).toMatchObject({ modifier: -1, groups: [{ chainAdv: 2 }] });
-  expect(() => parse("1d10 crit miss 1+3")).toThrow(EngineError);
-  expect(() => parse("1d10 crit miss 1+3")).toThrow(/space/);
-});
-
-test("no spaces and capitals", () => {
-  expect(parse("2D6+3")).toMatchObject({ modifier: 3, groups: [{ count: 2, size: 6 }] });
-  expect(parse("1d20-2")).toMatchObject({ modifier: -2 });
-  expect(parse("1D10 CRIT EACH EXPLODE").groups[0]).toMatchObject({ crit: "each", explode: true });
-  expect(() => parse("1d10crit")).toThrow(/1d10crit/);
-});
-
-test("shorthand dice", () => {
-  expect(parse("d20").groups[0]).toMatchObject({ count: 1, size: 20 });
-  expect(parse("d%").groups[0]).toMatchObject({ count: 1, size: 100 });
-});
-
-test("counters, keep and drop", () => {
-  expect(parse("2d6 adv3 dis1").groups[0]).toMatchObject({ adv: 3, dis: 1 });
-  expect(parse("2d6 adv adv").groups[0]).toMatchObject({ adv: 2 });
-  expect(parse("4d6 keep 3").groups[0].keep).toEqual({ n: 3, low: false });
-  expect(parse("2d20 keep low 1").groups[0].keep).toEqual({ n: 1, low: true });
-  expect(parse("4d6 drop 1").groups[0].drop).toBe(1);
-});
-
-test("times and note", () => {
-  expect(parse("1d6 x3 + 2").times).toBe(3);
-  expect(parse("x3 1d6").times).toBe(3);
-  expect(parse("1d6 #").note).toBeNull();
-  expect(parse("1d6 # a # b").note).toBe("a # b");
-});
-
-test("errors name the problem", () => {
-  expect(() => parse("1d10 chian 5+")).toThrow('Unknown word "chian"');
-  expect(() => parse("2d6 adv keep 1")).toThrow(EngineError);
-  expect(() => parse("4d6 keep 2 drop 1")).toThrow(/keep and drop/);
-  expect(() => parse("1d10 chain 5+")).toThrow(/crit/);
-  expect(() => parse("crit 1d6")).toThrow(EngineError);
-  expect(() => parse("1d6 +")).toThrow(EngineError);
-  expect(() => parse("1d6 x26")).toThrow(EngineError);
-  expect(() => parse("1d6 x0")).toThrow(EngineError);
-  expect(() => parse("1d6 x2 x3")).toThrow(EngineError);
-  expect(() => parse("1d1001")).toThrow(EngineError);
-  expect(() => parse("1d0")).toThrow(EngineError);
-  expect(() => parse("1d6 crit miss banana")).toThrow(/banana/);
-  expect(() => parse("   ")).toThrow(EngineError);
-  expect(() => parse("# only a note")).toThrow(EngineError);
-  expect(new EngineError("x").name).toBe("EngineError");
-});
-
-test("over 100 dice is refused before rolling", () => {
-  expect(() => parse("60d6 adv50")).toThrow(/100/);
-  expect(() => parse("30d6 x4")).toThrow(/100/);
-  expect(stageZeroSizes(parse("2d6 adv3 x2"))).toEqual([6, 6, 6, 6, 6, 6, 6, 6, 6, 6]);
-});
-
-test("huge counts are refused without building dice", () => {
-  expect(() => parse("1000000000d6")).toThrow(/100/);
-  expect(() => parse("99999999999d6")).toThrow(/100/);
-  expect(() => parse("2d6 adv999999999999")).toThrow(/100/);
-  expect(() => parse("2d6 dis999999999999")).toThrow(/100/);
-  expect(() => parse("1d10 crit chain 5+ chain adv999999999999")).toThrow(/100/);
-  expect(() => parse("1d6 x25 + 5d6 x25".replace(" x25 +", " +"))).toThrow(/100/);
-  expect(() => parse("1d6 x999999999999")).toThrow(EngineError);
-});
-
-test("keep and drop stay within the dice", () => {
-  expect(() => parse("4d6 keep 0")).toThrow(/keep 0/);
-  expect(() => parse("4d6 keep 5")).toThrow(/keep 5/);
-  expect(() => parse("4d6 drop 0")).toThrow(/drop 0/);
-  expect(() => parse("4d6 drop 4")).toThrow(/drop 4/);
-  expect(parse("4d6 keep 4").groups[0].keep).toEqual({ n: 4, low: false });
-  expect(parse("4d6 drop 3").groups[0].drop).toBe(3);
-});
-
-test("a command needs dice", () => {
-  for (const t of ["3", "+3", "x3"]) expect(() => parse(t)).toThrow(/No dice/);
+test.each([
+  ["", /Empty command/],
+  ["crit 1d10", /"crit" comes before any dice/],
+  ["1d10 crit crit5", /crit appears twice/],
+  ["1d10 adv adv2", /adv appears twice/],
+  ["1d10 x2 x3", /x appears twice/],
+  ["1d10 crit11", /"crit11" is outside the d10's 1 to 10/],
+  ["1d10 miss0", /outside/],
+  ["1d10 miss3-1", /low to high/],
+  ["1d10 crit5-2", /low to high/],
+  ["1d10 crit5-10 miss1-5", /crit and miss overlap/],
+  ["1d1 crit miss", /crit and miss overlap/],
+  ["1d10 critadv", /critadv needs crit/],
+  ["1d10 x", /x needs a number/],
+  ["1d10 x0", /x1 to x25/],
+  ["1d10 x26", /x1 to x25/],
+  ["1d10 adv0", /"adv0" must be 1 to 100/],
+  ["1d10 keep 1", /Unknown word "keep"/],
+  ["1d10 explode", /Unknown word "explode"/],
+  ["1d10 chain", /Unknown word "chain"/],
+  ["1d10 # sword", /Unknown word "#"/],
+  ["1d10 crit 10", /Put a \+ or - before "10"/],
+  ["1d10 +", /A trailing "\+" needs dice or a number after it/],
+  ["1d10 crit5-", /A trailing "-"/],
+  ["1d10 + + 2", /"\+" needs dice or a number after it/],
+  ["1d10 + crit", /"\+" needs dice or a number after it/],
+  ["3", /No dice/],
+  ["0d6", /needs at least 1 die/],
+  ["1d0", /1 to 1000 sides/],
+  ["101d6", /More than 100 dice/],
+  ["50d6 adv x3", /More than 100 dice/],
+])("%s → error", (cmd, message) => {
+  expect(() => parse(cmd)).toThrow(EngineError);
+  expect(() => parse(cmd)).toThrow(message);
 });

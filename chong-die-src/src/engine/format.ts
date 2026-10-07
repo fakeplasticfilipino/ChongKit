@@ -4,7 +4,7 @@ import { RepRecord, RolledDie, RollRecord } from "./types";
 export interface FormattedResult {
   /** The big number: the repetitions' totals joined by `, ` */
   total: string;
-  /** One line per repetition: `~~x~~` dropped, `**x**` a crit or a 1; the first ends with ` # note` */
+  /** One line per repetition: `~~x~~` dropped, `**x**` a crit or a 1 */
   lines: string[];
 }
 
@@ -49,8 +49,6 @@ function lineOf(rep: RepRecord, modifier: number): string {
 export function formatRecord(record: RollRecord): FormattedResult {
   return {
     total: record.reps.map((r) => String(r.total)).join(", "),
-    // The note (`# sword`) ends the first line, as it was typed
-    lines: record.reps.map((rep, i) =>
-      lineOf(rep, record.modifier) + (i === 0 && record.note ? ` # ${record.note}` : "")),
+    lines: record.reps.map((rep) => lineOf(rep, record.modifier)),
   };
 }

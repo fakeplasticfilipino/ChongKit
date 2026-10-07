@@ -1,17 +1,12 @@
 import { Range } from "./types";
 
-/** `5+` (5 or more), `4-` (4 or less), `1-2`, or `6`. Null when it isn't one. */
-export function parseRange(word: string): Range | null {
-  let m: RegExpExecArray | null;
-  if ((m = /^(\d+)\+$/.exec(word))) return { min: +m[1], max: Infinity };
-  if ((m = /^(\d+)-$/.exec(word))) return { min: -Infinity, max: +m[1] };
-  if ((m = /^(\d+)-(\d+)$/.exec(word))) {
-    const min = +m[1];
-    const max = +m[2];
-    return min <= max ? { min, max } : null;
-  }
-  if ((m = /^(\d+)$/.exec(word))) return { min: +m[1], max: +m[1] };
-  return null;
+/** `5` (exactly 5) or `5-10` (5 to 10, low to high). Null when it isn't one. */
+export function parseRange(text: string): Range | null {
+  const m = /^(\d+)(?:-(\d+))?$/.exec(text);
+  if (!m) return null;
+  const min = +m[1];
+  const max = m[2] === undefined ? min : +m[2];
+  return min <= max ? { min, max } : null;
 }
 
 export function inRange(v: number, r: Range): boolean {

@@ -1,19 +1,11 @@
-/** Inclusive range of face values; `max` may be Infinity, `min` may be -Infinity. */
+/** Inclusive range of face values: `5` → { min: 5, max: 5 }, `5-10` → { min: 5, max: 10 } */
 export type Range = { min: number; max: number };
 
+/** Dice of one size joined into the command by a sign: `1d10`, `+ 2d6`, `- 1d4` */
 export interface GroupPlan {
   sign: 1 | -1;
   count: number;
   size: number;
-  adv: number;
-  dis: number;
-  keep: { n: number; low: boolean } | null;
-  drop: number;
-  crit: "none" | "primary" | "each";
-  miss: Range | null;
-  chain: Range[];
-  chainAdv: number;
-  explode: boolean;
 }
 
 export interface Plan {
@@ -22,7 +14,15 @@ export interface Plan {
   groups: GroupPlan[];
   modifier: number;
   times: number;
-  note: string | null;
+  /** The words, all acting on the first group (`groups[0]`) */
+  adv: number;
+  dis: number;
+  /** The Primary Die in this range crits and starts a chain */
+  crit: Range | null;
+  /** The Primary Die in this range marks the roll MISS */
+  miss: Range | null;
+  /** Extra dice in each chain pick (the highest is kept) */
+  critAdv: number;
 }
 
 export class EngineError extends Error {
@@ -40,7 +40,7 @@ export const MAX_SIDES = 1000;
 /** A random source: returns a whole number from 1 to `size`. */
 export type Rng = (size: number) => number;
 
-export type DieKind = "start" | "adv" | "chain" | "explode";
+export type DieKind = "start" | "adv" | "chain";
 
 export interface RolledDie {
   /** The die's place in its repetition's rolling order, from 0. */
@@ -54,7 +54,8 @@ export interface RolledDie {
   parent: number | null;
   /** Groups the dice of one advantage chain pick. */
   pick: number | null;
-  source: "crit" | "range" | "explode" | null;
+  /** "crit" on a chain die: it came from a crit */
+  source: "crit" | null;
 }
 
 export interface GroupResult {
@@ -86,7 +87,7 @@ export interface RepRecord {
 }
 
 export interface RollRecord {
-  v: 3;
+  v: 4;
   modifier: number;
   text: string;
   note: string | null;
