@@ -1,0 +1,57 @@
+{
+  "planPath": "chong-die-src/docs/2026-10-08-command-language-v4-plan.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 1: Engine speaks 4.0",
+      "status": "pending",
+      "description": "**Goal:** `parse`, `range`, `types`, `roll` and `format` implement the 4.0 language and the chain rule; `expand.ts` is gone.\n\n**Files:**\n- Modify: `chong-die-src/src/engine/types.ts`, `range.ts`, `parse.ts`, `roll.ts`, `format.ts`, `index.ts`\n- Delete: `chong-die-src/src/engine/expand.ts`, `chong-die-src/src/engine/expand.test.ts`\n- Test (rewrite): `chong-die-src/src/engine/range.test.ts`, `parse.test.ts`, `roll.test.ts`, `format.test.ts`, `record.test.ts`\n\n**Acceptance Criteria:**\n- [ ] `parse(\"1d10+3 crit miss\")` gives `crit {10,10}`, `miss {1,1}`, `modifier 3`.\n- [ ] Every error case in the parse test table throws an `EngineError` with the listed message.\n- [ ] With `1d10 crit5-10`, a 7 on the Primary Die is a crit and chains. A chain die showing 6 does not chain, and a chain die showing 10 does.\n- [ ] Records are `v: 4` with no `note`.\n- [ ] All engine Vitest files pass.\n\n**Verify:** `cd chong-die-src && npx yarn@1.22.22 vitest run src/engine` → all engine test files pass\n\nFull steps: chong-die-src/docs/2026-10-08-command-language-v4-plan.md → Task 1: Engine speaks 4.0\n\n```json:metadata\n{\"files\":[\"chong-die-src/src/engine/types.ts\",\"chong-die-src/src/engine/expand.ts\",\"chong-die-src/src/engine/expand.test.ts\",\"chong-die-src/src/engine/range.test.ts\"],\"verifyCommand\":\"cd chong-die-src && npx yarn@1.22.22 vitest run src/engine\",\"acceptanceCriteria\":[\"`parse(\\\"1d10+3 crit miss\\\")` gives `crit {10,10}`, `miss {1,1}`, `modifier 3`.\",\"Every error case in the parse test table throws an `EngineError` with the listed message.\",\"With `1d10 crit5-10`, a 7 on the Primary Die is a crit and chains. A chain die showing 6 does not chain, and a chain die showing 10 does.\",\"Records are `v: 4` with no `note`.\",\"All engine Vitest files pass.\"],\"modelTier\":\"frontier\"}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 2: App without saved names, record v4",
+      "status": "pending",
+      "description": "**Goal:** The Chong Die app compiles and its tests pass against the 4.0 engine: saved names and `expand` are gone, and `ChongRollMeta` is `v: 4`.\n\n**Files:**\n- Modify: `chong-die-src/src/chong/savedRolls.ts`, `chongStore.ts`, `CommandLine.tsx`, `rollRunner.ts`, `place.ts`, `RollPanel.tsx`, `PillDialog.tsx`, `rollMeta.ts`\n- Test (update): `chong-die-src/src/chong/savedRolls.test.ts`, `chongStore.test.ts`, `place.test.ts`, `rollMeta.test.ts`, `rollRunner.test.ts`\n\n**Acceptance Criteria:**\n- [ ] `grep -rn \"expand\\|allNames\\|BUILT_IN_NAMES\\|checkName\\|parseDefinition\\|setName\\|\\.names\" chong-die-src/src/chong` finds nothing, apart from unrelated local variables such as `setName` in `PillDialog`'s `useState`.\n- [ ] `isCurrentMeta` accepts only `v === 4`, and `buildMeta` writes `v: 4`.\n- [ ] The tests contain no old-syntax words (`chain`, `keep`, `explode`, `each`, `nimble`, `# `, `4-`, `5+`).\n- [ ] `npx yarn@1.22.22 test` passes, and `npx tsc --noEmit` reports no errors.\n\n**Verify:** `cd chong-die-src && npx tsc --noEmit && npx yarn@1.22.22 test` → no type errors, all tests pass\n\nFull steps: chong-die-src/docs/2026-10-08-command-language-v4-plan.md → Task 2: App without saved names, record v4\n\n```json:metadata\n{\"files\":[\"chong-die-src/src/chong/savedRolls.ts\",\"chong-die-src/src/chong/savedRolls.test.ts\"],\"verifyCommand\":\"cd chong-die-src && npx tsc --noEmit && npx yarn@1.22.22 test\",\"acceptanceCriteria\":[\"`grep -rn \\\"expand\\\\|allNames\\\\|BUILT_IN_NAMES\\\\|checkName\\\\|parseDefinition\\\\|setName\\\\|\\\\.names\\\" chong-die-src/src/chong` finds nothing, apart from unrelated local variables such as `setName` in `PillDialog`'s `useState`.\",\"`isCurrentMeta` accepts only `v === 4`, and `buildMeta` writes `v: 4`.\",\"The tests contain no old-syntax words (`chain`, `keep`, `explode`, `each`, `nimble`, `# `, `4-`, `5+`).\",\"`npx yarn@1.22.22 test` passes, and `npx tsc --noEmit` reports no errors.\"],\"modelTier\":\"standard\"}\n```",
+      "blockedBy": [
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "subject": "Task 3: Remove the Chong's Tracker link from Chong Die",
+      "status": "pending",
+      "description": "**Goal:** Chong Die no longer listens for rolls from Chong's Tracker. The background page only opens the party popover.\n\n**Files:**\n- Delete: `chong-die-src/src/chong/channels.ts`, `channels.test.ts`, `incoming.ts`, `incoming.test.ts`, `IncomingRolls.tsx`, `trackerRolls.test.ts`\n- Modify: `chong-die-src/src/App.tsx`, `chong-die-src/src/background.ts`\n\n**Acceptance Criteria:**\n- [ ] `grep -rn \"channels\\|incoming\\|IncomingRolls\\|roll-examples\\|com.chongkit.chongdie/roll\" chong-die-src/src` finds nothing.\n- [ ] `background.ts` contains only the popover `OBR.onReady` block.\n- [ ] tsc and the tests pass.\n\n**Verify:** `cd chong-die-src && npx tsc --noEmit && npx yarn@1.22.22 test` → no type errors, all tests pass\n\nFull steps: chong-die-src/docs/2026-10-08-command-language-v4-plan.md → Task 3: Remove the Chong's Tracker link from Chong Die\n\n```json:metadata\n{\"files\":[\"chong-die-src/src/chong/channels.ts\",\"chong-die-src/src/App.tsx\",\"chong-die-src/src/background.ts\"],\"verifyCommand\":\"cd chong-die-src && npx tsc --noEmit && npx yarn@1.22.22 test\",\"acceptanceCriteria\":[\"`grep -rn \\\"channels\\\\|incoming\\\\|IncomingRolls\\\\|roll-examples\\\\|com.chongkit.chongdie/roll\\\" chong-die-src/src` finds nothing.\",\"`background.ts` contains only the popover `OBR.onReady` block.\",\"tsc and the tests pass.\"],\"modelTier\":\"mechanical\"}\n```",
+      "blockedBy": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "subject": "Task 4: Rolls panel 280 px",
+      "status": "pending",
+      "description": "**Goal:** The Rolls panel is 280 px wide instead of 360.\n\n**Files:**\n- Modify: `chong-die-src/src/chong/layout.ts:2`\n- Test: `chong-die-src/src/chong/layout.test.ts`\n\n**Acceptance Criteria:**\n- [ ] `PANEL_WIDTH === 280`.\n- [ ] `windowWidth(700, true) === 630` and `windowWidth(700, false) === 350`.\n\n**Verify:** `cd chong-die-src && npx yarn@1.22.22 vitest run src/chong/layout.test.ts` → 2 tests pass\n\nFull steps: chong-die-src/docs/2026-10-08-command-language-v4-plan.md → Task 4: Rolls panel 280 px\n\n```json:metadata\n{\"files\":[\"chong-die-src/src/chong/layout.ts:2\",\"chong-die-src/src/chong/layout.test.ts\"],\"verifyCommand\":\"cd chong-die-src && npx yarn@1.22.22 vitest run src/chong/layout.test.ts\",\"acceptanceCriteria\":[\"`PANEL_WIDTH === 280`.\",\"`windowWidth(700, true) === 630` and `windowWidth(700, false) === 350`.\"],\"modelTier\":\"mechanical\"}\n```",
+      "blockedBy": [
+        2
+      ]
+    },
+    {
+      "id": 4,
+      "subject": "Task 5: Chong's Tracker: notes are plain text",
+      "status": "pending",
+      "description": "**Goal:** Chong's Tracker no longer finds, underlines or sends rolls. Notes show as plain text, and a click edits them.\n\n**Files:**\n- Modify: `chongs-tracker/core.js:413-475`, `chongs-tracker/app.js:484-525,745`, `chongs-tracker/style.css:179-190`, `chongs-tracker/manifest.json`, `chongs-tracker/index.html`, `chongs-tracker/background.html`, `chongs-tracker/TRACKER.md`\n- Delete: `chongs-tracker/tests/roll-examples.json`\n- Test: `chongs-tracker/tests/core.test.js`\n\n**Acceptance Criteria:**\n- [ ] `grep -rn \"findRolls\\|toCommand\\|chongdie\\|sendRoll\\|roll-examples\\|\\.roll\\b\" chongs-tracker --include=*.js --include=*.css --include=*.html` finds nothing (excluding `vendor/`).\n- [ ] The manifest version and every `?v=` are `1.10.0`.\n- [ ] `node --test \"chongs-tracker/tests/*.test.js\"` passes.\n\n**Verify:** `node --test \"chongs-tracker/tests/*.test.js\"` → all pass, 0 failures\n\nFull steps: chong-die-src/docs/2026-10-08-command-language-v4-plan.md → Task 5: Chong's Tracker: notes are plain text\n\n```json:metadata\n{\"files\":[\"chongs-tracker/core.js:413-475\",\"chongs-tracker/app.js:484-525,745\",\"chongs-tracker/style.css:179-190\",\"chongs-tracker/manifest.json\",\"chongs-tracker/index.html\",\"chongs-tracker/background.html\",\"chongs-tracker/TRACKER.md\",\"chongs-tracker/tests/roll-examples.json\",\"chongs-tracker/tests/core.test.js\"],\"verifyCommand\":\"node --test \\\"chongs-tracker/tests/*.test.js\\\"\",\"acceptanceCriteria\":[\"`grep -rn \\\"findRolls\\\\|toCommand\\\\|chongdie\\\\|sendRoll\\\\|roll-examples\\\\|\\\\.roll\\\\b\\\" chongs-tracker --include=*.js --include=*.css --include=*.html` finds nothing (excluding `vendor/`).\",\"The manifest version and every `?v=` are `1.10.0`.\",\"`node --test \\\"chongs-tracker/tests/*.test.js\\\"` passes.\"],\"modelTier\":\"mechanical\"}\n```",
+      "blockedBy": [
+        3
+      ]
+    },
+    {
+      "id": 5,
+      "subject": "Task 6: Docs, version 4.0.0, build, push",
+      "status": "pending",
+      "description": "**Goal:** The docs describe 4.0, the manifest is 4.0.0, `chong-die/` is rebuilt, the full test suite passes, and everything is pushed to `main`.\n\n**Files:**\n- Modify: `chong-die-src/public/manifest.json`, `chong-die-src/DESIGN.md`, `chong-die-src/NOTICE.md`, `chong-die-src/docs/2026-10-07-roll-engine-design.md` (one line at the top), `chong-die/TRACKER.md`, `CLAUDE.md`, `README.md`, `TRACKER.md`\n- Rebuild: `chong-die/`\n\n**Acceptance Criteria:**\n- [ ] `chong-die-src/public/manifest.json` and `chong-die/manifest.json` both say `\"version\": \"4.0.0\"`.\n- [ ] `grep -nE \"chain adv|explode|keep low|crit each|Saved names|nimble = |# note|roll-examples|com.chongkit.chongdie/roll\" README.md CLAUDE.md chong-die-src/DESIGN.md` finds nothing.\n- [ ] `npm test` at the repo root passes.\n- [ ] After `git push`, `git status -sb` shows `main` level with `origin/main`.\n\n**Verify:** `npm test` → all suites pass; `git status -sb` → `## main...origin/main` with no ahead/behind\n\nFull steps: chong-die-src/docs/2026-10-08-command-language-v4-plan.md → Task 6: Docs, version 4.0.0, build, push\n\n```json:metadata\n{\"files\":[\"chong-die-src/public/manifest.json\",\"chong-die-src/DESIGN.md\",\"chong-die-src/NOTICE.md\",\"chong-die-src/docs/2026-10-07-roll-engine-design.md\",\"chong-die/TRACKER.md\"],\"verifyCommand\":\"npm test\",\"acceptanceCriteria\":[\"`chong-die-src/public/manifest.json` and `chong-die/manifest.json` both say `\\\"version\\\": \\\"4.0.0\\\"`.\",\"`grep -nE \\\"chain adv|explode|keep low|crit each|Saved names|nimble = |# note|roll-examples|com.chongkit.chongdie/roll\\\" README.md CLAUDE.md chong-die-src/DESIGN.md` finds nothing.\",\"`npm test` at the repo root passes.\",\"After `git push`, `git status -sb` shows `main` level with `origin/main`.\"],\"modelTier\":\"standard\"}\n```",
+      "blockedBy": [
+        4
+      ]
+    }
+  ],
+  "lastUpdated": "2026-10-07T16:29:19.372Z"
+}

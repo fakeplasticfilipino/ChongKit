@@ -85,8 +85,8 @@ parse just show their error (never hosted: no migration).
 - Tracker link removed: `channels.ts`, `incoming.ts`, `IncomingRolls.tsx`, their tests,
   `trackerRolls.test.ts`, the roll listener in `background.ts` (it keeps opening the popover).
   `TrayError` stays only if something else still raises tray errors.
-- **Rolls panel width:** follows the tray: `PANEL_WIDTH` becomes `panelWidth(height) =
-  max(240, height / 2 + 20)` in `layout.ts`; `windowWidth` uses it.
+- **Rolls panel width:** `PANEL_WIDTH` 360 → 280 px, fixed. (The tray is at most 350 px since
+  Owlbear caps the window at 700 px tall, so "tray + 20" would have made it wider, not thinner.)
 - Version 4.0.0; DESIGN.md, NOTICE.md, rebuild `chong-die/`, `chong-die/TRACKER.md`.
 
 ## Chong's Tracker
@@ -109,5 +109,5 @@ Vitest (`npm test` at the root runs everything):
   words after the modifier, words acting on the first group only.
 - roll: crit on the range starts a chain; a chain die chains only on max (a range value doesn't);
   `critadv` picks; adv/dis net and Primary Die; miss mark; caps.
-- layout: `panelWidth` at 400, 700, 1000 px.
+- layout: `PANEL_WIDTH` is 280; `windowWidth(700, true)` is 630.
 - Tracker: `npm test` still passes with the roll tests removed.
