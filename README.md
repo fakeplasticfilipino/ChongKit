@@ -7,7 +7,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | Tool | Status | What it does |
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
-| [Chong Die](chong-die/) | ✅ v3 | Owlbear Rodeo 3D dice with a plain-words command line, saved rolls and names in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
+| [Chong Die](chong-die/) | ✅ v4 | Owlbear Rodeo 3D dice with a plain-words command line, saved rolls in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
 | [Character Sheet](character-sheet/) | ✅ v3 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, notes; add more of any box, remove any; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
@@ -171,12 +171,7 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
   abilities) become each entry's **note**; everything not beside a monster (the fight's title,
   twist, family traits, loot) goes in the tab's **general note**.
 - **Notes:** the box under the add box is the tab's general note (GM tabs: GM only; players' tabs:
-  everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note.
-- **Rolls in notes:** dice in a note (`1d8!+3d8+2`, `2d6+3`, `1d20`) are underlined. Click one to
-  roll it in **Chong Die** (it must be installed in the room). A `(2×)` before it on the line rolls it twice.
-  The dice are converted to Chong Die's words when clicked (`1d8!` → `1d8 explode`, `4d6kh3` → `4d6 keep 3`,
-  `(2×)` → `x2`); Avrae operations with no Chong Die word aren't underlined.
-  Click anywhere else in the note to edit it.
+  everyone). Each entry has its own note in its ⋯ menu. Pasting a fight again doesn't repeat the note. Click a note to edit it.
 - **Minions** share one entry whose HP is how many are left: `Kobold Minion x10` (any name with
   "minion" in it) makes one entry with 10 HP. Pasted generator minions work the same way.
 - **Mass delete (GM only):** `/clear` deletes every entry in the current tab and empties its general
@@ -255,56 +250,35 @@ the faces the roll decided). It is a modified version of
   another tab; right-click (long-press) to edit or delete. Tabs: **+** adds, double-click renames,
   **×** deletes, drag to reorder.
 - **⋯**: Hide rolls, Roll history, other players' trays, export / import (your saved
-  rolls and names live in this browser only), about.
-- Rolls clicked in **Chong's Tracker** notes land on this tray, ready to throw.
-- **Outline:** whenever a roll uses `crit` or `miss`, the Primary Die (the first die of a group still
-  kept; with `crit each`, every kept die of the first throw) gets a **purple outline**, dark red
+  rolls live in this browser only), about.
+- **Outline:** whenever a roll uses `crit` or `miss`, the Primary Die (the first die still kept) gets a **purple outline**, dark red
   when the Primary Die is in the `miss` range, gold when that die crit. A
-  die the roll dropped (advantage, `keep`, `drop`) fades once it lands. Chain dice pop out of the
+  die the roll dropped (advantage) fades once it lands. Chain dice pop out of the
   die that made them after it settles.
 - **Marks, not verdicts:** the total is always the real sum; **MISS**, **CRIT** and **CAPPED** are
   shown beside it and the table decides what they mean.
 
-**Roll syntax** (a command is dice groups joined by `+` or `-`, with plain numbers as modifiers;
-rules follow the group they belong to: in `1d4 nimble + 2d6 + 3` only the dagger can crit)
+**Roll syntax:** dice and numbers joined by `+` or `-` (spaces optional), then words anywhere after
+the first dice. Every word is glued to an optional number; the words act on the first dice.
 
 | Word | Means | Example |
 |---|---|---|
-| `NdS` | N dice of S sides (`d20` is `1d20`, `d%` is `1d100`) | `2d6` |
-| `adv`, `adv2`, `dis`, `dis3` | Advantage / disadvantage counters; they cancel first. Net n adds n dice, then drops the n lowest (highest for `dis`); ties drop from the left | `2d6 adv3` |
-| `keep 3`, `keep low 1`, `drop 1` | Keep the highest / lowest, drop the lowest | `4d6 keep 3` |
-| `crit` | Can-crit dice crit on their max and add chain dice | `1d8 crit` |
-| `crit each` | Every kept die of the first throw can crit, advantage dice included | `3d10 crit each` |
-| `miss <range>` | Mark MISS when the Primary Die is in range | `2d6 crit miss 4-` |
-| `chain <range>` | The Primary Die in range adds a chain die | `1d10 crit chain 5+` |
-| `chain adv`, `chain adv2` | Chain dice roll with advantage | `1d10 crit chain adv` |
-| `explode` | Dice roll one more on their max, which is not a crit | `1d6 explode` |
-| `xN` | Roll the whole command N times, separately (1 to 25) | `1d20+5 x3` |
-| `# text` | A note shown with the roll | `1d10 crit # longsword` |
+| `NdS` | N dice of S sides (`d20` is `1d20`, `d%` is `1d100`) | `2d6+1d4-1` |
+| `adv`, `adv3`, `dis`, `dis2` | Advantage / disadvantage (bare = 1); they cancel first. Net n adds n dice, then drops the n lowest (highest for `dis`); ties drop from the left | `1d20+5 adv` |
+| `crit`, `crit10`, `crit5-10` | The Primary Die in this range (bare: the die's max) crits and adds a chain die | `1d10+3 crit` |
+| `miss`, `miss1`, `miss1-4` | Mark MISS when the Primary Die is in this range (bare: 1) | `1d10+3 crit miss` |
+| `critadv`, `critadv2` | Chain dice roll with advantage (needs `crit`) | `1d10 crit critadv` |
+| `x2`, `x3` | Roll the whole command N times, separately (1 to 25) | `1d10+3 crit miss x2` |
 
-Ranges are written one way everywhere: `5+` (5 or more), `4-` (4 or less), `1-2` (1 to 2), `6`
-(exactly 6); a `+` or `-` right after a range starts the next part (`miss 4-+3`). The Primary Die is the first die of a group still kept; with `crit`, it and every chain
-die can crit. A chain die is one more die of the same size added to the total (with `chain adv`, an
-advantage pick of that size); a die that meets several reasons at once adds one chain die. Errors
-show under the command line: `keep` with `drop`, `adv`/`dis` with `keep`/`drop`, `chain` without
-`crit`, `keep n` outside 1 to the dice count, `drop n` outside 1 to the dice count minus one, or a
-command with no dice. Limits: 100 dice per roll and 20 chain dice; a roll that hits either stops adding
-dice and is marked CAPPED. d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …) are
-rolled without a 3D die.
-
-**Saved names:** `name = text` saves a name and `name =` deletes it. A name expands where it is used,
-and names may use names (a loop is an error):
-
-```
-nimble = crit miss 1
-atk    = 1d10 nimble chain 5+ chain adv
-atk +3        rolls  1d10 crit miss 1 chain 5+ chain adv +3
-```
-
-`nimble` is built in as `crit miss 1` (Nimble's Primary Die: a 1 misses, its max crits); the engine
-itself contains no Nimble. Save your own `nimble` to change it, and delete it to get the built-in
-back. A name's own `# note` moves to the end of the command. Chong Die leaves out rerolls,
-multiplication and division, and target checks on purpose.
+Nimble's attack is `1d10+3 crit miss`. The Primary Die is the first die still kept after advantage.
+A chain die is one more die of the same size added to the total (with `critadv`, an advantage pick);
+**a chain die chains again only on its max**, never on the crit range. A range's `-` is part of it
+(`crit5-10`); to subtract, leave a space (`crit5 -2`). Errors show under the command line (a word
+twice, a range outside the die or backwards, `crit` and `miss` overlapping, `critadv` without
+`crit`, unknown words). Limits: 100 dice per roll and 20 chain dice; a roll that hits either stops
+adding dice and is marked CAPPED. d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …)
+are rolled without a 3D die. Chong Die leaves out keep/drop, exploding dice, rerolls, multiplication
+and division, and target checks on purpose.
 
 **Building:** `cd chong-die-src`, then `npx yarn@1.22.22` (install) and `npx yarn@1.22.22 build`,
 which writes the site files into `chong-die/`. Commit both folders. How it works: `chong-die-src/DESIGN.md`.

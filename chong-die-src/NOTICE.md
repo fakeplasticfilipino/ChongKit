@@ -7,6 +7,7 @@ under the same license.
 
 ## Changes made by ChongKit
 
+- 4.0.0: a simpler command language (words glued to numbers: `adv3`, `crit5-10`, `miss1-4`, `critadv`, `x2`; words act on the first dice); removed keep/drop, explode, crit each, saved names and notes; removed the Chong's Tracker roll link; Rolls panel 280 px.
 - Renamed to Chong Die; plugin id `com.chongkit.chongdie/` (was `rodeo.owlbear.dice/`)
 - Built into `../chong-die/`, served from `/ChongKit/chong-die/` on GitHub Pages
 - Libraries split into `vendor-*` chunks by how often they change (Rapier, three.js, React, MUI,

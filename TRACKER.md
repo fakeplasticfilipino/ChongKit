@@ -120,6 +120,7 @@ Owlbear Rodeo extension, tracked separately in [chongs-tracker/TRACKER.md](chong
 
 ## Chong Die (`chong-die/`)
 Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0) with a plain-words command line, an engine that decides every roll, and saved-roll pills.
+- ✅ Chong Die 4.0.0 and Chong's Tracker 1.10.0: new command language, no roll link between them.
 - ✅ v3.1.0: dice land on the record's face naturally (pre-simulated throw played back, no turn after landing).
 - ✅ v3.0.2: the roll engine rebuilt (CLI-first, engine-decided, dice land on the record's face), saved names (`nimble` built in), Primary Die outlines from the record; Avrae syntax, waves, right-click exploding and the Nimble switch removed. Status, Owlbear checklist and backlog: [chong-die/TRACKER.md](chong-die/TRACKER.md); how it works: `chong-die-src/DESIGN.md`
 

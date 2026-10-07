@@ -7,9 +7,9 @@ The rules (license, build, version bump, contracts) are in the repo's `CLAUDE.md
 One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` → `App`).
 
 - **Tray** (`tray/InteractiveTray.tsx`): upstream's 3D tray, with the command line always on top
-  (`chong/CommandLine.tsx`) and ▤ Rolls beside it. Errors from the tracker show as a banner
+  (`chong/CommandLine.tsx`) and ▤ Rolls beside it. Tray errors show as a banner
   (`TrayError`).
-- **Rolls panel** (`chong/RollPanel.tsx`), docked to the right, 360 px, toggled by ▤
+- **Rolls panel** (`chong/RollPanel.tsx`), docked to the right, 280 px, toggled by ▤
   (`prefs.panelOpen`). The window width is `windowWidth(height, panelOpen)` (`chong/layout.ts`),
   set with `OBR.action.setWidth` in one step (stepping it through Owlbear looks laggy). Opening widens
   the window, then fades the panel in once it fits; closing fades it out, then narrows the window
@@ -26,36 +26,22 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
 
 ## Rolling
 
-The engine decides every number; the tray acts the result out. Spec: `docs/2026-10-07-roll-engine-design.md`.
+The engine decides every number; the tray acts the result out. Spec: `docs/2026-10-08-command-language-v4-design.md` (language), `docs/2026-10-07-roll-engine-design.md` (engine).
 
 - Everything rolls as a command, even dice picked by hand (`rollPickedDice` → `countsToCommand`).
   `startCommandRoll` (`chong/rollRunner.ts`) expands, parses and rolls the command, then throws stage 0.
-- **Hold to roll:** custom rolls (typed, pills, Chong's Tracker, history, Reroll) never throw right
+- **Hold to roll:** custom rolls (typed, pills, history, Reroll) never throw right
   away: `placeCommand` (`chong/place.ts`) puts their first stage's dice on the tray as picked dice
   and keeps the command in `trayStore.placed`; holding Roll shakes them, releasing throws the
   command (`startCommandRoll` with the hold's `speedMultiplier`). Changing or clearing the dice by
   hand drops the command (`dropPlaced` in `controls/store.ts`). Commands with only virtual dice
   (`1d7`) roll at once.
-- **Roll engine** (`src/engine/`, pure TS, Vitest): `expand` (saved names, repeated; a loop is an
-  error) → `parse` (the only module that knows the words) → `roll` (plan + random source: the
-  browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept,
-  crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the
-  result text; the first line ends with ` # note`). `expand` pads each name with spaces, so a glued sign
-  (`atk+3`) starts the next part; after `miss`/`chain`, `adv+3` splits, and a range takes its longest
-  valid start when a sign follows (`4-+3` → `4-`, `+3`); `1+3` is an error asking for a space.
-  `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray
-  shows. Errors are `EngineError`, shown under the command line.
+- **Roll engine** (`src/engine/`, pure TS, Vitest): `parse` (a scanner; the only module that knows the words: `adv dis crit miss critadv xN`, glued to an optional number or `N-M` range, acting on the first dice group) → `roll` (plan + random source: the browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept, crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the result text). The Primary Die in the crit range is a crit; a chain die crits and chains only on its max. `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray shows. Errors are `EngineError`, shown under the command line.
 - **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CRIT and
   CAPPED are marks beside it. Caps: 100 dice per roll (checked before rolling) and 20 chain dice
-  (a `chain adv` pick counts as one); hitting either marks the roll CAPPED.
-- **Saved names** (`name = text` saves, `name =` deletes; `chong/chongStore.ts`, `chong/savedRolls.ts`):
-  names expand where used and may use names. The built-in `nimble = crit miss 1` (`BUILT_IN_NAMES`,
-  frozen, in `chong/savedRolls.ts`) sits under the
-  user's names: a user's `nimble` wins, and deleting it restores the built-in. A name's own `# note`
-  moves to the end of the expanded command. The expanded text is what rolls, syncs and goes into
-  history. The engine contains no Nimble.
+  (a `critadv` pick counts as one); hitting either marks the roll CAPPED.
 - **Sync:** each roll carries `chong` metadata (`ChongRollMeta` in `chong/rollMeta.ts`:
-  `{ v: 3, record, parts, faces, stage }`): the record, 3D die id → record die and part, 3D die id →
+  `{ v: 4, record, parts, faces, stage }`): the record, 3D die id → record die and part, 3D die id →
   forced face, and the stage shown so far. Only the roller rolls; every tray acts out the same
   record, with no recomputing and no waves. Hidden rolls sync without the record. A roll in another
   format (`isCurrentMeta`) shows as its text with no dice, never as an error.
@@ -63,17 +49,14 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
   (`revealStages`). `revealNext` (run by `useRevealRunner`) waits until every die on the tray has
   settled, then pops the next stage's dice out of their parents (`popThrow`); an advantage chain die
   pops as a pair.
-- **Dropped dice** fade once they have landed (a die the record dropped: advantage, `keep`/`drop`,
+- **Dropped dice** fade once they have landed (a die the record dropped: advantage,
   a chain pick's lower die).
-- **From Chong's Tracker:** `{ id, command }` on `…/roll` → the background acks, opens the window and
-  re-sends `…/run` until `…/run-ack` (`chong/channels.ts`, `background.ts`, `chong/incoming.ts`).
 
 ## Primary Die outlines
 
 Placed by the record, not by where a die lands, and shown whenever a group uses `crit` or `miss`
 (`usesCrit` / `usesMiss`); there is no switch. The Primary Die is the first die of a group still kept;
-the outlined dice are the group's `primaries` (with `crit each`, every kept die of the first throw;
-records from before 3.0.2 lack it and outline just the Primary Die).
+the outlined dice are the group's `primaries` (just the Primary Die).
 
 - `chong/Highlights.tsx` draws the outline: the die's own geometry, scaled 1.08, inside out
   (`BackSide`), unlit. Per die: gold when it crit; dark red when it is the group's Primary Die and
@@ -127,7 +110,7 @@ turns after it lands. Since R maps the solid onto itself, the turned die looks l
 
 ## Storage (localStorage)
 
-- `chongkit.chongdie`: saved rolls (tabs, pills, typed history) and saved names, `chong/savedRolls.ts`. Only
+- `chongkit.chongdie`: saved rolls (tabs, pills, typed history), `chong/savedRolls.ts`. Only
   `chongStore` writes it.
 - `chongkit.chongdie.prefs`: `panelOpen` (`chong/prefs.ts`, `prefsStore`); the 2.x `nimble` switch is dropped on load.
 - Stores: `chongStore` (saved rolls, tabs, draft, error), `trayStore` (tray error banner),

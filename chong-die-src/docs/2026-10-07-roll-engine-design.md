@@ -1,4 +1,5 @@
 # Chong Die 3.0: the roll engine, rebuilt
+> Its command language is replaced by 4.0: see `2026-10-08-command-language-v4-design.md`.
 
 Design spec, agreed in a brainstorm on 7 Oct 2026. It replaces the Avrae roll engine (`src/roll/`)
 and the physics-decided dice. Read with `DESIGN.md` (how Chong Die works today) and the repo's
