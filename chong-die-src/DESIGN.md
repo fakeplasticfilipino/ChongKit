@@ -11,9 +11,9 @@ One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` �
   (`TrayError`).
 - **Rolls panel** (`chong/RollPanel.tsx`), docked to the right, 360 px, toggled by ▤
   (`prefs.panelOpen`). The window width is `windowWidth(height, panelOpen)` (`chong/layout.ts`),
-  set with `OBR.action.setWidth`; opening or closing glides it there over `PANEL_GLIDE_MS` (a step
-  per frame, `plugin/ResizeObserver.tsx`). Tray and panel never shrink (the window clips them), and
-  a closing panel stays mounted until the glide ends. Tabs + ⋯ on top; the first tab (Rolls: can't be closed or moved)
+  set with `OBR.action.setWidth` in one step (stepping it through Owlbear looks laggy). Opening widens
+  the window, then fades the panel in once it fits; closing fades it out, then narrows the window
+  (`usePanelFade` in `App.tsx`, `PANEL_FADE_MS`). Tray and panel never shrink. Tabs + ⋯ on top; the first tab (Rolls: can't be closed or moved)
   starts with the dice style button and a pill per die (`DicePills`: each click adds one die to the
   tray, thrown with the tray's Roll button), a faint line, then the tab's pills and a + pill.
 - **⋯** (`chong/MoreMenu.tsx`): hide rolls, roll history, other players' trays, Nimble rules,
