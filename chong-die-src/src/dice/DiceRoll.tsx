@@ -1,5 +1,8 @@
-import { Physics } from "@react-three/rapier";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Physics, useRapier } from "@react-three/rapier";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDieDensity } from "../helpers/getDieDensity";
+import { preSimulate, SimObstacle, Track } from "../helpers/preSimulate";
+import { PlaybackDice } from "./PlaybackDice";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 import { TrayColliders } from "../colliders/TrayColliders";
 import { DiceRoll as DiceRollType } from "../types/DiceRoll";
@@ -43,6 +46,31 @@ export function DiceRoll({
   const faces = isCurrentMeta(roll?.chong) ? roll.chong.faces : undefined;
 
   const emptyCallback = useCallback(() => {}, []);
+
+  // Use a fixed transform if we have it
+  // This allows re-rolling of individual dice as
+  // we can lock the dice that are already in the tray
+  const fixedTransformOf = (die: Die) => transformsRef?.current?.[die.id] || undefined;
+
+  // Chong Die: each die's pre-simulated throw, by die id, made once (a die keeps its path while
+  // others land or are thrown again)
+  const tracksRef = useRef(new Map<string, Track>());
+  const playback =
+    !finishedTransforms && faces
+      ? (dice ?? []).filter(
+          (die) => !fixedTransformOf(die) && faces[die.id] !== undefined && rollThrows[die.id]
+        )
+      : [];
+  const obstacles = (dice ?? []).flatMap((die) => {
+    const transform = fixedTransformOf(die);
+    return transform ? [{ type: die.type, transform }] : [];
+  });
+  useEffect(() => {
+    const ids = new Set(dice?.map((die) => die.id));
+    for (const id of tracksRef.current.keys()) {
+      if (!ids.has(id)) tracksRef.current.delete(id);
+    }
+  }, [dice]);
 
   /**
    * Because we recreate the physics world every new roll
@@ -99,12 +127,24 @@ export function DiceRoll({
         paused={paused}
       >
         <TrayColliders />
+        {/* Chong Die: dice with a record face play a pre-simulated throw that lands on it */}
+        <PlaybackDiceSet
+          dice={playback}
+          obstacles={obstacles}
+          rollThrows={rollThrows}
+          faces={faces ?? {}}
+          paused={paused}
+          tracks={tracksRef.current}
+          onRollFinished={onRollFinished}
+          Dice={Dice}
+          faded={faded}
+        />
         {dice?.map((die) => {
+          if (playback.includes(die)) {
+            return null;
+          }
           const dieThrow = rollThrows[die.id];
-          // Use a fixed transform if we have it
-          // This allows re-rolling of individual dice as
-          // we can lock the dice that are already in the tray
-          const fixedTransform = transformsRef?.current?.[die.id] || undefined;
+          const fixedTransform = fixedTransformOf(die);
           return (
             <PhysicsDice
               key={die.id}
@@ -132,3 +172,89 @@ export function DiceRoll({
 DiceRoll.defaultProps = {
   Dice: DefaultDice,
 };
+
+/**
+ * Chong Die: dice thrown together, pre-simulated as one throw (with the dice already lying in the
+ * tray as obstacles) and played back. A die whose pre-simulation fails rolls live and turns onto its
+ * face once it settles.
+ */
+function PlaybackDiceSet({
+  dice,
+  obstacles,
+  rollThrows,
+  faces,
+  paused,
+  tracks,
+  onRollFinished,
+  Dice,
+  faded,
+}: {
+  dice: Die[];
+  obstacles: SimObstacle[];
+  rollThrows: Record<string, DiceThrow>;
+  faces: Record<string, number>;
+  paused: boolean;
+  tracks: Map<string, Track>;
+  onRollFinished?: (id: string, number: number, transform: DiceTransform) => void;
+  Dice: React.FC<JSX.IntrinsicElements["group"] & { die: Die; faded?: boolean }>;
+  faded: Set<string>;
+}) {
+  const { rapier } = useRapier();
+  const emptyCallback = useCallback(() => {}, []);
+
+  const missing = dice.filter((die) => !tracks.has(die.id));
+  if (missing.length) {
+    try {
+      const made = preSimulate(
+        rapier,
+        missing.map((die) => ({
+          type: die.type,
+          density: getDieDensity(die),
+          dieThrow: rollThrows[die.id],
+        })),
+        obstacles
+      );
+      missing.forEach((die, i) => tracks.set(die.id, made[i]));
+    } catch (e) {
+      console.warn("Pre-simulation failed: rolling live", e);
+    }
+  }
+
+  return (
+    <>
+      {dice.map((die) => {
+        const track = tracks.get(die.id);
+        const model = (landed: boolean) => (
+          <Dice
+            die={die}
+            onClick={emptyCallback}
+            onPointerDown={emptyCallback}
+            faded={landed && faded.has(die.id)}
+          />
+        );
+        return track ? (
+          <PlaybackDice
+            key={die.id}
+            die={die}
+            track={track}
+            forcedFace={faces[die.id]}
+            paused={paused}
+            onRollFinished={onRollFinished}
+          >
+            {model}
+          </PlaybackDice>
+        ) : (
+          <PhysicsDice
+            key={die.id}
+            die={die}
+            dieThrow={rollThrows[die.id]}
+            onRollFinished={onRollFinished}
+            forcedFace={faces[die.id]}
+          >
+            {model(false)}
+          </PhysicsDice>
+        );
+      })}
+    </>
+  );
+}

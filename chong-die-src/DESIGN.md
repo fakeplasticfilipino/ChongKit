@@ -80,25 +80,32 @@ records from before 3.0.2 lack it and outline just the Primary Die).
   the group missed; else purple.
 - Chain dice aren't outlined; the CRIT mark is in the result text.
 
-## Faces (3.0: landing on the record's face)
+## Faces (landing on the record's face)
 
-Decided by a throwaway spike (Task 1 of the 3.0 plan). **Settle-then-turn:** the die rolls and
-settles as now; then its visible model (the `dice` group, never the collider) turns in a 250 ms
-slerp from identity to `R`, a rotation of the solid onto itself that puts the record's face T where
-the landed face U is (T is the face the record wants, U the face the die landed on; a locator is a
-per-face marker in the die model, and the top one gives the face value; `R · locator(T) ≈ locator(U)`, in the die's frame).
+**Pre-simulate, then play back (3.1).** Before the tray shows a throw, `PlaybackDiceSet`
+(`dice/DiceRoll.tsx`) runs it out of sight in a headless Rapier world (`helpers/preSimulate.ts`:
+the live world's settings, `colliders/trayShape.ts`, every die of the throw, the dice already lying
+in the tray as fixed obstacles; settle and 5 s cap per 1/120 step) and records each die's path and
+its collisions. `dice/PlaybackDice.tsx` reads the face the path lands on (U) off its last pose, turns
+the model by R (below) before the first frame, and plays the path back, interpolated, with the
+collision sounds (`dice/useDieSound.ts`). The die tumbles and stops on the record's face T; nothing
+turns after it lands. Since R maps the solid onto itself, the turned die looks like any die.
 
-- **Why not pre-simulation.** Rapier does replay a throw exactly: a headless world
-  (`@dimforge/rapier3d-compat` 0.11.2, the build `@react-three/rapier` 1.1.1 uses; fixed 1/120
-  step; the tray's colliders; every die of the throw) gave the same top face on 20/20 throws of 1
-  to 6 dice across two runs, poses bit-identical. But only a bit-exact copy works: moving the dice's
-  start by 1e-6 changed a top face on 5 to 8 throws of 20. Held: same WASM build, fixed step with
-  `interpolate={false}` (frame rate only changes how many steps run per frame), same collider
-  shapes, a fresh world per roll. Not shown: that the live world is built bit-identically (bodies
-  come from `@react-three/rapier` through three.js transforms, the Euler round trip in
-  `PhysicsDice`, React's effect order), and the settle check, lock and 5 s cap run on render frames
-  and the wall clock, not on steps (locking 2 or 3 steps late kept every top face in 200 throws,
-  but the poses differ).
+- **Why playback, not replay in the live world.** Rapier replays a headless throw bit for bit
+  (tested in `preSimulate.test.ts`), but a live world only matches when it is built bit-identically
+  (moving a start by 1e-6 changed a top face on 5 to 8 throws of 20), and the live settle check
+  runs on render frames. Playing the recorded path back needs neither.
+- **Every tray simulates for itself.** Other players' trays run the same pre-simulation from the
+  synced throws and obstacle poses, and compute their own R from what their path lands on, so they
+  show T even if a path differed. Each path is made once per die id (`tracksRef`): a die keeps its
+  path while others land, chain dice are thrown, or one is dragged and rethrown (the moving dice
+  aren't obstacles for a rethrow).
+- **Fallbacks.** A die with no record face (hidden rolls on other trays, rolls in another format)
+  rolls live as before. If the pre-simulation throws, the die rolls live and turns after it
+  settles (the 3.0 turn in `PhysicsDice`: a 250 ms slerp from identity to R).
+- **The reported pose** is `rotation · R` (d4: plus the pivot's shift, `turnedPose`), what
+  `finishDieRoll` stores and `DiceRollSync` sends, so the static dice of every tray, and a die
+  placed again by a fixed transform (which never turns), show the record's face.
 - **Finding R.** Build each die's symmetry group from the collider hull's face normals (proper
   rotations; d4 12, d6 24, d8 24, d10/d100 10, d12 60, d20 60), tolerance about 2e-3 rad (the
   collider vertices are printed to 6 digits). Don't solve it from the locators: they aren't an
@@ -113,22 +120,10 @@ per-face marker in the die model, and the top one gives the face value; `R · lo
   whose model is centred at y ≈ −0.165 (model units, ×0.1 in the tray), not at the origin: turn it
   about that point or it jumps by a fifth of its size. Its locators point at corners (a d4 reads its
   top corner).
-- **Other players:** `R` is a symmetry of the collider and the model, so the final pose can carry
-  `rotation · R` (d4: plus the pivot's shift) and their trays snap to it as now.
 - **In the code:** `helpers/faceSymmetry.ts` (pure, tested for every die and style: every landed
   face turns to read every face) builds each type's group from `colliders/colliderVertices.ts`
-  (the hulls' vertices, shared with the colliders) and picks `R` from the locators read off the
-  die (`getLocatorsFromDiceGroup`, so the d20's rotated mesh is accounted for). `DiceRoll` hands
-  each `PhysicsDice` its `forcedFace` (`chong.faces[id]`; on every tray that has the record).
-  On settle, or at the 5 s cap where it lies, a die showing another face locks its body, turns its
-  `group` (250 ms; the hull is the same shape under `R`) and then reports the forced face with the pose
-  `rotation · R` (d4: the position moved by the pivot's shift, `turnedPose`). That pose is what
-  `finishDieRoll` stores and `DiceRollSync` sends, so the static dice of every tray, and a die
-  placed again by a fixed transform (which never turns), show the record's face. A die already
-  showing it, or one the record doesn't cover (non-command rolls), reports as before.
-- **How the group is built:** the rotations that map the collider hull's face normals onto
-  themselves (tolerance 2e-3), then the element that moves T's locator closest to U's. Implemented in
-  `src/helpers/faceSymmetry.ts`.
+  (the hulls' vertices, shared with the colliders and the pre-simulation) and picks `R` from the
+  locators read off the die (`getLocatorsFromDiceGroup`, so the d20's rotated mesh is accounted for).
 
 ## Storage (localStorage)
 

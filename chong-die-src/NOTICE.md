@@ -62,3 +62,12 @@ under the same license.
   next part; the result's first line ends with the roll's `# note`; `crit each` outlines every
   kept die of the first throw; `nimble` moved out of the engine into `chong/savedRolls.ts`;
   "Saved" / "Deleted" notices are no longer red; a d1's 1 is not bold
+
+### 3.1.0 (Oct 2026)
+
+- Dice land on the record's face with no turn: each throw is pre-simulated headless
+  (`helpers/preSimulate.ts`) and played back (`dice/PlaybackDice.tsx`), the model turned by the
+  solid's symmetry from the first frame; collision sounds replay from the simulation
+  (`dice/useDieSound.ts`). Upstream files changed: `colliders/TrayColliders.tsx` (built from
+  `colliders/trayShape.ts`, shared with the pre-simulation), `dice/PhysicsDice.tsx` (sound moved
+  to `useDieSound`), `dice/DiceRoll.tsx` (plays back dice with a record face)

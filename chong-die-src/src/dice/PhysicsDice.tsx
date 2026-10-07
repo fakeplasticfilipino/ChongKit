@@ -13,10 +13,8 @@ import {
   getValueFromDiceGroup,
 } from "../helpers/getValueFromDiceGroup";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useAudioListener } from "../audio/AudioListenerProvider";
-import { getNextBuffer } from "../audio/getAudioBuffer";
+import { useDieSound } from "./useDieSound";
 import { PhysicalMaterial } from "../types/PhysicalMaterial";
-import { getDieWeightClass } from "../helpers/getDieWeightClass";
 import { getDieDensity } from "../helpers/getDieDensity";
 import { DiceThrow } from "../types/DiceThrow";
 import { DiceTransform } from "../types/DiceTransform";
@@ -31,8 +29,6 @@ import {
 
 /** Minium linear and angular speed before the dice roll is considered finished */
 const MIN_ROLL_FINISHED_SPEED = 0.005;
-/** Cool down in MS before dice audio can get played again */
-const AUDIO_COOLDOWN = 200;
 /** Force stop the physics roll after 5 seconds */
 const MAX_ROLL_TIME = 5000;
 /** Chong Die: how long a settled die takes to turn onto its record's face (DESIGN.md, Faces) */
@@ -234,38 +230,18 @@ export function PhysicsDice({
     };
   }, [checkRollFinished]);
 
-  const listener = useAudioListener();
-  const lastAudioTimeRef = useRef(0);
+  const playSound = useDieSound(die);
   const handleCollision = useCallback(
     ({ rigidBodyObject }: CollisionEnterPayload) => {
-      if (performance.now() - lastAudioTimeRef.current < AUDIO_COOLDOWN) {
-        return;
-      }
-      const group = ref.current;
       // TODO: remove conditional when this gets merged https://github.com/pmndrs/react-three-rapier/pull/151/commits
       const physicalMaterial: PhysicalMaterial =
         rigidBodyObject?.userData?.material || "LEATHER";
       const linvel = rigidBodyRef.current?.linvel();
-      if (group && physicalMaterial && linvel) {
-        const speed = magnitude(linvel);
-        const weightClass = getDieWeightClass(die);
-        const buffer = getNextBuffer(weightClass, physicalMaterial);
-        if (buffer && listener) {
-          const sound = new THREE.PositionalAudio(listener);
-          sound.setBuffer(buffer);
-          sound.setRefDistance(3);
-          sound.play();
-          // Modulate sound volume based off of the speed of the colliding dice
-          sound.setVolume(Math.min(speed / 5, 1));
-          sound.onEnded = () => {
-            group.remove(sound);
-          };
-          group.add(sound);
-          lastAudioTimeRef.current = performance.now();
-        }
+      if (linvel) {
+        playSound(ref.current, physicalMaterial, magnitude(linvel));
       }
     },
-    []
+    [playSound]
   );
 
   const userData = useMemo(

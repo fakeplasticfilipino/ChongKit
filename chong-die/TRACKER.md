@@ -5,14 +5,14 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v3.0.2)
+## ✅ Now (v3.1.0)
 - One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right and fades in / out as it opens / closes (the tray never squeezes)
 - Rolls tab with dice pills (each click adds a die to the tray) and the dice style; saved-roll pills that always roll; ⋯ for hide, history, players' trays, export / import
 - Chong's Tracker's look (transparent, translucent surfaces)
 - Roll engine (`src/engine/`): plain words (`adv`, `keep`, `crit`, `miss`, `chain`, `explode`, `xN`), the engine rolls first and every tray acts out the same record; MISS / CRIT / CAPPED marks
 - Saved names (`name = text`); `nimble = crit miss 1` built in and editable
 - Primary Die outline from the record whenever a roll uses `crit` or `miss`; dropped dice fade; chain dice pop out after their parent settles
-- Dice land on the record's face (250 ms turn after settling)
+- Dice land on the record's face naturally (3.1.0): each throw is pre-simulated out of sight and played back with the model already turned, so there's no turn after landing; sounds replay from the simulation
 - Libraries in six `vendor-*` chunks: a new MUI / drei part rewrites only that chunk (~250 KB), never Rapier (2 MB) or three.js
 - Rolls from Chong's Tracker (converted to the new words); shared examples tested by both sides; `npm test` runs everything
 - Hold to roll for every custom roll (typed, pills, tracker, history): dice wait on the tray, hold and release Roll
@@ -21,6 +21,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Removed in 2.7: the ⚡ Instant switch, bonus / advantage, the fairness tester and debug store
 
 ## 📋 To check at the table (Owlbear, two players)
+- [ ] 3.1.0: dice tumble and stop on the result with no turn, on both trays; collision sounds still play; a chain die bounces off the dice lying in the tray; a die dragged and rethrown lands on the same face
 - [ ] `2d6 adv`: three d6 land, the dropped one fades; same text and total on the other tray
 - [ ] `1d8 crit` until it crits: a chain d8 pops out after the parent settles; gold outline; CRIT
 - [ ] `atk = 1d10 nimble chain 5+ chain adv`, then `atk +3`: on 5+ a pair pops out and the lower fades; on 1 a dark red outline and MISS

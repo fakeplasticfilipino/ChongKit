@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "http-server", "..", "-p", "8000", "-c-1", "--silent"],
       "port": 8000
+    },
+    {
+      "name": "chong-die-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--prefix", "chong-die-src", "vite", "chong-die-src", "--port", "5173", "--strictPort"],
+      "port": 5173
     }
   ]
 }
