@@ -176,15 +176,10 @@ html.page .tabbar, html.page .bar, html.page .list { display: none; }
 .standalone h1 { font-size: 24px; margin: 0 0 8px; }
 .standalone p { color: var(--text2); }
 .standalone #manifest-url { display: block; padding: 10px 12px; border-radius: 8px; background: var(--field); user-select: all; overflow-wrap: anywhere; }
-/* A note with its rolls underlined; click a roll to roll it in Chong Die, elsewhere to edit */
+/* A note shown as text; click it to edit */
 .note-view {
   display: block; width: 100%; min-height: 32px; padding: 6px 10px; border-radius: 8px;
   background: var(--field); line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text;
 }
 .note-view:hover { background: var(--hover); }
 .note-view:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--primary); }
-.roll {
-  display: inline; padding: 0; border: 0; background: none; font: inherit; color: var(--primary);
-  text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
-}
-.roll:hover { text-decoration-thickness: 2px; }
