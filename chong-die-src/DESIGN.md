@@ -59,6 +59,43 @@ Recorded with the roll as `chong.nimble`, so everyone sees the roller's setting.
   the term's own ops (`<key>m`, then `…mm` while the new die shows its max; counted in the 20 extra
   dice); `throwNextWave` pops each new die out of its parent (`popThrow`).
 
+## Faces (3.0: landing on the record's face)
+
+Decided by a throwaway spike (Task 1 of the 3.0 plan). **Settle-then-turn:** the die rolls and
+settles as now; then its visible model (the `dice` group, never the collider) turns in a 250 ms
+slerp from identity to `R`, a rotation of the solid onto itself that puts the record's face T where
+the landed face U is (`R · locator(T) ≈ locator(U)`, in the die's frame).
+
+- **Why not pre-simulation.** Rapier does replay a throw exactly: a headless world
+  (`@dimforge/rapier3d-compat` 0.11.2, the build `@react-three/rapier` 1.1.1 uses; fixed 1/120
+  step; the tray's colliders; every die of the throw) gave the same top face on 20/20 throws of 1
+  to 6 dice across two runs, poses bit-identical. But only a bit-exact copy works: moving the dice's
+  start by 1e-6 changed a top face on 4 to 7 throws of 20. Held: same WASM build, fixed step with
+  `interpolate={false}` (frame rate only changes how many steps run per frame), same collider
+  shapes, a fresh world per roll. Not shown: that the live world is built bit-identically (bodies
+  come from `@react-three/rapier` through three.js transforms, the Euler round trip in
+  `PhysicsDice`, React's effect order), and the settle check, lock and 5 s cap run on render frames
+  and the wall clock, not on steps (locking 2 or 3 steps late kept every top face in 200 throws,
+  but the poses differ).
+- **Finding R.** Build each die's symmetry group from the collider hull's face normals (proper
+  rotations; d4 12, d6 24, d8 24, d10/d100 10, d12 60, d20 60), tolerance about 2e-3 rad (the
+  collider vertices are printed to 6 digits). Don't solve it from the locators: they aren't an
+  exactly symmetric set. Pick the group element taking T's locator closest to U's. Checked for
+  every resting face and every T, read the way `getValueFromDiceGroup` does: d4 16/16, d6 36/36,
+  d8 64/64, d10 100/100, d12 144/144, d20 400/400, d100 100/100.
+- **Locators** (the `.tsx` values the app uses): the d6's are exact. The d10/d100's sit at 31.2°
+  above and 26.8° below the equator (the faces are at ±42.3°), so `R` misses by up to 4.9°; the d20's
+  by up to 2.3° (positions rounded to 2 decimals), d8 4.8°, d12 1.5°. All still read right; the
+  smallest margin is the d20 (0.23 in the up-dot between the top locator and the next).
+- **The model stays put** under every `R` (within 0.16% of its size) for every die but the d4,
+  whose model is centred at y ≈ −0.165 (model units, ×0.1 in the tray), not at the origin: turn it
+  about that point or it jumps by a fifth of its size. Its locators point at corners (a d4 reads its
+  top corner).
+- **Other players:** `R` is a symmetry of the collider and the model, so the final pose can carry
+  `rotation · R` (d4: plus the pivot's shift) and their trays snap to it as now.
+- The spike's scripts (symmetry check, headless harness) are kept locally in
+  `.superpowers/sdd/2026-10-07-roll-engine-plan/spike-harness/` (git-ignored).
+
 ## Storage (localStorage)
 
 - `chongkit.chongdie`: saved rolls (tabs, pills, typed history), `chong/savedRolls.ts`. Only
