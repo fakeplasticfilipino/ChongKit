@@ -5,7 +5,7 @@ the Nimble tools. Update this when work starts or finishes.
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ v1 — built, needs a real Owlbear test
+## ✅ v1 — built, tested in a real Owlbear room
 - [x] Extension skeleton: `manifest.json`, action popover (`index.html`), background page, vendored SDK
 - [x] Tabs: create (+), rename (double-click), delete (×); **Players** tab is permanent; players can make and manage their own tabs
 - [x] Entries: name + HP; everything saved to the **scene's** metadata (never room metadata), one key per entry
@@ -51,10 +51,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Notes show as text; click elsewhere in a note to edit it
 - [x] Browser check (fake SDK): paste, underline, click sends, no-ack notification, edit + Escape
 
-## 📋 Next up
-- [ ] Owlbear: click a note roll with Chong Die ⚡ on and off, with Chong Die closed, and without it installed
-- [ ] Install in a real Owlbear room and check: notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge pills on different token sizes and maps (v1.6.0), click-to-attach (popover stays open?), token pictures in the panel, context-menu icon, players' view
-- [ ] Fix whatever that test turns up
+## ✅ Checked in a real Owlbear room
+- [x] Note rolls into Chong Die (open, closed, not installed)
+- [x] Notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge pills on different token sizes and maps, click-to-attach, token pictures in the panel, context-menu icon, players' view: nothing to fix
 
 ## Dropped
 - Custom counters (number, slider, checkbox): removed, not wanted

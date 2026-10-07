@@ -14,14 +14,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Rolls from Chong's Tracker; shared examples tested by both sides; `npm test` runs everything
 - Removed in 2.7: Place mode (and the ⚡ switch), bonus / advantage, the fairness tester and debug store
 
-## 📋 Check in a real Owlbear room (two players)
-- [ ] Install from the manifest; the window narrows / widens with ▤; phone width
-- [ ] Owlbear's glass shows through the panel
-- [ ] Command line, dice pills + Roll, pills; other players see the same dice and total
-- [ ] Nimble: outline on your tray and on other players'; right-click and long-press chains, same total on both sides
-- [ ] Hidden rolls; ⋯ → a player's tray; roll history
-- [ ] A roll clicked in Chong's Tracker, with the window closed and open
-- [ ] Export / import (downloads may be blocked in the extension frame)
+## ✅ Checked in a real Owlbear room (two players)
+- [x] Install from the manifest; the window narrows / widens with ▤; phone width
+- [x] Owlbear's glass shows through the panel
+- [x] Command line, dice pills + Roll, pills; other players see the same dice and total
+- [x] Nimble: outline on your tray and on other players'; right-click and long-press chains, same total on both sides
+- [x] Hidden rolls; ⋯ → a player's tray; roll history
+- [x] A roll clicked in Chong's Tracker, with the window closed and open
+- [x] Export / import (downloads may be blocked in the extension frame)
 
 ## 💡 Backlog
 - A die popped out next to a wall can come to rest wedged on the wall or its parent: aim `popThrow` away from the nearest wall
