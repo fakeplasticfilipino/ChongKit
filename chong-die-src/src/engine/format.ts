@@ -21,8 +21,7 @@ function groupText(rep: RepRecord, group: number): string {
   let text = first.length ? `${rep.groups[group].label} (${first.map(dieText).join(", ")})` : "0";
   const done = new Set<number>();
   for (const d of own) {
-    if (d.kind === "explode") text += ` + explode (${dieText(d)})`;
-    else if (d.kind === "chain" && !done.has(d.pick ?? d.id)) {
+    if (d.kind === "chain" && !done.has(d.pick ?? d.id)) {
       const pick = own.filter((c) => c.kind === "chain" && (c.pick ?? c.id) === (d.pick ?? d.id));
       pick.forEach((c) => done.add(c.pick ?? c.id));
       text += pick.length > 1
