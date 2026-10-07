@@ -62,7 +62,7 @@ const initial = loadSaved();
 export const useChongStore = create<ChongState>()(
   immer((set) => ({
     saved: initial,
-    activeTabId: initial.tabs[0].id,
+    activeTabId: initial.activeTabId ?? initial.tabs[0].id,
     panelOpen: true,
     placed: null,
     error: null,
@@ -214,8 +214,8 @@ export const useChongStore = create<ChongState>()(
 
 // Save on every change to the saved rolls
 useChongStore.subscribe((state, prev) => {
-  if (state.saved !== prev.saved) {
-    saveSaved(state.saved);
+  if (state.saved !== prev.saved || state.activeTabId !== prev.activeTabId) {
+    saveSaved({ ...state.saved, activeTabId: state.activeTabId });
   }
   if (state.prefs !== prev.prefs) {
     savePrefs(state.prefs);

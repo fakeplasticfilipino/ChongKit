@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   emptySaved,
+  instantFor,
   importSaved,
   loadSaved,
   pillError,
@@ -144,3 +145,24 @@ test("old pills without a description load unchanged", () => {
   });
   expect(v!.tabs[0].pills[0]).toEqual({ id: "a", name: "A", command: "1d4" });
 });
+
+const twoTabs = {
+  version: 1,
+  tabs: [
+    { id: "a", name: "A", instant: false, pills: [] },
+    { id: "b", name: "B", instant: true, pills: [] },
+  ],
+  history: [],
+};
+
+test("the active tab is kept when it names a tab", () =>
+  expect(validateSavedRolls({ ...twoTabs, activeTabId: "b" })!.activeTabId).toBe("b"));
+
+test("an active tab that no longer exists is dropped", () =>
+  expect(validateSavedRolls({ ...twoTabs, activeTabId: "gone" })!.activeTabId).toBeUndefined());
+
+test("instantFor follows the active tab", () =>
+  expect(instantFor(validateSavedRolls({ ...twoTabs, activeTabId: "b" })!)).toBe(true));
+
+test("instantFor falls back to the first tab", () =>
+  expect(instantFor(validateSavedRolls(twoTabs)!)).toBe(false));

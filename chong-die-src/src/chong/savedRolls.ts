@@ -21,6 +21,8 @@ export interface SavedRolls {
   tabs: RollTab[];
   /** Typed commands, oldest first */
   history: string[];
+  /** The tab open in the Rolls window (tracker rolls follow its Instant switch) */
+  activeTabId?: string;
 }
 
 export const STORAGE_KEY = "chongkit.chongdie";
@@ -77,7 +79,16 @@ export function validateSavedRolls(data: unknown): SavedRolls | null {
   const history = Array.isArray(raw.history)
     ? raw.history.filter(isText).slice(-MAX_HISTORY)
     : [];
-  return { version: 1, tabs, history };
+  const saved: SavedRolls = { version: 1, tabs, history };
+  if (isText(raw.activeTabId) && tabs.some((t) => t.id === raw.activeTabId)) {
+    saved.activeTabId = raw.activeTabId;
+  }
+  return saved;
+}
+
+/** Whether the active tab (else the first) rolls right away */
+export function instantFor(saved: SavedRolls): boolean {
+  return (saved.tabs.find((t) => t.id === saved.activeTabId) || saved.tabs[0]).instant;
 }
 
 export function loadSaved(storage = defaultStorage()): SavedRolls {
