@@ -107,8 +107,8 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
 .cs-w.extra.on { border-style: solid; border-color: var(--frame); background: var(--fill); }
 
 /* Stats share one frame (the frame shows through the gaps as dividers); each has its save pip on top */
-.cs-stats { gap: 2px; background: var(--frame); border: 2px solid var(--frame); border-radius: 3px; overflow: hidden; }
-.cs-stat { position: relative; display: flex; flex-direction: column; min-width: 0; background: #fff; }
+.cs-stats { gap: 0; background: #fff; border: 2px solid var(--frame); border-radius: 3px; overflow: hidden; }
+.cs-stat { position: relative; display: flex; flex-direction: column; min-width: 0; background: #fff; box-shadow: 0 0 0 1px var(--frame); }
 .cs-stat .cs-num { min-height: 62px; font-size: 36px; }
 .cs-pip { display: flex; justify-content: center; gap: 2px; margin: 5px auto 0; padding: 0 2px; border: 0; background: transparent; color: var(--frame); cursor: pointer; }
 .cs-tri { width: 20px; height: 18px; }
@@ -162,7 +162,7 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
 .cs-addbox { width: 100%; min-height: 90px; break-inside: avoid; }
 
 /* Narrow windows and phones */
-@media (max-width: 900px) { .cs-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1150px) { .cs-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 620px) {
   main.cs-page { padding: 10px 10px 16px; }
   .cs-top, .cs-notes { padding: 14px 10px; }
@@ -201,6 +201,7 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
 
 /* Print: the top section on the first page, the open tab's notes after it, every note open */
 @media print {
+  body.cs-flat { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .cs-tools, .notice, .cs-x, .cs-grip, .cs-add, .cs-toast, .cs-nadd, .cs-ndel, .cs-nfold, .cs-tabadd, .cs-tdel { display: none !important; }
   body.cs-flat, html:has(body.cs-flat) { background: #fff; }
   .cs-top, .cs-notes { min-height: 0; padding: 0; border: 0; box-shadow: none; }

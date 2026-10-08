@@ -558,13 +558,13 @@
     try { show(S.importJson(await file.text())); }
     catch (err) { alert(`Couldn't import ${file.name}: ${err.message}`); }
   });
+  // Every note opens for any print (More → Print or Ctrl+P), then folds back.
+  window.addEventListener('beforeprint', () => { printing = true; render(); });
+  window.addEventListener('afterprint', () => { printing = false; render(); });
   $('print').addEventListener('click', () => {
     closeMenu();
-    printing = true;
-    if (editing) setEditing(false); else render();
+    if (editing) setEditing(false);
     window.print();
-    printing = false;
-    render();
   });
 
   // --- Sign in -------------------------------------------------------------------------
