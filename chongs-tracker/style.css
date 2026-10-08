@@ -33,7 +33,7 @@ select option { background: var(--paper); color: var(--text); }
 /* Tabs */
 /* The tab strip scrolls sideways (wheel or drag the bar); + stays put on the right. The scrollbar
    only shows from 5 tabs on (.many), thin and faint until hovered. Edges fade when there's more. */
-.tabbar { display: flex; align-items: flex-start; gap: 2px; padding: 12px 8px 4px 12px; }
+.tabbar { display: flex; align-items: flex-start; gap: 2px; padding: 10px 6px 4px 10px; }
 .tabs {
   flex: 1; min-width: 0; display: flex; gap: 4px; padding-bottom: 6px;
   overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
@@ -53,7 +53,7 @@ select option { background: var(--paper); color: var(--text); }
 #tab-add { flex: none; display: flex; }
 .tab {
   flex: none; display: inline-flex; align-items: center; gap: 2px;
-  padding: 6px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text2);
+  padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text2);
   font-weight: 500; white-space: nowrap;
 }
 .tab:hover { background: var(--field); color: var(--text); }
@@ -66,10 +66,10 @@ select option { background: var(--paper); color: var(--text); }
 .tab.drop-tab { box-shadow: inset 0 0 0 1.5px var(--primary); color: var(--primary); }
 
 /* Command bar */
-.bar { display: flex; gap: 2px; align-items: flex-start; padding: 0 12px 8px; }
+.bar { display: flex; gap: 2px; align-items: flex-start; padding: 0 10px 8px; }
 .bar textarea { flex: 1; resize: none; height: 32px; max-height: 120px; line-height: 20px; margin-right: 4px; }
 /* Notes: the tab's note under the add box; an entry's note in its ⋯ menu */
-.tab-note { padding: 0 12px 8px; }
+.tab-note { padding: 0 10px 8px; }
 .tab-note:empty { display: none; }
 textarea.note { display: block; width: 100%; resize: none; height: 32px; line-height: 20px; white-space: pre-wrap; }
 /* Help sheet: covers the whole panel; the ⓘ / × button stays in the lower-right corner. */
@@ -96,7 +96,7 @@ textarea.note { display: block; width: 100%; resize: none; height: 32px; line-he
 .fab[hidden] { display: none; }
 
 /* Entries: one flat card each */
-.list { padding: 0 12px 56px; display: grid; gap: 6px; } /* room under the help button */
+.list { padding: 0 10px 56px; display: grid; gap: 6px; } /* room under the help button */
 .entry { background: var(--card); border-radius: 12px; }
 .entry.focus { box-shadow: inset 0 0 0 1.5px var(--primary); }
 .entry.movable .row, .entry.movable .name:not(:focus) { cursor: grab; }
@@ -104,7 +104,7 @@ textarea.note { display: block; width: 100%; resize: none; height: 32px; line-he
 .entry.drop-before { box-shadow: 0 -3px 0 -1px var(--primary); }
 .entry.drop-after { box-shadow: 0 3px 0 -1px var(--primary); }
 .count { flex: none; color: var(--text2); font-size: 12px; font-weight: 700; }
-.row { display: flex; align-items: center; gap: 8px; padding: 6px 4px 6px 6px; }
+.row { display: flex; align-items: center; gap: 6px; padding: 6px 4px 6px 6px; }
 .row .name { flex: 1; width: 0; background: transparent; font-weight: 500; padding-left: 2px; }
 .row .name:hover:not(:focus) { background: transparent; }
 .row .name:disabled { opacity: 1; }
@@ -126,7 +126,7 @@ textarea.note { display: block; width: 100%; resize: none; height: 32px; line-he
 @keyframes pick { to { opacity: .45; } }
 
 .hp {
-  position: relative; flex: none; width: 72px; height: 28px; border-radius: 14px; overflow: hidden;
+  position: relative; flex: none; width: 64px; height: 28px; border-radius: 14px; overflow: hidden;
   background: var(--hp-track);
 }
 .hp .fill { position: absolute; inset: 0 auto 0 0; background: var(--hp); transition: width .2s; }

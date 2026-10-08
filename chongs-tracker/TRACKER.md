@@ -58,6 +58,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Note rolls into Chong Die (open, closed, not installed)
 - [x] Notes (tab + entry), drag onto a tab, the × detach, a room tab across two scenes, badge pills on different token sizes and maps, click-to-attach, token pictures in the panel, context-menu icon, players' view: nothing to fix
 
+## ✅ Thinner panel (v1.11.0)
+- [x] Panel 320 px wide (was 380); HP pill 64 px, tighter gaps and side padding
+
 ## Dropped
 - Custom counters (number, slider, checkbox): removed, not wanted
 

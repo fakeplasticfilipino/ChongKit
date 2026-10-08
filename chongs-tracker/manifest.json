@@ -1,6 +1,6 @@
 {
   "name": "Chong's Tracker",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "manifest_version": 1,
   "author": "ChongKit",
   "homepage_url": "https://fakeplasticfilipino.github.io/ChongKit/chongs-tracker/",
@@ -12,6 +12,6 @@
     "icon": "/ChongKit/chongs-tracker/icon.svg",
     "popover": "/ChongKit/chongs-tracker/index.html",
     "height": 560,
-    "width": 380
+    "width": 320
   }
 }
