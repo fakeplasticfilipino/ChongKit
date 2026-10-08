@@ -57,6 +57,11 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Content-Security-Policy on the sheet page; imports over 1 MB refused; 8+ character passwords for new accounts
 - [x] Tests: notes tabs upgrade, owner-aware merge, imports are yours
 
+### 🚧 v4 — flat boxes on top, notes below (spec: `docs/superpowers/specs/2026-10-09-character-sheet-v4-design.md`)
+- [x] Prototype agreed (flat whitish look, top/bottom split, caps 12 stats / 18 skills / 6 small boxes / 2 pairs, note boxes, Reset)
+- [ ] Spec reviewed
+- [ ] Plan, then build (data v5 + upgrade from v4)
+
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 
