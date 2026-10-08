@@ -4,13 +4,13 @@
     {
       "id": 0,
       "subject": "Task 1: The v5 model in sheet.js",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** `sheet.js` holds the version 5 character (lists of boxes with caps, tabs of note boxes) with its pure helpers, covered by a rewritten test file.\n\n**Files:**\n- Modify (full rewrite): `character-sheet/sheet.js`\n- Test (full rewrite): `character-sheet/tests/sheet.test.js`\n\n**Acceptance Criteria:**\n- [ ] `Sheet.blank()` returns `v: 5` with exactly the defaults listed in Global Constraints.\n- [ ] `Sheet.normalize` returns a blank sheet keeping only `id`, `owner`, `updated` for any input with `v < 5`.\n- [ ] `normalize` caps each list, keeps defaults for a missing list, keeps an empty list empty, drops junk entries, makes missing ids.\n- [ ] `columns(7, 6) === 4`, `columns(12, 6) === 6`, `columns(18, 6) === 6`, `columns(4, 3) === 2`.\n- [ ] `noteTitle('Fireball\\n1d10') === 'Fireball.'`; empty first line → `'Untitled'`.\n- [ ] `moveNote`, `step`, `reset`, `undoLayout`, `mergeChars`, `loadAll`/`saveAll`, `importJson` behave as the tests below say.\n- [ ] `npm test` passes.\n\n**Verify:** `node --test character-sheet/tests/sheet.test.js` → `ℹ fail 0`\n\nFull steps and code: docs/superpowers/plans/2026-10-09-character-sheet-v4.md (Task 1).\n\n```json:metadata\n{\"files\":[\"character-sheet/sheet.js\",\"character-sheet/tests/sheet.test.js\"],\"verifyCommand\":\"node --test character-sheet/tests/sheet.test.js\",\"modelTier\":\"standard\",\"acceptanceCriteria\":[\"`Sheet.blank()` returns `v: 5` with exactly the defaults listed in Global Constraints.\",\"`Sheet.normalize` returns a blank sheet keeping only `id`, `owner`, `updated` for any input with `v < 5`.\",\"`normalize` caps each list, keeps defaults for a missing list, keeps an empty list empty, drops junk entries, makes missing ids.\",\"`columns(7, 6) === 4`, `columns(12, 6) === 6`, `columns(18, 6) === 6`, `columns(4, 3) === 2`.\",\"`noteTitle('Fireball\\\\n1d10') === 'Fireball.'`; empty first line → `'Untitled'`.\",\"`moveNote`, `step`, `reset`, `undoLayout`, `mergeChars`, `loadAll`/`saveAll`, `importJson` behave as the tests below say.\",\"`npm test` passes.\"]}\n```"
     },
     {
       "id": 1,
       "subject": "Task 2: The page: notes.js, ui.js, index.html",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         0
       ],
@@ -19,7 +19,7 @@
     {
       "id": 2,
       "subject": "Task 3: The flat look (sheet.css)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         1
       ],
@@ -28,12 +28,12 @@
     {
       "id": 3,
       "subject": "Task 4: Docs, landing card, push",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         2
       ],
       "description": "**Goal:** CLAUDE.md, README, TRACKER and the landing card describe Character Sheet v4; everything is pushed to `main`.\n\n**Files:**\n- Modify: `CLAUDE.md` (ground rule 4's \"Easy on the eyes\" bullet; Character Sheet rules 1–5; Layout)\n- Modify: `README.md` (tools table row line 11; Character Sheet section lines 16–79)\n- Modify: `TRACKER.md` (the 🚧 v4 entry)\n- Modify: `index.html` (root: the Character Sheet card's `v3`)\n- Modify: `docs/superpowers/specs/2026-10-09-character-sheet-v4-design.md` (Status line)\n\n**Acceptance Criteria:**\n- [ ] CLAUDE.md's Character Sheet rules describe the flat look, no automation, caps, Reset, notes and data v5 (no mention of parchment, `removed`, `extras`, saves section, calculator or Bloodied for the sheet).\n- [ ] README's Character Sheet section describes v4 (no v1–v3 upgrade text, no calculator or skill-follows-stat text).\n- [ ] The landing card and the README table say `v4`.\n- [ ] TRACKER's v4 entry is ✅ with its items ticked.\n- [ ] `git status` is clean except `.claude/launch.json`; `git log origin/main -1` is the docs commit.\n\n**Verify:** `npm test` → `ℹ fail 0`; `git status -sb` → `## main...origin/main` (only ` M .claude/launch.json` if anything).\n\nFull steps and code: docs/superpowers/plans/2026-10-09-character-sheet-v4.md (Task 4).\n\n```json:metadata\n{\"files\":[\"CLAUDE.md\",\"README.md\",\"TRACKER.md\",\"index.html\",\"docs/superpowers/specs/2026-10-09-character-sheet-v4-design.md\"],\"verifyCommand\":\"npm test && git status -sb\",\"modelTier\":\"mechanical\",\"acceptanceCriteria\":[\"CLAUDE.md's Character Sheet rules describe the flat look, no automation, caps, Reset, notes and data v5 (no mention of parchment, `removed`, `extras`, saves section, calculator or Bloodied for the sheet).\",\"README's Character Sheet section describes v4 (no v1–v3 upgrade text, no calculator or skill-follows-stat text).\",\"The landing card and the README table say `v4`.\",\"TRACKER's v4 entry is ✅ with its items ticked.\",\"`git status` is clean except `.claude/launch.json`; `git log origin/main -1` is the docs commit.\"]}\n```"
     }
   ],
-  "lastUpdated": "2026-10-08T16:41:42.079Z"
+  "lastUpdated": "2026-10-08T17:06:27.903Z"
 }
