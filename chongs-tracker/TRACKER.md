@@ -61,6 +61,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ## ✅ Thinner panel (v1.11.0)
 - [x] Panel 320 px wide (was 380); tighter gaps and side padding
 - [x] v1.11.1: HP pill back to 72 px (it must stay easy to click); a name too long for its row fades out at the end (`fadeLong`)
+- [x] v1.11.2: the pin moved from the row into the ⋯ menu's buttons, so the HP box never moves when an entry opens
 
 ## Dropped
 - Custom counters (number, slider, checkbox): removed, not wanted

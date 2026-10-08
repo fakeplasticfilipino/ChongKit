@@ -567,13 +567,6 @@ function renderEntry(e) {
   }, !edit));
   row.append(hp);
 
-  if (isOpen) {
-    const pin = pinned.has(e.id);
-    row.append(iconButton('pin', pin ? 'Unpin' : 'Pin open', () => {
-      if (pin) { pinned.delete(e.id); active = e.id; } else { pinned.add(e.id); if (active === e.id) active = null; }
-      render();
-    }, pin));
-  }
   if (edit) {
     row.append(iconButton('more', isOpen ? 'Close' : 'More', () => {
       if (isOpen) collapse(e.id); else active = e.id;
@@ -724,6 +717,15 @@ function renderMore(e) {
   more.append(el('div', { className: 'field' }, caption, note));
 
   const actions = el('div', { className: 'actions' });
+  // The pin lives here, not in the row, so the HP box never moves when ⋯ opens.
+  const pin = pinned.has(e.id);
+  const pinBtn = el('button', { type: 'button', className: 'btn' + (pin ? ' on' : ''), innerHTML: svg('pin'), title: pin ? 'Unpin' : 'Keep open' });
+  pinBtn.setAttribute('aria-label', pinBtn.title);
+  pinBtn.addEventListener('click', () => {
+    if (pin) { pinned.delete(e.id); active = e.id; } else { pinned.add(e.id); if (active === e.id) active = null; }
+    render();
+  });
+  actions.append(pinBtn);
   if (role === 'GM') {
     const vis = el('button', { type: 'button', className: 'btn' + (e.hidden ? '' : ' on'), innerHTML: svg(e.hidden ? 'eyeOff' : 'eye') });
     vis.append(e.hidden ? 'Stats hidden' : 'Stats shown');
