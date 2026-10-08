@@ -6,12 +6,21 @@ import { useDiceRollStore } from "../dice/store";
 import { startCommandRoll } from "./rollRunner";
 import { useChongStore } from "./chongStore";
 import { emptySaved } from "./savedRolls";
+import { usePrefsStore } from "./prefsStore";
 
 beforeEach(() => {
   useChongStore.getState().replaceSaved(emptySaved());
   useTrayStore.getState().setPlaced(null);
   useDiceControlsStore.getState().resetDiceCounts();
   useDiceRollStore.getState().clearRoll();
+  usePrefsStore.getState().setQuickRoll(false);
+});
+
+test("quick roll: a custom roll throws at once, nothing waits on the tray", () => {
+  usePrefsStore.getState().setQuickRoll(true);
+  expect(placeCommand("1d20+5", { hidden: false })).toBe("rolled");
+  expect(useTrayStore.getState().placed).toBeNull();
+  expect(useDiceRollStore.getState().roll?.chong?.record.text).toBe("1d20+5");
 });
 
 const countOf = (type: string) => {

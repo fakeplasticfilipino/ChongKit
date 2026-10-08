@@ -4,9 +4,10 @@ import { immer } from "zustand/middleware/immer";
 import { loadPrefs, Prefs, PREFS_KEY, savePrefs } from "./prefs";
 
 interface PrefsState {
-  /** Rolls panel open (saved in this browser) */
+  /** Rolls panel open, quick roll (saved in this browser) */
   prefs: Prefs;
   setPanelOpen: (open: boolean) => void;
+  setQuickRoll: (on: boolean) => void;
   /** Read the prefs again (another window changed them) */
   reload: (storage?: Storage) => void;
 }
@@ -17,6 +18,11 @@ export const usePrefsStore = create<PrefsState>()(
     setPanelOpen(open) {
       set((state) => {
         state.prefs.panelOpen = open;
+      });
+    },
+    setQuickRoll(on) {
+      set((state) => {
+        state.prefs.quickRoll = on;
       });
     },
     reload(storage) {

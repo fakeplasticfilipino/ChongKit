@@ -239,6 +239,8 @@ the faces the roll decided). It is a modified version of
 **Using it**
 - **Hold to roll:** every roll waits on the tray. Its dice appear (the command shows under them);
   hold **Roll** to shake them, let go to throw. **×** clears them.
+- **⚡ Quick roll** (between the command line and ▤): on, typed rolls, pills, history and Reroll
+  throw at once instead of waiting to be held. It remembers.
 - **Command line** (always on top of the tray): type a roll and press Enter.
   ↑ / ↓ step through what you typed before. A typo shows under the line and isn't rolled.
 - **▤ Rolls** (beside the command line) opens the panel docked to the right of the tray; closed,
@@ -265,15 +267,16 @@ the first dice. Every word is glued to an optional number; the words act on the 
 |---|---|---|
 | `NdS` | N dice of S sides (`d20` is `1d20`, `d%` is `1d100`) | `2d6+1d4-1` |
 | `adv`, `adv3`, `dis`, `dis2` | Advantage / disadvantage (bare = 1); they cancel first. Net n adds n dice, then drops the n lowest (highest for `dis`); ties drop from the left | `1d20+5 adv` |
-| `crit`, `crit10`, `crit5-10` | The Primary Die in this range (bare: the die's max) crits and adds a chain die | `1d10+3 crit` |
-| `miss`, `miss1`, `miss1-4` | Mark MISS when the Primary Die is in this range (bare: 1) | `1d10+3 crit miss` |
+| `crit`, `crit10`, `crit5-10`, `crit>=5`, `crit>9` | The Primary Die in this range (bare: the die's max) crits and adds a chain die | `1d10+3 crit` |
+| `miss`, `miss1`, `miss1-4`, `miss<=4`, `miss<2` | Mark MISS when the Primary Die is in this range (bare: 1) | `1d10+3 crit miss` |
 | `critadv`, `critadv2` | Chain dice roll with advantage (needs `crit`) | `1d10 crit critadv` |
 | `x2`, `x3` | Roll the whole command N times, separately (1 to 25) | `1d10+3 crit miss x2` |
 
 Nimble's attack is `1d10+3 crit miss`. The Primary Die is the first die still kept after advantage.
 A chain die is one more die of the same size added to the total (with `critadv`, an advantage pick);
 **a chain die chains again only on its max**, never on the crit range. A range's `-` is part of it
-(`crit5-10`); to subtract, leave a space (`crit5 -2`). Errors show under the command line (a word
+(`crit5-10`); to subtract, leave a space (`crit5 -2`). `>=`, `>`, `<=`, `<` count to the die's
+end (`crit>=5` on a d10 is 5–10); one that leaves no face (`crit>10` on a d10) is an error. Errors show under the command line (a word
 twice, a range outside the die or backwards, `crit` and `miss` overlapping, `critadv` without
 `crit`, unknown words). Limits: 100 dice per roll and 20 chain dice; a roll that hits either stops
 adding dice and is marked CAPPED. d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …)

@@ -44,6 +44,13 @@ test("d20, d% and any case", () => {
 test("x repeats the whole roll", () => {
   expect(stageZeroSizes(parse("1d10 adv x2"))).toEqual([10, 10, 10, 10]);
 });
+test("comparisons for crit and miss, clamped to the die", () => {
+  expect(parse("1d10 crit>=5 miss<=4")).toMatchObject({ crit: { min: 5, max: 10 }, miss: { min: 1, max: 4 } });
+  expect(parse("1d10 crit>9 miss<2")).toMatchObject({ crit: { min: 10, max: 10 }, miss: { min: 1, max: 1 } });
+  expect(parse("1d10 miss<=20").miss).toEqual({ min: 1, max: 10 });
+  expect(parse("1d20 crit>=0").crit).toEqual({ min: 1, max: 20 });
+  expect(parse("1d10 CRIT>=5+3")).toMatchObject({ crit: { min: 5, max: 10 }, modifier: 3 });
+});
 test.each([
   ["", /Empty command/],
   ["crit 1d10", /"crit" comes before any dice/],
@@ -71,6 +78,11 @@ test.each([
   ["1d10 crit5-10d6", /Unknown word "crit5-10d6"/],
   ["1d10 + + 2", /"\+" needs dice or a number after it/],
   ["1d10 + crit", /"\+" needs dice or a number after it/],
+  ["1d10 crit>10", /"crit>10" leaves no faces on the d10/],
+  ["1d10 miss<1", /"miss<1" leaves no faces on the d10/],
+  ["1d10 crit>=5 miss<=5", /crit and miss overlap/],
+  ["1d10 crit=5", /Unknown word "crit=5"/],
+  ["1d10 crit >= 5", /Unknown word ">="/],
   ["3", /No dice/],
   ["0d6", /needs at least 1 die/],
   ["1d0", /1 to 1000 sides/],

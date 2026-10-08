@@ -43,6 +43,9 @@ words anywhere after the first dice. Case doesn't matter.
 - **Primary Die:** the first die of the first group still kept after `adv`/`dis`.
 - **Ranges** are `N` or `N-M` (N ≤ M), glued to the word. A `-` inside `crit`/`miss` is always the
   range: `crit5-2` is an error; `crit5 -2` is crit on 5, then subtract 2.
+- **Comparisons (4.1):** `crit` and `miss` also take `>=N`, `>N`, `<=N`, `<N`, glued
+  (`crit>=5`, `miss<=4`), counted to the die's end and clamped to it (`miss<=20` on a d10 is 1-10).
+  One that leaves no face (`crit>10` on a d10) is an error.
 
 ### The chain rule (the table's, non-negotiable)
 

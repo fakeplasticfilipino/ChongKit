@@ -5,7 +5,8 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v4.0.0)
+## ✅ Now (v4.1.0)
+- 4.1.0: ⚡ Quick roll between the command line and ▤ (remembered; custom rolls throw at once); `crit>=5`, `crit>9`, `miss<=4`, `miss<2` alongside `crit5-10`.
 - 4.0.0: a simpler command language (words glued to numbers: `adv3`, `crit5-10`, `miss1-4`, `critadv`, `x2`; words act on the first dice); removed keep/drop, explode, crit each, saved names and notes; removed the Chong's Tracker roll link; Rolls panel 280 px.
 - One window: tray with the command line on top and ▤ Rolls beside it; the Rolls panel docks to the right and fades in / out as it opens / closes (the tray never squeezes)
 - Rolls tab with dice pills (each click adds a die to the tray) and the dice style; saved-roll pills that always roll; ⋯ for hide, history, players' trays, export / import

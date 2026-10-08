@@ -10,10 +10,11 @@ import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
 import { placeCommand } from "./place";
 import { PanelToggle } from "./PanelToggle";
+import { QuickRollToggle } from "./QuickRollToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
 import { FIELD, HOVER } from "./look";
 
-/** The command box always on top of the tray, with the Rolls button beside it: Enter puts the roll on the tray */
+/** The command box always on top of the tray, with Quick roll and Rolls beside it: Enter puts the roll on the tray */
 export function CommandLine() {
   const theme = useTheme();
   const rolling = useDiceRollStore((state) =>
@@ -124,6 +125,7 @@ export function CommandLine() {
             sx={{ fontFamily: "'Roboto Mono', Consolas, monospace", fontSize: 13 }}
           />
         </Box>
+        <QuickRollToggle />
         <PanelToggle />
       </Box>
       {error && (

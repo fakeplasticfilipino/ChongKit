@@ -7,7 +7,7 @@ The rules (license, build, version bump, contracts) are in the repo's `CLAUDE.md
 One window: the toolbar button opens the tray (`index.html` → `src/main.tsx` → `App`).
 
 - **Tray** (`tray/InteractiveTray.tsx`): upstream's 3D tray, with the command line always on top
-  (`chong/CommandLine.tsx`) and ▤ Rolls beside it. Tray errors show as a banner
+  (`chong/CommandLine.tsx`) and ⚡ Quick roll (`chong/QuickRollToggle.tsx`) and ▤ Rolls beside it. Tray errors show as a banner
   (`TrayError`).
 - **Rolls panel** (`chong/RollPanel.tsx`), docked to the right, 280 px, toggled by ▤
   (`prefs.panelOpen`). The window width is `windowWidth(height, panelOpen)` (`chong/layout.ts`),
@@ -31,12 +31,13 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
 - Everything rolls as a command, even dice picked by hand (`rollPickedDice` → `countsToCommand`).
   `startCommandRoll` (`chong/rollRunner.ts`) parses and rolls the command, then throws stage 0.
 - **Hold to roll:** custom rolls (typed, pills, history, Reroll) never throw right
-  away: `placeCommand` (`chong/place.ts`) puts their first stage's dice on the tray as picked dice
+  away, unless ⚡ Quick roll is on (`prefs.quickRoll`: `placeCommand` then calls `startCommandRoll` at
+  once): `placeCommand` (`chong/place.ts`) puts their first stage's dice on the tray as picked dice
   and keeps the command in `trayStore.placed`; holding Roll shakes them, releasing throws the
   command (`startCommandRoll` with the hold's `speedMultiplier`). Changing or clearing the dice by
   hand drops the command (`dropPlaced` in `controls/store.ts`). Commands with only virtual dice
   (`1d7`) roll at once.
-- **Roll engine** (`src/engine/`, pure TS, Vitest): `parse` (a scanner; the only module that knows the words: `adv dis crit miss critadv xN`, glued to an optional number or `N-M` range, acting on the first dice group) → `roll` (plan + random source: the browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept, crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the result text). The Primary Die in the crit range is a crit; a chain die crits and chains only on its max. `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray shows. Errors are `EngineError`, shown under the command line.
+- **Roll engine** (`src/engine/`, pure TS, Vitest): `parse` (a scanner; the only module that knows the words: `adv dis crit miss critadv xN`, glued to an optional number, an `N-M` range or (crit/miss) a `>= > <= <` comparison clamped to the die, acting on the first dice group) → `roll` (plan + random source: the browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept, crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the result text). The Primary Die in the crit range is a crit; a chain die crits and chains only on its max. `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray shows. Errors are `EngineError`, shown under the command line.
 - **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CRIT and
   CAPPED are marks beside it. Caps: 100 dice per roll (checked before rolling) and 20 chain dice
   (a `critadv` pick counts as one); hitting either marks the roll CAPPED.
@@ -112,6 +113,6 @@ turns after it lands. Since R maps the solid onto itself, the turned die looks l
 
 - `chongkit.chongdie`: saved rolls (tabs, pills, typed history), `chong/savedRolls.ts`. Only
   `chongStore` writes it.
-- `chongkit.chongdie.prefs`: `panelOpen` (`chong/prefs.ts`, `prefsStore`); the 2.x `nimble` switch is dropped on load.
+- `chongkit.chongdie.prefs`: `panelOpen`, `quickRoll` (`chong/prefs.ts`, `prefsStore`); the 2.x `nimble` switch is dropped on load.
 - Stores: `chongStore` (saved rolls, tabs, draft, error), `trayStore` (tray error banner),
   `prefsStore`, `partyStore` (other players, the tray shown full size).

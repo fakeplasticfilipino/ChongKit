@@ -4,6 +4,8 @@ import { EngineError, GroupPlan, MAX_DICE, MAX_SIDES, MAX_TIMES, Plan, Range } f
 const DICE = /^(\d*)d(\d+|%)$/i;
 /** The words (the only list of them): a word glued to an optional number, or a range for crit/miss */
 const WORD = /^(critadv|adv|dis|crit|miss)(\d+(?:-\d+)?)?$/i;
+/** crit and miss also take a comparison: `crit>=5`, `crit>9`, `miss<=4`, `miss<2` */
+const COMPARE = /^(crit|miss)([<>]=?\d+)$/i;
 const TIMES = /^x(\d+)$/i;
 /** A sign; a crit/miss range glued whole (its - is the range's); else a run of anything but spaces and signs */
 const TOKEN = /\s*(?:([+-])|((?:crit|miss)\d+-[^\s+-]+)|([^\s+-]+))/iy;
@@ -30,9 +32,24 @@ function diceGroup(sign: 1 | -1, tok: string, m: RegExpExecArray): GroupPlan {
   return { sign, count, size };
 }
 
+/** `>=N`, `>N`, `<=N`, `<N` on a die of `size` faces, clamped to the die; null when no face is left */
+function compareRange(arg: string, size: number): Range | null {
+  const m = /^([<>])(=?)(\d+)$/.exec(arg)!;
+  const n = +m[3];
+  const r = m[1] === ">"
+    ? { min: Math.max(1, m[2] ? n : n + 1), max: size }
+    : { min: 1, max: Math.min(size, m[2] ? n : n - 1) };
+  return r.min <= r.max ? r : null;
+}
+
 /** The range glued to crit/miss (`bare` when there is none); it must fit the first group's die */
 function rangeOf(tok: string, arg: string, bare: number, size: number): Range {
-  const r = arg === "" ? { min: bare, max: bare } : parseRange(arg);
+  if (/^[<>]/.test(arg)) {
+    const c = compareRange(arg, size);
+    if (!c) throw bad(`"${tok}" leaves no faces on the d${size}`);
+    return c;
+  }
+  const r =arg === "" ? { min: bare, max: bare } : parseRange(arg);
   if (!r) throw bad(`"${tok}": a range goes low to high, like miss1-4`);
   if (r.min < 1 || r.max > size) throw bad(`"${tok}" is outside the d${size}'s 1 to ${size}`);
   return r;
@@ -78,7 +95,7 @@ export function parse(input: string): Plan {
     if (sign !== null) throw bad(`"${symbol()}" needs dice or a number after it`);
     if (/^x$/i.test(tok)) throw bad("x needs a number, like x2");
     const x = TIMES.exec(tok);
-    const w = WORD.exec(tok);
+    const w = WORD.exec(tok) ?? COMPARE.exec(tok);
     if (!x && !w) throw bad(`Unknown word "${tok}"`);
     if (groups.length === 0) throw bad(`"${tok}" comes before any dice`);
     const name = x ? "x" : w![1].toLowerCase();

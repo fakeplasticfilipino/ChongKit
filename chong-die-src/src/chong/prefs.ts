@@ -4,11 +4,13 @@ import { Die } from "../types/Die";
 export interface Prefs {
   /** The Rolls panel docked beside the tray is open */
   panelOpen: boolean;
+  /** Custom rolls throw at once instead of waiting on the tray to be held */
+  quickRoll: boolean;
 }
 
 export const PREFS_KEY = "chongkit.chongdie.prefs";
 
-const DEFAULTS: Prefs = { panelOpen: true };
+const DEFAULTS: Prefs = { panelOpen: true, quickRoll: false };
 
 function defaultStorage(): Storage | undefined {
   try {
@@ -23,7 +25,7 @@ export function loadPrefs(storage = defaultStorage()): Prefs {
     const raw = JSON.parse(storage?.getItem(PREFS_KEY) || "null");
     if (raw && typeof raw === "object") {
       // Older prefs also held the 2.x Nimble switch: it's dropped
-      return { panelOpen: raw.panelOpen !== false };
+      return { panelOpen: raw.panelOpen !== false, quickRoll: raw.quickRoll === true };
     }
   } catch {
     // Blocked or corrupt storage: defaults

@@ -7,6 +7,7 @@ under the same license.
 
 ## Changes made by ChongKit
 
+- 4.1.0: ⚡ Quick roll beside the command line (custom rolls throw at once); `crit`/`miss` take `>=`, `>`, `<=`, `<` comparisons (`crit>=5`).
 - 4.0.0: a simpler command language (words glued to numbers: `adv3`, `crit5-10`, `miss1-4`, `critadv`, `x2`; words act on the first dice); removed keep/drop, explode, crit each, saved names and notes; removed the Chong's Tracker roll link; Rolls panel 280 px.
 - Renamed to Chong Die; plugin id `com.chongkit.chongdie/` (was `rodeo.owlbear.dice/`)
 - Built into `../chong-die/`, served from `/ChongKit/chong-die/` on GitHub Pages
