@@ -8,7 +8,7 @@ no upgrade: older saves open as a blank sheet (only a test account has v4 data).
 
 1. **Look:** flat, simple, whitish boxes instead of the parchment sheet. White fields, thin grey outlines
    (`#4a4a4a`), flat grey label bands (`#6f6f6f`, white caps text), near-square corners (3 px), a light grey
-   page. Red stays for Bloodied only. No paper edge, desk, margin lines or corner imprint.
+   page. No red. No paper edge, desk, margin lines or corner imprint.
 2. **Layout:** split top and bottom. The **top section** (all the numbers) spans the width; the **notes**
    span the width below it and get most of the page (at least 70% of the screen height).
 3. **Everything is a list of boxes** with caps, so any box can be added, removed, renamed and reordered in
@@ -17,11 +17,11 @@ no upgrade: older saves open as a blank sheet (only a test account has v4 data).
    to that one line.
 
 Kept as they are: the notice and footer, the toolbar (character picker, New, Edit layout, More, Saved,
-Sign in), calculator boxes (`-4`, `+3`, `13-4`), ↑/↓ steppers, undo (toast + Ctrl+Z, keeps typing done
+Sign in), ↑/↓ steppers, undo (toast + Ctrl+Z, keeps typing done
 since), saving to localStorage, accounts and sync, import/export, print, the CSP and every security rule.
 Still no dice rolling, and **no automation**: it's a sheet you write on. Every box is a number or text you
 type; nothing is worked out from anything else (skills don't follow stats, Initiative doesn't follow DEX).
-The only things the sheet does on its own are the calculator math you type and the red Bloodied number.
+The sheet does nothing on its own: no calculator math (`13-4` stays as typed) and no Bloodied colour.
 
 ## Top section
 
@@ -45,7 +45,7 @@ The only things the sheet does on its own are the calculator math you type and t
 | Part | Default | Cap | Layout |
 |---|---|---|---|
 | Details (next to the name) | Hit Die, Level | 6 | one line, wraps |
-| Current / Max pairs | Current HP / Max HP (♥, Bloodied) | 2 | stacked, full width of the vitals |
+| Current / Max pairs | Current HP / Max HP (♥) | 2 | stacked, full width of the vitals |
 | Small boxes | Temp HP, Armor (shield), Initiative | 6 | rows of up to 3 |
 | Wounds | five circles + skull, then 3 dashed extra circles | — | under the small boxes |
 | Stats | STR DEX CON INT WIS CHA | 12 | rows of up to 6 |
@@ -57,10 +57,10 @@ The only things the sheet does on its own are the calculator math you type and t
 - **Stats** share one frame (dividers between them). Each has its ▲▽ save pips on top: every stat is also
   its save (cycle none → advantage → disadvantage → none, as `cycleSave` today). The separate Saves
   section goes away.
-- **Skills** and **small boxes** are plain numbers you type (calculator math and ↑/↓ work). Armor is the one
+- **Skills** and **small boxes** are plain numbers you type (↑/↓ step them). Armor is the one
   box with the shield.
-- **Pairs:** the default HP pair has the heart and turns Current red when Bloodied (at or below half Max).
-  An added pair (Mana, Focus…) is plain: renamable labels, no heart, no Bloodied.
+- **Pairs:** the default HP pair has the heart. An added pair (Mana, Focus…) has no heart. Both have
+  renamable labels in Edit layout.
 - **Wounds:** click to fill black (as today: fill up to the circle, or clear the last one). The 3 dashed
   extras sit after the skull and toggle one by one; they're always shown (no on/off setting).
 - **Phone:** vitals stack above stats and skills; stats and skills use rows of up to 3. No sideways scroll.
@@ -126,12 +126,13 @@ id and owner and gets a new `updated`, so it syncs like any edit. It can be undo
 - **No upgrade.** `normalize` reads v5 only. Anything older (or not a sheet) becomes `blank()`, keeping
   just its `id`, `owner` and `updated` so sync still matches it up. `upgrade1`, `upgrade2`, the v3 → v4
   notes step, `removed`, `extras`, `SECTIONS`, `ADDS`, `saves`, `skillStat`, `statVal`, `skillTotal`,
-  `boxSkillTotal`, `initiative`, `pointsFor`, `woundsMax` and `woundExtra` are deleted, with their tests.
+  `boxSkillTotal`, `initiative`, `pointsFor`, `evalExpr`, `applyMath`, `bloodied`, `woundsMax` and `woundExtra` are deleted, with their tests.
 - `normalize` enforces the caps (extra boxes past a cap are dropped) and fills missing fields.
 - `undoLayout` is rewritten for the new lists: the earlier lists come back, but boxes, notes and tabs that
   still exist keep what was typed since.
 - Kept as they are: `mergeChars`, `content`, `loadAll` / `saveAll`, `exportJson` / `importJson`,
-  `evalExpr` / `applyMath`, `signed` / `parseModifier`, `bloodied`, `setWounds`, `cycleSave`, `move`.
+  `signed`, `setWounds`, `cycleSave`, `move`. New: `step` (↑/↓ on typed text: `+2` → `+3`, `d10` left alone),
+  `reset`, `moveNote` (a note to another place or box), `columns`, `noteTitle`, `canAdd`. `parseModifier` goes.
 
 ## Files
 
