@@ -520,10 +520,17 @@ function renderList() {
   const first = focus.map(byId).filter((e) => shown.includes(e));
   shown = [...first, ...shown.filter((e) => !first.includes(e))];
   list.replaceChildren(...shown.map(renderEntry));
+  list.querySelectorAll('.name').forEach(fadeLong);
   const empty = $('empty');
   empty.hidden = shown.length > 0;
   empty.textContent = sceneReady ? 'No entries' : 'No scene';
 }
+
+// A name too long for its row fades out at the end instead of being cut off (style.css .name.long).
+function fadeLong(name) {
+  name.classList.toggle('long', name.scrollWidth > name.clientWidth + 1);
+}
+addEventListener('resize', () => document.querySelectorAll('.row .name').forEach(fadeLong));
 
 function renderEntry(e) {
   const edit = C.canEdit(e, role, tabs);
@@ -537,6 +544,8 @@ function renderEntry(e) {
   const name = el('input', { className: 'name', value: e.name, disabled: !edit, spellcheck: false });
   name.addEventListener('change', () => updateEntry(e, { name: name.value.trim() || e.name }));
   name.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') name.blur(); });
+  name.addEventListener('input', () => fadeLong(name));
+  name.addEventListener('blur', () => { name.scrollLeft = 0; fadeLong(name); });
   row.append(name);
   const many = liveTokens(e).length;
   if (many > 1) row.append(el('span', { className: 'count', title: `${many} tokens`, textContent: `×${many}` }));
