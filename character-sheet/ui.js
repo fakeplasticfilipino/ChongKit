@@ -35,7 +35,6 @@
     chevron: 'M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z',
     close: 'M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
     grip: 'M9 4a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zM9 10a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zM9 16a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4z',
-    heart: 'M12 21s-7.5-4.6-9.8-9.3C.6 8.3 2.7 4.5 6.4 4.5c2.3 0 4 1.3 5.6 3.3 1.6-2 3.3-3.3 5.6-3.3 3.7 0 5.8 3.8 4.2 7.2C19.5 16.4 12 21 12 21z',
     undo: 'M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62A7.95 7.95 0 0112.5 10.5c3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z',
   };
   const icon = (name, cls = 'cs-ic') => {
@@ -44,15 +43,6 @@
     n.setAttribute('class', cls);
     n.setAttribute('aria-hidden', 'true');
     n.innerHTML = `<path d="${ICON[name]}" fill="currentColor"/>`;
-    return n;
-  };
-  // The Armor shield, drawn like the sheet's: a thick outline with a thin one inside.
-  const shield = () => {
-    const n = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    n.setAttribute('viewBox', '0 0 100 116');
-    n.setAttribute('aria-hidden', 'true');
-    n.innerHTML = '<path d="M50 4 L94 17 V56 C94 84 74 102 50 112 C26 102 6 84 6 56 V17 Z" fill="#fff" stroke="currentColor" stroke-width="3"/>'
-      + '<path d="M50 12 L86 23 V56 C86 79 70 94 50 103 C30 94 14 79 14 56 V23 Z" fill="none" stroke="currentColor" stroke-width="1"/>';
     return n;
   };
   const typing = () => { const a = document.activeElement; return !!a && a.matches('input, textarea, select'); };
@@ -351,21 +341,18 @@
       field(s, 'name', 'Character name', 'cs-name', { after: names }),
       h('div', { class: 'cs-details' }, details, addButton('details', 'sm')));
   }
-  // Current / Max: two numbers split by a slanted line. The HP pair has the heart.
+  // Current / Max: two numbers split by a slanted line.
   function pair(p, i) {
     const name = p.label || 'Current';
     return editable('pairs', i, name, h('div', { class: 'cs-pair' },
       h('div', { class: 'cs-split' }, field(p, 'cur', name, 'cs-num', { step: true }), field(p, 'max', p.maxLabel || 'Max', 'cs-num', { step: true })),
-      h('div', { class: 'cs-labs' }, label(p, 'label', 'Current', 'cs-lab'), label(p, 'maxLabel', 'Max', 'cs-lab')),
-      p.hp ? icon('heart', 'cs-heart') : null));
+      h('div', { class: 'cs-labs' }, label(p, 'label', 'Current', 'cs-lab'), label(p, 'maxLabel', 'Max', 'cs-lab'))));
   }
-  // A small box (Temp HP, Armor, Initiative…): one number. Armor sits in the shield.
+  // A small box (Temp HP, Armor, Initiative…): one number.
   function small(b, i) {
     const name = b.label || 'Box';
-    const num = field(b, 'value', name, 'cs-num', { step: true });
-    return editable('boxes', i, name, h('div', { class: 'cs-small' + (b.shield ? ' armor' : '') },
-      b.shield ? h('div', { class: 'cs-shield' }, shield(), num) : num,
-      label(b, 'label', 'Box', 'cs-lab')));
+    return editable('boxes', i, name, h('div', { class: 'cs-small' },
+      field(b, 'value', name, 'cs-num', { step: true }), label(b, 'label', 'Box', 'cs-lab')));
   }
   // Wounds: five circles and the skull (click to fill up to there), then 3 dashed extras.
   function wounds() {
@@ -473,7 +460,7 @@
   // The notes (notes.js) draw with these helpers.
   const notes = window.SheetNotes({
     h, icon, change, commit, tabStrip, render: () => render(),
-    get s() { return s; }, get printing() { return printing; },
+    get s() { return s; }, get printing() { return printing; }, get editing() { return editing; },
   });
 
   function render() {

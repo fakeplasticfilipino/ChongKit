@@ -3,8 +3,8 @@
 // v4 sheet, data version 5: a sheet you write on. Every box holds the text typed into it; nothing
 // is worked out from anything else. The layout is lists of boxes with caps (the table's choice, for
 // looks): details, current / max pairs, small boxes, wounds, stats (each with a save pip), skills,
-// and tabs of note boxes holding notes. Derived (not from the GM Guide): the layout, the defaults
-// and the caps.
+// and tabs of four note boxes holding notes (a name and a description). Derived (not from the GM
+// Guide): the layout, the defaults and the caps. The default stats and skills are Nimble's.
 
 (function (root) {
   const VERSION = 5;
@@ -14,11 +14,12 @@
   const PER_ROW = { boxes: 3, stats: 6, skills: 6 }; // the most boxes in one row (phones: 3)
   const WOUNDS = 6; // five circles and the skull
   const EXTRA_WOUNDS = 3; // the dashed circles after the skull
+  const NOTE_BOXES = 4; // every tab has exactly four note boxes
   const DEFAULTS = {
     details: ['Hit Die', 'Level'],
-    stats: ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'],
-    skills: ['Arcana', 'Examination', 'Influence', 'Insight', 'Perception', 'Stealth'],
-    tabs: ['Actions', 'Spells', 'Inventory'],
+    stats: ['STR', 'DEX', 'INT', 'WIL'],
+    skills: ['Arcana', 'Examination', 'Finesse', 'Influence', 'Insight', 'Lore', 'Might', 'Naturecraft', 'Perception', 'Stealth'],
+    tabs: ['Actions'],
   };
 
   const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -28,20 +29,20 @@
   const mode = (v) => (v === 'adv' || v === 'dis' ? v : '');
 
   const newDetail = (label = '') => ({ id: uid(), label, value: '' });
-  const newPair = (label = '', maxLabel = '', hp = false) => ({ id: uid(), label, maxLabel, cur: '', max: '', hp });
-  const newBox = (label = '', shield = false) => ({ id: uid(), label, value: '', shield });
+  const newPair = (label = '', maxLabel = '') => ({ id: uid(), label, maxLabel, cur: '', max: '' });
+  const newBox = (label = '') => ({ id: uid(), label, value: '' });
   const newStat = (label = '') => ({ id: uid(), label, value: '', mode: '' });
   const newSkill = (label = '') => ({ id: uid(), label, value: '' });
-  const newNote = (text = '', folded = false) => ({ id: uid(), text, folded });
+  const newNote = (name = '', text = '', folded = false) => ({ id: uid(), name, text, folded });
   const newNoteBox = (title = '') => ({ id: uid(), title, notes: [] });
-  const newTab = (name = '') => ({ id: uid(), name, boxes: [newNoteBox()] });
+  const newTab = (name = '') => ({ id: uid(), name, boxes: Array.from({ length: NOTE_BOXES }, () => newNoteBox()) });
 
   function blank(name = '') {
     const s = {
       v: VERSION, id: uid(), name, updated: 0, owner: '',
       details: DEFAULTS.details.map((l) => newDetail(l)),
-      pairs: [newPair('Current HP', 'Max HP', true)],
-      boxes: [newBox('Temp HP'), newBox('Armor', true), newBox('Initiative')],
+      pairs: [newPair('Current HP', 'Max HP')],
+      boxes: [newBox('Temp HP'), newBox('Armor'), newBox('Initiative')],
       wounds: 0, woundMarks: Array(EXTRA_WOUNDS).fill(false),
       stats: DEFAULTS.stats.map((l) => newStat(l)),
       skills: DEFAULTS.skills.map((l) => newSkill(l)),
@@ -58,14 +59,27 @@
   const keepId = (x) => str(x.id) || uid();
   const READ = {
     details: (d) => ({ id: keepId(d), label: str(d.label), value: str(d.value) }),
-    pairs: (p) => ({ id: keepId(p), label: str(p.label), maxLabel: str(p.maxLabel), cur: str(p.cur), max: str(p.max), hp: !!p.hp }),
-    boxes: (b) => ({ id: keepId(b), label: str(b.label), value: str(b.value), shield: !!b.shield }),
+    pairs: (p) => ({ id: keepId(p), label: str(p.label), maxLabel: str(p.maxLabel), cur: str(p.cur), max: str(p.max) }),
+    boxes: (b) => ({ id: keepId(b), label: str(b.label), value: str(b.value) }),
     stats: (x) => ({ id: keepId(x), label: str(x.label), value: str(x.value), mode: mode(x.mode) }),
     skills: (x) => ({ id: keepId(x), label: str(x.label), value: str(x.value) }),
   };
-  const readNote = (n) => ({ id: keepId(n), text: str(n.text), folded: !!n.folded });
+  // A note is a name and a description. Notes saved before they had a name keep all their text in
+  // `text`: its first line becomes the name, the rest the description.
+  function readNote(n) {
+    let name = str(n.name), text = str(n.text);
+    if (n.name == null) { const lines = text.split('\n'); name = lines.shift().trim(); text = lines.join('\n'); }
+    return { id: keepId(n), name, text, folded: !!n.folded };
+  }
   const readNoteBox = (b) => ({ id: keepId(b), title: str(b.title), notes: (objs(b.notes) || []).map(readNote) });
-  const readTab = (t) => ({ id: keepId(t), name: str(t.name), boxes: (objs(t.boxes) || []).map(readNoteBox) });
+  // Exactly four boxes per tab: missing ones are added; the notes of any past the fourth move into it.
+  function readTab(t) {
+    const boxes = (objs(t.boxes) || []).map(readNoteBox);
+    while (boxes.length < NOTE_BOXES) boxes.push(newNoteBox());
+    const extra = boxes.splice(NOTE_BOXES);
+    boxes[NOTE_BOXES - 1].notes.push(...extra.flatMap((b) => b.notes));
+    return { id: keepId(t), name: str(t.name), boxes };
+  }
 
   function normalize(input) {
     if (!input || typeof input !== 'object') return blank();
@@ -101,11 +115,12 @@
     return Math.ceil(n / Math.ceil(n / per));
   }
 
-  // A folded note shows its first line as its name, ending in a full stop ("Fireball" → "Fireball.").
-  function noteTitle(text) {
-    const first = str(text).split('\n')[0].trim();
-    if (!first) return 'Untitled';
-    return /[.!?:]$/.test(first) ? first : first + '.';
+  // Swap two note boxes of a tab (with their notes). Returns the new boxes; the input is left as it was.
+  function swapBoxes(boxes, i, j) {
+    const out = boxes.slice();
+    if (i === j || !out[i] || !out[j]) return out;
+    [out[i], out[j]] = [out[j], out[i]];
+    return out;
   }
 
   // Move a note within its box or into another box of the same tab. `at` is the index in the target
@@ -227,9 +242,9 @@
   }
 
   const api = {
-    VERSION, STORE, CAPS, PER_ROW, WOUNDS, EXTRA_WOUNDS, DEFAULTS, uid,
+    VERSION, STORE, CAPS, PER_ROW, WOUNDS, EXTRA_WOUNDS, NOTE_BOXES, DEFAULTS, uid,
     blank, normalize, reset, newDetail, newPair, newBox, newStat, newSkill, newNote, newNoteBox, newTab,
-    canAdd, columns, noteTitle, moveNote, step, signed, setWounds, cycleSave, undoLayout, move,
+    canAdd, columns, swapBoxes, moveNote, step, signed, setWounds, cycleSave, undoLayout, move,
     loadAll, saveAll, exportJson, importJson, mergeChars, content,
   };
   if (typeof module !== 'undefined') module.exports = api;

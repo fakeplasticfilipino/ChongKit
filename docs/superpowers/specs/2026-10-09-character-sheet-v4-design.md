@@ -1,6 +1,11 @@
 # Character Sheet v4: flat boxes on top, notes below (design)
 
 Date: 2026-10-09 · Status: **built** (v4) · Prototype: `sheet-prototype.html` (scratchpad, throwaway)
+
+**Revised after building (2026-10-09):** notes became four fixed note boxes per tab (swapped by dragging in Edit
+layout, no + Box), each note a name + description (read-only when playing, edited only in Edit layout);
+defaults are Nimble's four stats (STR DEX INT WIL) and ten skills, one Actions tab; no heart or shield.
+`noteTitle` gave way to `swapBoxes`. CLAUDE.md's Character Sheet section is the current description.
 Replaces the v3 layout and look of `character-sheet/`. Saved data goes from version 4 to **version 5**, with
 no upgrade: older saves open as a blank sheet (only a test account has v4 data).
 

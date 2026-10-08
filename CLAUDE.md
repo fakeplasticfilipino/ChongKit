@@ -63,11 +63,12 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 1. **Its own flat look** (v4, the table's choice), not the GM Guide's parchment: simple whitish boxes.
    White fields, thin grey outlines (`#4a4a4a`), flat grey label bands with white caps text (`#6f6f6f`),
    near-square corners (3 px), a light grey page, no red on the sheet. `body.cs-flat` overrides
-   `nimble.css`'s tokens; the notice and footer stay. The top section (name + details; Current / Max
-   pairs, the HP pair with the ♥; small boxes, Armor in the shield; wounds = five circles + skull, then 3
-   dashed extras; stats with ▲▽ save pips; skills) spans the width (it stacks into one column below
-   1150 px wide), and the notes span the width below it. Printing (More → Print or Ctrl+P) prints the top
-   section on page 1 and the open tab's notes after it, every note open.
+   `nimble.css`'s tokens; the notice and footer stay. No icons in the boxes (no heart, no shield). The top
+   section (name + details; Current / Max pairs; small boxes; wounds = five circles + skull, then 3 dashed
+   extras; stats with ▲▽ save pips; skills) spans the width (it stacks into one column below 1150 px wide),
+   and the notes span the width below it: four tall note boxes side by side (two below 1150 px, one on
+   phones). Printing (More → Print or Ctrl+P) prints the top section on page 1 and the open tab's notes
+   after it, every note open.
    Its own styles live in `character-sheet/sheet.css`.
 2. **A sheet you write on.** It holds HP and Wounds on purpose, but nothing is automated: every box is the
    text typed into it. No dice, no calculator math, no Bloodied colour, nothing follows anything else.
@@ -77,9 +78,12 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 4. **Configurable, with caps for looks:** details 6, Current / Max pairs 2, small boxes 6, stats 12, skills
    18 (`Sheet.CAPS`), laid out in even rows (`Sheet.columns`). In Edit layout every box (defaults too) gets
    a × and a grip, its label becomes a field, and each list ends with a dashed + button while there's room.
-   More → Reset character brings back the defaults (`Sheet.reset`, undoable). Notes: tabs (`tabStrip`: +,
-   double-click rename, ×, drag) → note boxes (CSS columns) → notes (free text; folded, a note shows its
-   first line, `Sheet.noteTitle`; notes drag between boxes, `Sheet.moveNote`). Layout changes go through
+   More → Reset character brings back the defaults (`Sheet.reset`, undoable): Nimble's four stats (STR DEX
+   INT WIL) and ten skills, one Actions tab. Notes: tabs (`tabStrip`: +, double-click rename, ×, drag), each
+   with exactly four note boxes (`Sheet.NOTE_BOXES`; a new tab has four; no adding or removing boxes) →
+   notes (a name and a description). Playing, notes are read-only: click a name to open its description.
+   Only in Edit layout can notes be added, typed in, deleted or dragged (`Sheet.moveNote`), box titles
+   typed, and boxes swapped by dragging one onto another (`Sheet.swapBoxes`). Layout changes go through
    undo (`undoLayout` keeps typing done since).
 5. Data version 5, saved in localStorage under `chongkit.sheets` (every character in one key). Older
    versions aren't upgraded: they open blank, keeping only id, owner and last edit. Logic lives in
@@ -161,7 +165,7 @@ character-sheet/             → /character-sheet/
   index.html                 Page + toolbar
   sheet.js                   Pure logic: the v5 model, caps, even rows, notes, saving, import/export
   ui.js                      Draws the top section and toolbar; saving, sync, undo; the sign-in dialog
-  notes.js                   Draws the notes: tabs of note boxes holding foldable notes
+  notes.js                   Draws the notes: tabs of four note boxes holding notes (name + description)
   cloud.js                   Optional sign-in (Discord / email) and sync via Supabase
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)

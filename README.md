@@ -8,7 +8,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
 | [Chong Die](chong-die/) | ✅ v4 | Owlbear Rodeo 3D dice with a plain-words command line, saved rolls in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
-| [Character Sheet](character-sheet/) | ✅ v4 | A character sheet in the browser: HP, small boxes, wounds, stats with save pips, skills, and tabs of note boxes; add, remove, rename and reorder any box; saves locally. |
+| [Character Sheet](character-sheet/) | ✅ v4 | A character sheet in the browser: HP, small boxes, wounds, stats with save pips, skills, and tabs of four note boxes; add, remove, rename and reorder any box; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
@@ -43,18 +43,20 @@ before, only in this browser. Deleting a character while signed in deletes it fr
 It's a sheet you write on: every box holds what you type, and nothing is worked out for you (no math,
 no skills following stats).
 
-- **Top:** the name, with Hit Die and Level beside it. On the left: Current HP / Max HP (the heart),
-  Temp HP, Armor (in the shield) and Initiative, and the wounds. On the right: the stats (STR, DEX, CON,
-  INT, WIS, CHA), each with a save pip that cycles ▲ advantage / ▼ disadvantage / none, and the skills
-  (Arcana, Examination, Influence, Insight, Perception, Stealth). Below 1150 px wide the top section
+- **Top:** the name, with Hit Die and Level beside it. On the left: Current HP / Max HP, Temp HP, Armor
+  and Initiative, and the wounds. On the right: Nimble's stats (STR, DEX, INT, WIL), each with a save pip
+  that cycles ▲ advantage / ▼ disadvantage / none, and Nimble's ten skills (Arcana, Examination, Finesse,
+  Influence, Insight, Lore, Might, Naturecraft, Perception, Stealth). Below 1150 px wide the top section
   stacks into one column.
 - **Wounds:** click a circle to fill it (black) up to there; click the last filled one to clear it. The
   skull is the last wound; the three dashed circles after it are extra wounds (each clicks on and off).
 - **Notes** (below, full width): tabs like a browser's (click to switch, **+** adds one, double-click to
-  rename, × closes it with Undo, drag to move). Each tab holds note boxes that arrange themselves in
-  columns; **+ Box** (at the end of a tab) adds another note box; give a box a title, **+ Note** adds a note, the chevron on its title folds or opens all its
-  notes, × removes it (Undo). A note is free text: its first line is its name, and folded it shows just
-  that line ("Fireball."). Drag a note by its grip to reorder it or move it to another box.
+  rename, × closes it with Undo, drag to move). A character starts with one tab, Actions. Every tab has
+  four tall note boxes side by side. A note is a name with a description under it: click the name to
+  open or close the description; the chevron on a box's title opens or closes all its notes.
+- **Editing notes** happens in **Edit layout**: type a box's title, **+ Note** adds a note (type its name
+  and description), × deletes one (Undo), drag a note's grip to reorder it or move it to another box,
+  and drag a box's grip onto another box to swap the two. Outside Edit layout notes can only be read.
 - **Edit layout** (toolbar): every box gets a × to remove it and a grip to drag it, labels can be
   renamed, and each list ends with a + button: up to 6 details, 2 Current / Max pairs, 6 small boxes,
   12 stats and 18 skills. Rows stay even (7 stats sit 4 + 3). **Done** (or Esc) goes back. Removing

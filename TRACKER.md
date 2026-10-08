@@ -64,7 +64,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Notes: tabs → note boxes (auto columns) → notes that fold to their first line; drag notes between boxes
 - [x] Reset character (back to the defaults, undoable); no automation (no math, no Bloodied, nothing derived)
 - [x] Data version 5; older saves open blank
-- [x] Tests: defaults, normalize, caps, columns, noteTitle, moveNote, step, reset, undo, saving, sync
+- [x] Tests: defaults, normalize, caps, columns, moveNote, step, reset, undo, saving, sync
+- [x] Nimble defaults (STR DEX INT WIL, ten skills), one Actions tab, no heart or shield
+- [x] Notes: four fixed boxes per tab (swap by dragging in Edit layout), notes as name + description; read-only when playing, edited only in Edit layout
 
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide

@@ -84,16 +84,12 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
 .cs-split::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 3px; background: var(--frame); transform: skewX(-10deg); }
 .cs-split .cs-num { font-size: 42px; }
 .cs-labs { display: grid; grid-template-columns: 1fr 1fr; }
-.cs-heart { position: absolute; z-index: 2; top: -13px; right: 12px; width: 30px; height: 30px; color: var(--frame); pointer-events: none; }
 
 /* Even rows: the column count comes from the page (Sheet.columns) */
 .cs-smalls, .cs-stats, .cs-skills { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 10px; }
 
 /* Small boxes (Temp HP, Armor, Initiative…) */
 .cs-small .cs-num { min-height: 70px; }
-.cs-shield { position: relative; flex: 1; display: grid; place-items: center; min-height: 70px; }
-.cs-shield svg { position: absolute; top: 6%; height: 88%; width: auto; color: var(--frame); }
-.cs-shield .cs-num { position: relative; z-index: 1; min-height: 0; padding-bottom: 6px; font-size: 28px; }
 
 /* Wounds: five circles and the skull on a band, then 3 dashed extras */
 .cs-wounds { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
@@ -127,7 +123,7 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
 .cs-add:hover { border-color: var(--frame); color: var(--frame); }
 .cs-add.sm { min-height: 0; padding: 6px 10px; }
 
-/* Notes: tabs over note boxes that fill as many columns as fit */
+/* Notes: tabs over four tall note boxes side by side */
 .cs-notes { display: flex; flex-direction: column; gap: 12px; min-height: 70vh; }
 .cs-tabstrip { display: flex; flex-wrap: wrap; align-items: end; border-bottom: 3px solid var(--frame); }
 .cs-tab { display: flex; align-items: center; margin-right: -2px; border: 2px solid var(--frame); border-bottom: 0; background: var(--well); }
@@ -138,37 +134,48 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
 .cs-tdel:hover { opacity: 1; }
 .cs-tname { margin: 4px 0 4px 8px; padding: 2px 4px; border: 1.5px solid var(--frame); font: 700 15px var(--body); text-transform: uppercase; }
 .cs-tabadd { min-width: 38px; padding: 6px 12px; border: 2px dashed var(--frame); border-bottom: 0; background: transparent; font: 700 15px var(--body); cursor: pointer; }
-.cs-nboxes { columns: 300px; column-gap: 14px; }
-.cs-nbox { break-inside: avoid; margin-bottom: 14px; border: 2px solid var(--frame); border-radius: 3px; background: var(--well); overflow: hidden; }
+.cs-nboxes { flex: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.cs-nbox { display: flex; flex-direction: column; min-width: 0; min-height: 60vh; border: 2px solid var(--frame); border-radius: 3px; background: var(--well); }
+.cs-nbox.dragging { opacity: .4; }
 .cs-nbox.drop { outline: 2px dashed var(--frame); outline-offset: -4px; }
-.cs-nhead { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; background: var(--band); color: var(--band-t); }
-.cs-ntitle { min-width: 0; padding: 6px 2px; border: 0; background: transparent; color: var(--band-t); font: 800 16px var(--body); letter-spacing: .04em; text-transform: uppercase; }
-.cs-ntitle:focus { outline: 1.5px dashed var(--band-t); }
-.cs-nfold, .cs-ndel { display: grid; place-items: center; height: 32px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
-.cs-nfold .cs-ic { transition: transform .15s; }
-.cs-nfold[aria-expanded="true"] .cs-ic { transform: rotate(90deg); }
-.cs-nlist { display: flex; flex-direction: column; gap: 6px; padding: 8px; }
-.cs-note { display: grid; grid-template-columns: 18px 24px minmax(0, 1fr) 26px; align-items: start; border: 2px solid var(--frame); border-radius: 3px; background: #fff; }
+.cs-nhead { display: flex; align-items: center; gap: 2px; min-height: 34px; padding: 0 6px; background: var(--band); color: var(--band-t); }
+.cs-nhead .cs-grip { position: static; color: var(--band-t); opacity: .8; }
+.cs-ntitle { flex: 1; min-width: 0; padding: 6px 2px; border: 0; background: transparent; color: var(--band-t); font: 800 16px var(--body); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+input.cs-ntitle { border-bottom: 1.5px dashed var(--band-t); }
+input.cs-ntitle:focus { outline: 1.5px dashed var(--band-t); }
+.cs-nfold, .cs-ndel { display: grid; place-items: center; flex: none; width: 26px; height: 30px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.cs-nfold .cs-ic, .cs-chev { transition: transform .15s; }
+.cs-nfold[aria-expanded="true"] .cs-ic, .cs-nname[aria-expanded="true"] .cs-chev { transform: rotate(90deg); }
+.cs-nlist { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: 8px; }
+
+/* A note: its name in a bar, its description in a box under it */
+.cs-note { border: 2px solid var(--frame); border-radius: 3px; background: #fff; }
 .cs-note.drop { box-shadow: 0 -3px 0 var(--frame); }
-.cs-note .cs-grip { position: static; width: 18px; height: 32px; }
-.cs-note .cs-nfold { color: var(--frame); }
+.cs-nname { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 34px; padding: 4px 8px 4px 4px; border: 0; background: transparent; color: var(--ink); font: 700 16px/1.3 var(--body); text-align: left; cursor: pointer; }
+.cs-nname span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-note.open .cs-nname span { white-space: normal; overflow-wrap: anywhere; }
+.cs-ndesc { margin: 0 6px 6px; padding: 6px 8px; min-height: 2.4em; border: 1.5px solid var(--rule); border-radius: 2px; white-space: pre-wrap; overflow-wrap: anywhere; font: 500 15px/1.4 var(--body); }
+.cs-nrow { display: flex; align-items: center; gap: 2px; padding: 2px 4px; }
+.cs-nrow .cs-grip { position: static; }
+.cs-nname-in { flex: 1; min-width: 0; padding: 4px 6px; border: 1.5px solid var(--rule); border-radius: 2px; font: 700 16px var(--body); color: var(--ink); background: #fff; }
+.cs-ndesc-in { display: block; width: calc(100% - 12px); margin: 0 6px 6px; min-height: 3em; padding: 6px 8px; border: 1.5px solid var(--rule); border-radius: 2px; resize: none; overflow: hidden; font: 500 15px/1.4 var(--body); color: var(--ink); background: #fff; }
+.cs-nname-in:focus, .cs-ndesc-in:focus { outline: 2px solid var(--frame); outline-offset: -1px; }
 .cs-note .cs-ndel { color: var(--muted); }
-.cs-ntext { display: block; width: 100%; min-height: 32px; padding: 6px 2px; border: 0; background: transparent; resize: none; overflow: hidden; font: 500 16px/1.35 var(--body); color: var(--ink); }
-.cs-ntext:focus { outline: none; }
-.cs-nline { min-width: 0; padding: 6px 2px; border: 0; background: transparent; font: 700 16px/1.35 var(--body); color: var(--ink); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
-.cs-nprint { padding: 6px 2px; white-space: pre-wrap; font: 500 15px/1.35 var(--body); }
 .cs-nadd { padding: 5px; border: 2px dashed var(--muted); border-radius: 3px; background: transparent; color: var(--muted); font: 700 14px var(--body); text-transform: uppercase; cursor: pointer; }
 .cs-nadd:hover { border-color: var(--frame); color: var(--frame); }
-.cs-addbox { width: 100%; min-height: 90px; break-inside: avoid; }
 
 /* Narrow windows and phones */
-@media (max-width: 1150px) { .cs-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1150px) {
+  .cs-cols { grid-template-columns: minmax(0, 1fr); }
+  .cs-nboxes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 620px) {
   main.cs-page { padding: 10px 10px 16px; }
   .cs-top, .cs-notes { padding: 14px 10px; }
   .cs-stats, .cs-skills { grid-template-columns: repeat(var(--cols-sm), minmax(0, 1fr)); }
   .cs-track { gap: 6px; padding: 5px 10px; }
-  .cs-nboxes { columns: 1; }
+  .cs-nboxes { grid-template-columns: minmax(0, 1fr); }
+  .cs-nbox { min-height: 0; }
 }
 
 /* Sign-in dialog */
@@ -206,5 +213,5 @@ input.cs-lab::placeholder { color: rgba(255, 255, 255, .6); }
   body.cs-flat, html:has(body.cs-flat) { background: #fff; }
   .cs-top, .cs-notes { min-height: 0; padding: 0; border: 0; box-shadow: none; }
   .cs-top { break-after: page; }
-  .cs-note { grid-template-columns: minmax(0, 1fr); }
+  .cs-nbox { min-height: 0; }
 }
