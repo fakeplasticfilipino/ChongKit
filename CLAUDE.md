@@ -30,7 +30,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    (`--blood`) for Bloodied numbers. Reuse the classes and tokens in `assets/css/nimble.css`.
    - **Easy on the eyes, like the printed page:** matte parchment everywhere, never white surfaces
      or fields (`--panel`, `--parchment-hi`, the sheet's `--sheet`/`--fld`), and soft brown-black ink
-     (`--ink` #2b2520, outlines `--frame` #3a332c), never pure black. Red is for Bloodied and Deadly only.
+     (`--ink` #2b2520, outlines `--frame` #3a332c), never pure black. Red is for Bloodied and Deadly only. The Character Sheet has its own flat whitish look (see its section).
    - No site-wide top bar: each tool page has a "← All tools" link.
 5. **Keep it simple.** This is for use mid-session at the table; favor big readable numbers over features.
    - No helper or explainer text in the UI (no "tap here to…" tips, no difficulty descriptions, no
@@ -60,25 +60,31 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 
 `character-sheet/`: the Nimble character sheet. The Nimble ground rules apply, with these differences:
 
-1. **The sheet is our table's sheet** (v2): rounded heavy-outlined boxes, panels with sideways labels,
-   parchment fields (never white), condensed caps labels. The sheet is a **sheet of paper**: lighter
-   parchment with a clear black edge, faint edge shading, printed margin lines and a corner imprint,
-   lying on a darker desk (`body.cs-desk`), with the notice and footer. It fills most of the screen
-   (slim notice, one toolbar row).
-   Six stats (STR DEX CON INT WIS CHA, each with an oval number slot), three saves (STR DEX WIL),
-   Combat (Armor, HP, Initiative/Speed, Wounds + optional 5 dashed extra circles; filled wounds are
-   black), ten skills, tabs of collapsible entries, tabs of notes.
-   Its own styles live in `character-sheet/sheet.css`; page chrome still comes from `nimble.css`.
-2. **It tracks HP and Wounds on purpose** (it's a sheet). Still no dice rolling.
-3. **No GM Guide numbers:** the layout, stats, saves, skill/stat pairs and the six-wound track are the
-   table's choices; call them derived. Don't add class or ancestry data that isn't in the PDF.
-4. **Configurable:** playing vs Edit layout. In Edit layout each section ends with a bar that adds
-   another box of the section's own kind (`ADDS`: stat, save, skill, detail line; Combat: number or
-   current/max) and restores removed ones; added boxes show inline with the defaults, boxes get a × to
-   remove and added ones a grip to reorder. Tabs are managed directly, like browser tabs (+, double-click
-   rename, ×, drag); the entries' tabs and the notes' tabs share `tabStrip`. Layout changes go through undo (`undoLayout` keeps typing done since). Default boxes are removed via `removed` (`section:id`), extras live in `extras`. Tabs live in `tabs` (name + entries), notes in `noteTabs` (name + text). Old saves are upgraded in `normalize` (`upgrade1` for v1, `upgrade2` for v2, notes → first notes tab for v3).
-5. Saved in localStorage under `chongkit.sheets` (every character in one key). Logic lives in
-   `sheet.js` (browser global `Sheet`, CommonJS for tests) and is covered by `tests/sheet.test.js`.
+1. **Its own flat look** (v4, the table's choice), not the GM Guide's parchment: simple whitish boxes.
+   White fields, thin grey outlines (`#4a4a4a`), flat grey label bands with white caps text (`#6f6f6f`),
+   near-square corners (3 px), a light grey page, no red on the sheet. `body.cs-flat` overrides
+   `nimble.css`'s tokens; the notice and footer stay. The top section (name + details; Current / Max
+   pairs, the HP pair with the ♥; small boxes, Armor in the shield; wounds = five circles + skull, then 3
+   dashed extras; stats with ▲▽ save pips; skills) spans the width (it stacks into one column below
+   1150 px wide), and the notes span the width below it. Printing (More → Print or Ctrl+P) prints the top
+   section on page 1 and the open tab's notes after it, every note open.
+   Its own styles live in `character-sheet/sheet.css`.
+2. **A sheet you write on.** It holds HP and Wounds on purpose, but nothing is automated: every box is the
+   text typed into it. No dice, no calculator math, no Bloodied colour, nothing follows anything else.
+   ↑/↓ step a whole number (`Sheet.step`).
+3. **No GM Guide numbers:** the layout, the defaults and the caps are the table's choices; call them derived.
+   Don't add class or ancestry data that isn't in the PDF.
+4. **Configurable, with caps for looks:** details 6, Current / Max pairs 2, small boxes 6, stats 12, skills
+   18 (`Sheet.CAPS`), laid out in even rows (`Sheet.columns`). In Edit layout every box (defaults too) gets
+   a × and a grip, its label becomes a field, and each list ends with a dashed + button while there's room.
+   More → Reset character brings back the defaults (`Sheet.reset`, undoable). Notes: tabs (`tabStrip`: +,
+   double-click rename, ×, drag) → note boxes (CSS columns) → notes (free text; folded, a note shows its
+   first line, `Sheet.noteTitle`; notes drag between boxes, `Sheet.moveNote`). Layout changes go through
+   undo (`undoLayout` keeps typing done since).
+5. Data version 5, saved in localStorage under `chongkit.sheets` (every character in one key). Older
+   versions aren't upgraded: they open blank, keeping only id, owner and last edit. Logic lives in
+   `sheet.js` (browser global `Sheet`, CommonJS for tests), covered by `tests/sheet.test.js`; the notes
+   are drawn by `notes.js` (global `SheetNotes`, given `ui.js`'s helpers).
 6. **Accounts (optional):** `cloud.js` (browser global `Cloud`) signs in with Discord or email +
    password against Supabase project `chong-nimble-sheet` (ref `fmkbvoukbrxjbzlexjhu`) and syncs
    characters to `public.character_sheets` (`user_id`, `id`, `data` jsonb, `updated_at`; RLS: own
@@ -153,8 +159,9 @@ _config.yml                  GitHub Pages config (excludes repo-only files)
 assets/css/nimble.css        Shared GM-Guide look for every page
 character-sheet/             → /character-sheet/
   index.html                 Page + toolbar
-  sheet.js                   Pure logic: defaults, skill math, calculator, saving, import/export
-  ui.js                      Draws the sheet, trays, tabs and entries; the sign-in dialog
+  sheet.js                   Pure logic: the v5 model, caps, even rows, notes, saving, import/export
+  ui.js                      Draws the top section and toolbar; saving, sync, undo; the sign-in dialog
+  notes.js                   Draws the notes: tabs of note boxes holding foldable notes
   cloud.js                   Optional sign-in (Discord / email) and sync via Supabase
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)

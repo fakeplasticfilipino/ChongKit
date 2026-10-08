@@ -1,6 +1,6 @@
 # Character Sheet v4: flat boxes on top, notes below (design)
 
-Date: 2026-10-09 · Status: **draft, for review** · Prototype: `sheet-prototype.html` (scratchpad, throwaway)
+Date: 2026-10-09 · Status: **built** (v4) · Prototype: `sheet-prototype.html` (scratchpad, throwaway)
 Replaces the v3 layout and look of `character-sheet/`. Saved data goes from version 4 to **version 5**, with
 no upgrade: older saves open as a blank sheet (only a test account has v4 data).
 

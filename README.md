@@ -8,7 +8,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 |------|--------|--------------|
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
 | [Chong Die](chong-die/) | ✅ v4 | Owlbear Rodeo 3D dice with a plain-words command line, saved rolls in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
-| [Character Sheet](character-sheet/) | ✅ v3 | A Nimble character sheet in the browser: six stats, saves, skills, tabs of collapsible entries, notes; add more of any box, remove any; saves locally. |
+| [Character Sheet](character-sheet/) | ✅ v4 | A character sheet in the browser: HP, small boxes, wounds, stats with save pips, skills, and tabs of note boxes; add, remove, rename and reorder any box; saves locally. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
@@ -19,10 +19,8 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 browser. Everything saves in this browser as you type (localStorage), so it's there next time;
 **Export** saves a character as a `.json` file and **Import** loads one back (handy for moving to
 another device). The list at the top switches between characters and **New** starts one; **More** has
-Copy, Export, Import, Print and Delete. Every number box steps with the ↑ / ↓ keys (Shift: by 5).
-Characters saved by v1 move over by themselves (WIL becomes WIS, level joins the class, Finesse and
-Might points become extra skill boxes); v2 sheets drop the unused starter Mana / Gold / Inventory boxes
-and move note entries into a Notes tab.
+Copy, Export, Import, Print, Reset and Delete. Number boxes step with the ↑ / ↓ keys (Shift: by 5).
+Characters saved before v4 open as a blank sheet.
 
 **Accounts (optional):** **Sign in** (toolbar) with Discord, or with an email and password
 (**Create account** sends a confirmation email first). Signed in, every character is also saved to
@@ -42,40 +40,33 @@ before, only in this browser. Deleting a character while signed in deletes it fr
   Imports over 1 MB are refused. If two devices edit the same character, the edit made last (by each
   device's clock) wins.
 
-- **Details:** name on the banner; Class & Level, Ancestry, Height, Weight; Hit Dice (left / die).
-- **Stats:** STR, DEX, CON, INT, WIS, CHA. Type each stat in its box (`3`, `+3` or `-1`; modifiers
-  show their sign); the oval under it is a slot for a second number. Click a stat's name to mark it
-  as a key stat (it turns dark).
-- **Saves:** STR, DEX and WIL each have a number box. The circle on the left cycles ▲ advantage /
-  ▼ disadvantage / none.
-- **Skills** show their stat plus any skill points, so they follow the stat. Type a skill's total
-  (`+4`, `-1`…) and the difference is kept as points. Initiative works the same way from DEX.
-- **Combat:** Armor (shield), HP / Max HP / Temp, Initiative / Speed, Wounds.
-- **HP, Temp HP, saves, the ovals and Current/Max boxes do math:** `-4` takes 4 off, `+3` adds 3,
-  `13-4` or `10` sets it (Enter or click away). HP turns dark red when Bloodied (at or below half max).
-- **Wounds:** click a circle to fill it (black) up to there; click the last filled one to clear it. The
-  skull is the last wound. Edit layout can add a row of five smaller dashed circles under the track for
-  extra wounds (each clicks on and off).
-- **Tabs** (Actions, Abilities, Inventory to start) work like browser tabs: click to switch, **+** adds
-  one, double-click a name to rename it, × closes it (with Undo), drag a tab to move it. Each tab is a
-  list of bars showing a name and a short summary on the right. Click a bar to open it and edit its
-  name, summary and details. Drag the grip to reorder, × to delete (with Undo), Expand all / Collapse
-  all at the top.
-- **Edit layout** (toolbar) is for changing the sheet: every box gets a red × to take it off, and each
-  section ends with buttons that add another box of its own kind: **+ Stat** (big box, oval, name),
-  **+ Save**, **+ Skill** (type its stat under it: a stat's name like DEX, or an added stat's, makes it
-  follow that stat; anything else, or nothing, leaves it a plain number for systems without stats), **+ Line** in the details,
-  and in Combat **+ Number** (like Armor) or **+ Current / Max** (like HP). Added boxes sit in the
-  section with the rest; type their name, drag the grip to reorder. Removed boxes come back from the
-  same bar, and Combat's bar sets Max Wounds. **Done** (or Esc) goes back to playing. Removing or
-  deleting anything shows **Undo** (Ctrl+Z works too).
-- **Notes:** tabs of free text on ruled lines, working like the tabs above (+, double-click to rename,
-  ×, drag). Older sheets' notes are in the first tab, **Notes**.
+It's a sheet you write on: every box holds what you type, and nothing is worked out for you (no math,
+no skills following stats).
 
-**Derived, not from the GM Guide:** the sheet's layout (our table's sheet), its stats, saves,
-skill-to-stat pairs, skill = stat + points, Initiative = DEX + bonus and the six-wound track are not
-from the GM Guide (which has no character rules). Ancestry and Class are free text: there's no
-"Apply" that fills in stats, because that data isn't in the GM Guide.
+- **Top:** the name, with Hit Die and Level beside it. On the left: Current HP / Max HP (the heart),
+  Temp HP, Armor (in the shield) and Initiative, and the wounds. On the right: the stats (STR, DEX, CON,
+  INT, WIS, CHA), each with a save pip that cycles ▲ advantage / ▼ disadvantage / none, and the skills
+  (Arcana, Examination, Influence, Insight, Perception, Stealth). Below 1150 px wide the top section
+  stacks into one column.
+- **Wounds:** click a circle to fill it (black) up to there; click the last filled one to clear it. The
+  skull is the last wound; the three dashed circles after it are extra wounds (each clicks on and off).
+- **Notes** (below, full width): tabs like a browser's (click to switch, **+** adds one, double-click to
+  rename, × closes it with Undo, drag to move). Each tab holds note boxes that arrange themselves in
+  columns; give a box a title, **+ Note** adds a note, the chevron on its title folds or opens all its
+  notes, × removes it (Undo). A note is free text: its first line is its name, and folded it shows just
+  that line ("Fireball."). Drag a note by its grip to reorder it or move it to another box.
+- **Edit layout** (toolbar): every box gets a × to remove it and a grip to drag it, labels can be
+  renamed, and each list ends with a + button: up to 6 details, 2 Current / Max pairs, 6 small boxes,
+  12 stats and 18 skills. Rows stay even (7 stats sit 4 + 3). **Done** (or Esc) goes back. Removing
+  anything shows **Undo** (Ctrl+Z works too).
+- **Reset character** (More) clears the character and brings back the default layout (Undo brings it
+  back).
+- **Print** (More, or Ctrl+P) prints the top section on page 1 and the open tab's notes after it, every
+  note open.
+
+**Derived, not from the GM Guide:** the sheet's layout, defaults, caps and the six-wound track are our
+table's choices; the GM Guide has no character rules. Ancestry and Class data isn't in the GM Guide, so
+there's nothing that fills a sheet in.
 
 ## Combat Generator
 

@@ -57,10 +57,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Content-Security-Policy on the sheet page; imports over 1 MB refused; 8+ character passwords for new accounts
 - [x] Tests: notes tabs upgrade, owner-aware merge, imports are yours
 
-### 🚧 v4 — flat boxes on top, notes below (spec: `docs/superpowers/specs/2026-10-09-character-sheet-v4-design.md`)
-- [x] Prototype agreed (flat whitish look, top/bottom split, caps 12 stats / 18 skills / 6 small boxes / 2 pairs, note boxes, Reset)
-- [ ] Spec reviewed
-- [ ] Plan, then build (data v5 + upgrade from v4)
+### ✅ v4 — done (flat boxes on top, notes below; spec: `docs/superpowers/specs/2026-10-09-character-sheet-v4-design.md`)
+- [x] Flat whitish look (white fields, grey outlines and bands, near-square corners)
+- [x] Top section: details, Current / Max pairs (♥ on HP), small boxes (Armor shield), wounds + 3 extras, stats with save pips, skills
+- [x] Caps for looks (details 6, pairs 2, small boxes 6, stats 12, skills 18), even rows, every box removable / renamable / draggable
+- [x] Notes: tabs → note boxes (auto columns) → notes that fold to their first line; drag notes between boxes
+- [x] Reset character (back to the defaults, undoable); no automation (no math, no Bloodied, nothing derived)
+- [x] Data version 5; older saves open blank
+- [x] Tests: defaults, normalize, caps, columns, noteTitle, moveNote, step, reset, undo, saving, sync
 
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
