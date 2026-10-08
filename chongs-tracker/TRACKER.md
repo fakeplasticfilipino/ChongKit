@@ -70,7 +70,3 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
   ones on the current map. Tokens deleted without detaching stay in the list (a few bytes each).
 - Manifest paths are absolute (`/ChongKit/chongs-tracker/...`) because the site is served under
   `/ChongKit/`. If the repo is renamed, update `manifest.json`.
-
-## 💡 From the v1.8 review (deferred)
-- Enter on a focused roll opens the editor instead of rolling (Space works)
-- `3+1d6` and `2d6+3x` underline only part of the roll (hand-written notes only)

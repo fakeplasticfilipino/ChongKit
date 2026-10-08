@@ -106,7 +106,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Summary line and Loot are options (More options), off by default; ticking them redraws the same fight
 
 ### Avrae Version — removed
-- Was: More options → Avrae Version (`4d8+2` → `1d8!+3d8+2`). Removed: Chong Die applies Nimble's primary-die rules itself (since 3.0 through its `nimble` saved name)
+- Was: More options → Avrae Version (`4d8+2` → `1d8!+3d8+2`). Removed: Chong Die applies Nimble's primary-die rules itself (`1d10+3 crit miss`)
 
 ### 📋 Next up
 - (nothing queued)
