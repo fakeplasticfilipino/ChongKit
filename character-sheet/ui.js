@@ -1,7 +1,7 @@
-// Character Sheet: the page. Draws the sheet from the character (sheet.js has the rules) and
-// saves every change to this browser's localStorage.
-// Two modes: playing (fill it in, use the tabs) and Edit layout (add another box of a section's
-// kind, remove, restore and reorder boxes). Every removal can be undone (toast or Ctrl+Z).
+// Character Sheet: the page. Draws the sheet from the character (sheet.js has the rules, notes.js
+// draws the notes) and saves every change to this browser's localStorage.
+// Two modes: playing (fill it in) and Edit layout (every box gets a × and a grip, labels become
+// fields, each list ends with a + button). Every removal can be undone (toast or Ctrl+Z).
 (function () {
   const S = window.Sheet;
   const $ = (id) => document.getElementById(id);
@@ -14,8 +14,7 @@
   let all = S.loadAll(store);
   let s = all.chars[all.current];
   let editing = false; // Edit layout
-  const openEntries = new Set();
-  let derived = []; // redraws numbers that follow the stats (skills, Initiative)
+  let printing = false; // drawing for Print: every note open, as plain text
 
   // --- Helpers ----------------------------------------------------------------------
   function h(tag, props, ...kids) {
@@ -28,7 +27,7 @@
       else if (k === 'value') n.value = v;
       else n.setAttribute(k, v === true ? '' : v);
     }
-    kids.flat().forEach((c) => c != null && c !== false && n.append(c));
+    kids.flat(Infinity).forEach((c) => c != null && c !== false && n.append(c));
     return n;
   }
   const ICON = {
@@ -36,6 +35,7 @@
     chevron: 'M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z',
     close: 'M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
     grip: 'M9 4a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zM9 10a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4zM9 16a2 2 0 110 4 2 2 0 010-4zm6 0a2 2 0 110 4 2 2 0 010-4z',
+    heart: 'M12 21s-7.5-4.6-9.8-9.3C.6 8.3 2.7 4.5 6.4 4.5c2.3 0 4 1.3 5.6 3.3 1.6-2 3.3-3.3 5.6-3.3 3.7 0 5.8 3.8 4.2 7.2C19.5 16.4 12 21 12 21z',
     undo: 'M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62A7.95 7.95 0 0112.5 10.5c3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z',
   };
   const icon = (name, cls = 'cs-ic') => {
@@ -204,7 +204,7 @@
       if (all.chars[s.id] !== s) {
         const was = s.id;
         s = all.chars[all.current];
-        if (s.id !== was) { history = []; openEntries.clear(); }
+        if (s.id !== was) history = [];
       }
       S.saveAll(store, all);
       stored = new Set(Object.keys(all.chars));
@@ -221,14 +221,15 @@
   // Coming back to the tab picks up edits made on another device.
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncAll(); });
   window.addEventListener('online', () => { if (C && C.signedIn) syncAll(); });
-  const refresh = () => derived.forEach((f) => f());
 
   // --- Undo -------------------------------------------------------------------------
-  // Structural changes (remove, delete, add, move) go through change(): one snapshot each.
+  // Structural changes (remove, delete, add, move, Reset) go through change(): one snapshot each.
+  // A layout snapshot brings back the earlier layout and keeps typing done since; a full one
+  // (Reset) brings back everything.
   let history = [];
   let toastTimer = null;
-  function change(label, fn) {
-    history.push(JSON.stringify(s));
+  function change(label, fn, full = false) {
+    history.push({ json: JSON.stringify(s), full });
     if (history.length > 60) history.shift();
     fn();
     commit();
@@ -238,7 +239,8 @@
   function undo() {
     const prev = history.pop();
     if (!prev) return;
-    s = S.normalize(S.undoLayout(JSON.parse(prev), s));
+    const was = JSON.parse(prev.json);
+    s = S.normalize(prev.full ? was : S.undoLayout(was, s));
     all.chars[s.id] = s;
     commit();
     render();
@@ -260,117 +262,33 @@
   });
 
   // --- Inputs -----------------------------------------------------------------------
-  // ↑ / ↓ step a number box by 1 (Shift: 5).
+  // Every box holds the text typed into it. ↑ / ↓ step a whole number by 1 (Shift: 5).
   function stepper(inp, onStep) {
     inp.addEventListener('keydown', (ev) => {
       if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') return;
-      const cur = parseFloat(inp.value);
-      const by = (ev.key === 'ArrowUp' ? 1 : -1) * (ev.shiftKey ? 5 : 1);
+      const v = S.step(inp.value, (ev.key === 'ArrowUp' ? 1 : -1) * (ev.shiftKey ? 5 : 1));
+      if (v === inp.value) return;
       ev.preventDefault();
-      onStep(String((Number.isFinite(cur) ? Math.trunc(cur) : 0) + by));
-    });
-  }
-  function text(path, label, cls = '') {
-    const inp = h('input', { class: 'cs-in ' + cls, value: get(path), 'aria-label': label, spellcheck: false,
-      onkeydown: (ev) => { if (ev.key === 'Enter') inp.blur(); } });
-    inp.addEventListener('input', () => {
-      set(path, inp.value);
-      commit();
-      if (path === 'name') names();
-    });
-    return inp;
-  }
-  // Calculator box: "-4" / "+3" change it, "13-4" sets it. Applied on Enter or leaving the box.
-  function calc(getV, setV, label, cls = '', after) {
-    const inp = h('input', { class: 'cs-in ' + cls, value: getV(), 'aria-label': label, inputMode: 'text', spellcheck: false });
-    let start = inp.value;
-    inp.addEventListener('focus', () => { start = inp.value; });
-    const apply = () => {
-      if (inp.value === start) return;
-      const r = S.applyMath(inp.value, start);
-      const v = r === null ? inp.value : r;
       inp.value = v;
-      start = v;
-      setV(v);
-      commit();
-      if (after) after();
-    };
-    inp.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter') { apply(); inp.blur(); }
-      if (ev.key === 'Escape') { inp.value = start; inp.blur(); }
+      onStep(v);
     });
-    stepper(inp, (v) => { inp.value = v; start = v; setV(v); commit(); if (after) after(); });
-    inp.addEventListener('blur', apply);
+  }
+  function field(obj, key, label, cls = '', opts = {}) {
+    const inp = h('input', { class: 'cs-in ' + cls, value: obj[key], 'aria-label': label, spellcheck: false, inputMode: 'text',
+      onkeydown: (ev) => { if (ev.key === 'Enter') inp.blur(); } });
+    inp.addEventListener('input', () => { obj[key] = inp.value; commit(); if (opts.after) opts.after(); });
+    if (opts.step) stepper(inp, (v) => { obj[key] = v; commit(); });
     return inp;
   }
-  // Whole numbers that are modifiers (stats, skills, Initiative): type 3, +3 or -1; shown with
-  // their sign (+3, 0, -1). The text keyboard on phones, so + and - are there.
-  function whole(getV, setV, label, cls = '') {
-    const inp = h('input', { class: 'cs-in ' + cls, value: S.signed(getV()), 'aria-label': label, inputMode: 'text',
-      spellcheck: false, onkeydown: (ev) => { if (ev.key === 'Enter') inp.blur(); } });
-    const take = (v) => { const n = S.parseModifier(v); if (n !== null) { setV(n); commit(); refresh(); } };
-    inp.addEventListener('input', () => take(inp.value));
-    stepper(inp, (v) => { inp.value = S.signed(+v); take(v); });
-    inp.addEventListener('blur', () => { inp.value = S.signed(getV()); });
-    return inp;
+  // A box's name: plain text when playing, typed in Edit layout.
+  function label(obj, key, fallback, cls) {
+    if (!editing) return h('span', { class: cls }, obj[key] || fallback);
+    return h('input', { class: `${cls} cs-lbl-in`, value: obj[key], placeholder: fallback, 'aria-label': 'Name', spellcheck: false,
+      oninput: (ev) => { obj[key] = ev.target.value; commit(); },
+      onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
   }
-  // A number that follows a stat (skills, Initiative): typing a total stores the difference.
-  function follows(total, setTotal, label, cls = '', tip) {
-    const inp = whole(total, setTotal, label, cls);
-    derived.push(() => {
-      if (document.activeElement !== inp) inp.value = S.signed(total());
-      if (tip) inp.title = tip();
-    });
-    return inp;
-  }
-  const statName = (id) => (S.STATS.find((x) => x.id === id) || {}).name || '';
 
-  // --- Sections and edit layout -----------------------------------------------------------
-  const TITLES = { header: 'Details', stats: 'Stats', saves: 'Saves', combat: 'Combat', skills: 'Skills' };
-  const DEFAULT_NAMES = {
-    header: { name: 'Character Name', cls: 'Class & Level', ancestry: 'Ancestry', height: 'Height', weight: 'Weight', hitDice: 'Hit Dice' },
-    stats: Object.fromEntries(S.STATS.map((x) => [x.id, x.name])),
-    saves: Object.fromEntries(S.SAVES.map((x) => [x.id, `${x.name} save`])),
-    combat: { armor: 'Armor', hp: 'Hit Points', initSpeed: 'Initiative & Speed', wounds: 'Wounds' },
-    skills: Object.fromEntries(S.SKILLS.map((x) => [x.id, x.name])),
-  };
-  const ADD_NAMES = { text: 'Line', stat: 'Stat', save: 'Save', skill: 'Skill', num: 'Number', pair: 'Current / Max' };
-  const shown = (name) => S.SECTIONS[name].filter((id) => !S.isRemoved(s, name, id));
-  const removedIn = (name) => S.SECTIONS[name].filter((id) => S.isRemoved(s, name, id));
-
-  // A section: a framed panel with its side label (or a label on the top edge). In Edit layout it
-  // ends with a bar that adds another box of the same kind and puts removed boxes back.
-  function section(name, cls, label, ...content) {
-    const lab = label === 'side' ? h('div', { class: 'cs-vl' }, h('span', {}, TITLES[name]))
-      : label === 'top' ? h('span', { class: 'cs-legend' }, TITLES[name]) : null;
-    return h('section', { class: `cs-sec ${cls}` }, lab, ...content, editing ? editBar(name) : null);
-  }
-  function editBar(name) {
-    const adds = S.ADDS[name].map((type) => h('button', {
-      type: 'button', class: 'cs-addb',
-      onclick: () => {
-        const b = S.newBox(name, type);
-        change(null, () => { s.extras[name].push(b); });
-        setTimeout(() => { const n = document.querySelector(`[data-box="${b.id}"] .cs-lbl-in`); if (n) n.focus(); }, 0);
-      },
-    }, '+ ', ADD_NAMES[type]));
-    const gone = removedIn(name).map((id) => h('button', {
-      type: 'button', class: 'cs-addb restore', title: 'Put back',
-      onclick: () => change(null, () => { s = S.setRemoved(s, name, id, false); }),
-    }, icon('undo', 'cs-ic sm'), DEFAULT_NAMES[name][id]));
-    return h('div', { class: 'cs-editbar' }, adds, name === 'combat' ? woundsSetting() : null, gone);
-  }
-  // In Edit layout every default box gets a × that takes it off the sheet (Edit layout can put it back).
-  function removable(name, id, node) {
-    node.classList.add('cs-box');
-    if (editing) {
-      node.append(h('button', {
-        type: 'button', class: 'cs-x', title: 'Remove', 'aria-label': `Remove ${DEFAULT_NAMES[name][id]}`,
-        onclick: () => change(`Removed ${DEFAULT_NAMES[name][id]}`, () => { s = S.setRemoved(s, name, id, true); }),
-      }, icon('close', 'cs-ic xs')));
-    }
-    return node;
-  }
+  // --- Edit layout ----------------------------------------------------------------------
   // Drag to reorder: the grip starts it, items in the same list accept the drop.
   let dragKind = null;
   function draggable(grip, node, kind, i, onMove) {
@@ -386,228 +304,117 @@
       else render();
     });
   }
-
-  // --- Added boxes: drawn like the section's own boxes ---------------------------------------
-  // Their name is typed in Edit layout and shown as a label when playing.
-  function label(b, fallback, cls) {
-    if (!editing) return h('span', { class: cls }, b.label || fallback);
-    return h('input', { class: `${cls} cs-lbl-in`, value: b.label, placeholder: fallback, 'aria-label': 'Name', spellcheck: false,
-      size: Math.max(3, (b.label || fallback).length),
-      oninput: (ev) => { b.label = ev.target.value; ev.target.size = Math.max(3, (b.label || fallback).length); commit(); },
-      onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
-  }
-  function added(name, b, i) {
-    const nm = b.label || ADD_NAMES[b.type];
-    let node;
-    if (b.type === 'stat') {
-      const name2 = editing ? label(b, 'Stat', 'cs-sname') : h('button', {
-        type: 'button', class: 'cs-sname' + (b.key ? ' on' : ''), 'aria-pressed': String(b.key), title: 'Key stat', 'aria-label': `${nm} key stat`,
-        onclick: () => { b.key = !b.key; commit(); render(); },
-      }, b.label || 'Stat');
-      node = h('div', { class: 'cs-stat' },
-        h('div', { class: 'cs-sbox cs-rbox' },
-          whole(() => b.value, (v) => { b.value = v; refresh(); }, nm, 'cs-num'),
-          calc(() => b.slot, (v) => { b.slot = v; }, `${nm} small number`, 'cs-oval')),
-        name2);
-    } else if (b.type === 'save') {
-      node = h('div', { class: 'cs-save cs-rbox' },
-        pip(b, nm), calc(() => b.value, (v) => { b.value = v; }, `${nm} save`, 'cs-num'), label(b, 'Save', 'cs-cap'));
-    } else if (b.type === 'skill') {
-      // The stat under the skill is free text: naming a stat (DEX, or an added stat) makes the
-      // skill follow it; anything else leaves it a plain number.
-      const linked = () => S.skillStat(s, b.stat);
-      const base = () => { const st = linked(); return st ? S.statVal(s, st.id) : 0; };
-      const shown = S.statList(s).find((x) => x.id === b.stat); // older saves store the stat's id
-      const stat = h('input', { class: 'cs-xstat', value: shown ? shown.name : b.stat, maxLength: 24, size: 5, spellcheck: false,
-        'aria-label': `${nm} stat`, placeholder: '—',
-        oninput: (ev) => { b.stat = ev.target.value; commit(); refresh(); },
-        onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
-      node = h('div', { class: 'cs-skill' },
-        h('div', { class: 'cs-kbox cs-rbox' },
-          follows(() => S.boxSkillTotal(s, b), (v) => { b.points = S.pointsFor(v, base()); }, nm, 'cs-num',
-            () => (linked() ? `${linked().name} ${base()} + ${b.points || 0}` : ''))),
-        label(b, 'Skill', 'cs-cap'), stat);
-    } else if (b.type === 'text') {
-      const inp = h('input', { class: 'cs-in cs-line', value: b.value, 'aria-label': nm, spellcheck: false, oninput: (ev) => { b.value = ev.target.value; commit(); } });
-      node = h('label', { class: 'cs-lf' }, label(b, 'Line', 'cs-sub'), inp);
-    } else if (b.type === 'pair') {
-      const max = h('input', { class: 'cs-in cs-num', value: b.max, 'aria-label': `${nm} max`, oninput: (ev) => { b.max = ev.target.value; commit(); } });
-      stepper(max, (v) => { max.value = v; b.max = v; commit(); });
-      node = h('div', { class: 'cs-cell' },
-        h('div', { class: 'cs-duo cs-rbox' }, h('div', {}, calc(() => b.value, (v) => { b.value = v; }, nm, 'cs-num')), h('div', {}, max)),
-        h('div', { class: 'cs-labels' }, label(b, 'Current', 'cs-cap'), h('span', { class: 'cs-cap' }, 'Max')));
-    } else {
-      node = h('div', { class: 'cs-cell cs-single' },
-        h('div', { class: 'cs-one cs-rbox' }, calc(() => b.value, (v) => { b.value = v; }, nm, 'cs-num')),
-        label(b, 'Number', 'cs-cap'));
-    }
-    node.classList.add('cs-box', 'cs-added');
-    node.dataset.box = b.id;
-    if (editing) {
-      node.append(h('button', {
-        type: 'button', class: 'cs-x', title: 'Delete', 'aria-label': `Delete ${nm}`,
-        onclick: () => change(`Deleted ${nm}`, () => { s.extras[name] = s.extras[name].filter((x) => x.id !== b.id); }),
-      }, icon('close', 'cs-ic xs')));
-      const grip = h('span', { class: 'cs-grip', title: 'Drag to move', draggable: 'true' }, icon('grip', 'cs-ic sm'));
-      node.append(grip);
-      draggable(grip, node, 'box-' + name, i, (from, to) => change(null, () => { s.extras[name] = S.move(s.extras[name], from, to); }));
-    }
+  // In Edit layout every box (defaults too) gets a × (with Undo) and a grip to drag it in its list.
+  function editable(key, i, name, node) {
+    node.classList.add('cs-box');
+    node.dataset.box = s[key][i].id;
+    if (!editing) return node;
+    const grip = h('span', { class: 'cs-grip', title: 'Drag to move', draggable: 'true' }, icon('grip', 'cs-ic sm'));
+    node.append(grip, h('button', { type: 'button', class: 'cs-x', title: 'Remove', 'aria-label': `Remove ${name}`,
+      onclick: () => change(`Removed ${name}`, () => { s[key] = s[key].filter((_, j) => j !== i); }) }, icon('close', 'cs-ic xs')));
+    draggable(grip, node, 'box-' + key, i, (from, to) => change(null, () => { s[key] = S.move(s[key], from, to); }));
     return node;
   }
-  const addedIn = (name) => s.extras[name].map((b, i) => added(name, b, i));
-  function woundsSetting() {
-    const step = (d) => change(null, () => { s.woundsMax = Math.max(1, Math.min(20, s.woundsMax + d)); s.wounds = Math.min(s.wounds, s.woundsMax); });
-    return h('div', { class: 'cs-setting' },
-      h('span', { class: 'cs-setlabel' }, 'Max Wounds'),
-      h('div', { class: 'stepper' },
-        h('button', { type: 'button', 'aria-label': 'Fewer wounds', onclick: () => step(-1) }, '−'),
-        h('input', { value: String(s.woundsMax), readOnly: true, 'aria-label': 'Max wounds', tabIndex: -1 }),
-        h('button', { type: 'button', 'aria-label': 'More wounds', onclick: () => step(1) }, '+')));
+  // Each list ends with a dashed + button in Edit layout while there's room: "+ Stat (6/12)".
+  const ADD = { details: 'Detail', pairs: 'Current / Max', boxes: 'Box', stats: 'Stat', skills: 'Skill' };
+  const MAKE = { details: S.newDetail, pairs: () => S.newPair(), boxes: () => S.newBox(), stats: S.newStat, skills: S.newSkill };
+  const adding = (key) => editing && S.canAdd(s, key);
+  function addButton(key, cls = '') {
+    if (!adding(key)) return null;
+    return h('button', { type: 'button', class: 'cs-add ' + cls, onclick: () => {
+      const b = MAKE[key]('');
+      change(null, () => { s[key].push(b); });
+      setTimeout(() => { const n = document.querySelector(`[data-box="${b.id}"] .cs-lbl-in`); if (n) n.focus(); }, 0);
+    } }, `+ ${ADD[key]} (${s[key].length}/${S.CAPS[key]})`);
+  }
+  // Even rows (Sheet.columns): the column counts ride on CSS variables; phones use --cols-sm.
+  function grid(cls, key, kids) {
+    const n = s[key].length + (adding(key) && key !== 'stats' ? 1 : 0);
+    return h('div', { class: cls, style: `--cols: ${S.columns(n, S.PER_ROW[key])}; --cols-sm: ${S.columns(n, 3)}` }, kids);
   }
 
-  // --- The sheet ----------------------------------------------------------------------
-  // Details: the name on a banner, then class, ancestry, height and weight on lines, and Hit Dice.
+  // --- The top section ------------------------------------------------------------------
+  // The name, with the details (Hit Die, Level…) beside it.
   function header() {
-    const ids = shown('header');
-    const lines = ids.filter((id) => ['cls', 'ancestry', 'height', 'weight'].includes(id)).map((id) => removable('header', id,
-      h('label', { class: 'cs-lf' }, h('span', { class: 'cs-sub' }, DEFAULT_NAMES.header[id]), text(id, DEFAULT_NAMES.header[id], 'cs-line'))))
-      .concat(addedIn('header'));
-    const parts = [];
-    if (ids.includes('name')) {
-      parts.push(removable('header', 'name', h('div', { class: 'cs-ribbon' },
-        h('div', { class: 'cs-banner' }, h('div', { class: 'cs-banner-in' }, text('name', 'Character name', 'cs-name'))),
-        h('span', { class: 'cs-sub' }, 'Character Name'))));
-    }
-    const details = [];
-    if (lines.length) details.push(h('div', { class: 'cs-dgrid' }, lines));
-    if (ids.includes('hitDice')) {
-      details.push(removable('header', 'hitDice', h('div', { class: 'cs-hd' },
-        h('span', { class: 'cs-sub' }, 'Hit Dice'),
-        h('div', { class: 'cs-hdbox cs-rbox' }, text('hitDice.cur', 'Hit dice left', 'cs-num'), h('span', { class: 'cs-hslash' }, '/'), text('hitDice.die', 'Hit die', 'cs-num')))));
-    }
-    if (details.length) parts.push(h('div', { class: 'cs-details' }, details));
-    return section('header', 'cs-head', null, parts);
+    const details = s.details.map((d, i) => editable('details', i, d.label || 'detail',
+      h('label', { class: 'cs-detail' }, label(d, 'label', 'Detail', 'cs-dlab'), field(d, 'value', d.label || 'Detail', 'cs-dval', { step: true }))));
+    return h('div', { class: 'cs-head' },
+      field(s, 'name', 'Character name', 'cs-name', { after: names }),
+      h('div', { class: 'cs-details' }, details, addButton('details', 'sm')));
   }
-
-  // Stats: a big number, a small number in the oval, and the name (click it to mark a key stat).
-  function stats() {
-    return section('stats', 'cs-pnl cs-stats', 'side', h('div', { class: 'cs-statrow' }, shown('stats').map((id) => {
-      const st = s.stats[id];
-      const name = DEFAULT_NAMES.stats[id];
-      return removable('stats', id, h('div', { class: 'cs-stat' },
-        h('div', { class: 'cs-sbox cs-rbox' },
-          whole(() => st.val, (v) => { st.val = v; refresh(); }, name, 'cs-num'),
-          calc(() => st.slot, (v) => { st.slot = v; }, `${name} small number`, 'cs-oval')),
-        h('button', {
-          type: 'button', class: 'cs-sname' + (st.key ? ' on' : ''), 'aria-pressed': String(st.key), title: 'Key stat', 'aria-label': `${name} key stat`,
-          onclick: () => { st.key = !st.key; commit(); render(); },
-        }, name)));
-    }), addedIn('stats')));
+  // Current / Max: two numbers split by a slanted line. The HP pair has the heart.
+  function pair(p, i) {
+    const name = p.label || 'Current';
+    return editable('pairs', i, name, h('div', { class: 'cs-pair' },
+      h('div', { class: 'cs-split' }, field(p, 'cur', name, 'cs-num', { step: true }), field(p, 'max', p.maxLabel || 'Max', 'cs-num', { step: true })),
+      h('div', { class: 'cs-labs' }, label(p, 'label', 'Current', 'cs-lab'), label(p, 'maxLabel', 'Max', 'cs-lab')),
+      p.hp ? icon('heart', 'cs-heart') : null));
   }
-
-  // Saves: a number, the name, and a pip that cycles ▲ advantage / ▼ disadvantage / none.
-  function pip(sv, name) {
-    const lab = sv.mode === 'adv' ? 'advantage' : sv.mode === 'dis' ? 'disadvantage' : 'normal';
-    return h('button', {
-      type: 'button', class: 'cs-pip' + (sv.mode ? ' on' : ''), title: `Save: ${lab}`, 'aria-label': `${name} save: ${lab}`,
-      onclick: () => { sv.mode = S.cycleSave(sv.mode); commit(); render(); },
-    }, sv.mode === 'adv' ? '▲' : sv.mode === 'dis' ? '▼' : '');
+  // A small box (Temp HP, Armor, Initiative…): one number. Armor sits in the shield.
+  function small(b, i) {
+    const name = b.label || 'Box';
+    const num = field(b, 'value', name, 'cs-num', { step: true });
+    return editable('boxes', i, name, h('div', { class: 'cs-small' + (b.shield ? ' armor' : '') },
+      b.shield ? h('div', { class: 'cs-shield' }, shield(), num) : num,
+      label(b, 'label', 'Box', 'cs-lab')));
   }
-  function saves() {
-    return section('saves', 'cs-pnl cs-saves', 'side', h('div', { class: 'cs-saverow' }, shown('saves').map((id) => {
-      const sv = s.saves[id];
-      const name = S.SAVES.find((x) => x.id === id).name;
-      return removable('saves', id, h('div', { class: 'cs-save cs-rbox' },
-        pip(sv, name),
-        calc(() => sv.val, (v) => { sv.val = v; }, `${name} save`, 'cs-num'),
-        h('span', { class: 'cs-cap' }, name)));
-    }), addedIn('saves')));
-  }
-
-  // Combat: the Armor shield on the left; HP, Initiative / Speed, Wounds and added boxes beside it.
-  function combat() {
-    const ids = shown('combat');
-    const side = [];
-    let ac = null;
-    for (const id of ids) {
-      if (id === 'armor') {
-        const armor = text('armor', 'Armor', 'cs-num');
-        stepper(armor, (v) => { armor.value = v; s.armor = v; commit(); });
-        ac = removable('combat', id, h('div', { class: 'cs-ac' }, h('div', { class: 'cs-shield' }, shield(), armor), h('span', { class: 'cs-cap' }, 'Armor')));
-      } else if (id === 'hp') side.push(removable('combat', id, hitPoints()));
-      else if (id === 'initSpeed') {
-        side.push(removable('combat', id, h('div', { class: 'cs-cell' },
-          h('div', { class: 'cs-duo cs-rbox' },
-            h('div', {}, follows(() => S.initiative(s), (v) => { s.initBonus = S.pointsFor(v, S.statVal(s, 'dex')); }, 'Initiative', 'cs-num',
-              () => `DEX ${S.statVal(s, 'dex')} + ${s.initBonus || 0}`)),
-            h('div', {}, text('speed', 'Speed', 'cs-num'))),
-          h('div', { class: 'cs-labels' }, h('span', { class: 'cs-cap' }, 'Initiative'), h('span', { class: 'cs-cap' }, 'Speed')))));
-      } else side.push(removable('combat', id, wounds()));
-    }
-    side.push(...addedIn('combat'));
-    return section('combat', 'cs-pnl cs-combat', 'side', h('div', { class: 'cs-cmb' }, ac, side.length ? h('div', { class: 'cs-cmb-r' }, side) : null));
-  }
-  function hitPoints() {
-    const cur = calc(() => s.hp.cur, (v) => { s.hp.cur = v; }, 'Hit points', 'cs-num', () => blood());
-    const max = h('input', { class: 'cs-in cs-num', value: s.hp.max, 'aria-label': 'Max hit points', oninput: (ev) => { s.hp.max = ev.target.value; commit(); blood(); } });
-    stepper(max, (v) => { max.value = v; s.hp.max = v; commit(); blood(); });
-    const blood = () => cur.classList.toggle('bloodied', S.bloodied(s.hp));
-    blood();
-    return h('div', { class: 'cs-cell cs-hpcell' },
-      h('div', { class: 'cs-duo cs-rbox' },
-        h('div', {}, cur), h('div', {}, max),
-        h('div', { class: 'cs-tmp' }, calc(() => s.hp.temp, (v) => { s.hp.temp = v; }, 'Temp HP', 'cs-num'))),
-      h('div', { class: 'cs-labels' }, h('span', { class: 'cs-cap' }, 'HP'), h('span', { class: 'cs-cap' }, 'Max HP'), h('span', { class: 'cs-sub cs-tmp' }, 'Temp')));
-  }
-  // Wounds: the track ends in the skull. Under it, an optional row of five small dashed circles
-  // for extra wounds (added and removed in Edit layout).
+  // Wounds: five circles and the skull (click to fill up to there), then 3 dashed extras.
   function wounds() {
     const dots = [];
-    for (let i = 0; i < s.woundsMax; i++) {
-      const last = i === s.woundsMax - 1;
+    for (let i = 0; i < S.WOUNDS; i++) {
       const on = i < s.wounds;
-      dots.push(h('button', {
-        type: 'button', class: 'cs-w' + (on ? ' on' : '') + (last ? ' skull' : ''), 'aria-pressed': String(on),
-        title: `${i + 1}`, 'aria-label': `Wound ${i + 1}`, onclick: () => { s.wounds = S.setWounds(s.wounds, i); commit(); render(); },
-      }, last ? icon('skull', 'cs-ic') : h('span', { class: 'cs-dot' }), h('span', { class: 'cs-wn' }, String(i + 1))));
+      const skull = i === S.WOUNDS - 1;
+      dots.push(h('button', { type: 'button', class: 'cs-w' + (on ? ' on' : '') + (skull ? ' skull' : ''), 'aria-pressed': String(on),
+        'aria-label': `Wound ${i + 1}`, onclick: () => { s.wounds = S.setWounds(s.wounds, i); commit(); render(); } },
+      skull ? icon('skull', 'cs-ic') : null));
     }
-    let extra = null;
-    if (s.woundExtra) {
-      extra = h('div', { class: 'cs-wx' }, s.woundMarks.map((m, i) => h('button', {
-        type: 'button', class: 'cs-wxd' + (m ? ' on' : ''), 'aria-pressed': String(m), 'aria-label': `Extra wound ${i + 1}`,
-        onclick: () => { s.woundMarks[i] = !m; commit(); render(); },
-      })), editing ? h('button', {
-        type: 'button', class: 'cs-wxdel', title: 'Remove extra circles', 'aria-label': 'Remove extra wound circles',
-        onclick: () => change('Removed extra wounds', () => { s.woundExtra = false; }),
-      }, icon('close', 'cs-ic xs')) : null);
-    } else if (editing) {
-      extra = h('div', { class: 'cs-wx' }, h('button', {
-        type: 'button', class: 'cs-addb sm', onclick: () => change(null, () => { s.woundExtra = true; }),
-      }, `+ ${S.EXTRA_WOUNDS} extra`));
-    }
-    return h('div', { class: 'cs-wnd' },
-      h('div', { class: 'cs-track cs-rbox' }, dots),
-      h('span', { class: 'cs-cap' }, 'Wounds'),
-      extra);
+    const extra = s.woundMarks.map((m, i) => h('button', { type: 'button', class: 'cs-w extra' + (m ? ' on' : ''), 'aria-pressed': String(m),
+      'aria-label': `Extra wound ${i + 1}`, onclick: () => { s.woundMarks[i] = !m; commit(); render(); } }));
+    return h('div', { class: 'cs-wounds', role: 'group', 'aria-label': 'Wounds' }, h('div', { class: 'cs-track' }, dots), h('div', { class: 'cs-extra' }, extra));
+  }
+  // The save pip: ▲ advantage and ▼ disadvantage side by side, the one in use filled.
+  function tri(up, on) {
+    const n = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    n.setAttribute('viewBox', '0 0 20 18');
+    n.setAttribute('class', 'cs-tri' + (on ? ' on' : ''));
+    n.setAttribute('aria-hidden', 'true');
+    n.innerHTML = `<path d="${up ? 'M10 2 18 16H2z' : 'M2 2h16L10 16z'}"/>`;
+    return n;
+  }
+  function pip(st, name) {
+    const lab = st.mode === 'adv' ? 'advantage' : st.mode === 'dis' ? 'disadvantage' : 'normal';
+    return h('button', { type: 'button', class: 'cs-pip', title: `Save: ${lab}`, 'aria-label': `${name} save: ${lab}`,
+      onclick: () => { st.mode = S.cycleSave(st.mode); commit(); render(); } }, tri(true, st.mode === 'adv'), tri(false, st.mode === 'dis'));
+  }
+  function stat(st, i) {
+    const name = st.label || 'Stat';
+    return editable('stats', i, name, h('div', { class: 'cs-stat' },
+      pip(st, name), field(st, 'value', name, 'cs-num', { step: true }), label(st, 'label', 'Stat', 'cs-lab')));
+  }
+  function skill(k, i) {
+    const name = k.label || 'Skill';
+    return editable('skills', i, name, h('div', { class: 'cs-skill' },
+      field(k, 'value', name, 'cs-num', { step: true }), label(k, 'label', 'Skill', 'cs-lab')));
+  }
+  // Vitals on the left (pairs, small boxes, wounds); stats and skills on the right.
+  function top() {
+    return h('section', { class: 'cs-top' },
+      header(),
+      h('div', { class: 'cs-cols' },
+        h('div', { class: 'cs-panel cs-vitals' },
+          h('div', { class: 'cs-pairs' }, s.pairs.map(pair), addButton('pairs', 'sm')),
+          grid('cs-smalls', 'boxes', [s.boxes.map(small), addButton('boxes')]),
+          wounds()),
+        h('div', { class: 'cs-panel cs-abilities' },
+          s.stats.length ? grid('cs-stats', 'stats', s.stats.map(stat)) : null,
+          addButton('stats', 'sm'),
+          grid('cs-skills', 'skills', [s.skills.map(skill), addButton('skills')]))));
   }
 
-  function skills() {
-    return section('skills', 'cs-pnl cs-skills', 'top', h('div', { class: 'cs-band' }, shown('skills').map((id) => {
-      const sk = S.SKILLS.find((x) => x.id === id);
-      const st = statName(sk.stat);
-      return removable('skills', id, h('div', { class: 'cs-skill' },
-        h('div', { class: 'cs-kbox cs-rbox' },
-          follows(() => S.skillTotal(s, id), (v) => { s.skills[id] = S.pointsFor(v, S.statVal(s, sk.stat)); }, sk.name, 'cs-num',
-            () => `${st} ${S.statVal(s, sk.stat)} + ${s.skills[id] || 0}`)),
-        h('span', { class: 'cs-cap' }, sk.name),
-        h('span', { class: 'cs-sub' }, st)));
-    }), addedIn('skills')));
-  }
-
+  // --- Tabs -------------------------------------------------------------------------
   // Tabs, like a browser's: click to switch, + adds one, double-click a name to rename it,
-  // × closes it (with Undo), drag a tab to move it.
-  // Used by the entries' tabs and the notes' tabs: `k` names the list (`tabs` / `noteTabs`) and
-  // `pick` the current one (`tab` / `noteTab`); `count` shows a number on each tab.
+  // × closes it (with Undo), drag a tab to move it. `k` names the list (`tabs`) and `pick` the
+  // current one (`tab`); `count` shows a number on each tab.
   let renaming = null;
   function tabStrip(k, pick, make, count, label) {
     const cur = s[k].find((t) => t.id === s[pick]) || s[k][0];
@@ -653,91 +460,17 @@
     if (renaming) setTimeout(() => { const n = document.querySelector('.cs-tname'); if (n && document.activeElement !== n) { n.focus(); n.select(); } }, 0);
     return { cur, strip: h('div', { class: 'cs-tabstrip', role: 'tablist' }, strip) };
   }
-  function tabsSection() {
-    const { cur, strip } = tabStrip('tabs', 'tab', () => S.newTab(''), (t) => t.entries.length, 'New tab');
-    let panel = null;
-    if (cur) {
-      const el = entryList({ key: 'tab-' + cur.id, get: () => cur.entries, set: (v) => { cur.entries = v; } });
-      panel = h('div', { class: 'cs-tabpanel', role: 'tabpanel' }, el.fold ? h('div', { class: 'cs-elist-top' }, el.fold) : null, el.list, el.add);
-    }
-    return h('section', { class: 'cs-tabs' }, strip, panel);
-  }
 
-  // A tab's entries: bars showing a name and summary; click one to open it, drag to reorder.
-  function entryList(list) {
-    const items = list.get();
-    const add = h('button', {
-      type: 'button', class: 'cs-addb wide',
-      onclick: () => {
-        const e = S.newEntry();
-        openEntries.add(e.id);
-        change(null, () => { list.set(list.get().concat(e)); });
-        setTimeout(() => { const n = document.querySelector(`[data-entry="${e.id}"] .cs-etitle`); if (n) n.focus(); }, 0);
-      },
-    }, '+ Entry');
-    const many = items.length > 1;
-    const allOpen = many && items.every((e) => openEntries.has(e.id));
-    const fold = many ? h('button', {
-      type: 'button', class: 'cs-fold', onclick: () => {
-        if (allOpen) items.forEach((e) => openEntries.delete(e.id)); else items.forEach((e) => openEntries.add(e.id));
-        render();
-      },
-    }, allOpen ? 'Collapse all' : 'Expand all') : null;
-    return { fold, list: h('div', { class: 'cs-elist' }, items.map((e, i) => entry(e, i, list))), add };
-  }
-  function grow(t) { t.style.height = 'auto'; t.style.height = Math.max(96, t.scrollHeight + 2) + 'px'; }
-  function entry(e, i, list) {
-    const open = openEntries.has(e.id);
-    const toggle = () => { if (open) openEntries.delete(e.id); else openEntries.add(e.id); render(); };
-    const peek = e.sum || e.body.split('\n').find((l) => l.trim()) || '';
-    const title = open
-      ? h('input', { class: 'cs-etitle', value: e.title, 'aria-label': 'Title', placeholder: 'Title', spellcheck: false,
-        oninput: (ev) => { e.title = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const b = node.querySelector('.cs-esum'); if (b) b.focus(); } } })
-      : h('span', { class: 'cs-etext' },
-        h('span', { class: 'cs-etitle' + (e.title ? '' : ' none') }, e.title || 'Untitled'),
-        peek ? h('span', { class: 'cs-epeek' }, peek) : null);
-    const del = h('button', {
-      type: 'button', class: 'cs-edel', title: 'Delete', 'aria-label': `Delete ${e.title || 'entry'}`,
-      onclick: () => change(`Deleted ${e.title || 'entry'}`, () => { list.set(list.get().filter((x) => x.id !== e.id)); openEntries.delete(e.id); }),
-    }, icon('close', 'cs-ic sm'));
-    const grip = h('span', { class: 'cs-grip', title: 'Drag to move', draggable: 'true' }, icon('grip', 'cs-ic sm'));
-    const bar = h('div', {
-      class: 'cs-ebar', role: 'button', tabIndex: 0, 'aria-expanded': String(open),
-      onclick: (ev) => { if (!ev.target.closest('input, button, .cs-grip')) toggle(); },
-      onkeydown: (ev) => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === bar) { ev.preventDefault(); toggle(); } },
-    }, grip, icon('chevron', 'cs-ic cs-chev'), title, del);
-    const node = h('div', { class: `cs-entry lite${open ? ' open' : ''}`, 'data-entry': e.id }, bar);
-    if (open) {
-      node.append(h('input', { class: 'cs-esum', value: e.sum, 'aria-label': 'Summary', placeholder: 'Summary', spellcheck: false,
-        oninput: (ev) => { e.sum = ev.target.value; commit(); }, onkeydown: (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); node.querySelector('.cs-ebody').focus(); } } }));
-      const body = h('textarea', { class: 'cs-ebody', 'aria-label': e.title || 'Entry', value: e.body, oninput: (ev) => { e.body = ev.target.value; commit(); grow(ev.target); } });
-      node.append(body);
-      setTimeout(() => grow(body), 0);
-    }
-    draggable(grip, node, 'entry-' + list.key, i, (from, to) => change(null, () => { list.set(S.move(list.get(), from, to)); }));
-    return node;
-  }
-
-  // Notes: tabs of free text on ruled lines (same tabs as the entries).
-  function notes() {
-    const { cur, strip } = tabStrip('noteTabs', 'noteTab', () => S.newNote(''), null, 'New notes tab');
-    const page = cur ? h('div', { class: 'cs-tabpanel cs-notepage', role: 'tabpanel' },
-      h('textarea', { class: 'cs-free', 'aria-label': cur.name || 'Notes', value: cur.text, spellcheck: true,
-        oninput: (ev) => { cur.text = ev.target.value; commit(); } })) : null;
-    return h('section', { class: 'cs-notes' }, h('div', { class: 'cs-sectitle' }, 'Notes'), strip, page);
-  }
+  // The notes (notes.js) draw with these helpers.
+  const notes = window.SheetNotes({
+    h, icon, change, commit, tabStrip, render: () => render(),
+    get s() { return s; }, get printing() { return printing; },
+  });
 
   function render() {
-    derived = [];
     const sheet = $('sheet');
     sheet.classList.toggle('editing', editing);
-    sheet.replaceChildren(
-      header(),
-      h('div', { class: 'cs-row' }, h('div', { class: 'cs-col' }, stats(), saves()), combat()),
-      skills(),
-      tabsSection(),
-      notes());
-    refresh();
+    sheet.replaceChildren(top(), notes.render());
   }
 
   document.addEventListener('keydown', (ev) => {
@@ -764,7 +497,6 @@
     renaming = null;
     history = [];
     hideToast();
-    openEntries.clear();
     if (!(c.id in lastJson) && !c.updated) lastJson[c.id] = S.content(c); // a new blank sheet isn't an edit
     commit();
     names();
@@ -782,6 +514,12 @@
     c.name = (s.name || 'Unnamed') + ' (copy)';
     c.owner = ''; // a new character of yours
     show(c);
+  });
+  // Reset: clear this character and start again from the default layout (Undo brings it back).
+  $('reset').addEventListener('click', () => {
+    closeMenu();
+    if (!confirm('Clear this character and start again?')) return;
+    change('Reset character', () => { s = S.reset(s); all.chars[s.id] = s; }, true);
   });
   $('delete').addEventListener('click', () => {
     closeMenu();
@@ -820,7 +558,14 @@
     try { show(S.importJson(await file.text())); }
     catch (err) { alert(`Couldn't import ${file.name}: ${err.message}`); }
   });
-  $('print').addEventListener('click', () => { closeMenu(); if (editing) setEditing(false); else render(); window.print(); });
+  $('print').addEventListener('click', () => {
+    closeMenu();
+    printing = true;
+    if (editing) setEditing(false); else render();
+    window.print();
+    printing = false;
+    render();
+  });
 
   // --- Sign in -------------------------------------------------------------------------
   // The toolbar's account button opens a dialog: Discord, or email + password. Signed in, it
