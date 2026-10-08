@@ -52,7 +52,7 @@ no skills following stats).
   skull is the last wound; the three dashed circles after it are extra wounds (each clicks on and off).
 - **Notes** (below, full width): tabs like a browser's (click to switch, **+** adds one, double-click to
   rename, × closes it with Undo, drag to move). Each tab holds note boxes that arrange themselves in
-  columns; give a box a title, **+ Note** adds a note, the chevron on its title folds or opens all its
+  columns; **+ Box** (at the end of a tab) adds another note box; give a box a title, **+ Note** adds a note, the chevron on its title folds or opens all its
   notes, × removes it (Undo). A note is free text: its first line is its name, and folded it shows just
   that line ("Fireball."). Drag a note by its grip to reorder it or move it to another box.
 - **Edit layout** (toolbar): every box gets a × to remove it and a grip to drag it, labels can be

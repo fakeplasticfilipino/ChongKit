@@ -55,8 +55,6 @@
       + '<path d="M50 12 L86 23 V56 C86 79 70 94 50 103 C30 94 14 79 14 56 V23 Z" fill="none" stroke="currentColor" stroke-width="1"/>';
     return n;
   };
-  const get = (path) => path.split('.').reduce((o, k) => o[k], s);
-  const set = (path, v) => { const ks = path.split('.'); const last = ks.pop(); ks.reduce((o, k) => o[k], s)[last] = v; };
   const typing = () => { const a = document.activeElement; return !!a && a.matches('input, textarea, select'); };
 
   // --- Saving -----------------------------------------------------------------------
@@ -201,15 +199,26 @@
       m.upload.forEach((id) => dirty.add(id));
       C.setSynced(remote.map((r) => r.id));
       if (!all.chars[all.current]) all.current = Object.keys(all.chars)[0];
-      if (all.chars[s.id] !== s) {
+      // The drawn fields write into the very object `s` they were drawn from, so when the
+      // open character is unchanged keep that same object (taking the merged owner and
+      // timestamp); swapping in a copy without a redraw would lose everything typed next.
+      const merged = all.chars[s.id];
+      let openChanged = false;
+      if (merged && S.content(merged) === S.content(s)) {
+        s.owner = merged.owner;
+        s.updated = merged.updated;
+        all.chars[s.id] = s;
+        lastJson[s.id] = S.content(s);
+      } else {
         const was = s.id;
         s = all.chars[all.current];
         if (s.id !== was) history = [];
+        openChanged = true;
       }
       S.saveAll(store, all);
       stored = new Set(Object.keys(all.chars));
-      // Only redraw when the account actually changed something.
-      if (JSON.stringify(Object.values(all.chars).map(S.content).sort()) !== before) softRender();
+      // Redraw when the open character changed, or the account changed another one.
+      if (openChanged || JSON.stringify(Object.values(all.chars).map(S.content).sort()) !== before) softRender();
       else names();
       retryDelay = 5000;
       syncBad = false;
@@ -292,13 +301,13 @@
   // Drag to reorder: the grip starts it, items in the same list accept the drop.
   let dragKind = null;
   function draggable(grip, node, kind, i, onMove) {
-    grip.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('text/plain', `${kind}|${i}`); ev.dataTransfer.effectAllowed = 'move'; node.classList.add('dragging'); dragKind = kind; });
+    grip.addEventListener('dragstart', (ev) => { ev.dataTransfer.setData('application/x-chongkit', `${kind}|${i}`); ev.dataTransfer.effectAllowed = 'move'; node.classList.add('dragging'); dragKind = kind; });
     grip.addEventListener('dragend', () => { node.classList.remove('dragging'); dragKind = null; });
     node.addEventListener('dragover', (ev) => { if (dragKind === kind) { ev.preventDefault(); node.classList.add('drop'); } });
     node.addEventListener('dragleave', () => node.classList.remove('drop'));
     node.addEventListener('drop', (ev) => {
       ev.preventDefault();
-      const [k, n] = ev.dataTransfer.getData('text/plain').split('|');
+      const [k, n] = ev.dataTransfer.getData('application/x-chongkit').split('|');
       const from = parseInt(n, 10);
       if (k === kind && Number.isFinite(from) && from !== i) onMove(from, i);
       else render();

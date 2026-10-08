@@ -173,6 +173,7 @@ test('saving several characters; export and import', () => {
   assert.notStrictEqual(copy.id, b.id, 'an import never overwrites');
   assert.throws(() => S.importJson('{"name":"x"}'));
   assert.throws(() => S.importJson('nope'));
+  assert.throws(() => S.importJson(JSON.stringify({ chongkitSheet: 4, v: 4, name: 'Old' })), /before Character Sheet v4/);
   mem.set(S.STORE, '{broken');
   assert.strictEqual(Object.keys(S.loadAll(storage).chars).length, 1);
 });

@@ -29,7 +29,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    small-caps names, grey arrow-tipped ability bars, heart/shield icons for HP/armor, dark red
    (`--blood`) for Bloodied numbers. Reuse the classes and tokens in `assets/css/nimble.css`.
    - **Easy on the eyes, like the printed page:** matte parchment everywhere, never white surfaces
-     or fields (`--panel`, `--parchment-hi`, the sheet's `--sheet`/`--fld`), and soft brown-black ink
+     or fields (`--panel`, `--parchment-hi`), and soft brown-black ink
      (`--ink` #2b2520, outlines `--frame` #3a332c), never pure black. Red is for Bloodied and Deadly only. The Character Sheet has its own flat whitish look (see its section).
    - No site-wide top bar: each tool page has a "← All tools" link.
 5. **Keep it simple.** This is for use mid-session at the table; favor big readable numbers over features.

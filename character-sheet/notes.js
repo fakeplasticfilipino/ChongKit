@@ -43,7 +43,7 @@
         h('button', { type: 'button', class: 'cs-ndel', title: 'Delete', 'aria-label': `Delete ${title}`,
           onclick: () => change(`Deleted ${title}`, () => { box.notes = box.notes.filter((x) => x.id !== n.id); }) }, icon('close', 'cs-ic xs')));
       grip.addEventListener('dragstart', (ev) => {
-        ev.dataTransfer.setData('text/plain', 'note');
+        ev.dataTransfer.setData('application/x-chongkit', 'note');
         ev.dataTransfer.effectAllowed = 'move';
         dragging = { box: box.id, id: n.id };
         node.classList.add('dragging');

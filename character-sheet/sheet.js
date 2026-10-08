@@ -222,6 +222,7 @@
   function importJson(text) {
     const raw = JSON.parse(text);
     if (!raw || typeof raw !== 'object' || !raw.chongkitSheet) throw new Error('Not a ChongKit character');
+    if (int(raw.v, 1) < VERSION) throw new Error('Saved before Character Sheet v4: it can\'t be opened');
     return { ...normalize(raw), id: uid(), owner: '', updated: Date.now() }; // a new character of yours
   }
 
