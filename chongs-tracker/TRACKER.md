@@ -63,6 +63,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] v1.11.1: HP pill back to 72 px (it must stay easy to click); a name too long for its row fades out at the end (`fadeLong`)
 - [x] v1.11.2: the pin moved from the row into the ⋯ menu's buttons, so the HP box never moves when an entry opens
 
+## ✅ Big HP box (v1.12.0)
+- [x] The ⋯ menu opens with a full-width HP box above Max HP / Extra HP / AC: same bar and calculator as the row's (`hpBox`)
+
 ## Dropped
 - Custom counters (number, slider, checkbox): removed, not wanted
 

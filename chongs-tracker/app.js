@@ -559,13 +559,7 @@ function renderEntry(e) {
     return wrap;
   }
   if (e.extra > 0) row.append(el('span', { className: 'xp', title: 'Extra HP', textContent: `+${e.extra}` }));
-  const hp = el('div', { className: 'hp' }, el('span', { className: 'fill', style: `width:${C.hpFraction(e) * 100}%` }));
-  hp.append(mathInput('', e.hp, (text) => {
-    const change = C.readInput(text, e.hp);
-    if (!change) { render(); return; }
-    updateEntry(e, (x) => C.applyHp(x, change));
-  }, !edit));
-  row.append(hp);
+  row.append(hpBox(e, 'hp', !edit));
 
   if (edit) {
     row.append(iconButton('more', isOpen ? 'Close' : 'More', () => {
@@ -685,8 +679,21 @@ function renderAvatar(e, edit) {
   return b;
 }
 
+// The HP box: a bar filled against Max HP with a calculator input (`-3`, `+5`, `12`). The row has
+// the small one; the ⋯ menu repeats it full width.
+function hpBox(e, cls, disabled) {
+  const hp = el('div', { className: cls }, el('span', { className: 'fill', style: `width:${C.hpFraction(e) * 100}%` }));
+  hp.append(mathInput('', e.hp, (text) => {
+    const change = C.readInput(text, e.hp);
+    if (!change) { render(); return; }
+    updateEntry(e, (x) => C.applyHp(x, change));
+  }, disabled));
+  return hp;
+}
+
 function renderMore(e) {
   const more = el('div', { className: 'more' });
+  more.append(el('label', { className: 'field' }, el('span', { textContent: 'HP' }), hpBox(e, 'hp wide')));
 
   const max = mathInput('', e.max, (text) => {
     const t = text.trim();
