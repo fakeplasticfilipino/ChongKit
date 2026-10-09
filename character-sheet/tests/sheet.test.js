@@ -90,7 +90,40 @@ test('notes: a name and a description; four boxes per tab', () => {
   assert.deepStrictEqual(old.boxes[0].notes.map((x) => [x.name, x.text]), [['Fireball', '1d10\n120ft.'], ['', '']], 'older notes: first line is the name');
   const many = tab([1, 2, 3, 4, 5, 6].map((i) => ({ title: 'B' + i, notes: [{ name: 'n' + i, text: '' }] })));
   assert.deepStrictEqual(many.boxes.map((x) => x.title), ['B1', 'B2', 'B3', 'B4']);
-  assert.deepStrictEqual(many.boxes[3].notes.map((x) => x.name), ['n4', 'n5', 'n6'], 'notes past the fourth box move into it');
+  assert.deepStrictEqual([many.boxes[3].free, many.boxes[3].text, many.boxes[3].notes], [true, 'n4\n\nn5\n\nn6', []],
+    'notes past the fourth box move into it, and the last box becomes the free one');
+});
+
+test('the free box: plain text, always last in a new tab, one per tab', () => {
+  const t = S.newTab('Spells');
+  assert.deepStrictEqual(t.boxes.map((b) => b.free), [false, false, false, true]);
+  assert.deepStrictEqual([t.boxes[3].text, t.boxes[3].notes], ['', []]);
+  const tab = (boxes) => S.normalize({ v: 5, tabs: [{ id: 't', name: 'A', boxes }] }).tabs[0];
+  const noFree = tab([{}, {}, {}, { title: 'Gear', notes: [{ name: 'Rope', text: '50 ft' }, { name: 'Torch', text: '' }] }]);
+  assert.deepStrictEqual([noFree.boxes[3].free, noFree.boxes[3].title, noFree.boxes[3].text], [true, 'Gear', 'Rope\n50 ft\n\nTorch'],
+    'a tab saved before the free box turns its last box into one, its notes written out');
+  const swapped = tab([{ free: true, text: 'Owe Mira 5 gp.' }, {}, {}, {}]);
+  assert.deepStrictEqual(swapped.boxes.map((b) => b.free), [true, false, false, false], 'a free box keeps its place after a swap');
+  assert.strictEqual(swapped.boxes[0].text, 'Owe Mira 5 gp.');
+  const two = tab([{ free: true, text: 'one' }, { free: true, text: 'two' }, {}, {}]);
+  assert.deepStrictEqual(two.boxes.map((b) => b.free), [true, false, false, false], 'only one free box');
+  assert.deepStrictEqual(two.boxes[1].notes.map((n) => n.text), ['two'], 'the second one\'s text is kept as a note');
+  const boxes = [{ id: 'A', free: false, notes: [{ ...S.newNote('a'), id: 'a' }] }, { id: 'F', free: true, notes: [], text: '' }];
+  assert.deepStrictEqual(S.moveNote(boxes, 'A', 'a', 'F', null)[1].notes, [], 'notes can\'t be dropped into the free box');
+});
+
+test('when a character was last edited', () => {
+  const now = Date.UTC(2026, 9, 9, 12);
+  const ago = (ms) => S.edited(now - ms, now);
+  assert.strictEqual(S.edited(0, now), 'Never edited');
+  assert.strictEqual(S.edited(1, now), 'Never edited');
+  assert.strictEqual(ago(20000), 'Edited just now');
+  assert.strictEqual(ago(5 * 60000), 'Edited 5 min ago');
+  assert.strictEqual(ago(3600000), 'Edited 1 hour ago');
+  assert.strictEqual(ago(5 * 3600000), 'Edited 5 hours ago');
+  assert.strictEqual(ago(30 * 3600000), 'Edited yesterday');
+  assert.strictEqual(ago(4 * 86400000), 'Edited 4 days ago');
+  assert.strictEqual(ago(60 * 86400000), 'Edited 2026-08-10');
 });
 
 test('note boxes swap places', () => {

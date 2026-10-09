@@ -1,7 +1,8 @@
 // Character Sheet: the page. Draws the sheet from the character (sheet.js has the rules, notes.js
-// draws the notes) and saves every change to this browser's localStorage.
-// Two modes: playing (fill it in) and Edit layout (every box gets a × and a grip, labels become
-// fields, each list ends with a + button). Every removal can be undone (toast or Ctrl+Z).
+// draws the notes, menu.js the Characters menu) and saves every change to this browser's localStorage.
+// Two modes: playing (fill it in) and Customize (every box gets a × and a grip, labels become
+// fields, each list ends with a + button; notes, tabs and save pips change only here). Every
+// removal can be undone (toast or Ctrl+Z).
 (function () {
   const S = window.Sheet;
   const $ = (id) => document.getElementById(id);
@@ -13,7 +14,7 @@
 
   let all = S.loadAll(store);
   let s = all.chars[all.current];
-  let editing = false; // Edit layout
+  let editing = false; // Customize
   let printing = false; // drawing for Print: every note open, as plain text
 
   // --- Helpers ----------------------------------------------------------------------
@@ -279,7 +280,7 @@
     if (opts.step) stepper(inp, (v) => { obj[key] = v; commit(); });
     return inp;
   }
-  // A box's name: plain text when playing, typed in Edit layout.
+  // A box's name: plain text when playing, typed in Customize.
   function label(obj, key, fallback, cls) {
     if (!editing) return h('span', { class: cls }, obj[key] || fallback);
     return h('input', { class: `${cls} cs-lbl-in`, value: obj[key], placeholder: fallback, 'aria-label': 'Name', spellcheck: false,
@@ -287,7 +288,7 @@
       onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } });
   }
 
-  // --- Edit layout ----------------------------------------------------------------------
+  // --- Customize ----------------------------------------------------------------------
   // Drag to reorder: the grip starts it, items in the same list accept the drop.
   let dragKind = null;
   function draggable(grip, node, kind, i, onMove) {
@@ -303,7 +304,7 @@
       else render();
     });
   }
-  // In Edit layout every box (defaults too) gets a × (with Undo) and a grip to drag it in its list.
+  // In Customize every box (defaults too) gets a × (with Undo) and a grip to drag it in its list.
   function editable(key, i, name, node) {
     node.classList.add('cs-box');
     node.dataset.box = s[key][i].id;
@@ -314,7 +315,7 @@
     draggable(grip, node, 'box-' + key, i, (from, to) => change(null, () => { s[key] = S.move(s[key], from, to); }));
     return node;
   }
-  // Each list ends with a dashed + button in Edit layout while there's room: "+ Stat (6/12)".
+  // Each list ends with a dashed + button in Customize while there's room: "+ Stat (6/12)".
   const ADD = { details: 'Detail', pairs: 'Current / Max', boxes: 'Box', stats: 'Stat', skills: 'Skill' };
   const MAKE = { details: S.newDetail, pairs: () => S.newPair(), boxes: () => S.newBox(), stats: S.newStat, skills: S.newSkill };
   const adding = (key) => editing && S.canAdd(s, key);
@@ -379,7 +380,8 @@
   }
   function pip(st, name) {
     const lab = st.mode === 'adv' ? 'advantage' : st.mode === 'dis' ? 'disadvantage' : 'normal';
-    return h('button', { type: 'button', class: 'cs-pip', title: `Save: ${lab}`, 'aria-label': `${name} save: ${lab}`,
+    // The pip only changes in Customize; playing, it just shows.
+    return h('button', { type: 'button', class: 'cs-pip', title: `Save: ${lab}`, 'aria-label': `${name} save: ${lab}`, disabled: !editing,
       onclick: () => { st.mode = S.cycleSave(st.mode); commit(); render(); } }, tri(true, st.mode === 'adv'), tri(false, st.mode === 'dis'));
   }
   function stat(st, i) {
@@ -408,8 +410,8 @@
   }
 
   // --- Tabs -------------------------------------------------------------------------
-  // Tabs, like a browser's: click to switch, + adds one, double-click a name to rename it,
-  // × closes it (with Undo), drag a tab to move it. `k` names the list (`tabs`) and `pick` the
+  // Tabs, like a browser's: click to switch. In Customize, + adds one, double-click a name to rename
+  // it, × closes it (with Undo), drag a tab to move it. `k` names the list (`tabs`) and `pick` the
   // current one (`tab`); `count` shows a number on each tab.
   let renaming = null;
   function tabStrip(k, pick, make, count, label) {
@@ -432,21 +434,21 @@
           onkeydown: (ev) => { if (ev.key === 'Enter') finish(true); if (ev.key === 'Escape') { ev.stopPropagation(); finish(false); } },
           onblur: () => finish(true) });
       } else {
-        name = h('button', { type: 'button', role: 'tab', class: 'cs-tabbtn', 'aria-selected': String(on), title: 'Double-click to rename',
-          onclick: () => pickTab(t), ondblclick: () => { renaming = t.id; s[pick] = t.id; render(); } },
+        name = h('button', { type: 'button', role: 'tab', class: 'cs-tabbtn', 'aria-selected': String(on), title: editing ? 'Double-click to rename' : null,
+          onclick: () => pickTab(t), ondblclick: () => { if (editing) { renaming = t.id; s[pick] = t.id; render(); } } },
         t.name || 'Untitled', count ? h('span', { class: 'cs-tabn' }, String(count(t))) : null);
       }
-      const node = h('div', { class: 'cs-tab' + (on ? ' on' : ''), draggable: renaming === t.id ? 'false' : 'true' }, name,
-        h('button', { type: 'button', class: 'cs-tdel', title: 'Close tab', 'aria-label': `Close ${t.name || 'tab'}`,
+      const node = h('div', { class: 'cs-tab' + (on ? ' on' : ''), draggable: editing && renaming !== t.id ? 'true' : 'false' }, name,
+        editing && h('button', { type: 'button', class: 'cs-tdel', title: 'Close tab', 'aria-label': `Close ${t.name || 'tab'}`,
           onclick: () => change(`Closed ${t.name || 'tab'}`, () => {
             const at = s[k].indexOf(t);
             s[k] = s[k].filter((x) => x !== t);
             if (s[pick] === t.id) s[pick] = (s[k][Math.min(at, s[k].length - 1)] || {}).id || '';
           }) }, icon('close', 'cs-ic xs')));
-      draggable(node, node, 'tab-' + k, i, (from, to) => change(null, () => { s[k] = S.move(s[k], from, to); }));
+      if (editing) draggable(node, node, 'tab-' + k, i, (from, to) => change(null, () => { s[k] = S.move(s[k], from, to); }));
       return node;
     });
-    strip.push(h('button', { type: 'button', class: 'cs-tabadd', title: label, 'aria-label': label,
+    if (editing) strip.push(h('button', { type: 'button', class: 'cs-tabadd', title: label, 'aria-label': label,
       onclick: () => {
         const t = make();
         change(null, () => { s[k].push(t); s[pick] = t.id; });
@@ -473,21 +475,41 @@
     if (ev.key === 'Escape' && editing && !typing()) setEditing(false);
   });
 
-  // --- Toolbar ------------------------------------------------------------------------
+  // --- Toolbar and the Characters menu ----------------------------------------------------
+  // The sheet's toolbar has only ☰ Characters and Customize; everything else (new, copy, import,
+  // export, print, reset, delete, the account) is in the Characters menu. The page opens on the
+  // character used last.
   function setEditing(on) {
     editing = on;
     const b = $('edit');
     b.setAttribute('aria-pressed', String(on));
-    b.textContent = on ? 'Done' : 'Edit layout';
+    b.textContent = on ? 'Done' : 'Customize';
     render();
   }
   $('edit').addEventListener('click', () => setEditing(!editing));
 
-  function names() {
-    const sel = $('who');
-    sel.replaceChildren(...Object.values(all.chars).map((c) => h('option', { value: c.id, selected: c.id === s.id }, c.name || 'Unnamed')));
+  let view = 'sheet'; // 'sheet' or 'menu'
+  function showView(v) {
+    view = v;
+    if (v === 'menu' && editing) { editing = false; $('edit').setAttribute('aria-pressed', 'false'); $('edit').textContent = 'Customize'; }
+    $('menu').hidden = v !== 'menu';
+    $('sheetbar').hidden = v === 'menu';
+    $('sheet').hidden = v === 'menu';
+    hideToast();
+    if (v === 'menu') { save(); renderMenu(); } else render(); // save first, so the card shows the last edit
+    window.scrollTo(0, 0);
   }
-  function show(c) {
+  $('tomenu').addEventListener('click', () => showView('menu'));
+  const synced = (c) => !!(C && C.signedIn && (c.owner === C.userId || C.synced().includes(c.id)));
+  const menu = window.SheetMenu({
+    h, icon, chars: () => all.chars, get current() { return s.id; }, synced,
+    open: (c) => show(c), act: (k, c) => act(k, c), renderMenu: () => renderMenu(),
+  });
+  function renderMenu() { $('cards').replaceChildren(...menu.render()); }
+  // Keeps the Characters menu current after a rename, a sync or another tab's save.
+  function names() { if (view === 'menu') renderMenu(); }
+  // Make `c` the open character (without switching views).
+  function select(c) {
     all.chars[c.id] = c;
     s = c;
     renaming = null;
@@ -495,38 +517,39 @@
     hideToast();
     if (!(c.id in lastJson) && !c.updated) lastJson[c.id] = S.content(c); // a new blank sheet isn't an edit
     commit();
-    names();
-    render();
   }
-  const menu = $('menu');
-  const closeMenu = () => { menu.open = false; };
-  document.addEventListener('pointerdown', (ev) => { if (menu.open && !ev.target.closest('#menu')) closeMenu(); });
-  $('who').addEventListener('change', (ev) => show(all.chars[ev.target.value]));
-  $('new').addEventListener('click', () => { show(S.blank()); const n = document.querySelector('.cs-name'); if (n) n.focus(); });
-  $('copy').addEventListener('click', () => {
-    closeMenu();
-    const c = S.normalize(JSON.parse(JSON.stringify(s)));
-    c.id = S.uid();
-    c.name = (s.name || 'Unnamed') + ' (copy)';
-    c.owner = ''; // a new character of yours
-    show(c);
-  });
-  // Reset: clear this character and start again from the default layout (Undo brings it back).
-  $('reset').addEventListener('click', () => {
-    closeMenu();
-    if (!confirm('Clear this character and start again?')) return;
-    change('Reset character', () => { s = S.reset(s); all.chars[s.id] = s; }, true);
-  });
-  $('delete').addEventListener('click', () => {
-    closeMenu();
-    if (!confirm(`Delete ${s.name || 'this character'}? This can't be undone.`)) return;
-    const id = s.id;
-    const synced = C && C.signedIn && (s.owner === C.userId || C.synced().includes(id));
-    forget([id]);
+  function show(c) { select(c); showView('sheet'); }
+
+  // The card actions (and + New character).
+  function act(key, c) {
+    if (key === 'new') { show(S.blank()); const n = document.querySelector('.cs-name'); if (n) n.focus(); }
+    else if (key === 'copy') {
+      const copy = S.normalize(JSON.parse(JSON.stringify(c)));
+      copy.id = S.uid();
+      copy.name = (c.name || 'Unnamed') + ' (copy)';
+      copy.owner = ''; // a new character of yours
+      all.chars[copy.id] = copy;
+      commit();
+      renderMenu();
+    } else if (key === 'export') exportChar(c);
+    else if (key === 'print') { show(c); window.print(); }
+    else if (key === 'reset') {
+      if (!confirm(`Clear ${c.name || 'this character'} and start again?`)) return;
+      show(c);
+      // Reset: start again from the default layout (Undo brings it back).
+      change('Reset character', () => { s = S.reset(s); all.chars[s.id] = s; }, true);
+    } else if (key === 'delete') removeChar(c);
+  }
+  function removeChar(c) {
+    if (!confirm(`Delete ${c.name || 'this character'}? This can't be undone.`)) return;
+    const wasSynced = synced(c);
+    forget([c.id]);
     // Queued until the account confirms it, so a delete made offline isn't undone on the next sync.
-    if (synced) C.remove(id).then(() => { syncBad = false; status('Synced'); }).catch(failed);
-    show(Object.values(all.chars)[0] || S.blank());
-  });
+    if (wasSynced) C.remove(c.id).then(() => { syncBad = false; status('Synced'); }).catch(failed);
+    if (c.id === s.id) select(Object.values(all.chars)[0] || S.blank());
+    else commit();
+    renderMenu();
+  }
   // Drop characters from this tab (deleted, or removed from this browser).
   function forget(ids) {
     for (const id of ids) {
@@ -536,16 +559,15 @@
       deletedHere.add(id);
     }
   }
-  $('export').addEventListener('click', () => {
-    closeMenu();
-    const blob = new Blob([S.exportJson(s)], { type: 'application/json' });
-    const a = h('a', { href: URL.createObjectURL(blob), download: `${(s.name || 'character').replace(/[^\w\- ]+/g, '').trim() || 'character'}.json` });
+  function exportChar(c) {
+    const blob = new Blob([S.exportJson(c)], { type: 'application/json' });
+    const a = h('a', { href: URL.createObjectURL(blob), download: `${(c.name || 'character').replace(/[^\w\- ]+/g, '').trim() || 'character'}.json` });
     document.body.append(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
-  $('import').addEventListener('click', () => { closeMenu(); $('import-file').click(); });
+  }
+  $('import').addEventListener('click', () => $('import-file').click());
   $('import-file').addEventListener('change', async (ev) => {
     const file = ev.target.files[0];
     ev.target.value = '';
@@ -554,14 +576,9 @@
     try { show(S.importJson(await file.text())); }
     catch (err) { alert(`Couldn't import ${file.name}: ${err.message}`); }
   });
-  // Every note opens for any print (More → Print or Ctrl+P), then folds back.
+  // Every note opens for any print (a card's ⋯ → Print, or Ctrl+P on the sheet), then folds back.
   window.addEventListener('beforeprint', () => { printing = true; render(); });
   window.addEventListener('afterprint', () => { printing = false; render(); });
-  $('print').addEventListener('click', () => {
-    closeMenu();
-    if (editing) setEditing(false);
-    window.print();
-  });
 
   // --- Sign in -------------------------------------------------------------------------
   // The toolbar's account button opens a dialog: Discord, or email + password. Signed in, it

@@ -1,7 +1,8 @@
-// Character Sheet: the notes. Each tab (the same tab strip as before) has four note boxes; a note is
+// Character Sheet: the notes. Each tab (the same tab strip as before) has four note boxes: three lists
+// of notes and one free box of plain text (typed in at any time). A note is
 // a name and a description.
 // Playing: click a note's name to open or close its description; the chevron on a box opens or
-// closes all its notes. Edit layout: type names, descriptions and box titles, + Note, × deletes a
+// closes all its notes. Customize: type names, descriptions and box titles, + Note, × deletes a
 // note, drag a note's grip to move it (within its box or into another), drag a box's grip onto
 // another box to swap them. ui.js hands over its helpers and draws this.
 (function () {
@@ -71,7 +72,27 @@
       return node;
     }
 
+    // The free box: plain text, typed straight in at any time (playing or in Customize).
+    function freeBox(box, j, tab) {
+      const handle = ui.editing ? grip('Drag onto another box to swap') : null;
+      const title = ui.editing
+        ? h('input', { class: 'cs-ntitle', value: box.title, 'aria-label': 'Box title', spellcheck: false,
+          oninput: (ev) => { box.title = ev.target.value; commit(); },
+          onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } })
+        : h('span', { class: 'cs-ntitle' }, box.title);
+      const body = ui.printing ? h('div', { class: 'cs-ndesc cs-freetext' }, box.text)
+        : h('textarea', { class: 'cs-free', value: box.text, 'aria-label': box.title || 'Notes', spellcheck: true,
+          oninput: (ev) => { box.text = ev.target.value; commit(); } });
+      const node = h('div', { class: 'cs-nbox free' }, h('div', { class: 'cs-nhead' }, handle, title), body);
+      if (handle) {
+        startDrag(handle, node, () => { draggingBox = j; });
+        dropTarget(node, () => draggingBox != null, () => swapWith(tab, j));
+      }
+      return node;
+    }
+
     function noteBox(box, j, tab) {
+      if (box.free) return freeBox(box, j, tab);
       const anyOpen = box.notes.some((n) => !n.folded);
       const fold = h('button', { type: 'button', class: 'cs-nfold', 'aria-expanded': String(anyOpen), 'aria-label': anyOpen ? 'Close all' : 'Open all',
         onclick: () => { box.notes.forEach((n) => { n.folded = anyOpen; }); redraw(); } }, icon('chevron', 'cs-ic sm'));

@@ -67,8 +67,11 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    section (name + details; Current / Max pairs; small boxes; wounds = five circles + skull, then 3 dashed
    extras; stats with ▲▽ save pips; skills) spans the width (it stacks into one column below 1150 px wide),
    and the notes span the width below it: four tall note boxes side by side (two below 1150 px, one on
-   phones). Printing (More → Print or Ctrl+P) prints the top section on page 1 and the open tab's notes
-   after it, every note open.
+   phones). The sheet's toolbar is only ☰ Characters and Customize; everything else lives in the
+   **Characters menu** (`menu.js`): a card per character (most recently edited first; the page opens on
+   the last-used character), each card's ⋯ with Copy, Export file, Print, Reset character and Delete,
+   plus + New character, Import and the account. Printing (a card's ⋯ → Print or Ctrl+P) prints the top
+   section on page 1 and the open tab's notes after it, every note open.
    Its own styles live in `character-sheet/sheet.css`.
 2. **A sheet you write on.** It holds HP and Wounds on purpose, but nothing is automated: every box is the
    text typed into it. No dice, no calculator math, no Bloodied colour, nothing follows anything else.
@@ -76,19 +79,22 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
 3. **No GM Guide numbers:** the layout, the defaults and the caps are the table's choices; call them derived.
    Don't add class or ancestry data that isn't in the PDF.
 4. **Configurable, with caps for looks:** details 6, Current / Max pairs 2, small boxes 6, stats 12, skills
-   18 (`Sheet.CAPS`), laid out in even rows (`Sheet.columns`). In Edit layout every box (defaults too) gets
+   18 (`Sheet.CAPS`), laid out in even rows (`Sheet.columns`). In **Customize** every box (defaults too) gets
    a × and a grip, its label becomes a field, and each list ends with a dashed + button while there's room.
-   More → Reset character brings back the defaults (`Sheet.reset`, undoable): Nimble's four stats (STR DEX
-   INT WIL) and ten skills, one Actions tab. Notes: tabs (`tabStrip`: +, double-click rename, ×, drag), each
-   with exactly four note boxes (`Sheet.NOTE_BOXES`; a new tab has four; no adding or removing boxes) →
-   notes (a name and a description). Playing, notes are read-only: click a name to open its description.
-   Only in Edit layout can notes be added, typed in, deleted or dragged (`Sheet.moveNote`), box titles
-   typed, and boxes swapped by dragging one onto another (`Sheet.swapBoxes`). Layout changes go through
-   undo (`undoLayout` keeps typing done since).
+   Reset character brings back the defaults (`Sheet.reset`, undoable): Nimble's four stats (STR DEX INT
+   WIL) and ten skills, one Actions tab. Save pips show while playing and change only in Customize. Notes:
+   tabs (`tabStrip`; playing you can only switch tabs, Customize adds +, double-click rename, ×, drag),
+   each with exactly four note boxes (`Sheet.NOTE_BOXES`; a new tab has four; no adding or removing boxes):
+   three lists of notes (a name and a description) and one free box of plain text (`free`, last in a new
+   tab), which can be typed in any time. Playing, list notes are read-only: click a name to open its
+   description. Only in Customize can notes be added, typed in, deleted or dragged (`Sheet.moveNote`;
+   never into the free box), box titles typed, and boxes swapped by dragging one onto another
+   (`Sheet.swapBoxes`). Layout changes go through undo (`undoLayout` keeps typing done since).
 5. Data version 5, saved in localStorage under `chongkit.sheets` (every character in one key). Older
    versions aren't upgraded: they open blank, keeping only id, owner and last edit. Logic lives in
    `sheet.js` (browser global `Sheet`, CommonJS for tests), covered by `tests/sheet.test.js`; the notes
-   are drawn by `notes.js` (global `SheetNotes`, given `ui.js`'s helpers).
+   are drawn by `notes.js` (global `SheetNotes`) and the Characters menu by `menu.js` (global
+   `SheetMenu`), both given `ui.js`'s helpers.
 6. **Accounts (optional):** `cloud.js` (browser global `Cloud`) signs in with Discord or email +
    password against Supabase project `chong-nimble-sheet` (ref `fmkbvoukbrxjbzlexjhu`) and syncs
    characters to `public.character_sheets` (`user_id`, `id`, `data` jsonb, `updated_at`; RLS: own
@@ -162,10 +168,11 @@ index.html                   Site landing page: a card for each tool   → /
 _config.yml                  GitHub Pages config (excludes repo-only files)
 assets/css/nimble.css        Shared GM-Guide look for every page
 character-sheet/             → /character-sheet/
-  index.html                 Page + toolbar
+  index.html                 Page: the sheet's toolbar and the Characters menu
   sheet.js                   Pure logic: the v5 model, caps, even rows, notes, saving, import/export
-  ui.js                      Draws the top section and toolbar; saving, sync, undo; the sign-in dialog
-  notes.js                   Draws the notes: tabs of four note boxes holding notes (name + description)
+  ui.js                      Draws the top section and toolbar; card actions; saving, sync, undo; sign-in
+  notes.js                   Draws the notes: tabs of four note boxes (three lists of notes, one free box)
+  menu.js                    Draws the Characters menu: a card per character
   cloud.js                   Optional sign-in (Discord / email) and sync via Supabase
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)

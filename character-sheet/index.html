@@ -18,28 +18,25 @@
 <main class="cs-page">
   <p class="notice">This tool is free to use for anyone who already owns the content, is trying the system out, or cannot afford to buy it right now. If you enjoy Nimble and are able, please support the game by purchasing the official content at <a href="https://nimbleRPG.com">nimbleRPG.com</a>.</p>
 
-  <div class="toolbar cs-tools">
-    <a class="back" href="../">← All tools</a>
-    <select id="who" aria-label="Character"></select>
-    <button class="btn" type="button" id="new">New</button>
-    <button class="btn" type="button" id="edit" aria-pressed="false">Edit layout</button>
-    <details class="cs-menu" id="menu">
-      <summary class="btn">More</summary>
-      <div class="cs-menu-list">
-        <button type="button" id="copy">Copy character</button>
-        <button type="button" id="export">Export file</button>
-        <button type="button" id="import">Import file</button>
-        <button type="button" id="print">Print</button>
-        <button type="button" id="reset">Reset character</button>
-        <button type="button" id="delete" class="danger">Delete character</button>
-      </div>
-    </details>
+  <!-- The sheet: only what's needed at the table. Everything else is in the Characters menu. -->
+  <div class="toolbar cs-tools" id="sheetbar">
+    <button class="btn" type="button" id="tomenu">☰ Characters</button>
+    <button class="btn" type="button" id="edit" aria-pressed="false">Customize</button>
     <span id="saved" class="cs-saved" aria-live="polite"></span>
-    <button class="btn" type="button" id="account">Sign in</button>
-    <input type="file" id="import-file" accept=".json,application/json" hidden>
   </div>
-
   <div id="sheet" class="cs"></div>
+
+  <!-- The Characters menu: a card per character, and everything that isn't the sheet itself. -->
+  <section id="menu" class="cs-menuview" hidden>
+    <div class="toolbar cs-tools">
+      <a class="back" href="../">← All tools</a>
+      <h1 class="cs-mtitle">Characters</h1>
+      <button class="btn" type="button" id="import">Import</button>
+      <button class="btn" type="button" id="account">Sign in</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+    </div>
+    <div id="cards" class="cs-cards"></div>
+  </section>
   <div id="toast" class="cs-toast" role="status" hidden></div>
   <dialog id="signin" class="cs-dialog" aria-label="Account"></dialog>
 
@@ -48,6 +45,7 @@
 <script src="sheet.js"></script>
 <script src="cloud.js"></script>
 <script src="notes.js"></script>
+<script src="menu.js"></script>
 <script src="ui.js"></script>
 </body>
 </html>

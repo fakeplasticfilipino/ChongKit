@@ -66,7 +66,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Data version 5; older saves open blank
 - [x] Tests: defaults, normalize, caps, columns, moveNote, step, reset, undo, saving, sync
 - [x] Nimble defaults (STR DEX INT WIL, ten skills), one Actions tab, no heart or shield
-- [x] Notes: four fixed boxes per tab (swap by dragging in Edit layout), notes as name + description; read-only when playing, edited only in Edit layout
+- [x] Notes: four fixed boxes per tab (swap by dragging in Customize), notes as name + description; read-only when playing, edited only in Customize
+- [x] Last box of each tab is a free notepad (typed in any time); tabs and save pips change only in Customize ("Edit layout" renamed Customize)
+- [x] Characters menu: a card per character (⋯: Copy, Export, Print, Reset, Delete; + New, Import, Sign in); the sheet toolbar is only ☰ Characters and Customize; opens on the last-used character
 
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide

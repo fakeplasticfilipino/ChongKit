@@ -16,21 +16,37 @@ main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
 
 /* Toolbar */
 .cs-tools { position: relative; margin: 0 0 12px; align-items: center; }
-.cs-tools select { min-width: 210px; }
 .btn[aria-pressed="true"] { background: var(--ink); color: var(--parchment-hi); }
-.cs-menu { position: relative; }
-.cs-menu > summary { list-style: none; cursor: pointer; }
-.cs-menu > summary::-webkit-details-marker { display: none; }
-.cs-menu > summary::after { content: " ▾"; font-size: .8em; }
-.cs-menu[open] > summary { background: var(--bar); }
-.cs-menu-list {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 190px; display: flex; flex-direction: column;
-  background: var(--parchment-hi); border: 1.5px solid var(--ink); box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
+/* The sheet and the Characters menu swap with the hidden attribute (beats their display rules). */
+.cs-page [hidden] { display: none !important; }
+
+/* The Characters menu: a card per character */
+.cs-mtitle { flex: 1; margin: 0; font: 800 28px var(--body); }
+.cs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.cs-ccard { position: relative; display: flex; flex-direction: column; min-height: 160px; border: 2px solid var(--frame); border-radius: 3px; background: #fff; cursor: pointer; }
+.cs-ccard:hover { box-shadow: 0 3px 10px rgba(0, 0, 0, .15); }
+.cs-ccard:focus-visible { outline: 3px solid var(--frame); outline-offset: 2px; }
+.cs-ccard.current { box-shadow: 0 0 0 2px var(--frame); }
+.cs-cname { padding: 10px 44px 4px 12px; font: 800 22px/1.15 var(--body); overflow-wrap: anywhere; }
+.cs-cmeta { padding: 0 12px; color: var(--muted); font-weight: 600; }
+.cs-cstats { display: flex; gap: 6px; margin: auto 12px 10px; padding-top: 10px; }
+.cs-cstat { flex: 1; min-width: 0; border: 1.5px solid var(--frame); border-radius: 2px; text-align: center; }
+.cs-cstat b { display: block; padding: 2px 4px; font: 700 20px var(--body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-cstat span { display: block; padding: 1px 4px; background: var(--band); color: #fff; font: 700 11px var(--body); letter-spacing: .04em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-cfoot { margin-top: auto; padding: 6px 12px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; font-style: italic; }
+.cs-cstats + .cs-cfoot { margin-top: 0; }
+.cs-cmore { position: absolute; top: 6px; right: 6px; width: 34px; height: 32px; padding: 0; border: 1.5px solid var(--frame); background: #fff; font: 800 18px var(--body); cursor: pointer; }
+.cs-cmore:hover, .cs-cmore[aria-expanded="true"] { background: var(--bar); }
+.cs-cpop {
+  position: absolute; top: 42px; right: 6px; z-index: 30; min-width: 180px; display: flex; flex-direction: column;
+  background: #fff; border: 1.5px solid var(--ink); box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
 }
-.cs-menu-list button { padding: 9px 14px; border: 0; border-bottom: 1px solid var(--bar-dark); background: transparent; text-align: left; font: 500 1rem var(--body); color: var(--ink); cursor: pointer; }
-.cs-menu-list button:last-child { border-bottom: 0; }
-.cs-menu-list button:hover { background: var(--bar); }
-.cs-menu-list .danger { color: var(--blood); }
+.cs-cpop button { padding: 9px 14px; border: 0; border-bottom: 1px solid var(--bar-dark); background: transparent; text-align: left; font: 500 1rem var(--body); color: var(--ink); cursor: pointer; }
+.cs-cpop button:last-child { border-bottom: 0; }
+.cs-cpop button:hover { background: var(--bar); }
+.cs-cpop .danger { color: var(--blood); }
+.cs-cnew { min-height: 160px; border: 2.5px dashed var(--muted); border-radius: 3px; background: transparent; color: var(--muted); font: 800 18px var(--body); text-transform: uppercase; cursor: pointer; }
+.cs-cnew:hover { border-color: var(--frame); color: var(--frame); }
 .cs-saved { margin-left: auto; font-style: italic; color: var(--muted); opacity: 0; transition: opacity .3s; }
 .cs-saved.show { opacity: 1; }
 .cs-saved.bad { color: var(--blood); opacity: 1; }
@@ -163,6 +179,10 @@ input.cs-ntitle:focus { outline: 1.5px dashed var(--band-t); }
 .cs-note .cs-ndel { color: var(--muted); }
 .cs-nadd { padding: 5px; border: 2px dashed var(--muted); border-radius: 3px; background: transparent; color: var(--muted); font: 700 14px var(--body); text-transform: uppercase; cursor: pointer; }
 .cs-nadd:hover { border-color: var(--frame); color: var(--frame); }
+/* The free box: plain text typed straight in */
+.cs-free { flex: 1; display: block; width: calc(100% - 16px); min-height: 12em; margin: 8px; padding: 10px 12px; border: 1.5px solid var(--rule); border-radius: 2px; background: #fff; resize: none; font: 500 16px/1.45 var(--body); color: var(--ink); }
+.cs-free:focus { outline: 2px solid var(--frame); outline-offset: -1px; }
+.cs-freetext { margin: 8px; }
 
 /* Narrow windows and phones */
 @media (max-width: 1150px) {
@@ -209,7 +229,7 @@ input.cs-ntitle:focus { outline: 1.5px dashed var(--band-t); }
 /* Print: the top section on the first page, the open tab's notes after it, every note open */
 @media print {
   body.cs-flat { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  .cs-tools, .notice, .cs-x, .cs-grip, .cs-add, .cs-toast, .cs-nadd, .cs-ndel, .cs-nfold, .cs-tabadd, .cs-tdel { display: none !important; }
+  .cs-tools, .cs-menuview, .notice, .cs-x, .cs-grip, .cs-add, .cs-toast, .cs-nadd, .cs-ndel, .cs-nfold, .cs-tabadd, .cs-tdel { display: none !important; }
   body.cs-flat, html:has(body.cs-flat) { background: #fff; }
   .cs-top, .cs-notes { min-height: 0; padding: 0; border: 0; box-shadow: none; }
   .cs-top { break-after: page; }

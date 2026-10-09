@@ -34,8 +34,11 @@
   const newStat = (label = '') => ({ id: uid(), label, value: '', mode: '' });
   const newSkill = (label = '') => ({ id: uid(), label, value: '' });
   const newNote = (name = '', text = '', folded = false) => ({ id: uid(), name, text, folded });
-  const newNoteBox = (title = '') => ({ id: uid(), title, notes: [] });
-  const newTab = (name = '') => ({ id: uid(), name, boxes: Array.from({ length: NOTE_BOXES }, () => newNoteBox()) });
+  // A note box holds a list of notes, or (`free`) plain text typed straight in. Each tab has three
+  // list boxes and one free box, last.
+  const newNoteBox = (title = '', free = false) => ({ id: uid(), title, free, notes: [], text: '' });
+  const newTab = (name = '') => ({ id: uid(), name,
+    boxes: Array.from({ length: NOTE_BOXES }, (_, i) => newNoteBox('', i === NOTE_BOXES - 1)) });
 
   function blank(name = '') {
     const s = {
@@ -71,13 +74,30 @@
     if (n.name == null) { const lines = text.split('\n'); name = lines.shift().trim(); text = lines.join('\n'); }
     return { id: keepId(n), name, text, folded: !!n.folded };
   }
-  const readNoteBox = (b) => ({ id: keepId(b), title: str(b.title), notes: (objs(b.notes) || []).map(readNote) });
-  // Exactly four boxes per tab: missing ones are added; the notes of any past the fourth move into it.
+  const readNoteBox = (b) => ({ id: keepId(b), title: str(b.title), free: !!b.free, notes: (objs(b.notes) || []).map(readNote), text: str(b.text) });
+  // A note written out as plain text (for the free box): its name, then its description.
+  const noteText = (n) => [n.name, n.text].filter((x) => x.trim()).join('\n');
+  // Exactly four boxes per tab, one of them free (plain text): missing boxes are added; the notes of
+  // any past the fourth move into it. A tab without a free box turns its last box into one, its notes
+  // written out as text; a second free box becomes a list again, its text kept as a note.
   function readTab(t) {
     const boxes = (objs(t.boxes) || []).map(readNoteBox);
     while (boxes.length < NOTE_BOXES) boxes.push(newNoteBox());
     const extra = boxes.splice(NOTE_BOXES);
     boxes[NOTE_BOXES - 1].notes.push(...extra.flatMap((b) => b.notes));
+    if (!boxes.some((b) => b.free)) boxes[NOTE_BOXES - 1].free = true;
+    let seen = false;
+    for (const b of boxes) {
+      if (b.free && !seen) {
+        seen = true;
+        b.text = [b.text, ...b.notes.map(noteText)].filter((x) => x.trim()).join('\n\n');
+        b.notes = [];
+      } else {
+        if (b.free && b.text.trim()) b.notes.push(newNote('', b.text));
+        b.free = false;
+        b.text = '';
+      }
+    }
     return { id: keepId(t), name: str(t.name), boxes };
   }
 
@@ -129,7 +149,7 @@
     const out = boxes.map((b) => ({ ...b, notes: b.notes.slice() }));
     const src = out.find((b) => b.id === fromBox);
     const dst = out.find((b) => b.id === toBox);
-    if (!src || !dst) return out;
+    if (!src || !dst || dst.free) return out; // the free box holds text, not notes
     const i = src.notes.findIndex((n) => n.id === noteId);
     if (i < 0) return out;
     const [n] = src.notes.splice(i, 1);
@@ -141,6 +161,20 @@
 
   // ↑ / ↓ on a box: a whole number steps (a "+2" modifier keeps its sign: "+3"); other text is left alone.
   const signed = (n) => (n > 0 ? `+${n}` : String(n));
+
+  // When a character was last edited, for its card in the Characters menu.
+  function edited(updated, now = Date.now()) {
+    if (!updated || updated <= 1) return 'Never edited';
+    const min = Math.floor(Math.max(0, now - updated) / 60000);
+    if (min < 1) return 'Edited just now';
+    if (min < 60) return `Edited ${min} min ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `Edited ${hr} hour${hr === 1 ? '' : 's'} ago`;
+    const day = Math.floor(hr / 24);
+    if (day === 1) return 'Edited yesterday';
+    if (day < 30) return `Edited ${day} days ago`;
+    return `Edited ${new Date(updated).toISOString().slice(0, 10)}`;
+  }
   function step(text, by) {
     const t = str(text).trim().replace(/−/g, '-');
     if (t === '') return String(by);
@@ -244,7 +278,7 @@
   const api = {
     VERSION, STORE, CAPS, PER_ROW, WOUNDS, EXTRA_WOUNDS, NOTE_BOXES, DEFAULTS, uid,
     blank, normalize, reset, newDetail, newPair, newBox, newStat, newSkill, newNote, newNoteBox, newTab,
-    canAdd, columns, swapBoxes, moveNote, step, signed, setWounds, cycleSave, undoLayout, move,
+    canAdd, columns, swapBoxes, moveNote, step, signed, edited, setWounds, cycleSave, undoLayout, move,
     loadAll, saveAll, exportJson, importJson, mergeChars, content,
   };
   if (typeof module !== 'undefined') module.exports = api;
