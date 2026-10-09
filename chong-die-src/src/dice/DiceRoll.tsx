@@ -1,7 +1,7 @@
 import { Physics, useRapier } from "@react-three/rapier";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDieDensity } from "../helpers/getDieDensity";
-import { preSimulate, SimObstacle, Track } from "../helpers/preSimulate";
+import { preSimulate, SimObstacle, Track, trackPose } from "../helpers/preSimulate";
 import { PlaybackDice } from "./PlaybackDice";
 import { getDieFromDice } from "../helpers/getDieFromDice";
 import { TrayColliders } from "../colliders/TrayColliders";
@@ -12,7 +12,7 @@ import { Die } from "../types/Die";
 import { Dice as DefaultDice } from "./Dice";
 import { PhysicsDice } from "./PhysicsDice";
 import { Highlights } from "../chong/Highlights";
-import { fadedDice, isCurrentMeta } from "../chong/rollMeta";
+import { ChongRollMeta, fadedDice, isCurrentMeta, leftmostPrimary } from "../chong/rollMeta";
 
 export function DiceRoll({
   roll,
@@ -21,6 +21,7 @@ export function DiceRoll({
   finishedTransforms,
   transformsRef,
   Dice,
+  onLeftmost,
 }: {
   roll: DiceRollType;
   rollThrows: Record<string, DiceThrow>;
@@ -37,6 +38,8 @@ export function DiceRoll({
   > | null>;
   /** Override to provide a custom Dice component  */
   Dice: React.FC<JSX.IntrinsicElements["group"] & { die: Die; faded?: boolean }>;
+  /** Chong Die, the roller's tray: keep the metadata once the Primary Dice are handed to the leftmost dice */
+  onLeftmost?: (meta: ChongRollMeta) => void;
 }) {
 
   const dice = useMemo(() => roll && getDieFromDice(roll), [roll]);
@@ -108,7 +111,7 @@ export function DiceRoll({
             />
           );
         })}
-        {/* Chong Die: the Primary Die of a group that crit or missed gets an outline (from the record) */}
+        {/* Chong Die: the Primary Die of a group that chained or missed gets an outline (from the record) */}
         <Highlights roll={roll} transforms={finishedTransforms} />
       </group>
     );
@@ -129,6 +132,8 @@ export function DiceRoll({
         <TrayColliders />
         {/* Chong Die: dice with a record face play a pre-simulated throw that lands on it */}
         <PlaybackDiceSet
+          meta={isCurrentMeta(roll?.chong) ? roll.chong : undefined}
+          onLeftmost={onLeftmost}
           dice={playback}
           obstacles={obstacles}
           rollThrows={rollThrows}
@@ -176,9 +181,14 @@ DiceRoll.defaultProps = {
 /**
  * Chong Die: dice thrown together, pre-simulated as one throw (with the dice already lying in the
  * tray as obstacles) and played back. A die whose pre-simulation fails rolls live and turns onto its
- * face once it settles.
+ * face once it settles. Before the first frame, each outlined group's Primary Die value goes to the
+ * die whose path ends leftmost (`leftmostPrimary`): every tray works it out from its own
+ * pre-simulation, and the roller's tray keeps it in the roll's metadata (so rerolls, chain dice and
+ * the outline follow it, and other trays get it with the next sync).
  */
 function PlaybackDiceSet({
+  meta,
+  onLeftmost,
   dice,
   obstacles,
   rollThrows,
@@ -189,6 +199,8 @@ function PlaybackDiceSet({
   Dice,
   faded,
 }: {
+  meta: ChongRollMeta | undefined;
+  onLeftmost?: (meta: ChongRollMeta) => void;
   dice: Die[];
   obstacles: SimObstacle[];
   rollThrows: Record<string, DiceThrow>;
@@ -220,6 +232,20 @@ function PlaybackDiceSet({
     }
   }
 
+  // Where each played-back die comes to rest (x: left to right on the tray)
+  const landedX: Record<string, number> = {};
+  for (const die of dice) {
+    const track = tracks.get(die.id);
+    if (track) landedX[die.id] = trackPose(track, track.count - 1).position.x;
+  }
+  const view = meta && !meta.leftmost ? leftmostPrimary(meta, landedX) : meta;
+  const viewFaces = view?.faces ?? faces;
+  const viewFaded = view && view !== meta ? new Set(fadedDice({ dice: [], chong: view })) : faded;
+  const handed = view !== meta ? view : undefined;
+  useEffect(() => {
+    if (handed && onLeftmost) onLeftmost(handed);
+  }, [handed, onLeftmost]);
+
   return (
     <>
       {dice.map((die) => {
@@ -229,7 +255,7 @@ function PlaybackDiceSet({
             die={die}
             onClick={emptyCallback}
             onPointerDown={emptyCallback}
-            faded={landed && faded.has(die.id)}
+            faded={landed && viewFaded.has(die.id)}
           />
         );
         return track ? (
@@ -237,7 +263,7 @@ function PlaybackDiceSet({
             key={die.id}
             die={die}
             track={track}
-            forcedFace={faces[die.id]}
+            forcedFace={viewFaces[die.id]}
             paused={paused}
             onRollFinished={onRollFinished}
           >
@@ -249,7 +275,7 @@ function PlaybackDiceSet({
             die={die}
             dieThrow={rollThrows[die.id]}
             onRollFinished={onRollFinished}
-            forcedFace={faces[die.id]}
+            forcedFace={viewFaces[die.id]}
           >
             {model(false)}
           </PhysicsDice>

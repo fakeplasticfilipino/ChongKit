@@ -17,7 +17,7 @@ export interface Plan {
   /** The words, all acting on the first group (`groups[0]`) */
   adv: number;
   dis: number;
-  /** The Primary Die in this range crits and starts a chain */
+  /** The `chain` range: the Primary Die in it starts a chain (the record marks it `crit`) */
   crit: Range | null;
   /** The Primary Die in this range marks the roll MISS */
   miss: Range | null;
@@ -68,9 +68,9 @@ export interface GroupResult {
   primaries: number[];
   /** The Primary Die landed in the miss range (an outcome). */
   miss: boolean;
-  /** A die of the group crit (an outcome). */
+  /** A die of the group chained (an outcome; the mark CHAIN). */
   crit: boolean;
-  /** The group was rolled with `crit`, whatever the dice show. */
+  /** The group was rolled with `chain`, whatever the dice show. */
   usesCrit: boolean;
   /** The group was rolled with a `miss` range, whatever the dice show. */
   usesMiss: boolean;

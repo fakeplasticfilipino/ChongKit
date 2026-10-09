@@ -253,12 +253,16 @@ the faces the roll decided). It is a modified version of
   **×** deletes, drag to reorder.
 - **⋯**: Hide rolls, Roll history, other players' trays, export / import (your saved
   rolls live in this browser only), about.
-- **Outline:** whenever a roll uses `crit` or `miss`, the Primary Die (the first die still kept) gets a **purple outline**, dark red
-  when the Primary Die is in the `miss` range, gold when that die crit. A
+- **Outline:** whenever a roll uses `chain` or `miss`, the Primary Die (the first die still kept) gets a **purple outline**, dark red
+  when the Primary Die is in the `miss` range, gold when it chained. The Primary Die is always the
+  **leftmost** die of its group (its value goes to whichever die lands leftmost; the odds and the result
+  are the same). A dragged and rethrown die keeps its value. A
   die the roll dropped (advantage) fades once it lands. Chain dice pop out of the
   die that made them after it settles.
-- **Marks, not verdicts:** the total is always the real sum; **MISS**, **CRIT** and **CAPPED** are
-  shown beside it and the table decides what they mean.
+- **Breakdown:** the total shows up top; the full breakdown runs along the bottom of the tray, on one
+  line when it fits (it shrinks a little before it wraps).
+- **Marks, not verdicts:** the total is always the real sum; **MISS**, **CHAIN** and **CAPPED** end the
+  breakdown and the table decides what they mean.
 
 **Roll syntax:** dice and numbers joined by `+` or `-` (spaces optional), then words anywhere after
 the first dice. Every word is glued to an optional number; the words act on the first dice.
@@ -267,18 +271,18 @@ the first dice. Every word is glued to an optional number; the words act on the 
 |---|---|---|
 | `NdS` | N dice of S sides (`d20` is `1d20`, `d%` is `1d100`) | `2d6+1d4-1` |
 | `adv`, `adv3`, `dis`, `dis2` | Advantage / disadvantage (bare = 1); they cancel first. Net n adds n dice, then drops the n lowest (highest for `dis`); ties drop from the left | `1d20+5 adv` |
-| `crit`, `crit10`, `crit5-10`, `crit>=5`, `crit>9` | The Primary Die in this range (bare: the die's max) crits and adds a chain die | `1d10+3 crit` |
-| `miss`, `miss1`, `miss1-4`, `miss<=4`, `miss<2` | Mark MISS when the Primary Die is in this range (bare: 1) | `1d10+3 crit miss` |
-| `critadv`, `critadv2` | Chain dice roll with advantage (needs `crit`) | `1d10 crit critadv` |
-| `x2`, `x3` | Roll the whole command N times, separately (1 to 25) | `1d10+3 crit miss x2` |
+| `chain`, `chain10`, `chain5-10`, `chain>=5`, `chain>9` | The Primary Die in this range (bare: the die's max) adds a chain die; marks CHAIN | `1d10+3 chain` |
+| `miss`, `miss1`, `miss1-4`, `miss<=4`, `miss<2` | Mark MISS when the Primary Die is in this range (bare: 1) | `1d10+3 chain miss` |
+| `chainadv`, `chainadv2` | Chain dice roll with advantage (needs `chain`) | `1d10 chain chainadv` |
+| `x2`, `x3` | Roll the whole command N times, separately (1 to 25) | `1d10+3 chain miss x2` |
 
-Nimble's attack is `1d10+3 crit miss`. The Primary Die is the first die still kept after advantage.
-A chain die is one more die of the same size added to the total (with `critadv`, an advantage pick);
-**a chain die chains again only on its max**, never on the crit range. A range's `-` is part of it
-(`crit5-10`); to subtract, leave a space (`crit5 -2`). `>=`, `>`, `<=`, `<` count to the die's
-end (`crit>=5` on a d10 is 5–10); one that leaves no face (`crit>10` on a d10) is an error. Errors show under the command line (a word
-twice, a range outside the die or backwards, `crit` and `miss` overlapping, `critadv` without
-`crit`, unknown words). Limits: 100 dice per roll and 20 chain dice; a roll that hits either stops
+Nimble's attack is `1d10+3 chain miss`. The Primary Die is the first die still kept after advantage.
+A chain die is one more die of the same size added to the total (with `chainadv`, an advantage pick);
+**a chain die chains again only on its max**, never on the chain range. A range's `-` is part of it
+(`chain5-10`); to subtract, leave a space (`chain5 -2`). `>=`, `>`, `<=`, `<` count to the die's
+end (`chain>=5` on a d10 is 5–10); one that leaves no face (`chain>10` on a d10) is an error. Errors show under the command line (a word
+twice, a range outside the die or backwards, `chain` and `miss` overlapping, `chainadv` without
+`chain`, unknown words). Limits: 100 dice per roll and 20 chain dice; a roll that hits either stops
 adding dice and is marked CAPPED. d2 and d3 are read from a d4 and a d6; other odd sizes (d5, d30, …)
 are rolled without a 3D die. Chong Die leaves out keep/drop, exploding dice, rerolls, multiplication
 and division, and target checks on purpose.

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ContactShadows,
   Environment,
@@ -19,6 +19,8 @@ import HiddenIcon from "@mui/icons-material/VisibilityOffRounded";
 import environment from "../environment.hdr";
 import { GradientOverlay } from "../controls/GradientOverlay";
 import { DiceResults } from "../controls/DiceResults";
+import { BreakdownLine } from "../chong/BreakdownLine";
+import { getRollDisplay } from "../chong/rollMeta";
 import { usePlayerDice } from "./usePlayerDice";
 import { PlayerDiceRoll } from "./PlayerDiceRoll";
 import { AudioListenerProvider } from "../audio/AudioListenerProvider";
@@ -95,8 +97,17 @@ function PlayerTrayResults({ player }: { player?: Player }) {
     usePlayerDice(player);
 
   const [resultsExpanded, setResultsExpanded] = useState(false);
+  // Chong Die: a command roll's breakdown along the bottom of the tray, above the player's name
+  const breakdown = useMemo(
+    () =>
+      finalValue !== null && diceRoll?.chong && !diceRoll.hidden
+        ? getRollDisplay(diceRoll, finishedRollValues ?? undefined)?.lines
+        : undefined,
+    [finalValue, diceRoll, finishedRollValues]
+  );
   return (
     <>
+      {breakdown && breakdown.length > 0 && <BreakdownLine lines={breakdown} bottom={56} />}
       {diceRoll?.hidden && (
         <Backdrop open sx={{ position: "absolute" }}>
           <Tooltip title="Hidden Roll">

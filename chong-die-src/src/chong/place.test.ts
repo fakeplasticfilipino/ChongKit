@@ -37,7 +37,7 @@ test("adv doubles the d20", () => expect(placeCounts("1d20 adv + 5")).toEqual({ 
 test("placing counts advantage dice", () => expect(placeCounts("2d6 adv")).toEqual({ D6: 3 }));
 
 test("chain dice aren't placed: they pop out after the throw", () =>
-  expect(placeCounts("1d10 crit1-10")).toEqual({ D10: 1 }));
+  expect(placeCounts("1d10 chain1-10")).toEqual({ D10: 1 }));
 
 test("a command that can't roll throws before anything is placed", () => {
   expect(() => placeCommand("1d20 frob", { hidden: false })).toThrow(/frob/);

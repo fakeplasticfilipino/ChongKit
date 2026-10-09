@@ -35,6 +35,8 @@ export interface ChongRollMeta {
   faces: Record<string, number>;
   /** The reveal stage shown so far: stage 0 is the first throw, then the chain dice by generation */
   stage: number;
+  /** The roller's tray has handed each outlined group's Primary Die value to its leftmost die (`leftmostPrimary`) */
+  leftmost?: boolean;
 }
 
 /** A synced roll in this format (other players may still send an older one) */
@@ -91,7 +93,53 @@ export function partId(meta: ChongRollMeta, rep: number, die: number): string | 
 }
 
 /**
- * For each dice group (and repeat) rolled with `crit` or `miss`, the 3D dice of its Primary Dice
+ * In each outlined group (rolled with `chain` or `miss`), hand the Primary Die's value to the die
+ * that lands leftmost, so players always find it there; the group's other first-throw dice of the
+ * same size take the other values, left to right, in record order. Values are only handed round
+ * between 3D dice (parts and faces); the record, and so the result, the total and the odds, don't
+ * change. `landedX`: 3D die id → where it comes to rest (x, left to right). A group with a die that
+ * has no landing yet is left as it is; ties go to the die found first.
+ */
+export function leftmostPrimary(meta: ChongRollMeta, landedX: Record<string, number>): ChongRollMeta {
+  const parts = { ...meta.parts };
+  const faces = { ...meta.faces };
+  // 3D ids of every record die, by part
+  const idsOf = new Map<string, string[]>();
+  for (const id of Object.keys(meta.parts)) {
+    const p = meta.parts[id];
+    const key = `${p.rep}:${p.die}`;
+    const list = idsOf.get(key) ?? [];
+    list[p.part] = id;
+    idsOf.set(key, list);
+  }
+  meta.record.reps.forEach((rep, r) => {
+    rep.groups.forEach((group, g) => {
+      if (!(group.usesCrit || group.usesMiss) || group.primary === null) {
+        return;
+      }
+      const size = rep.dice[group.primary].size;
+      const dice = rep.dice.filter((d) => d.group === g && d.kind !== "chain" && d.size === size);
+      const ids = dice.map((d) => idsOf.get(`${r}:${d.id}`) ?? []);
+      if (dice.length < 2 || ids.some((list) => !list.length || list.some((id) => landedX[id] === undefined))) {
+        return;
+      }
+      const slots = ids.map((list, i) => ({ list, x: landedX[list[0]], i })).sort((a, b) => a.x - b.x || a.i - b.i);
+      const primary = dice.findIndex((d) => d.id === group.primary);
+      const order = [primary, ...dice.map((_, i) => i).filter((i) => i !== primary)];
+      slots.forEach((slot, n) => {
+        const from = ids[order[n]];
+        slot.list.forEach((id, part) => {
+          parts[id] = { ...meta.parts[from[part]] };
+          faces[id] = meta.faces[from[part]];
+        });
+      });
+    });
+  });
+  return { ...meta, parts, faces, leftmost: true };
+}
+
+/**
+ * For each dice group (and repeat) rolled with `chain` or `miss`, the 3D dice of its Primary Dice
  * (a d100 by its first part), for the outline. Old rolls have none.
  */
 export function highlightedDice(roll: DiceRoll): string[] {
@@ -130,7 +178,7 @@ export function fadedDice(roll: DiceRoll): string[] {
     .sort(byOrder(meta));
 }
 
-/** The outline of a highlighted die: gold when it crit, else dark red when it is its group's primary and the group missed, else purple */
+/** The outline of a highlighted die: gold when it chained (the record's `crit`), else dark red when it is its group's primary and the group missed, else purple */
 export function highlightTone(roll: DiceRoll, id: string): "plain" | "miss" | "crit" {
   const meta = roll.chong;
   const part = isCurrentMeta(meta) ? meta.parts[id] : undefined;

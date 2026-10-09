@@ -37,10 +37,10 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
   command (`startCommandRoll` with the hold's `speedMultiplier`). Changing or clearing the dice by
   hand drops the command (`dropPlaced` in `controls/store.ts`). Commands with only virtual dice
   (`1d7`) roll at once.
-- **Roll engine** (`src/engine/`, pure TS, Vitest): `parse` (a scanner; the only module that knows the words: `adv dis crit miss critadv xN`, glued to an optional number, an `N-M` range or (crit/miss) a `>= > <= <` comparison clamped to the die, acting on the first dice group) → `roll` (plan + random source: the browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept, crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the result text). The Primary Die in the crit range is a crit; a chain die crits and chains only on its max. `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray shows. Errors are `EngineError`, shown under the command line.
-- **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CRIT and
+- **Roll engine** (`src/engine/`, pure TS, Vitest): `parse` (a scanner; the only module that knows the words: `adv dis chain miss chainadv xN`, glued to an optional number, an `N-M` range or (chain/miss) a `>= > <= <` comparison clamped to the die, acting on the first dice group) → `roll` (plan + random source: the browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept, crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the result text). The Primary Die in the `chain` range chains (the record calls it `crit`: a field name, kept so synced rolls stay v4); a chain die chains again only on its max. `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray shows. Errors are `EngineError`, shown under the command line.
+- **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CHAIN and
   CAPPED are marks beside it. Caps: 100 dice per roll (checked before rolling) and 20 chain dice
-  (a `critadv` pick counts as one); hitting either marks the roll CAPPED.
+  (a `chainadv` pick counts as one); hitting either marks the roll CAPPED.
 - **Sync:** each roll carries `chong` metadata (`ChongRollMeta` in `chong/rollMeta.ts`:
   `{ v: 4, record, parts, faces, stage }`): the record, 3D die id → record die and part, 3D die id →
   forced face, and the stage shown so far. Only the roller rolls; every tray acts out the same
@@ -55,14 +55,31 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
 
 ## Primary Die outlines
 
-Placed by the record, not by where a die lands, and shown whenever a group uses `crit` or `miss`
+Placed by the record, not by where a die lands, and shown whenever a group uses `chain` or `miss`
 (`usesCrit` / `usesMiss`); there is no switch. The Primary Die is the first die of a group still kept;
 the outlined dice are the group's `primaries` (just the Primary Die).
 
 - `chong/Highlights.tsx` draws the outline: the die's own geometry, scaled 1.08, inside out
   (`BackSide`), unlit. Per die: gold when it crit; dark red when it is the group's Primary Die and
   the group missed; else purple.
-- Chain dice aren't outlined; the CRIT mark is in the result text.
+- Chain dice aren't outlined; the CHAIN mark is in the result text.
+- **Always the leftmost die.** In each outlined group, the Primary Die's value goes to the die that
+  lands leftmost (smallest x: the camera looks straight down, +x to the right); the group's other
+  first-throw dice of the same size take the other values, left to right, in record order; ties go
+  to the die found first; a d100 moves with both parts. `leftmostPrimary` (`chong/rollMeta.ts`,
+  tested) hands parts and faces round between 3D dice; the record, so the result and the odds, never
+  change. `PlaybackDiceSet` (`dice/DiceRoll.tsx`) applies it before the first frame from where each
+  pre-simulated path ends, on every tray; the roller's tray keeps it in the metadata
+  (`leftmost: true`, via `setChong`), so rerolls, chain pops, fading and the outline follow it and
+  other trays get it with the next sync. A die dragged and rethrown keeps its value (it may then not
+  be leftmost). Dice that roll live (no pre-simulation) keep record order.
+
+## The breakdown line
+
+A command roll's result shows the total up top and its breakdown (`format`) along the bottom of the
+tray, always (no expanding): `chong/BreakdownLine.tsx`, one line per repetition, shrunk from 15 px to
+10 px to stay on one line, wrapping only when it still doesn't fit. Other players' trays put it above
+the player's name.
 
 ## Faces (landing on the record's face)
 

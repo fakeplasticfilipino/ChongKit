@@ -2,13 +2,13 @@ import { parseRange } from "./range";
 import { EngineError, GroupPlan, MAX_DICE, MAX_SIDES, MAX_TIMES, Plan, Range } from "./types";
 
 const DICE = /^(\d*)d(\d+|%)$/i;
-/** The words (the only list of them): a word glued to an optional number, or a range for crit/miss */
-const WORD = /^(critadv|adv|dis|crit|miss)(\d+(?:-\d+)?)?$/i;
-/** crit and miss also take a comparison: `crit>=5`, `crit>9`, `miss<=4`, `miss<2` */
-const COMPARE = /^(crit|miss)([<>]=?\d+)$/i;
+/** The words (the only list of them): a word glued to an optional number, or a range for chain/miss */
+const WORD = /^(chainadv|adv|dis|chain|miss)(\d+(?:-\d+)?)?$/i;
+/** chain and miss also take a comparison: `chain>=5`, `chain>9`, `miss<=4`, `miss<2` */
+const COMPARE = /^(chain|miss)([<>]=?\d+)$/i;
 const TIMES = /^x(\d+)$/i;
-/** A sign; a crit/miss range glued whole (its - is the range's); else a run of anything but spaces and signs */
-const TOKEN = /\s*(?:([+-])|((?:crit|miss)\d+-[^\s+-]+)|([^\s+-]+))/iy;
+/** A sign; a chain/miss range glued whole (its - is the range's); else a run of anything but spaces and signs */
+const TOKEN = /\s*(?:([+-])|((?:chain|miss)\d+-[^\s+-]+)|([^\s+-]+))/iy;
 
 const bad = (m: string) => new EngineError(m);
 
@@ -42,7 +42,7 @@ function compareRange(arg: string, size: number): Range | null {
   return r.min <= r.max ? r : null;
 }
 
-/** The range glued to crit/miss (`bare` when there is none); it must fit the first group's die */
+/** The range glued to chain/miss (`bare` when there is none); it must fit the first group's die */
 function rangeOf(tok: string, arg: string, bare: number, size: number): Range {
   if (/^[<>]/.test(arg)) {
     const c = compareRange(arg, size);
@@ -105,14 +105,14 @@ export function parse(input: string): Plan {
     if (name === "x") {
       times = +arg;
       if (times < 1 || times > MAX_TIMES) throw bad(`"${tok}" must be x1 to x${MAX_TIMES}`);
-    } else if (name === "crit") {
+    } else if (name === "chain") {
       crit = arg;
       critTok = tok;
     } else if (name === "miss") {
       miss = arg;
       missTok = tok;
     } else {
-      // adv/dis/critadv never get a range: the tokenizer only glues one to crit and miss
+      // adv/dis/chainadv never get a range: the tokenizer only glues one to chain and miss
       const n = arg === "" ? 1 : +arg;
       if (n < 1 || n > MAX_DICE) throw bad(`"${tok}" must be 1 to ${MAX_DICE}`);
       if (name === "adv") adv = n;
@@ -122,13 +122,13 @@ export function parse(input: string): Plan {
   }
   if (sign !== null) throw bad(`A trailing "${symbol()}" needs dice or a number after it`);
   if (groups.length === 0) throw bad("No dice");
-  if (critAdv && crit === null) throw bad("critadv needs crit");
+  if (critAdv && crit === null) throw bad("chainadv needs chain");
 
   const size = groups[0].size;
   const critRange = crit === null ? null : rangeOf(critTok, crit, size, size);
   const missRange = miss === null ? null : rangeOf(missTok, miss, 1, size);
   if (critRange && missRange && critRange.min <= missRange.max && missRange.min <= critRange.max) {
-    throw bad("crit and miss overlap");
+    throw bad("chain and miss overlap");
   }
   const plan: Plan = { text, groups, modifier, times, adv, dis, crit: critRange, miss: missRange, critAdv };
   if (stageZeroSizes(plan).length > MAX_DICE) throw bad(`More than ${MAX_DICE} dice`);

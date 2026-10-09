@@ -1,10 +1,10 @@
 import { RepRecord } from "./types";
 
-/** The marks a repetition earns, in the fixed order MISS, CRIT, CAPPED. */
-export function marks(rep: RepRecord): ("MISS" | "CRIT" | "CAPPED")[] {
-  const out: ("MISS" | "CRIT" | "CAPPED")[] = [];
+/** The marks a repetition earns, in the fixed order MISS, CHAIN, CAPPED (CHAIN: the Primary Die landed in the chain range). */
+export function marks(rep: RepRecord): ("MISS" | "CHAIN" | "CAPPED")[] {
+  const out: ("MISS" | "CHAIN" | "CAPPED")[] = [];
   if (rep.groups.some((g) => g.miss)) out.push("MISS");
-  if (rep.groups.some((g) => g.crit)) out.push("CRIT");
+  if (rep.groups.some((g) => g.crit)) out.push("CHAIN");
   if (rep.capped) out.push("CAPPED");
   return out;
 }

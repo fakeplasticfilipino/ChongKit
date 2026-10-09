@@ -145,7 +145,7 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
 A fork of [owlbear-rodeo/dice](https://github.com/owlbear-rodeo/dice) with a plain-words command
 line, an engine that decides every roll, and saved-roll pills. How it works: `chong-die-src/DESIGN.md` (keep it current).
 
-1. **System-agnostic.** The engine knows general words only (`adv`, `dis`, `crit`, `miss`, `critadv`, `xN`), never a game system. Nimble is just `1d10+3 crit miss`; other systems' rules may be added as words, never as built-in behaviour. The chain rule is the table's: only the Primary Die checks the `crit` range; a chain die chains again only on its max.
+1. **System-agnostic.** The engine knows general words only (`adv`, `dis`, `chain`, `miss`, `chainadv`, `xN`), never a game system. Nimble is just `1d10+3 chain miss`; other systems' rules may be added as words, never as built-in behaviour. The chain rule is the table's: only the Primary Die checks the `chain` range; a chain die chains again only on its max. In a roll with `chain` or `miss` the Primary Die is always the leftmost die (`leftmostPrimary`: values are handed round between 3D dice, the record never changes).
 2. **The one built tool.** It breaks the zero-install rule on purpose: React + TypeScript + three.js,
    built with Vite. Source in `chong-die-src/` (off the site, public on GitHub);
    `npx yarn@1.22.22 build` writes `chong-die/`, which is committed. **Rebuild and commit

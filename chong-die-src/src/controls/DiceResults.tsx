@@ -13,7 +13,6 @@ import { Die, isDie } from "../types/Die";
 import { Dice, isDice } from "../types/Dice";
 import { DicePreview } from "../previews/DicePreview";
 import { getRollDisplay } from "../chong/rollMeta";
-import { MarkdownText } from "../chong/MarkdownText";
 
 export function DiceResults({
   diceRoll,
@@ -38,6 +37,16 @@ export function DiceResults({
     return getCombinedDiceValue(diceRoll, rollValues);
   }, [diceRoll, rollValues, display]);
 
+  // Chong Die: a command roll's breakdown is always on the line along the bottom of the tray
+  // (`BreakdownLine`), so up here it's just the total
+  if (diceRoll.chong) {
+    return (
+      <Typography variant="h4" color="white" sx={{ padding: 0.5 }}>
+        {finalValue}
+      </Typography>
+    );
+  }
+
   return (
     <Stack alignItems="center" maxHeight="calc(100vh - 100px)">
       <Tooltip
@@ -61,17 +70,7 @@ export function DiceResults({
         style={{ transformOrigin: "50% 0 0" }}
       >
         <Stack overflow="auto" sx={{ pointerEvents: "all" }}>
-          {diceRoll.chong ? (
-            <Stack gap={0.5} px={2} maxWidth="320px">
-              {display?.lines.map((line, i) => (
-                <Typography key={i} color="white" variant="body2" textAlign="center">
-                  <MarkdownText text={line} />
-                </Typography>
-              ))}
-            </Stack>
-          ) : (
-            <DiceResultsExpanded diceRoll={diceRoll} rollValues={rollValues} />
-          )}
+          <DiceResultsExpanded diceRoll={diceRoll} rollValues={rollValues} />
         </Stack>
       </Grow>
     </Stack>

@@ -41,7 +41,7 @@ interface Budget {
 
 /**
  * A chain die: `1 + critAdv` dice of the parent's size, the highest kept (ties: the leftmost).
- * The table's rule: it crits, and chains again, only on its max, never on the crit range.
+ * The table's rule: it chains again only on its max, never on the `chain` range.
  */
 function chainPick(parent: RolledDie, critAdv: number, rng: Rng, nextId: number): RolledDie[] {
   const dice: RolledDie[] = [];
@@ -87,7 +87,7 @@ function rollRep(plan: Plan, rng: Rng, budget: Budget): RepRecord {
       usesMiss: first && plan.miss !== null,
     });
   });
-  // Chains, breadth-first in id order: every crit die earns one chain pick, with the next ids
+  // Chains, breadth-first in id order: every die that chained (`crit`) earns one chain pick, with the next ids
   let capped = false;
   for (let i = 0; i < dice.length; i++) {
     const die = dice[i];

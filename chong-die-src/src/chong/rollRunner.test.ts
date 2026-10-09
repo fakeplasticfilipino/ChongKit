@@ -37,7 +37,7 @@ test("a command roll puts stage 0 on the tray and records the faces", () => {
 
 test("chain dice wait for their parent to settle", () => {
   // crit1-6: the Primary Die always adds a chain die
-  startCommandRoll("1d6 crit1-6", { hidden: false });
+  startCommandRoll("1d6 chain1-6", { hidden: false });
   expect(trayIds()).toHaveLength(1);
   revealNext();
   expect(trayIds()).toHaveLength(1);
@@ -51,7 +51,7 @@ test("chain dice wait for their parent to settle", () => {
 });
 
 test("the result shows once every stage has settled, from the record", () => {
-  startCommandRoll("1d6 crit1-6 + 2", { hidden: false });
+  startCommandRoll("1d6 chain1-6 + 2", { hidden: false });
   for (let i = 0; i < 30 && !getRollDisplay(useDiceRollStore.getState().roll!, useDiceRollStore.getState().rollValues); i++) {
     settleAll();
     revealNext();

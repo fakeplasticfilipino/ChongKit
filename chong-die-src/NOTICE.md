@@ -7,6 +7,7 @@ under the same license.
 
 ## Changes made by ChongKit
 
+- 4.2.0: `crit` is now `chain` (`chain5-10`, `chain>=5`, `chainadv`) and its mark CHAIN, since crits exist in other systems and don't chain; in a roll with `chain` or `miss`, the Primary Die's value goes to the die that lands leftmost (each tray works it out from its pre-simulation; the record and the odds are unchanged); the breakdown line is always shown along the bottom of the tray, on one line when it fits.
 - 4.1.0: ⚡ Quick roll beside the command line (custom rolls throw at once); `crit`/`miss` take `>=`, `>`, `<=`, `<` comparisons (`crit>=5`).
 - 4.0.0: a simpler command language (words glued to numbers: `adv3`, `crit5-10`, `miss1-4`, `critadv`, `x2`; words act on the first dice); removed keep/drop, explode, crit each, saved names and notes; removed the Chong's Tracker roll link; Rolls panel 280 px.
 - Renamed to Chong Die; plugin id `com.chongkit.chongdie/` (was `rodeo.owlbear.dice/`)

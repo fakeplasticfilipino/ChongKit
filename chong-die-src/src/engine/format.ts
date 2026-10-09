@@ -4,7 +4,7 @@ import { RepRecord, RolledDie, RollRecord } from "./types";
 export interface FormattedResult {
   /** The big number: the repetitions' totals joined by `, ` */
   total: string;
-  /** One line per repetition: `~~x~~` dropped, `**x**` a crit or a 1 */
+  /** One line per repetition: `~~x~~` dropped, `**x**` a die that chained (the record's `crit`) or a 1 */
   lines: string[];
 }
 

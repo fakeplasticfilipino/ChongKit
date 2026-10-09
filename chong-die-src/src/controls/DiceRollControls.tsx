@@ -19,6 +19,8 @@ import { RerollDiceIcon } from "../icons/RerollDiceIcon";
 import { GradientOverlay } from "./GradientOverlay";
 import { useDiceRollStore } from "../dice/store";
 import { DiceResults } from "./DiceResults";
+import { BreakdownLine } from "../chong/BreakdownLine";
+import { getRollDisplay } from "../chong/rollMeta";
 import { useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
 import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
@@ -313,10 +315,21 @@ function FinishedRollControls() {
   }, [rollValues]);
 
   const [resultsExpanded, setResultsExpanded] = useState(false);
+  // Chong Die: a command roll's breakdown along the bottom of the tray
+  const breakdown = useMemo(
+    () => (roll?.chong ? getRollDisplay(roll, finishedRollValues)?.lines : undefined),
+    [roll, finishedRollValues]
+  );
 
   return (
     <>
       <GradientOverlay top height={resultsExpanded ? 500 : undefined} />
+      {breakdown && breakdown.length > 0 && (
+        <>
+          <GradientOverlay />
+          <BreakdownLine lines={breakdown} />
+        </>
+      )}
       <Box
         sx={{
           position: "absolute",
