@@ -24,6 +24,7 @@ import { getRollDisplay } from "../chong/rollMeta";
 import { useDiceControlsStore } from "./store";
 import { DiceType } from "../types/DiceType";
 import { rollPickedDice, startCommandRoll } from "../chong/rollRunner";
+import { thrownFromLine } from "../chong/place";
 import { placeCommand } from "../chong/place";
 import { useTrayStore } from "../chong/trayStore";
 import { ChongRollMeta, isCurrentMeta } from "../chong/rollMeta";
@@ -115,7 +116,10 @@ function DicePickedControls() {
       const speedMultiplier = Math.max(1, Math.min(10, activeTimeSeconds * 2));
       if (placed) {
         try {
+          // Read before the throw: throwing clears the tray, which drops it
+          const { fromPill } = useTrayStore.getState();
           startCommandRoll(placed, { hidden, speedMultiplier });
+          thrownFromLine(placed, fromPill);
         } catch (e) {
           useTrayStore.getState().setError(e instanceof Error ? e.message : "Can't roll this");
           handleReset();

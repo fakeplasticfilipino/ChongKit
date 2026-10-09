@@ -1,5 +1,5 @@
-import { beforeEach, expect, test } from "vitest";
-import { placeCounts, placeCommand } from "./place";
+import { beforeEach, describe, expect, test } from "vitest";
+import { followLine, placeCounts, placeCommand, placePill, thrownFromLine } from "./place";
 import { useTrayStore } from "./trayStore";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
@@ -11,6 +11,8 @@ import { usePrefsStore } from "./prefsStore";
 beforeEach(() => {
   useChongStore.getState().replaceSaved(emptySaved());
   useTrayStore.getState().setPlaced(null);
+  useTrayStore.getState().setFromPill(null);
+  useChongStore.getState().setDraft("");
   useDiceControlsStore.getState().resetDiceCounts();
   useDiceRollStore.getState().clearRoll();
   usePrefsStore.getState().setQuickRoll(false);
@@ -88,4 +90,71 @@ test("a command with only virtual dice rolls right away", () => {
   expect(placeCommand("1d7", { hidden: false })).toBe("rolled");
   expect(useTrayStore.getState().placed).toBeNull();
   expect(useDiceRollStore.getState().roll?.chong?.record.text).toBe("1d7");
+});
+
+describe("a pill goes into the command line, and the tray follows the line", () => {
+  test("clicking a pill places its dice and puts its roll in the line", () => {
+    expect(placePill("1d20+5", { hidden: false })).toBe("placed");
+    expect(useTrayStore.getState().placed).toBe("1d20+5");
+    expect(useChongStore.getState().draft).toBe("1d20+5");
+    expect(countOf("D20")).toBe(1);
+  });
+
+  test("typing adv after it adds the die on the tray; half-typed text keeps the last good roll", () => {
+    placePill("1d20+5", { hidden: false });
+    followLine("1d20+5 a", { hidden: false });
+    expect(useTrayStore.getState().placed).toBe("1d20+5");
+    followLine("1d20+5 adv", { hidden: false });
+    expect(useTrayStore.getState().placed).toBe("1d20+5 adv");
+    expect(countOf("D20")).toBe(2);
+    expect(useTrayStore.getState().error).toBeNull();
+  });
+
+  test("the line only steers dice it placed: nothing placed, an empty line or Quick roll leave the tray alone", () => {
+    followLine("1d20", { hidden: false });
+    expect(useTrayStore.getState().placed).toBeNull();
+    placePill("1d20+5", { hidden: false });
+    followLine("  ", { hidden: false });
+    expect(useTrayStore.getState().placed).toBe("1d20+5");
+    usePrefsStore.getState().setQuickRoll(true);
+    followLine("1d6", { hidden: false });
+    expect(useTrayStore.getState().placed).toBe("1d20+5");
+    expect(useDiceRollStore.getState().roll).toBeNull();
+  });
+
+  test("Quick roll: a pill still throws at once and leaves the line alone", () => {
+    usePrefsStore.getState().setQuickRoll(true);
+    expect(placePill("1d20+5", { hidden: false })).toBe("rolled");
+    expect(useChongStore.getState().draft).toBe("");
+  });
+
+  test("after the throw the line clears; an edited pill goes into history, an unchanged one doesn't", () => {
+    placePill("1d20+5", { hidden: false });
+    thrownFromLine("1d20+5");
+    expect(useChongStore.getState().draft).toBe("");
+    expect(useChongStore.getState().saved.history).toEqual([]);
+    placePill("1d20+5", { hidden: false });
+    followLine("1d20+5 dis", { hidden: false });
+    thrownFromLine("1d20+5 dis");
+    expect(useChongStore.getState().saved.history).toEqual(["1d20+5 dis"]);
+    expect(useTrayStore.getState().fromPill).toBeNull();
+  });
+
+  test("a line that no longer matches the thrown roll is kept", () => {
+    placePill("1d20+5", { hidden: false });
+    useChongStore.getState().setDraft("1d20+5 ad");
+    thrownFromLine("1d20+5");
+    expect(useChongStore.getState().draft).toBe("1d20+5 ad");
+  });
+});
+
+test("an edited pill thrown with Roll goes into history (read before the throw clears the tray)", () => {
+  placePill("1d20+5", { hidden: false });
+  useChongStore.getState().setDraft("1d20+5 adv"); // what the command line does as you type
+  followLine("1d20+5 adv", { hidden: false });
+  const { placed, fromPill } = useTrayStore.getState();
+  startCommandRoll(placed!, { hidden: false });
+  thrownFromLine(placed!, fromPill);
+  expect(useChongStore.getState().saved.history).toEqual(["1d20+5 adv"]);
+  expect(useChongStore.getState().draft).toBe("");
 });

@@ -8,7 +8,8 @@ import { useTheme } from "@mui/material/styles";
 import { useDiceControlsStore } from "../controls/store";
 import { useDiceRollStore } from "../dice/store";
 import { useChongStore } from "./chongStore";
-import { placeCommand } from "./place";
+import { followLine, placeCommand } from "./place";
+import { useTrayStore } from "./trayStore";
 import { PanelToggle } from "./PanelToggle";
 import { QuickRollToggle } from "./QuickRollToggle";
 import { COMMAND_LINE_HEIGHT } from "./layout";
@@ -43,7 +44,12 @@ export function CommandLine() {
       setError(e instanceof Error ? e.message : "Can't roll this");
       return;
     }
-    recordHistory(command);
+    // An unchanged pill is already one click away
+    const { fromPill, setFromPill } = useTrayStore.getState();
+    if (command !== fromPill) {
+      recordHistory(command);
+    }
+    setFromPill(null);
     setText("");
     setHistoryIndex(null);
     setError(null);
@@ -102,9 +108,11 @@ export function CommandLine() {
             fullWidth
             placeholder="1d20+5"
             value={text}
-            inputProps={{ "aria-label": "Roll command", spellCheck: false }}
+            inputProps={{ "aria-label": "Roll command", spellCheck: false, id: "chong-command" }}
             onChange={(e) => {
               setText(e.target.value);
+              // Dice the line placed follow it as it changes (` adv` adds a die)
+              followLine(e.target.value, { hidden });
               setHistoryIndex(null);
               if (error) {
                 setError(null);

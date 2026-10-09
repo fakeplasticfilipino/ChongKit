@@ -247,7 +247,9 @@ the faces the roll decided). It is a modified version of
   it's just the tray. It remembers.
 - **Rolls tab** (always first): the dice style, then a pill per die (d4 … d100). Each click puts one
   more on the tray (the pill shows ×2, ×3); throw them with the tray's Roll button.
-- **Your pills** (saved rolls) sit under a faint line. Click one to put it on the tray. **+** after the last pill
+- **Your pills** (saved rolls) sit under a faint line. Click one to put it on the tray; its roll also goes in
+  the command line, so you can add ` adv`, ` dis` or `+2` first (the dice on the tray change as you type),
+  then hold Roll. An edited pill goes into the ↑ history. With ⚡ Quick roll on, a pill throws at once. **+** after the last pill
   adds one (name, roll, optional description shown on hover / long-press); drag to reorder or onto
   another tab; right-click (long-press) to edit or delete. Tabs: **+** adds, double-click renames,
   **×** deletes, drag to reorder.

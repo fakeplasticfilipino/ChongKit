@@ -12,7 +12,7 @@ import AddIcon from "@mui/icons-material/AddRounded";
 import { useChongStore } from "./chongStore";
 import { MoreMenu } from "./MoreMenu";
 import { PillDialog } from "./PillDialog";
-import { placeCommand } from "./place";
+import { placePill } from "./place";
 import { Pill, pillError, RollTab } from "./savedRolls";
 import { PILL_DRAG, TabStrip } from "./TabStrip";
 import { useDiceControlsStore } from "../controls/store";
@@ -77,7 +77,9 @@ function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
       return;
     }
     try {
-      placeCommand(pill.command, { hidden });
+      if (placePill(pill.command, { hidden }) === "placed") {
+        focusCommandLine();
+      }
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Can't roll this");
@@ -203,4 +205,16 @@ function PillList({ tab, onAdd }: { tab: RollTab; onAdd: () => void }) {
       />
     </Box>
   );
+}
+
+/** Put the cursor at the end of the command line (a pill's roll was just put in it) */
+function focusCommandLine() {
+  // After the click has finished moving focus to the pill (a timeout: frames may not be drawn yet)
+  window.setTimeout(() => {
+    const input = document.getElementById("chong-command") as HTMLInputElement | null;
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  });
 }

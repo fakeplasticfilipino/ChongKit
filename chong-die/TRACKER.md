@@ -5,7 +5,8 @@ Owlbear Rodeo dice extension, a fork of owlbear-rodeo/dice (GPL-3.0). How it wor
 
 Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 
-## ✅ Now (v4.2.0)
+## ✅ Now (v4.3.0)
+- 4.3.0: clicking a saved pill also puts its roll in the command line (cursor at the end), so a player can add ` adv`, ` dis` or `+2` before throwing; while dice the line placed wait on the tray, the tray follows the line as it changes (half-typed text keeps the last good roll); Roll throws what the line says, the line clears, and an edited pill goes into ↑ history. Quick roll still throws pills at once.
 - 4.2.0: `crit` is now `chain` (`chain5-10`, `chain>=5`, `chainadv`) and its mark CHAIN, since crits exist in other systems and don't chain; in a roll with `chain` or `miss`, the Primary Die's value goes to the die that lands leftmost (each tray works it out from its pre-simulation; the record and the odds are unchanged); the breakdown line is always shown along the bottom of the tray, on one line when it fits.
 - 4.1.0: ⚡ Quick roll between the command line and ▤ (remembered; custom rolls throw at once); `crit>=5`, `crit>9`, `miss<=4`, `miss<2` alongside `crit5-10`.
 - 4.0.0: a simpler command language (words glued to numbers: `adv3`, `crit5-10`, `miss1-4`, `critadv`, `x2`; words act on the first dice); removed keep/drop, explode, crit each, saved names and notes; removed the Chong's Tracker roll link; Rolls panel 280 px.
@@ -24,6 +25,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - Removed in 2.7: the ⚡ Instant switch, bonus / advantage, the fairness tester and debug store
 
 ## 📋 To check at the table (Owlbear, two players)
+- [ ] 4.3.0: click a pill, type ` adv`: a second die joins the tray; hold Roll: it rolls with advantage, the line clears, ↑ brings it back
 - [ ] 4.2.0: `2d6 chain miss` twenty times: the outlined die is always the leftmost, on both trays; a dragged Primary keeps its value; the breakdown line sits at the bottom, on one line, with CHAIN / MISS
 - [ ] 3.1.0: dice tumble and stop on the result with no turn, on both trays; collision sounds still play; a chain die bounces off the dice lying in the tray; a die dragged and rethrown lands on the same face
 - [ ] `2d6 adv`: three d6 land, the dropped one fades; same text and total on the other tray

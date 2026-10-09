@@ -37,6 +37,13 @@ The engine decides every number; the tray acts the result out. Spec: `docs/2026-
   command (`startCommandRoll` with the hold's `speedMultiplier`). Changing or clearing the dice by
   hand drops the command (`dropPlaced` in `controls/store.ts`). Commands with only virtual dice
   (`1d7`) roll at once.
+- **A pill goes into the command line** (`placePill`, `chong/place.ts`): its dice are placed and its
+  roll fills the line (cursor at the end), and `trayStore.fromPill` remembers the pill. While dice
+  the line placed wait on the tray, `followLine` re-places them on every change that parses (half-typed
+  text keeps the last good roll; errors still show on Enter), so Roll always throws what the line says.
+  After the throw `thrownFromLine` clears the line and records an edited pill in the ↑ history (an
+  unchanged one is already a click away; `fromPill` is read before the throw, which drops it). Quick
+  roll throws pills at once and never throws from typing.
 - **Roll engine** (`src/engine/`, pure TS, Vitest): `parse` (a scanner; the only module that knows the words: `adv dis chain miss chainadv xN`, glued to an optional number, an `N-M` range or (chain/miss) a `>= > <= <` comparison clamped to the die, acting on the first dice group) → `roll` (plan + random source: the browser's `crypto.getRandomValues` in the app) → `record` (every die's value, size, kind, kept, crit, parent and source; each group's Primary Die and `primaries`; marks; total) → `format` (the result text). The Primary Die in the `chain` range chains (the record calls it `crit`: a field name, kept so synced rolls stay v4); a chain die chains again only on its max. `faces.ts` picks the face of each 3D die; `revealStages` splits the record into the throws the tray shows. Errors are `EngineError`, shown under the command line.
 - **Marks, not verdicts:** the total is the real sum of kept dice plus modifiers; MISS, CHAIN and
   CAPPED are marks beside it. Caps: 100 dice per roll (checked before rolling) and 20 chain dice

@@ -23,6 +23,7 @@ export function whilePlacing(fn: () => void) {
 function dropPlaced() {
   if (!placing && useTrayStore.getState().placed !== null) {
     useTrayStore.getState().setPlaced(null);
+    useTrayStore.getState().setFromPill(null);
   }
 }
 
