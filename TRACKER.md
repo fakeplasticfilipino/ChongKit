@@ -74,6 +74,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [ ] Create / join a campaign with a code; several per person; no roles
 - [ ] Add your own characters to a campaign; members see them in the Characters menu and open them read-only
 - [ ] Refresh every ~30 s (no Realtime); cache per account; `Cloud.list()` only your own rows
+- [x] Database: campaigns, members, read rule, functions (migration `campaigns`)
 
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
