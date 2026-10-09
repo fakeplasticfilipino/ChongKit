@@ -97,8 +97,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    `SheetMenu`), both given `ui.js`'s helpers.
 6. **Accounts (optional):** `cloud.js` (browser global `Cloud`) signs in with Discord or email +
    password against Supabase project `chong-nimble-sheet` (ref `fmkbvoukbrxjbzlexjhu`) and syncs
-   characters to `public.character_sheets` (`user_id`, `id`, `data` jsonb, `updated_at`; RLS: own
-   rows only). Each character carries `updated` (ms of its last edit) and `owner` (the account it
+   characters to `public.character_sheets` (`user_id`, `id`, `data` jsonb, `updated_at`, `campaign_id`; RLS: write own rows, read own rows and those in your campaigns). `Cloud.list()` asks for your own rows only (`Sheet.ownRowsPath`): without that, campaign friends' characters would merge into yours. Each character carries `updated` (ms of its last edit) and `owner` (the account it
    synced to); `Sheet.mergeChars` merges account and browser (newer edit wins; another account's
    characters are never uploaded; queued deletes are respected; tested). The publishable key in
    `cloud.js` is public by design; never put a secret/service key in the repo. The session is in
@@ -111,6 +110,17 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    `delete_my_account()` (security definer) only ever deletes the caller; signed-in users get only
    SELECT/INSERT/UPDATE/DELETE on `character_sheets` (no TRUNCATE etc.) and `anon` gets nothing. Tabs of the page merge each
    other's saves (`storage` event); deletes made offline are queued; failed syncs retry with backoff.
+   Campaign members can read each other's characters, never write them; `authenticated` has no INSERT/UPDATE on `campaign_id` (only `set_character_campaign`, `leave_campaign` and `delete_my_account` change it); every campaign change is a `security definer` function acting only as the caller; a wrong join code always says "No campaign with that code".
+8. **Campaigns** (`campaigns.js`, browser global `SheetCampaigns`): players of a campaign see each
+   other's characters. Tables `campaigns` (name, 6-character `code`) and `campaign_members` (with a
+   display `name`); `character_sheets.campaign_id`. Functions: `create_campaign`, `join_campaign`,
+   `leave_campaign` (the last member out deletes it), `rename_campaign`, `new_campaign_code`,
+   `set_character_campaign` (own characters only, a campaign you're in). No roles; several campaigns
+   per account (10), 12 members each, one campaign per character. The Characters menu has "Your
+   characters" then a section per campaign (`menu.js` shares its `card`); a friend's card opens their
+   sheet read-only (`ui.js` "viewing": nothing saved, synced or undone). No Realtime: it refreshes every
+   30 s while the menu or a friend's sheet shows (`Sheet.campaignDiff` / `campaignMerge` download only
+   what changed); the last copy is in localStorage `chongkit.campaigns.<user>`.
 
 ## Chong's Tracker (Owlbear Rodeo extension)
 
@@ -173,6 +183,7 @@ character-sheet/             → /character-sheet/
   ui.js                      Draws the top section and toolbar; card actions; saving, sync, undo; sign-in
   notes.js                   Draws the notes: tabs of four note boxes (three lists of notes, one free box)
   menu.js                    Draws the Characters menu: a card per character
+  campaigns.js               Draws the campaigns in the Characters menu; refreshes them every 30 s
   cloud.js                   Optional sign-in (Discord / email) and sync via Supabase
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)

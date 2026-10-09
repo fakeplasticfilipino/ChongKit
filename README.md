@@ -42,6 +42,13 @@ before, only in this browser. Deleting a character while signed in deletes it fr
   Imports over 1 MB are refused. If two devices edit the same character, the edit made last (by each
   device's clock) wins.
 
+**Campaigns (needs an account):** in the Characters menu, **+ New campaign** makes one and shows its
+code (like `K7Q-3MD`); everyone else uses **Join with code**. In a campaign, **+ Add character** puts one
+of your characters in it (a character is in one campaign at a time; its card's ⋯ → **Remove from
+campaign** takes it out). Everyone in the campaign sees its characters as cards and can open them
+read-only; they refresh about every 30 seconds. The campaign's ⋯ has Copy code, Rename, New code (the
+old code stops working) and Leave. There are no roles: everyone in a campaign is equal.
+
 It's a sheet you write on: every box holds what you type, and nothing is worked out for you (no math,
 no skills following stats).
 
