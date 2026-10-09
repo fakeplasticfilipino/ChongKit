@@ -3,9 +3,11 @@
 // Signed out, nothing here runs and the sheet only uses this browser's localStorage.
 // Sign-in: Discord or email + password, using the PKCE flow (only a one-time code ever appears in
 // the address bar; it's swapped for the session here). The session lives in localStorage.
-// Data: one row per character in `character_sheets` (user_id, id, data, updated_at); row-level
-// security lets each account read and write only its own rows. The database also refuses
-// characters over 256 KB, more than 50 per account, and older versions over newer ones.
+// Data: one row per character in `character_sheets` (user_id, id, data, updated_at, campaign_id);
+// row-level security lets each account write only its own rows, and read its own plus those in
+// campaigns it's a member of (so `list` asks for its own rows only). Campaign changes go through
+// database functions (rpc/*). The database also refuses characters over 256 KB, more than 50 per
+// account, and older versions over newer ones.
 (function () {
   const URL_ = 'https://fmkbvoukbrxjbzlexjhu.supabase.co';
   const KEY = 'sb_publishable_p327nFvW--OtzVX2W7saxA_1tEietW5'; // publishable (public) key: RLS guards the data
@@ -143,6 +145,7 @@
       await rest('POST', 'rpc/delete_my_account', {});
       put(userKey('synced'), null);
       put(userKey('deletes'), null);
+      put(userKey('campaigns'), null);
       save(null);
     },
     // Back from Discord, an email link or a reset link. Returns null (nothing to do), 'signin', or
@@ -172,7 +175,8 @@
     // Ids this browser has seen in the account (see Sheet.mergeChars), per account.
     synced: () => get(userKey('synced')) || [],
     setSynced: (ids) => { const k = userKey('synced'); if (k) put(k, [...new Set(ids)]); },
-    async list() { return (await rest('GET', 'character_sheets?select=id,data')) || []; },
+    // Your own characters only: campaign members can read each other's rows too.
+    async list() { return (await rest('GET', window.Sheet.ownRowsPath(Cloud.userId))) || []; },
     async push(chars) {
       if (!chars.length) return;
       await rest('POST', 'character_sheets?on_conflict=user_id,id',
@@ -195,6 +199,21 @@
         Cloud.setSynced(Cloud.synced().filter((x) => x !== id));
       }
     },
+
+    // --- Campaigns (campaigns.js; the diff and merge are Sheet.campaignDiff / campaignMerge) ---
+    async campaigns() { return (await rest('GET', 'campaigns?select=id,name,code,campaign_members(user_id,name)')) || []; },
+    async campaignIndex() { return (await rest('GET', window.Sheet.CAMPAIGN_INDEX_PATH)) || []; },
+    async campaignChars(keys) { return keys.length ? (await rest('GET', window.Sheet.campaignCharsPath(keys))) || [] : []; },
+    createCampaign: (name) => rest('POST', 'rpc/create_campaign', { p_name: name, p_member: Cloud.name() }),
+    joinCampaign: (code) => rest('POST', 'rpc/join_campaign', { p_code: code, p_member: Cloud.name() }),
+    leaveCampaign: (id) => rest('POST', 'rpc/leave_campaign', { p_campaign: id }),
+    renameCampaign: (id, name) => rest('POST', 'rpc/rename_campaign', { p_campaign: id, p_name: name }),
+    newCode: (id) => rest('POST', 'rpc/new_campaign_code', { p_campaign: id }),
+    // null takes the character out of its campaign. It must be in the account first.
+    setCampaign: (charId, campaignId) => rest('POST', 'rpc/set_character_campaign', { p_character: charId, p_campaign: campaignId }),
+    // The last refresh, per account, so the cards still show offline.
+    campaignCache: () => get(userKey('campaigns')),
+    setCampaignCache: (c) => { const k = userKey('campaigns'); if (k) put(k, c); },
   };
   window.Cloud = Cloud;
 })();
