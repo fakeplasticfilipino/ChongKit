@@ -265,3 +265,77 @@ test('move', () => {
   assert.deepStrictEqual(S.move(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b']);
   assert.deepStrictEqual(S.move(['a', 'b'], 5, 0), ['a', 'b']);
 });
+
+test('campaign codes: six characters with no look-alikes, shown with a dash', () => {
+  assert.strictEqual(S.formatCode('K7Q3MD'), 'K7Q-3MD');
+  assert.strictEqual(S.parseCode('k7q-3md'), 'K7Q3MD');
+  assert.strictEqual(S.parseCode(' K7Q 3MD '), 'K7Q3MD');
+  assert.strictEqual(S.parseCode('K7Q3M'), null);
+  assert.strictEqual(S.parseCode('K7Q3M0'), null, '0 is a look-alike');
+  assert.strictEqual(S.parseCode(null), null);
+});
+
+test('REST paths: only your own characters; the campaign index; downloads by id', () => {
+  assert.strictEqual(S.ownRowsPath('u-1'), 'character_sheets?select=id,data&user_id=eq.u-1');
+  assert.strictEqual(S.CAMPAIGN_INDEX_PATH, 'character_sheets?select=id,user_id,campaign_id,updated_at&campaign_id=not.is.null');
+  assert.strictEqual(S.campaignCharsPath(['u2/a', 'u3/b', 'u4/a']),
+    'character_sheets?select=id,user_id,data&campaign_id=not.is.null&id=in.(a,b)');
+  assert.strictEqual(S.campaignKey('u2', 'a'), 'u2/a');
+});
+
+const row = (user_id, id, campaign_id, updated_at) => ({ user_id, id, campaign_id, updated_at });
+const cachedChars = () => ({
+  'u2/a': { id: 'a', owner: 'u2', campaign: 'c1', updated: 't1', data: { name: 'Ilsa' } },
+  'u3/b': { id: 'b', owner: 'u3', campaign: 'c1', updated: 't1', data: { name: 'Pockets' } },
+  'u4/z': { id: 'z', owner: 'u4', campaign: 'c1', updated: 't1', data: { name: 'Gone' } },
+});
+
+test('campaign refresh: download only new or edited characters', () => {
+  const cache = { campaigns: [], own: {}, chars: cachedChars() };
+  const index = [row('me', 'm', 'c1', 't0'), row('u2', 'a', 'c1', 't1'), row('u3', 'b', 'c1', 't2'), row('u5', 'n', 'c2', 't1')];
+  assert.deepStrictEqual(S.campaignDiff(cache, index, 'me'), { fetch: ['u3/b', 'u5/n'], gone: ['u4/z'] });
+  assert.deepStrictEqual(S.campaignDiff(null, [row('u2', 'a', 'c1', 't1')], 'me'), { fetch: ['u2/a'], gone: [] });
+});
+
+test('campaign refresh: merge keeps unchanged copies, takes downloads, drops the gone, learns your own', () => {
+  const cache = { campaigns: [], own: { old: 'c9' }, chars: cachedChars() };
+  const campaigns = [{ id: 'c1', name: 'Iron Hills', code: 'K7Q3MD', campaign_members: [] }];
+  const index = [row('me', 'm', 'c1', 't0'), row('u2', 'a', 'c2', 't1'), row('u3', 'b', 'c1', 't2'), row('u5', 'n', 'c2', 't1')];
+  const fetched = [{ id: 'b', user_id: 'u3', data: { name: 'Pockets 2' } }, { id: 'n', user_id: 'u5', data: { name: 'New' } }];
+  const m = S.campaignMerge(cache, campaigns, index, fetched, 'me');
+  assert.strictEqual(m.campaigns, campaigns);
+  assert.deepStrictEqual(m.own, { m: 'c1' });
+  assert.deepStrictEqual(Object.keys(m.chars).sort(), ['u2/a', 'u3/b', 'u5/n']);
+  assert.deepStrictEqual(m.chars['u2/a'], { id: 'a', owner: 'u2', campaign: 'c2', updated: 't1', data: { name: 'Ilsa' } }, 'moved campaign without an edit');
+  assert.deepStrictEqual(m.chars['u3/b'], { id: 'b', owner: 'u3', campaign: 'c1', updated: 't2', data: { name: 'Pockets 2' } });
+  assert.deepStrictEqual(m.chars['u5/n'], { id: 'n', owner: 'u5', campaign: 'c2', updated: 't1', data: { name: 'New' } });
+  const missing = S.campaignMerge(null, [], [row('u6', 'q', 'c1', 't1')], [], 'me');
+  assert.deepStrictEqual(missing.chars, {}, 'not downloaded yet: left for the next refresh');
+});
+
+test('campaign sections: by name; your cards first (this browser\'s copy), then friends by last edit', () => {
+  const brakka = { ...S.blank('Brakka'), id: 'm', owner: 'me' };
+  const local = { m: brakka, w: { ...S.blank('Wren'), id: 'w', owner: 'me' }, x: { ...S.blank('Theirs'), id: 'x', owner: 'other' } };
+  const cache = {
+    campaigns: [
+      { id: 'c2', name: 'Saltmarsh', code: 'ABCDEF', campaign_members: [{ user_id: 'me', name: 'Sam' }] },
+      { id: 'c1', name: 'Iron Hills', code: 'K7Q3MD', campaign_members: [{ user_id: 'me', name: 'Sam' }, { user_id: 'u2', name: 'Jo' }, { user_id: 'u3', name: 'Alex' }] },
+    ],
+    own: { m: 'c1', x: 'c1' },
+    chars: {
+      'u2/a': { id: 'a', owner: 'u2', campaign: 'c1', updated: 't1', data: { ...S.blank('Ilsa'), updated: 100 } },
+      'u3/b': { id: 'b', owner: 'u3', campaign: 'c1', updated: 't2', data: { ...S.blank('Pockets'), updated: 200 } },
+    },
+  };
+  const v = S.campaignView(cache, local, 'me');
+  assert.deepStrictEqual(v.map((x) => x.name), ['Iron Hills', 'Saltmarsh']);
+  const [iron, salt] = v;
+  assert.deepStrictEqual([iron.id, iron.code, iron.players], ['c1', 'K7Q3MD', 3]);
+  assert.deepStrictEqual(iron.cards.map((k) => [k.key, k.mine, k.player, k.char.name]),
+    [['me/m', true, '', 'Brakka'], ['u3/b', false, 'Alex', 'Pockets'], ['u2/a', false, 'Jo', 'Ilsa']]);
+  assert.strictEqual(iron.cards[0].char, brakka, 'your own card is your local copy');
+  assert.strictEqual(iron.cards[1].char.id, 'b', 'a friend\'s character keeps its id');
+  assert.strictEqual(iron.cards[1].updated, 't2');
+  assert.deepStrictEqual(salt.cards, []);
+  assert.deepStrictEqual(S.campaignView(null, local, 'me'), []);
+});

@@ -275,11 +275,84 @@
     return { ...normalize(raw), id: uid(), owner: '', updated: Date.now() }; // a new character of yours
   }
 
+  // --- Campaigns ---------------------------------------------------------------------------
+  // Players of one campaign see each other's characters (cloud.js reads them, campaigns.js draws
+  // them). A campaign's join code: 6 characters without look-alikes (no 0 / O, 1 / I), shown K7Q-3MD.
+  const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function parseCode(text) {
+    const c = str(text).toUpperCase().replace(/[\s-]+/g, '');
+    return c.length === 6 && [...c].every((ch) => CODE_CHARS.includes(ch)) ? c : null;
+  }
+  const formatCode = (code) => { const c = str(code); return c.length === 6 ? `${c.slice(0, 3)}-${c.slice(3)}` : c; };
+  // REST paths. Campaign members can read each other's rows, so your own list must ask for your
+  // own rows only, or friends' characters would merge into yours.
+  const ownRowsPath = (user) => `character_sheets?select=id,data&user_id=eq.${encodeURIComponent(user)}`;
+  const CAMPAIGN_INDEX_PATH = 'character_sheets?select=id,user_id,campaign_id,updated_at&campaign_id=not.is.null';
+  const campaignKey = (owner, id) => `${owner}/${id}`;
+  function campaignCharsPath(keys) {
+    const ids = [...new Set(keys.map((k) => k.slice(k.indexOf('/') + 1)))];
+    return `character_sheets?select=id,user_id,data&campaign_id=not.is.null&id=in.(${ids.map(encodeURIComponent).join(',')})`;
+  }
+  // The campaign cache (per account): { campaigns: [{ id, name, code, campaign_members: [{ user_id,
+  // name }] }], chars: { 'owner/id': { id, owner, campaign, updated, data } }, own: { id: campaign } }.
+  // One refresh reads the index (every campaign character's id, owner, campaign and server edit
+  // time, [{ id, user_id, campaign_id, updated_at }]), then downloads only friends' characters that
+  // are new or edited (`fetch`); cached ones no longer in the index are `gone`.
+  function campaignDiff(cache, index, me) {
+    const chars = (cache && cache.chars) || {};
+    const fetch = [];
+    const seen = new Set();
+    for (const r of index || []) {
+      if (r.user_id === me) continue;
+      const key = campaignKey(r.user_id, r.id);
+      seen.add(key);
+      const c = chars[key];
+      if (!c || !c.data || c.updated !== r.updated_at) fetch.push(key);
+    }
+    return { fetch, gone: Object.keys(chars).filter((k) => !seen.has(k)) };
+  }
+  // The new cache after a refresh: `fetched` is the downloaded rows ([{ id, user_id, data }]).
+  function campaignMerge(cache, campaigns, index, fetched, me) {
+    const old = (cache && cache.chars) || {};
+    const got = new Map((fetched || []).map((r) => [campaignKey(r.user_id, r.id), r.data]));
+    const chars = {};
+    const own = {};
+    for (const r of index || []) {
+      if (r.user_id === me) { own[r.id] = r.campaign_id; continue; }
+      const key = campaignKey(r.user_id, r.id);
+      const fresh = got.has(key);
+      const data = fresh ? got.get(key) : old[key] && old[key].data;
+      if (!data) continue; // not downloaded yet: the next refresh asks again
+      chars[key] = { id: r.id, owner: r.user_id, campaign: r.campaign_id, updated: fresh ? r.updated_at : old[key].updated, data };
+    }
+    return { campaigns: campaigns || [], chars, own };
+  }
+  // The Characters menu's campaign sections, by name. Each card: { key, mine, player, updated,
+  // char }. Your own cards come first and are this browser's copy (the freshest); friends' follow,
+  // most recently edited first.
+  function campaignView(cache, local, me) {
+    const c = cache || {};
+    const own = c.own || {};
+    return (c.campaigns || []).slice().sort((a, b) => str(a.name).localeCompare(str(b.name))).map((camp) => {
+      const members = camp.campaign_members || [];
+      const player = (u) => (members.find((m) => m.user_id === u) || {}).name || 'Player';
+      const mine = Object.values(local || {})
+        .filter((ch) => own[ch.id] === camp.id && (!ch.owner || ch.owner === me))
+        .map((ch) => ({ key: campaignKey(me, ch.id), mine: true, player: '', updated: '', char: ch }));
+      const theirs = Object.entries(c.chars || {})
+        .filter(([, x]) => x.campaign === camp.id)
+        .map(([key, x]) => ({ key, mine: false, player: player(x.owner), updated: x.updated, char: normalize({ ...x.data, id: x.id }) }))
+        .sort((a, b) => (b.char.updated || 0) - (a.char.updated || 0));
+      return { id: camp.id, name: str(camp.name), code: str(camp.code), players: members.length, cards: [...mine, ...theirs] };
+    });
+  }
+
   const api = {
     VERSION, STORE, CAPS, PER_ROW, WOUNDS, EXTRA_WOUNDS, NOTE_BOXES, DEFAULTS, uid,
     blank, normalize, reset, newDetail, newPair, newBox, newStat, newSkill, newNote, newNoteBox, newTab,
     canAdd, columns, swapBoxes, moveNote, step, signed, edited, setWounds, cycleSave, undoLayout, move,
     loadAll, saveAll, exportJson, importJson, mergeChars, content,
+    formatCode, parseCode, ownRowsPath, CAMPAIGN_INDEX_PATH, campaignCharsPath, campaignKey, campaignDiff, campaignMerge, campaignView,
   };
   if (typeof module !== 'undefined') module.exports = api;
   else root.Sheet = api;
