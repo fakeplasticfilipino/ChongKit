@@ -70,6 +70,11 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Last box of each tab is a free notepad (typed in any time); tabs and save pips change only in Customize ("Edit layout" renamed Customize)
 - [x] Characters menu: a card per character (⋯: Copy, Export, Print, Reset, Delete; + New, Import, Sign in); the sheet toolbar is only ☰ Characters and Customize; opens on the last-used character
 
+### 📋 Campaigns — planned (spec: `docs/superpowers/specs/2026-10-09-character-sheet-campaigns-design.md`)
+- [ ] Create / join a campaign with a code; several per person; no roles
+- [ ] Add your own characters to a campaign; members see them in the Characters menu and open them read-only
+- [ ] Refresh every ~30 s (no Realtime); cache per account; `Cloud.list()` only your own rows
+
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 
