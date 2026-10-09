@@ -289,6 +289,8 @@
   const ownRowsPath = (user) => `character_sheets?select=id,data&user_id=eq.${encodeURIComponent(user)}`;
   const CAMPAIGN_INDEX_PATH = 'character_sheets?select=id,user_id,campaign_id,updated_at&campaign_id=not.is.null';
   const campaignKey = (owner, id) => `${owner}/${id}`;
+  // Ids are the owner's text; only plain ones are downloaded (a `,` or `)` would break the in.() list).
+  const SAFE_ID = /^[\w-]{1,64}$/;
   function campaignCharsPath(keys) {
     const ids = [...new Set(keys.map((k) => k.slice(k.indexOf('/') + 1)))];
     return `character_sheets?select=id,user_id,data&campaign_id=not.is.null&id=in.(${ids.map(encodeURIComponent).join(',')})`;
@@ -303,7 +305,7 @@
     const fetch = [];
     const seen = new Set();
     for (const r of index || []) {
-      if (r.user_id === me) continue;
+      if (r.user_id === me || !SAFE_ID.test(r.id)) continue;
       const key = campaignKey(r.user_id, r.id);
       seen.add(key);
       const c = chars[key];
@@ -319,6 +321,7 @@
     const own = {};
     for (const r of index || []) {
       if (r.user_id === me) { own[r.id] = r.campaign_id; continue; }
+      if (!SAFE_ID.test(r.id)) continue;
       const key = campaignKey(r.user_id, r.id);
       const fresh = got.has(key);
       const data = fresh ? got.get(key) : old[key] && old[key].data;

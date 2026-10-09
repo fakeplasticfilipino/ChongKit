@@ -313,6 +313,13 @@ test('campaign refresh: merge keeps unchanged copies, takes downloads, drops the
   assert.deepStrictEqual(missing.chars, {}, 'not downloaded yet: left for the next refresh');
 });
 
+test('campaign refresh: ids that would break the in.() list are neither fetched nor shown', () => {
+  const index = [row('u2', 'a,b)', 'c1', 't1'), row('u2', 'a', 'c1', 't1')];
+  assert.deepStrictEqual(S.campaignDiff({ chars: { 'u2/a,b)': { data: {} } } }, index, 'me'), { fetch: ['u2/a'], gone: ['u2/a,b)'] });
+  const m = S.campaignMerge(null, [], index, [{ id: 'a', user_id: 'u2', data: { name: 'Ilsa' } }, { id: 'a,b)', user_id: 'u2', data: {} }], 'me');
+  assert.deepStrictEqual(Object.keys(m.chars), ['u2/a']);
+});
+
 test('campaign sections: by name; your cards first (this browser\'s copy), then friends by last edit', () => {
   const brakka = { ...S.blank('Brakka'), id: 'm', owner: 'me' };
   const local = { m: brakka, w: { ...S.blank('Wren'), id: 'w', owner: 'me' }, x: { ...S.blank('Theirs'), id: 'x', owner: 'other' } };

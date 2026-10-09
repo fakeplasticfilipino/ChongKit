@@ -18,6 +18,8 @@
     let cache = (on() && C.campaignCache()) || EMPTY();
     let timer = null;
     let busy = false;
+    let again = false; // a refresh was asked for while one ran
+    let bad = false; // this module set the 'Not synced' status
     let active = false;
     let open = null; // the campaign whose ⋯ menu is open
     document.addEventListener('pointerdown', (ev) => {
@@ -32,21 +34,29 @@
     }
 
     async function refresh() {
-      if (!on() || busy) return;
+      if (!on()) return;
+      if (busy) { again = true; return; } // the follow-up picks up a change made meanwhile
       busy = true;
+      const me = C.userId; // a refresh in flight across a sign-out / other sign-in is dropped
       try {
         const campaigns = await C.campaigns();
+        if (C.userId !== me) return;
         const index = await C.campaignIndex();
-        const d = S.campaignDiff(cache, index, C.userId);
+        if (C.userId !== me) return;
+        const d = S.campaignDiff(cache, index, me);
         const want = new Set(d.fetch);
         const fetched = (await C.campaignChars(d.fetch)).filter((r) => want.has(S.campaignKey(r.user_id, r.id)));
-        cache = S.campaignMerge(cache, campaigns, index, fetched, C.userId);
+        if (C.userId !== me) return;
+        const before = JSON.stringify(cache);
+        cache = S.campaignMerge(cache, campaigns, index, fetched, me);
         C.setCampaignCache(cache);
-        ui.campaignsChanged();
+        if (bad) { bad = false; ui.status('Synced'); }
+        if (JSON.stringify(cache) !== before) ui.campaignsChanged(); // unchanged: keep the menu (and its focus)
       } catch {
-        if (on()) ui.status('Not synced', true);
+        if (on()) { bad = true; ui.status('Not synced', true); }
       } finally {
         busy = false;
+        if (again) { again = false; refresh(); }
       }
     }
     // On while the menu or a friend's sheet shows; a hidden tab skips its turns.

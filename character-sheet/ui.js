@@ -579,8 +579,9 @@
   async function upload(c) {
     save();
     if (synced(c) && !dirty.has(c.id)) return;
+    const was = c.owner;
     c.owner = C.userId;
-    await C.push([c]);
+    try { await C.push([c]); } catch (e) { c.owner = was; throw e; }
     dirty.delete(c.id);
     C.setSynced([...C.synced(), c.id]);
     S.saveAll(store, all);
