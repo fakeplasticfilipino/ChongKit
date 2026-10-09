@@ -202,9 +202,11 @@
       // The drawn fields write into the very object `s` they were drawn from, so when the
       // open character is unchanged keep that same object (taking the merged owner and
       // timestamp); swapping in a copy without a redraw would lose everything typed next.
+      // A friend's sheet opened while this sync was in flight: leave it alone; going back
+      // (stopViewing) opens your character from the merged list.
       const merged = all.chars[s.id];
       let openChanged = false;
-      if (merged && S.content(merged) === S.content(s)) {
+      if (viewing) { /* not yours: nothing to keep or swap */ } else if (merged && S.content(merged) === S.content(s)) {
         s.owner = merged.owner;
         s.updated = merged.updated;
         all.chars[s.id] = s;
@@ -218,7 +220,7 @@
       S.saveAll(store, all);
       stored = new Set(Object.keys(all.chars));
       // Redraw when the open character changed, or the account changed another one.
-      if (openChanged || JSON.stringify(Object.values(all.chars).map(S.content).sort()) !== before) softRender();
+      if (viewing) { /* redrawn when you go back */ } else if (openChanged || JSON.stringify(Object.values(all.chars).map(S.content).sort()) !== before) softRender();
       else names();
       retryDelay = 5000;
       syncBad = false;
