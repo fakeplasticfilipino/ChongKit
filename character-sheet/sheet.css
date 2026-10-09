@@ -47,6 +47,29 @@ main.cs-page { max-width: 1760px; padding: 12px 20px 20px; }
 .cs-cpop .danger { color: var(--blood); }
 .cs-cnew { min-height: 160px; border: 2.5px dashed var(--muted); border-radius: 3px; background: transparent; color: var(--muted); font: 800 18px var(--body); text-transform: uppercase; cursor: pointer; }
 .cs-cnew:hover { border-color: var(--frame); color: var(--frame); }
+/* Campaigns: the menu's sections (yours, then one per campaign), the picker, the band over a friend's sheet */
+.cs-msec { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin: 26px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--frame); }
+.cs-menu > .cs-msec:first-child { margin-top: 4px; }
+.cs-msec h2 { margin: 0; font: 800 24px var(--body); overflow-wrap: anywhere; }
+.cs-code { padding: 1px 8px; background: var(--band); color: var(--band-t); font: 700 15px var(--body); letter-spacing: .08em; }
+.cs-msub { color: var(--muted); font-weight: 600; }
+.cs-smenu { position: relative; margin-left: auto; align-self: center; }
+.cs-smenu .cs-cmore { position: static; display: block; }
+.cs-smenu .cs-cpop { top: 38px; right: 0; }
+.cs-cfoot.who { font-style: normal; font-weight: 700; color: var(--ink-soft); }
+.cs-ctag { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid var(--rule); background: var(--bar); color: var(--ink-soft); font: normal 700 12px var(--body); }
+.cs-crow { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 26px; }
+.cs-crow .cs-cnew { flex: 1 1 250px; min-height: 64px; }
+.cs-picks { display: flex; flex-direction: column; gap: 8px; }
+.cs-pick { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; border: 1.5px solid var(--frame); background: #fff; font: 700 17px var(--body); color: var(--ink); text-align: left; cursor: pointer; }
+.cs-pick:hover { background: var(--bar); }
+.cs-pick-sub { color: var(--muted); font-weight: 600; }
+.cs-pick.off { border-style: dashed; background: transparent; color: var(--muted); cursor: default; }
+.cs-pick.cancel { justify-content: center; border-style: dashed; background: transparent; color: var(--muted); }
+.cs-viewband { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 12px; padding: 7px 14px; background: var(--band); color: var(--band-t); font: 700 17px var(--body); }
+.cs-vwhen { margin-left: auto; font-weight: 500; font-style: italic; }
+.cs-in[readonly], .cs-free[readonly] { cursor: default; }
+.cs-w:disabled { cursor: default; }
 .cs-saved { margin-left: auto; font-style: italic; color: var(--muted); opacity: 0; transition: opacity .3s; }
 .cs-saved.show { opacity: 1; }
 .cs-saved.bad { color: var(--blood); opacity: 1; }

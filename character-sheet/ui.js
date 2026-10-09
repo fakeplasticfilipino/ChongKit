@@ -1,5 +1,6 @@
 // Character Sheet: the page. Draws the sheet from the character (sheet.js has the rules, notes.js
 // draws the notes, menu.js the Characters menu) and saves every change to this browser's localStorage.
+// A friend's character from a campaign (campaigns.js) opens read-only ("viewing"): nothing is saved.
 // Two modes: playing (fill it in) and Customize (every box gets a × and a grip, labels become
 // fields, each list ends with a + button; notes, tabs and save pips change only here). Every
 // removal can be undone (toast or Ctrl+Z).
@@ -16,6 +17,10 @@
   let s = all.chars[all.current];
   let editing = false; // Customize
   let printing = false; // drawing for Print: every note open, as plain text
+  // A friend's character from a campaign, open read-only: { key, player, campaign, updated }.
+  // While it's open `s` is that character; nothing is saved, synced or undone.
+  let viewing = null;
+  let syncLater = false; // a sync asked for while viewing runs when you go back
 
   // --- Helpers ----------------------------------------------------------------------
   function h(tag, props, ...kids) {
@@ -51,12 +56,14 @@
   // --- Saving -----------------------------------------------------------------------
   let timer = null, savedTimer = null;
   function commit() {
+    if (viewing) return;
     all.chars[s.id] = s;
     all.current = s.id;
     clearTimeout(timer);
     timer = setTimeout(save, 300);
   }
   function save() {
+    if (viewing) return;
     clearTimeout(timer);
     // Another tab of this page may have saved since: take its newer characters first.
     adopt(store.getItem(S.STORE));
@@ -117,6 +124,7 @@
   }
   window.addEventListener('storage', (ev) => {
     if (ev.key !== S.STORE || ev.newValue == null) return;
+    if (viewing) return; // taken in when you go back (stopViewing)
     if (adopt(ev.newValue)) softRender();
   });
   // Redraw after outside changes (other tabs, the account), but never under the cursor: while
@@ -177,6 +185,7 @@
   }
   async function syncAll() {
     if (!C || !C.signedIn) return;
+    if (viewing) { syncLater = true; return; }
     save();
     status('Syncing…');
     try {
@@ -246,9 +255,10 @@
     render();
     hideToast();
   }
-  function toast(label) {
+  function toast(label, canUndo = true) {
     const t = $('toast');
-    t.replaceChildren(h('span', {}, label), h('button', { type: 'button', class: 'cs-undo', onclick: undo }, icon('undo', 'cs-ic sm'), 'Undo'));
+    t.replaceChildren(...[h('span', {}, label),
+      canUndo ? h('button', { type: 'button', class: 'cs-undo', onclick: undo }, icon('undo', 'cs-ic sm'), 'Undo') : null].filter(Boolean));
     t.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, 6000);
@@ -274,10 +284,10 @@
     });
   }
   function field(obj, key, label, cls = '', opts = {}) {
-    const inp = h('input', { class: 'cs-in ' + cls, value: obj[key], 'aria-label': label, spellcheck: false, inputMode: 'text',
+    const inp = h('input', { class: 'cs-in ' + cls, value: obj[key], 'aria-label': label, spellcheck: false, inputMode: 'text', readOnly: !!viewing,
       onkeydown: (ev) => { if (ev.key === 'Enter') inp.blur(); } });
     inp.addEventListener('input', () => { obj[key] = inp.value; commit(); if (opts.after) opts.after(); });
-    if (opts.step) stepper(inp, (v) => { obj[key] = v; commit(); });
+    if (opts.step && !viewing) stepper(inp, (v) => { obj[key] = v; commit(); });
     return inp;
   }
   // A box's name: plain text when playing, typed in Customize.
@@ -362,11 +372,11 @@
       const on = i < s.wounds;
       const skull = i === S.WOUNDS - 1;
       dots.push(h('button', { type: 'button', class: 'cs-w' + (on ? ' on' : '') + (skull ? ' skull' : ''), 'aria-pressed': String(on),
-        'aria-label': `Wound ${i + 1}`, onclick: () => { s.wounds = S.setWounds(s.wounds, i); commit(); render(); } },
+        'aria-label': `Wound ${i + 1}`, disabled: !!viewing, onclick: () => { s.wounds = S.setWounds(s.wounds, i); commit(); render(); } },
       skull ? icon('skull', 'cs-ic') : null));
     }
     const extra = s.woundMarks.map((m, i) => h('button', { type: 'button', class: 'cs-w extra' + (m ? ' on' : ''), 'aria-pressed': String(m),
-      'aria-label': `Extra wound ${i + 1}`, onclick: () => { s.woundMarks[i] = !m; commit(); render(); } }));
+      'aria-label': `Extra wound ${i + 1}`, disabled: !!viewing, onclick: () => { s.woundMarks[i] = !m; commit(); render(); } }));
     return h('div', { class: 'cs-wounds', role: 'group', 'aria-label': 'Wounds' }, h('div', { class: 'cs-track' }, dots), h('div', { class: 'cs-extra' }, extra));
   }
   // The save pip: ▲ advantage and ▼ disadvantage side by side, the one in use filled.
@@ -463,6 +473,7 @@
   const notes = window.SheetNotes({
     h, icon, change, commit, tabStrip, render: () => render(),
     get s() { return s; }, get printing() { return printing; }, get editing() { return editing; },
+    get viewing() { return !!viewing; },
   });
 
   function render() {
@@ -490,12 +501,15 @@
 
   let view = 'sheet'; // 'sheet' or 'menu'
   function showView(v) {
+    if (v === 'menu') stopViewing();
     view = v;
     if (v === 'menu' && editing) { editing = false; $('edit').setAttribute('aria-pressed', 'false'); $('edit').textContent = 'Customize'; }
     $('menu').hidden = v !== 'menu';
     $('sheetbar').hidden = v === 'menu';
     $('sheet').hidden = v === 'menu';
+    viewBand();
     hideToast();
+    camps.setActive(v === 'menu' || !!viewing);
     if (v === 'menu') { save(); renderMenu(); } else render(); // save first, so the card shows the last edit
     window.scrollTo(0, 0);
   }
@@ -504,10 +518,71 @@
   const menu = window.SheetMenu({
     h, icon, chars: () => all.chars, get current() { return s.id; }, synced,
     open: (c) => show(c), act: (k, c) => act(k, c), renderMenu: () => renderMenu(),
+    campaignOf: (id) => camps.campaignOf(id), campaignSections: () => camps.render(),
+  });
+  const camps = window.SheetCampaigns({
+    h, dialog: () => dialog(), status, notify: (t) => toast(t, false), chars: () => all.chars,
+    card: (c, o) => menu.card(c, o), open: (c) => show(c), openFriend: (k, v) => openFriend(k, v),
+    upload: (c) => upload(c), renderMenu: () => renderMenu(), campaignsChanged: () => campaignsChanged(),
+    openAccount: () => openAccount(),
   });
   function renderMenu() { $('cards').replaceChildren(...menu.render()); }
   // Keeps the Characters menu current after a rename, a sync or another tab's save.
   function names() { if (view === 'menu') renderMenu(); }
+
+  // --- A friend's character (campaigns.js) ---------------------------------------------------
+  // Drawn like yours, read-only, under a grey band; Customize is hidden.
+  function openFriend(k, v) {
+    viewing = { key: k.key, player: k.player, campaign: v.name, updated: k.updated };
+    s = k.char;
+    renaming = null;
+    history = [];
+    showView('sheet');
+  }
+  function stopViewing() {
+    if (!viewing) return;
+    viewing = null;
+    s = all.chars[all.current] || Object.values(all.chars)[0];
+    adopt(store.getItem(S.STORE)); // what other tabs saved meanwhile
+    if (syncLater) { syncLater = false; syncAll(); }
+  }
+  function viewBand() {
+    const b = $('viewband');
+    b.hidden = !viewing || view === 'menu';
+    $('edit').hidden = !!viewing;
+    if (viewing) b.replaceChildren(h('span', {}, `${s.name || 'Unnamed'} — ${viewing.player}'s character · ${viewing.campaign}`),
+      h('span', { class: 'cs-vwhen' }, S.edited(s.updated)));
+  }
+  // After a campaign refresh: redraw the menu, or the friend's sheet if it changed (back to the
+  // menu if it left the campaign).
+  function campaignsChanged() {
+    if (view === 'menu') { renderMenu(); return; }
+    if (!viewing) return;
+    let found = null;
+    for (const v of camps.sections()) {
+      const k = v.cards.find((x) => x.key === viewing.key);
+      if (k) { found = { k, v }; break; }
+    }
+    if (!found) { showView('menu'); return; }
+    if (found.k.updated !== viewing.updated) {
+      const tab = s.tab;
+      s = found.k.char;
+      if (s.tabs.some((t) => t.id === tab)) s.tab = tab;
+      viewing = { ...viewing, updated: found.k.updated, campaign: found.v.name };
+      render();
+    }
+    viewBand();
+  }
+  // A character has to be in the account before it can join a campaign.
+  async function upload(c) {
+    save();
+    if (synced(c) && !dirty.has(c.id)) return;
+    c.owner = C.userId;
+    await C.push([c]);
+    dirty.delete(c.id);
+    C.setSynced([...C.synced(), c.id]);
+    S.saveAll(store, all);
+  }
   // Make `c` the open character (without switching views).
   function select(c) {
     all.chars[c.id] = c;
@@ -538,7 +613,8 @@
       show(c);
       // Reset: start again from the default layout (Undo brings it back).
       change('Reset character', () => { s = S.reset(s); all.chars[s.id] = s; }, true);
-    } else if (key === 'delete') removeChar(c);
+    } else if (key === 'uncampaign') camps.remove(c);
+    else if (key === 'delete') removeChar(c);
   }
   function removeChar(c) {
     if (!confirm(`Delete ${c.name || 'this character'}? This can't be undone.`)) return;
@@ -596,7 +672,7 @@
     const close = h('button', { type: 'button', class: 'cs-dlg-x', 'aria-label': 'Close', onclick: () => dlg.close() }, icon('close', 'cs-ic'));
     const note = h('p', { class: 'cs-auth-msg', 'aria-live': 'polite' }, msg || '');
     const say = (t, bad) => { note.textContent = t; note.classList.toggle('bad', !!bad); };
-    return { close, note, say, show: (...body) => { dlg.replaceChildren(close, ...body.filter(Boolean), note); if (!dlg.open) dlg.showModal(); } };
+    return { close, note, say, done: () => dlg.close(), show: (...body) => { dlg.replaceChildren(close, ...body.filter(Boolean), note); if (!dlg.open) dlg.showModal(); } };
   }
   // After a password-reset link: choose a new password.
   function openNewPassword() {
@@ -619,6 +695,7 @@
   const accountChars = () => Object.values(all.chars).filter((c) => c.owner === C.userId || C.synced().includes(c.id)).map((c) => c.id);
   function leaveAccount(removeHere) {
     if (removeHere) {
+      C.setCampaignCache(null);
       forget(accountChars());
       if (!Object.keys(all.chars).length) { const b = S.blank(); all.chars[b.id] = b; lastJson[b.id] = S.content(b); }
       if (!all.chars[s.id]) s = Object.values(all.chars)[0];
@@ -692,6 +769,10 @@
       accountButton();
       // The session ended by itself (expired, revoked, account deleted elsewhere): say so; edits stay here.
       if (why === 'expired') status('Signed out. Sign in to sync', true);
+      // Signed out while looking at a friend's character: back to the menu. Signed in or out with
+      // the menu open: its campaigns follow.
+      if (!C.signedIn && viewing) showView('menu');
+      else if (view === 'menu') { camps.setActive(true); renderMenu(); }
     });
   }
   accountButton();

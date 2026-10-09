@@ -72,7 +72,7 @@
       return node;
     }
 
-    // The free box: plain text, typed straight in at any time (playing or in Customize).
+    // The free box: plain text, typed straight in at any time (playing or in Customize; not a friend's).
     function freeBox(box, j, tab) {
       const handle = ui.editing ? grip('Drag onto another box to swap') : null;
       const title = ui.editing
@@ -81,7 +81,7 @@
           onkeydown: (ev) => { if (ev.key === 'Enter') ev.target.blur(); } })
         : h('span', { class: 'cs-ntitle' }, box.title);
       const body = ui.printing ? h('div', { class: 'cs-ndesc cs-freetext' }, box.text)
-        : h('textarea', { class: 'cs-free', value: box.text, 'aria-label': box.title || 'Notes', spellcheck: true,
+        : h('textarea', { class: 'cs-free', value: box.text, 'aria-label': box.title || 'Notes', spellcheck: true, readOnly: !!ui.viewing,
           oninput: (ev) => { box.text = ev.target.value; commit(); } });
       const node = h('div', { class: 'cs-nbox free' }, h('div', { class: 'cs-nhead' }, handle, title), body);
       if (handle) {
