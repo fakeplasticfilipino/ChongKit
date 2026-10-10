@@ -86,6 +86,49 @@
     };
   }
 
+  // ---- pixel fire: tongue shapes eaten away by noise that scrolls upward, so bits lick up and tear off ----
+  const FIRE_MAX = 36;
+
+  // Smooth 2D value noise in [-1, 1].
+  function hash2(i, j, seed) {
+    let h = Math.imul(i, 374761393) + Math.imul(j, 668265263) + Math.imul(seed | 0, 2147483647);
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return ((h >>> 0) / 4294967295) * 2 - 1;
+  }
+  function noise2(x, y, seed) {
+    const i = Math.floor(x), j = Math.floor(y), u = smooth(x - i), v = smooth(y - j);
+    const a = hash2(i, j, seed), b = hash2(i + 1, j, seed), c = hash2(i, j + 1, seed), d = hash2(i + 1, j + 1, seed);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+
+  // Three tongues: [centre, width, height, seed].
+  const TONGUES = [[0, 0.36, 0.85, 1], [-0.17, 0.24, 0.62, 2], [0.18, 0.26, 0.68, 3]]; // room at the top for the tips
+  // Heat 0–FIRE_MAX at (u, v): u across (-0.5 … 0.5), v up (0 at the base … 1 at the top).
+  // grow > 1 makes the fire taller (flicker, a log landing).
+  function fireHeat(u, v, t, grow) {
+    const n = noise2(u * 6, v * 5 - t * 6, 7) * 0.6 + noise2(u * 13, v * 10 - t * 9.5, 8) * 0.4;
+    let best = 0;
+    for (const [c, w, h, s] of TONGUES) {
+      const vv = v / (h * (grow || 1));
+      if (vv >= 1.2) continue;
+      const width = w * Math.pow(Math.max(0, 1 - vv), 0.8);
+      if (width < 0.004) continue; // above this tongue's tip
+      const sway = 0.1 * noise1(vv * 2 - t * 1.3 + s * 10, s) * vv;
+      const d = Math.abs(u - c - sway) / Math.max(width, 0.001);
+      const heat = (1 - d) * (1.25 - vv) + 0.5 * n * (0.2 + vv);
+      if (heat > best) best = heat;
+    }
+    return Math.min(1, best) * FIRE_MAX;
+  }
+
+  // Heat to colour: null (clear) when cold, then deep red → orange → yellow → white-hot.
+  const FIRE_RAMP = [[3, null], [8, 0x6e2a1f], [13, 0x9b3a1c], [18, 0xc8561b], [24, 0xe8812c], [29, 0xf8b347], [33, 0xffe08a], [37, 0xfff6d6]];
+  function fireColor(v) {
+    for (const [below, c] of FIRE_RAMP) if (v < below) return c;
+    return 0xfff6d6;
+  }
+
   // ---- sound schedules (shared with the picture: pops throw embers, wind sways the trees) ----
 
   // Fire pops in [from, to): a chance every 1/12 s, more when the fire flares. Strength 0.3–1.
@@ -179,7 +222,7 @@
   ];
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
-    pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX };
+    fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

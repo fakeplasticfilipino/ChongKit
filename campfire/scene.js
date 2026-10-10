@@ -77,8 +77,8 @@
       const a = (i / 6) * Math.PI * 2 + 0.3;
       const g = group(Math.cos(a) * 0.26, 0, Math.sin(a) * 0.26);
       g.rotation.y = -a;
-      const log = cyl(0.045, 0.06, 0.7, 5, i % 2 ? 0x24170f : 0x3a2416, 0, 0.28, 0);
-      log.rotation.z = 0.5; // leans in to the middle
+      const log = cyl(0.04, 0.055, 0.46, 5, i % 2 ? 0x24170f : 0x3a2416, 0, 0.17, 0);
+      log.rotation.z = 0.75; // leans in to the middle, low so the flames show over it
       log.castShadow = false;
       g.add(log);
       scene.add(g);
@@ -101,21 +101,40 @@
       coals.push(c);
     }
 
-    // ---- flames ----
-    const flameCols = [0xc8561b, 0xe8812c, 0xf8b347, 0xffe08a];
-    const flames = [];
-    for (let i = 0; i < 7; i++) {
-      const layer = i < 3 ? 0 : i < 5 ? 1 : i < 6 ? 2 : 3;
-      const h = [0.7, 0.55, 0.4, 0.26][layer], r = [0.22, 0.17, 0.12, 0.08][layer];
-      const geo = new THREE.ConeGeometry(r, h, 5);
-      geo.translate(0, h / 2, 0); // grow from the base
-      const f = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: flameCols[layer], depthWrite: false }));
-      const a = i * 2.4, off = layer === 0 ? 0.12 : 0.05;
-      f.userData = { x: Math.cos(a) * off, z: Math.sin(a) * off, seed: i + 1 };
-      f.position.set(f.userData.x, 0.08, f.userData.z);
-      f.renderOrder = 10 + layer; // drawn after the solid things, kept out of the outline pass
-      scene.add(f);
-      flames.push(f);
+    // ---- flames: a small pixel fire simulation on a sprite that always faces the camera ----
+    const FW = 32, FH = 48;
+    const fireCanvas = document.createElement('canvas');
+    fireCanvas.width = FW; fireCanvas.height = FH;
+    const fireCtx = fireCanvas.getContext('2d');
+    const fireImg = fireCtx.createImageData(FW, FH);
+    const fireTex = new THREE.CanvasTexture(fireCanvas);
+    fireTex.magFilter = fireTex.minFilter = THREE.NearestFilter;
+    fireTex.generateMipmaps = false;
+    fireTex.colorSpace = THREE.SRGBColorSpace;
+    const flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireTex, transparent: true, alphaTest: 0.5, depthWrite: false, fog: false }));
+    flame.scale.set(1.0, 1.5, 1);
+    flame.position.set(0, 0.72, 0);
+    flame.renderOrder = 10; // after the solid things; it writes no depth, so it gets no outline
+    scene.add(flame);
+    const fireRGB = {};
+    let fireFrame = -1;
+    function drawFire(t, flare) {
+      const frame = Math.floor(t * 20); // redrawn 20 times a second: flickery, like hand-drawn frames
+      if (frame === fireFrame) return;
+      fireFrame = frame;
+      const ft = frame / 20, grow = 0.85 + 0.35 * (A.flicker(ft) - 1) / 0.26 * 0.5 + 0.4 * flare;
+      const cells = [];
+      for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) cells.push(A.fireHeat((x + 0.5) / FW - 0.5, 1 - (y + 0.5) / FH, ft, grow));
+      const fireCells = cells;
+      const d = fireImg.data;
+      for (let i = 0; i < FW * FH; i++) {
+        const c = A.fireColor(fireCells[i]);
+        if (c === null) { d[i * 4 + 3] = 0; continue; }
+        const rgb = fireRGB[c] || (fireRGB[c] = [(c >> 16) & 255, (c >> 8) & 255, c & 255]);
+        d[i * 4] = rgb[0]; d[i * 4 + 1] = rgb[1]; d[i * 4 + 2] = rgb[2]; d[i * 4 + 3] = 255;
+      }
+      fireCtx.putImageData(fireImg, 0, 0);
+      fireTex.needsUpdate = true;
     }
 
     // ---- seats and the figures ----
@@ -299,14 +318,7 @@
       fireLight.color.setRGB(1, 0.62 + 0.3 * (f - 1), 0.36);
       fireLight.position.x = 0.08 * A.noise1(t * 2, 21);
       fireLight.position.z = 0.08 * A.noise1(t * 2, 22);
-      for (const fl of flames) {
-        const s = fl.userData.seed;
-        fl.scale.y = 0.85 + 0.35 * A.noise1(t * 4 + s * 10, s);
-        fl.scale.x = fl.scale.z = 0.9 + 0.15 * A.noise1(t * 3 + s * 20, s + 40);
-        fl.rotation.z = 0.18 * A.noise1(t * 2.5 + s, s + 80);
-        fl.rotation.x = 0.18 * A.noise1(t * 2.5 + s, s + 90);
-        fl.rotation.y = t * (0.6 + s * 0.1);
-      }
+      drawFire(t, 0);
       embersBed.material.color.setHex(f > 1.08 ? 0xc8561b : 0x9b3a1c);
       coals.forEach((c, i) => c.material.color.setHex(A.noise1(t * 1.5 + i * 7, 200 + i) > 0.2 ? 0xc8561b : 0x6e2a1f));
 

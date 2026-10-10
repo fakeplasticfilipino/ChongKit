@@ -154,3 +154,34 @@ test('orbit: speed eases off, yaw wraps, pitch stays in range', () => {
   s = A.orbit({ yaw: 1, pitch: 0.2, vyaw: 0, vpitch: 0 }, 1);
   assert.deepStrictEqual(s, { yaw: 1, pitch: 0.2, vyaw: 0, vpitch: 0 });
 });
+
+test('noise2 is smooth and stays in [-1, 1]', () => {
+  for (let x = 0; x < 6; x += 0.07) for (let y = 0; y < 6; y += 0.11) {
+    const n = A.noise2(x, y, 4);
+    assert.ok(n >= -1 && n <= 1);
+    close(A.noise2(x + 0.001, y, 4), n, 0.02, 'jump');
+  }
+});
+
+test('pixel fire: hot at the base, clear at the top and the sides, keeps moving', () => {
+  for (let t = 0; t < 20; t += 0.37) {
+    assert.ok(A.fireHeat(0, 0.03, t, 1) > A.FIRE_MAX * 0.8, 'hot core');
+    for (let u = -0.5; u <= 0.5; u += 0.05) {
+      assert.strictEqual(A.fireHeat(u, 0.99, t, 1) < 3, true, 'clear at the top');
+      const h = A.fireHeat(u, 0.5, t, 1);
+      assert.ok(h >= 0 && h <= A.FIRE_MAX);
+    }
+    assert.ok(A.fireHeat(-0.5, 0.2, t, 1) < 3 && A.fireHeat(0.5, 0.2, t, 1) < 3, 'clear at the sides');
+  }
+  let diff = 0;
+  for (let u = -0.4; u <= 0.4; u += 0.05) for (let v = 0.1; v < 0.9; v += 0.05) diff += Math.abs(A.fireHeat(u, v, 1, 1) - A.fireHeat(u, v, 1.3, 1));
+  assert.ok(diff > 50, 'flames move');
+  assert.ok(A.fireHeat(0, 0.75, 2, 1.4) >= A.fireHeat(0, 0.75, 2, 1), 'grow makes it taller');
+});
+
+test('fire colours: clear when cold, a colour for every hotter heat', () => {
+  assert.strictEqual(A.fireColor(0), null);
+  assert.strictEqual(A.fireColor(2), null);
+  for (let v = 3; v <= A.FIRE_MAX; v++) assert.ok(Number.isInteger(A.fireColor(v)));
+  assert.strictEqual(A.fireColor(A.FIRE_MAX), 0xfff6d6);
+});
