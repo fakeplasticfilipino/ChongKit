@@ -36,7 +36,7 @@ sitting, gets up and trots off (its path ends early) when a walker comes within 
 
 Thirteen secrets, each a spot near the treeline or behind bushes, out of the starting view, all
 inside the walking edge and clear of the camera's circle (radius 4.7) where it matters for the view.
-Twelve are always there; the seasonal one shows the current season's (`CampAnim.season`, `?season=`).
+Nine are always there, plus the current season's one (`CampAnim.season`, `?season=`).
 
 | Group | Secret | Hint | What happens |
 |---|---|---|---|
