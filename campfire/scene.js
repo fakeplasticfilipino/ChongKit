@@ -30,6 +30,7 @@
     const around = (rMin, rMax) => { const a = rand() * Math.PI * 2, r = rMin + rand() * (rMax - rMin); return [Math.cos(a) * r, Math.sin(a) * r, a]; };
     // keep props clear of the figures (and their seats) around the fire
     const SPOTS = [[-2.1, 0.35], [0, -2.25], [2.1, 0.35], [2.7, 0.05], [-3.4, -5.3], [2.6, -5.8], [3.3, -5.7], [1.55, -5.25], [-3.2, -4.6], [4.6, -5.5]]; // figures, seats, tent, horse, lantern post
+    for (const [x, z] of Object.values(A.SECRET_PLACES)) SPOTS.push([x, z]); // the forest leaves room for the secrets
     const clear = (x, z, d) => SPOTS.every(([sx, sz]) => Math.hypot(x - sx, z - sz) > d);
 
     // ---- light ----
@@ -278,6 +279,7 @@
     }
     for (let i = 0; i < 120; i++) {
       const [x, z] = around(7.2, 25);
+      if (!clear(x, z, 1.0)) continue;
       const near = Math.hypot(x, z) < 12;
       const r = 1.1 + rand() * 0.8;
       const h = underMoon(x, z, near ? 6 + rand() * 3.5 : 4.5 + rand() * 2.5, r);
@@ -425,6 +427,9 @@
       ],
     };
     const interact = CampInteract.build(interactKit);
+    const secrets = CampSecrets.build({ THREE, scene, box, cyl, cone, group, particles, season: SEASON });
+    interact.add(secrets.spots);
+    obstacles.push(...secrets.obstacles);
     const bowl = cyl(0.09, 0.06, 0.06, 7, 0x744726, 0, 0, 0);
     bowl.visible = false;
     scene.add(bowl);
@@ -852,6 +857,7 @@
       const wk = walk.update(t, dt, view.yaw);
       nowT = t;
       interact.update(t, wk);
+      secrets.update(t, wk.who ? wk : null, interact.react(t));
       const rxw = interact.react(t);
       bowl.visible = bowlSteam.visible = !!(rxw.stewing && rxw.local > 0.9 && wk.who);
       if (bowl.visible) {
