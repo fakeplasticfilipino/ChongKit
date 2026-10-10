@@ -53,6 +53,8 @@
         if (n < 9.0 && d - n > 0.3 + 0.08 * n) { gl_FragColor = vec4(0.059, 0.043, 0.039, 1.0); return; } // outline
         vec3 c = texture2D(tScene, vUv).rgb;
         c = pow(max(c, 0.0), vec3(1.0 / 2.2)); // linear → screen
+        vec2 q = (vUv - 0.5) * vec2(texel.y / texel.x, 1.0);
+        c *= 1.0 - 0.55 * smoothstep(0.35, 0.95, length(q)); // dark corners, like the reference
         c += (bayer4(gl_FragCoord.xy) - 0.5) * dither;
         vec3 best = palette[0]; float bd = 1e9;
         for (int i = 0; i < 48; i++) {

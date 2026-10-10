@@ -30,11 +30,11 @@
     const clear = (x, z, d) => SPOTS.every(([sx, sz]) => Math.hypot(x - sx, z - sz) > d);
 
     // ---- light ----
-    scene.add(new THREE.HemisphereLight(0x4a6280, 0x101828, 0.7));
-    const moonLight = new THREE.DirectionalLight(0x8fa6c4, 0.35);
+    scene.add(new THREE.HemisphereLight(0x4a6280, 0x101828, 0.42));
+    const moonLight = new THREE.DirectionalLight(0x8fa6c4, 0.25);
     moonLight.position.set(10, 20, -14);
     scene.add(moonLight);
-    const fireLight = new THREE.PointLight(0xff9a40, 5, 9, 1.6);
+    const fireLight = new THREE.PointLight(0xff9a40, 3.2, 6.5, 2); // a small warm pool, like the reference
     fireLight.position.set(0, 0.8, 0);
     fireLight.castShadow = true;
     fireLight.shadow.mapSize.set(512, 512);
@@ -44,14 +44,14 @@
 
     // ---- ground: dark earth that breaks up into grass ----
     scene.add(flat(40, 24, 0x16241b, 0, 0, 0));
-    scene.add(flat(3.3, 14, 0x24170f, 0, 0.01, 0));
+    scene.add(flat(3.3, 14, 0x150e0b, 0, 0.01, 0));
     for (let i = 0; i < 40; i++) {
       const [x, z] = around(2.4, 4.4);
       scene.add(flat(0.3 + rand() * 0.45, 6, [0x16241b, 0x213425, 0x24170f, 0x3a2416][i % 4], x, 0.012 + rand() * 0.008, z));
     }
     for (let i = 0; i < 12; i++) { // trodden patches by the fire
       const [x, z] = around(0.9, 2.4);
-      scene.add(flat(0.2 + rand() * 0.3, 6, 0x3a2416, x, 0.015, z));
+      scene.add(flat(0.2 + rand() * 0.3, 6, 0x24170f, x, 0.015, z));
     }
     for (let i = 0; i < 80; i++) { // grass tufts
       const [x, z] = around(2.6, 7.5);
@@ -288,14 +288,14 @@
 
     // ---- camera ----
     const camera = new THREE.PerspectiveCamera(44, 16 / 9, 0.1, 140);
-    const fill = new THREE.DirectionalLight(0x8fa6c4, 0.3); // soft light from the viewer, so faces read
+    const fill = new THREE.DirectionalLight(0x8fa6c4, 0.16); // soft light from the viewer, so faces read
     scene.add(fill, fill.target);
 
     // ---- every frame: t = seconds; view = { yaw, pitch } from dragging ----
     function update(t, view) {
       // fire
       const f = A.flicker(t);
-      fireLight.intensity = 5 * f;
+      fireLight.intensity = 3.2 * f;
       fireLight.color.setRGB(1, 0.62 + 0.3 * (f - 1), 0.36);
       fireLight.position.x = 0.08 * A.noise1(t * 2, 21);
       fireLight.position.z = 0.08 * A.noise1(t * 2, 22);
