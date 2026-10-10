@@ -61,7 +61,7 @@
 
     // wind through the trees
     windGain = gain(0, master);
-    windFilter = filter('bandpass', 450, 0.8);
+    windFilter = filter('bandpass', 300, 0.7);
     windFilter.connect(windGain);
     loop(windFilter);
 
@@ -303,9 +303,9 @@
     patter.gain.setTargetAtTime(0.06 * wet, now, 0.5);
     sizzle.gain.setTargetAtTime(0.012 * wet * fu * (0.6 + 0.4 * A.noise1(t * 5, 970)), now, 0.1);
     roar.gain.setTargetAtTime(0.09 * f * f * (0.35 + 0.65 * fu), now, 0.08);
-    windGain.gain.setTargetAtTime((0.02 + 0.14 * w * w) * (CampAudio.season === 'winter' ? 1.35 : 1), now, 0.3);
-    windFilter.frequency.setTargetAtTime(300 + 500 * w, now, 0.3);
-    rustle.gain.setTargetAtTime(0.04 * Math.max(0, w - 0.5) * 2 * (0.5 + 0.5 * A.noise1(t * 3, 950)), now, 0.1);
+    windGain.gain.setTargetAtTime((0.012 + 0.035 * w * w) * (CampAudio.season === 'winter' ? 1.15 : 1), now, 0.6); // a calm night: a soft sigh, never a storm
+    windFilter.frequency.setTargetAtTime(250 + 200 * w, now, 0.6);
+    rustle.gain.setTargetAtTime(0.013 * Math.max(0, w - 0.5) * 2 * (0.5 + 0.5 * A.noise1(t * 3, 950)), now, 0.1);
   }
 
   const state = () => (ctx ? ctx.state : 'waiting for a click');
