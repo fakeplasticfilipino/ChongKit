@@ -124,8 +124,9 @@
     const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
     const wantsToMove = () => MOVE_KEYS.some((c) => keys.has(c)) || Math.hypot(joy[0], joy[1]) > 0.2;
     const hold = (on) => { held = !!on; };
+    const face = (y) => { yaw = y; }; // an action turns the walker toward its spot
     const sitAt = (amount, drop) => { sitAmt = Math.max(0, Math.min(1, amount)); sitDrop = drop || 0; };
-    return { update, toggle, choose, setKey, setJoy, info, hold, sitAt, wantsToMove, state: () => state, away: (name) => who === name, walking: () => !!who };
+    return { update, toggle, choose, setKey, setJoy, info, hold, sitAt, face, wantsToMove, state: () => state, away: (name) => who === name, walking: () => !!who };
   }
 
   window.CampWalk = { build };

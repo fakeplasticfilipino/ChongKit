@@ -405,6 +405,28 @@
       ...bushSpots,
     ];
     const walk = CampWalk.build({ people: { traveler, wizard, samurai }, obstacles, onStep: (opts && opts.onStep) || null });
+
+    // ---- walk-up spots (interact.js): F · Pet and friends. Positions are first guesses, tuned by eye ----
+    const lx2 = -3.6, lz2 = -2.6; // the fallen log's middle
+    const busyNow = (who, t) => (A.BUSY[who] || []).some((n) => A.story(n, t) >= 0) || (() => { const c = A.talkAt(t); return !!c && (c.speaker === who || c.listener === who); })();
+    let nowT = 0;
+    const interactKit = {
+      THREE, camera: null, walk, people: { traveler, wizard, samurai }, now: () => nowT, busy: busyNow,
+      spots: [
+        { id: 'horse', x: 2.6 + 0.9 * hx, z: -5.8 + 0.9 * hz, r: 1.2, y: 1.5, acts: ['pet', 'apple'] },
+        { id: 'stew', x: 0, z: 1.25, r: 0.75, y: 1.2, acts: ['stew'] },
+        { id: 'log', x: lx2 + 0.45 * lz, z: lz2 - 0.45 * lx, r: 0.9, y: 0.9, acts: ['sit'], drop: 0 },
+        { id: 'rock', x: 4.4, z: 2.4, r: 0.8, y: 0.8, acts: ['sit'], drop: 0.15 },
+        { id: 'fire', x: 0.9, z: 0.9, r: 0.8, y: 1.0, acts: ['twig', 'warm'] },
+        { id: 'tent', x: -3.4 + 1.3 * Math.sin(Math.atan2(3.4, 5.3)), z: -5.3 + 1.3 * Math.cos(Math.atan2(3.4, 5.3)), r: 0.9, y: 1.3, acts: ['peek'] },
+        { id: 'traveler', x: -1.55, z: 0.55, r: 0.75, y: 1.5, companion: 'traveler', acts: [] },
+        { id: 'wizard', x: 0, z: -1.6, r: 0.75, y: 1.6, companion: 'wizard', acts: [] },
+        { id: 'samurai', x: 1.55, z: 0.55, r: 0.75, y: 1.5, companion: 'samurai', acts: [] },
+      ],
+    };
+    const interact = CampInteract.build(interactKit);
+    scene.add(box(0.7, 0.35, 0.5, 0x3a3f4a, 4.4, 0.17, 2.4)); // a rock to sit on at the edge
+    obstacles.push([4.4, 2.4, 0.4]);
     const OWNER = {};
     for (const [w, list] of Object.entries(A.BUSY)) for (const n of list) OWNER[n] = w;
     let lastT = null, walkWas = { who: null, k: 0, at: [0, 0] };
@@ -462,6 +484,7 @@
 
     // ---- camera ----
     const camera = new THREE.PerspectiveCamera(44, 16 / 9, 0.1, 140);
+    interactKit.camera = camera;
     const fill = new THREE.DirectionalLight(0x8fa6c4, 0.16); // soft light from the viewer, so faces read
     scene.add(fill, fill.target);
 
@@ -816,6 +839,8 @@
 
       // the walker (walk.js), posed over whatever their stories did
       const wk = walk.update(t, dt, view.yaw);
+      nowT = t;
+      interact.update(t, wk);
       walkWas = wk.who ? wk : { who: null, k: 0, at: [0, 0] };
       if (wk.who) { const wp = { traveler, wizard, samurai }[wk.who]; wp.head.getWorldPosition(walkerHead); }
       const wkK = A.smooth(wk.k || 0);
@@ -864,7 +889,7 @@
       return true;
     }
 
-    return { scene, camera, update, pick, act, walk };
+    return { scene, camera, update, pick, act, walk, interact };
   }
 
   window.CampScene = { build };

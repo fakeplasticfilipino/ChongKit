@@ -21,6 +21,13 @@
   #joy > div { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(143, 166, 196, 0.5); }
   @media (pointer: coarse) { body.walking #joy { display: block; } }
   body.idle { cursor: none; }
+  #hint { position: fixed; transform: translate(-50%, -100%); display: none; font: inherit; color: inherit; cursor: pointer;
+    background: rgba(10, 15, 26, 0.7); border: 1px solid #31445e; border-radius: 3px; padding: 4px 8px; white-space: nowrap; }
+  #hint.on { display: block; }
+  #tally { position: fixed; top: 12px; right: 12px; display: none; padding: 6px 10px; border: 1px solid #31445e; border-radius: 3px;
+    background: rgba(10, 15, 26, 0.7); transition: opacity 0.6s; }
+  body.walking #tally { display: block; }
+  body.idle #tally { opacity: 0; }
   .nogl-msg { display: none; position: fixed; inset: 0; place-items: center; text-align: center; padding: 16px; }
   body.nogl .nogl-msg { display: grid; }
 </style>
@@ -33,6 +40,8 @@
   <button id="walk" type="button" title="Walk around (E)">Walk</button>
 </div>
 <div id="joy" aria-hidden="true"><div></div></div>
+<button id="hint" type="button"></button>
+<div id="tally" aria-label="Secrets found"></div>
 <p class="nogl-msg">This browser can't draw the scene (WebGL is off).</p>
 <script src="vendor/three.min.js"></script>
 <script src="anim.js"></script>
@@ -41,6 +50,8 @@
 <script src="visitors.js"></script>
 <script src="extras.js"></script>
 <script src="walk.js"></script>
+<script src="interact.js"></script>
+<script src="secrets.js"></script>
 <script src="scene.js"></script>
 <script src="audio.js"></script>
 <script src="app.js"></script>

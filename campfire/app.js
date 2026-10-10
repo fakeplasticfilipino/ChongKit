@@ -136,6 +136,7 @@
   window.addEventListener('keydown', (e) => {
     if (MOVE.includes(e.code)) { world.walk.setKey(e.code, true); if (e.code.startsWith('Arrow')) e.preventDefault(); }
     else if (e.code === 'KeyE' && !e.repeat) world.walk.toggle();
+    else if (e.code === 'KeyF' && !e.repeat) world.interact.start(last);
     else if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') world.walk.choose(['traveler', 'wizard', 'samurai'][+e.code.slice(-1) - 1]);
   });
   window.addEventListener('keyup', (e) => world.walk.setKey(e.code, false));
