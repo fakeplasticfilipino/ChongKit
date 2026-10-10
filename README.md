@@ -324,6 +324,9 @@ keeps its one place in the sky, up and to the right of the starting view.
 
 Walk up to things and press **F** (or tap the hint): pet or feed the horse, ladle a bowl of stew and eat it, sit on the log or a rock, toss a twig or warm your hands at the fire, peek into the tent, talk to the others. Moving stops what you're doing.
 
+Thirteen secrets hide at the edge of the clearing (one of them changes with the season). Each device
+remembers what it has found: the count shows top right while walking.
+
 **What moves:** pixel flames lick and flicker and the firelight pulses (a small warm pool; the
 night stays dark); embers and smoke rise; everyone breathes; treetops sway, stars twinkle,
 fireflies drift at the forest edge, mist creeps between the trees, clouds cross the moon (its light

@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   const A = window.CampAnim;
-  const KEY = 'chongkit.campfire.found'; // the tally's storage (used once the tally lands)
+  const KEY = 'chongkit.campfire.found'; // the tally's storage
   const MOSS = 0x2f5a3a, STONE = 0x3a3f4a, BARK = 0x3a2416, CAP = 0xc8561b, GLOW = 0xf8b347, BONE = 0xe8e2d4, DARK = 0x150e0b;
   const LEAF = [0x0d1612, 0x16241b, 0x213425], SPINE = 0x24170f, FUR = 0x96603a, STEEL = 0x8fa6c4;
 
@@ -181,7 +181,7 @@
         s.scale.setScalar(0.28);
         s.position.set(x, 0.9, z);
         scene.add(s);
-        // goneAt: when it last fled (null: never). Task 10's tally reads it to count the find.
+        // goneAt: when it last fled (null: never); the tally counts each flight as a find.
         const w = parts.wisp = { sprite: s, goneAt: null };
         return (t, walker) => {
           const away = w.goneAt === null ? Infinity : t - w.goneAt;
@@ -243,7 +243,7 @@
         }
         scene.add(g);
         const dark = new THREE.Color(DARK), glow = new THREE.Color(0x8fd0e8);
-        // inside: is the walker standing in the ring now; enteredAt: when they last stepped in (Task 10 reads it)
+        // inside: is the walker standing in the ring now; enteredAt: when they last stepped in (the tally counts it)
         const s = parts.stones = { runeMat, level: 0, inside: false, enteredAt: null };
         return (t, walker) => {
           const inside = !!walker && Math.hypot(walker.at[0] - x, walker.at[1] - z) < 0.35;
@@ -402,13 +402,43 @@
       return { id: 'secret:' + s.id, secret: s.id, x, z, r: 1.0, y: 1.0, acts: [s.act] };
     });
 
+    // The tally: ids found on this device, saved in localStorage (in memory only when storage is off).
+    const tally = document.getElementById('tally');
+    let found = [];
+    try { found = A.readFound(localStorage.getItem(KEY)); } catch (e) { found = []; }
+    const show = () => { if (tally) tally.textContent = found.length + ' / ' + A.SECRETS.length; };
+    show();
+    function find(id) {
+      const first = !found.includes(id);
+      if (first) {
+        found.push(id);
+        try { localStorage.setItem(KEY, JSON.stringify(found)); } catch (e) { /* storage off: this visit only */ }
+        show();
+      }
+      if (kit.onFind) kit.onFind(id, first);
+    }
+    // Edge-triggered: each run of an action, each step into a ring, each flight of the wisp counts once.
+    let lastFound = '', ringIn = false, stonesAt = null, wispAt = null;
+
     let lastT = null;
     function update(t, walker, rx) {
+      rx = rx || {};
+      if (rx.spot && rx.spot.startsWith('secret:') && rx.local > 0.5) {
+        const key = rx.spot + '@' + Math.floor(t - rx.local);
+        if (key !== lastFound) { lastFound = key; find(rx.spot.slice(7)); }
+      }
+      const m = parts.mushrooms, inM = !!(m && walker && Math.hypot(walker.at[0] - m.x, walker.at[1] - m.z) < 0.65);
+      if (inM && !ringIn) find('mushrooms');
+      ringIn = inM;
+      const st = parts.stones;
+      if (st && st.enteredAt !== stonesAt) { stonesAt = st.enteredAt; if (stonesAt !== null) find('stones'); }
+      const w = parts.wisp;
+      if (w && w.goneAt !== wispAt) { wispAt = w.goneAt; if (wispAt !== null) find('wisp'); }
       const ev = lastT !== null && t > lastT ? A.events(Math.max(lastT, t - 61), t) : []; // the moments since last frame
       lastT = t;
-      for (const u of updates) u(t, walker, rx || {}, ev);
+      for (const u of updates) u(t, walker, rx, ev);
     }
-    return { spots, obstacles, update, parts };
+    return { spots, obstacles, update, parts, found: () => found.slice() };
   }
 
   window.CampSecrets = { build };

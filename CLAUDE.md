@@ -204,6 +204,9 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
    keeps the walker out of the obstacles listed in `scene.js` and inside the treeline. The walker's own
    stories, talks and sounds pause (`CampAnim.eventOwner`). New props that block the way go in that list.
    Talks (`CampAnim.talk`) only start when both are free; the wind stays a calm, quiet sigh.
+   Secrets are `CampAnim.SECRETS` at `SECRET_PLACES` (tested to stay inside the edge and clear of the
+   camp; the forest leaves room for them); each device saves its finds in localStorage
+   `chongkit.campfire.found` (read through `CampAnim.readFound`).
 4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
    `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
    comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw

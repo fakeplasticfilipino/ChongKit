@@ -409,5 +409,11 @@
     } else noiseHit(at, 'lowpass', 650, 1, 0.08, v * 1.4, out);
   }
   const state = () => (ctx ? ctx.state : 'waiting for a click');
-  window.CampAudio = { start, update, state, step, whisper: whisperNow, hum: 0, season: 'autumn', skip: null };
+  // A rising three-note chime for a first find.
+  function chime() {
+    if (!ctx || ctx.state !== 'running') return;
+    const at = ctx.currentTime + 0.02;
+    [660, 880, 1320].forEach((f, i) => ring(at + i * 0.12, [f], 0.9, 0.03));
+  }
+  window.CampAudio = { start, update, state, step, whisper: whisperNow, chime, hum: 0, season: 'autumn', skip: null };
 })();
