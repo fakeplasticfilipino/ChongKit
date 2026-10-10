@@ -212,7 +212,7 @@ test('events: sorted, in range, split ranges agree, each where its story says', 
   for (const t of at('sheathe')) close(A.story('katana', t), A.SHEATHE, 1e-6, 'sheathe');
   for (const t of at('snap')) assert.ok(A.dozeAt(t - 0.05) > 0.9 && A.dozeAt(t + 1.1) < 0.1, 'snap');
   for (const t of at('puff')) assert.ok(A.story('pipe', t) >= 0, 'puff');
-  for (const type of ['land', 'settle', 'snap', 'draw', 'sheathe', 'puff', 'wolf', 'star', 'eyes', 'stoke']) assert.ok(at(type).length > 0, type);
+  for (const type of ['land', 'settle', 'snap', 'draw', 'sheathe', 'puff', 'wolf', 'star', 'eyes', 'stoke', 'thunder']) assert.ok(at(type).length > 0, type);
   const wolves = at('wolf');
   for (let i = 1; i < wolves.length; i++) assert.ok(wolves[i] - wolves[i - 1] >= 90 && wolves[i] - wolves[i - 1] <= 210);
 });
@@ -309,4 +309,20 @@ test('the deer appears far off, then bounds away', () => {
     assert.ok(Math.hypot(d.x, d.z) >= 8.1);
   }
   assert.ok(seen > 0 && bounded > 0);
+});
+
+test('showers: rain eases in and out, now and then; thunder only while it rains', () => {
+  let raining = 0, prev = 0;
+  for (let t = 0; t < 7200; t += 0.5) {
+    const r = A.rainAt(t);
+    assert.ok(r >= 0 && r <= 1);
+    assert.ok(Math.abs(r - prev) < 0.1, 'no jumps at ' + t);
+    if (r > 0) raining += 0.5;
+    prev = r;
+  }
+  assert.ok(raining > 300 && raining < 7200 * 0.2, 'rains sometimes: ' + raining);
+  const th = A.thunders(0, 7200);
+  assert.ok(th.length > 3);
+  for (const x of th) assert.ok(A.rainAt(x) > 0.5, 'thunder in the rain');
+  assert.ok(A.flash(th[0] + 0.03) === 1 && A.flash(th[0] + 3) === 0 && A.flash(th[0] - 0.5) === 0);
 });

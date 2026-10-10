@@ -33,7 +33,9 @@
     const clear = (x, z, d) => SPOTS.every(([sx, sz]) => Math.hypot(x - sx, z - sz) > d);
 
     // ---- light ----
-    scene.add(new THREE.HemisphereLight(0x4a6280, 0x101828, 0.42));
+    const hemi = new THREE.HemisphereLight(0x4a6280, 0x101828, 0.42);
+    scene.add(hemi);
+    const NIGHT = new THREE.Color(0x05070c), LIGHTNING = new THREE.Color(0x31445e);
     const moonLight = new THREE.DirectionalLight(0x8fa6c4, 0.25);
     moonLight.position.set(10, 20, -14);
     scene.add(moonLight);
@@ -367,6 +369,21 @@
     let eyesSeen = -1;
     const skyPoint = (az, el, out) => out.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).multiplyScalar(95).add(CAM0);
 
+    // ---- showers: rain streaks and splashes (in winter it snows harder instead) ----
+    const DROPS = 500, SPLASHES = 140;
+    const rainGeo = new THREE.BufferGeometry();
+    rainGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(DROPS * 6), 3));
+    const rainLines = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: 0x8fa6c4, transparent: true, opacity: 0.55 }));
+    rainLines.frustumCulled = false;
+    scene.add(rainLines);
+    const splashGeo = new THREE.BufferGeometry();
+    splashGeo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(SPLASHES * 3), 3));
+    const splashes = new THREE.Points(splashGeo, new THREE.PointsMaterial({ color: 0x8fa6c4, size: 1, sizeAttenuation: false, transparent: true }));
+    splashes.frustumCulled = false;
+    scene.add(splashes);
+    const dropRand = A.rng(99);
+    const drops = Array.from({ length: DROPS }, () => [(dropRand() - 0.5) * 18, (dropRand() - 0.5) * 18, 7 + dropRand() * 3, dropRand() * 9.5]);
+
     // ---- the camp: tripod and stew, tent, horse, lantern (camp.js) ----
     const camp = CampProps.build({ THREE, scene, mat, mesh, box, cyl, cone, group, flat, rand, particles, blob });
     const visitors = CampVisitors.build({ THREE, scene, box, cyl, cone, group });
@@ -429,7 +446,8 @@
       // fire
       const f = A.flicker(t);
       const fl = A.flare(t); // a twig landed, the logs settled, or the wizard stoked it
-      const fu = A.fuel(t); // burns down over the evening
+      const rain = A.rainAt(t), wet = WINTER ? 0 : rain; // a shower (snow in winter)
+      const fu = A.fuel(t) * (1 - 0.3 * wet); // burns down over the evening; the rain damps it
       fireLight.intensity = 3.2 * f * (0.35 + 0.65 * fu) + 2.4 * fl;
       fireLight.distance = 6.5 * (0.65 + 0.35 * fu);
       fireLight.color.setRGB(1, 0.62 + 0.3 * (f - 1), 0.36);
@@ -465,7 +483,7 @@
         puffs[i].position.set(s.x, s.y, s.z);
         puffs[i].scale.setScalar(s.scale);
         puffs[i].rotation.set(k * 0.3, k * 0.2, 0);
-        puffs[i].material.opacity = s.alpha;
+        puffs[i].material.opacity = s.alpha * (1 + 1.5 * wet); // the rain makes it smoke
       }
 
       // breathing
@@ -486,7 +504,7 @@
       const shift = A.win(A.story('shift', t), 0, 3, 0.75);
       const lean = A.win(tw, 0.3, 3.4, 0.5);
       traveler.torso.rotation.z = -0.1 * shift;
-      traveler.torso.rotation.x = traveler.lean - 0.1 * shift + 0.22 * lean;
+      traveler.torso.rotation.x = traveler.lean - 0.1 * shift + 0.22 * lean + 0.15 * wet; // hunches in the rain
       const [tsx, tsz, tel] = A.keyframes(tw < 0 ? -1 : tw, [[0.6, -0.5, 0.05, -0.7], [1.2, 0.45, 0.25, -0.35], [1.55, -1.5, 0.1, -0.15], [2.3, -1.1, 0.05, -0.4], [3.4, -0.5, 0.05, -0.7]]);
       traveler.arms[0].sh.rotation.set(tsx, 0, tsz);
       traveler.arms[0].el.rotation.x = tel;
@@ -519,6 +537,12 @@
       const [wsx, wsz, wel] = A.keyframes(pp < 0 ? -1 : pp, [[0, -0.5, 0.05, -0.7], [1.2, -1.3, 0.6, -1.2], [9.6, -1.3, 0.6, -1.2], [10.8, -0.5, 0.05, -0.7]]);
       wizard.arms[0].sh.rotation.set(wsx - 0.6 * reach - 0.75 * stir, 0, wsz + 0.18 * stir * Math.sin(sl * 6));
       wizard.arms[0].el.rotation.x = wel + 0.55 * reach + 0.6 * stir;
+      const hold = A.smooth((wet - 0.2) / 0.3); // holds on to the hat in the rain
+      if (hold > 0) {
+        const a0 = wizard.arms[0];
+        a0.sh.rotation.set(a0.sh.rotation.x + (-0.4 - a0.sh.rotation.x) * hold, 0, a0.sh.rotation.z + (-2.3 - a0.sh.rotation.z) * hold);
+        a0.el.rotation.x += (-1.5 - a0.el.rotation.x) * hold;
+      }
       camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu });
       pipe.visible = pp >= 1.0 && pp < 10.0;
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
@@ -587,7 +611,9 @@
         c.material.opacity = 0.85 * A.smooth((0.6 - Math.abs(off)) / 0.15);
         cover = Math.max(cover, (1 - A.smooth(Math.hypot(off, u.el - EL) / u.w)) * c.material.opacity);
       }
+      cover = Math.max(cover, rain); // rain clouds hide the moon
       moonLight.intensity = 0.25 * (1 - 0.7 * cover);
+      moon.visible = rain < 0.6;
       halo.material.opacity = 0.35 * (1 - 0.8 * cover);
       // a shooting star, and eyes glinting in the forest
       const recent = A.events(t - 6, t);
@@ -636,6 +662,7 @@
           sp.setXYZ(i, p.x + wx * (8 - p.y) * 0.4, p.y, p.z);
         }
         sp.needsUpdate = true;
+        snow.geometry.setDrawRange(0, Math.floor(FLAKES * (0.55 + 0.45 * rain))); // a snow squall instead of rain
       }
       breaths.forEach((m, i) => { // breath steams out on each exhale
         const p = [traveler, wizard, samurai][i];
@@ -656,7 +683,27 @@
       }
 
       // stars twinkle
-      starGroups.forEach((s, i) => { s.material.opacity = 0.55 + 0.45 * A.noise1(t * 1.3 + i * 9, 300 + i); });
+      starGroups.forEach((s, i) => { s.material.opacity = (0.55 + 0.45 * A.noise1(t * 1.3 + i * 9, 300 + i)) * (1 - rain); });
+
+      // the shower: streaks fall slanting with the wind, splashes flicker on the ground; lightning far off
+      const rp = rainGeo.attributes.position, n = Math.floor(DROPS * wet);
+      for (let i = 0; i < DROPS; i++) {
+        const [x, z, top, ph] = drops[i];
+        if (i >= n) { rp.setXYZ(i * 2, 0, -50, 0); rp.setXYZ(i * 2 + 1, 0, -50, 0); continue; }
+        const y = top - ((t * 9 + ph) % (top + 0.5));
+        rp.setXYZ(i * 2, x + wx * 0.4 * (top - y), y, z);
+        rp.setXYZ(i * 2 + 1, x + wx * 0.4 * (top - y) - wx * 0.12, y + 0.35, z);
+      }
+      rp.needsUpdate = true;
+      const spp = splashGeo.attributes.position;
+      for (let i = 0; i < SPLASHES; i++) {
+        const show = i < SPLASHES * wet && dropRand() < 0.5;
+        spp.setXYZ(i, show ? (dropRand() - 0.5) * 12 : 0, show ? 0.03 : -50, show ? (dropRand() - 0.5) * 12 : 0);
+      }
+      spp.needsUpdate = true;
+      const fl2 = WINTER ? 0 : A.flash(t);
+      hemi.intensity = 0.42 * (1 - 0.3 * wet) + 2.2 * fl2;
+      scene.background.copy(NIGHT).lerp(LIGHTNING, fl2);
 
       // fireflies: drift at the forest edge, blink
       const fp = flies.geometry.attributes.position, fc = flies.geometry.attributes.color, fb = flies.userData.base;

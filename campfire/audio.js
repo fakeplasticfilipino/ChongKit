@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const A = window.CampAnim;
-  let ctx, master, noise, roar, hiss, windGain, windFilter, echo, rustle;
+  let ctx, master, noise, roar, hiss, windGain, windFilter, echo, rustle, rainGain, patter, sizzle;
   let offset = null, scheduled = 0;
 
   function loop(dest) {
@@ -70,6 +70,20 @@
     const leaves = filter('highpass', 2600);
     leaves.connect(rustle);
     loop(leaves);
+
+    // rain: a hiss of drops, a soft patter, and the fire sizzling
+    rainGain = gain(0, master);
+    const rb = filter('bandpass', 3200, 0.4);
+    rb.connect(rainGain);
+    loop(rb);
+    patter = gain(0, master);
+    const rl = filter('lowpass', 700, 0.7);
+    rl.connect(patter);
+    loop(rl);
+    sizzle = gain(0, master);
+    const sz = filter('highpass', 5500);
+    sz.connect(sizzle);
+    loop(sz);
 
     // a soft echo for faraway sounds (owl, wolf)
     echo = ctx.createDelay(1);
@@ -234,6 +248,23 @@
     thump(at, 70, 0.6, 0.3);
     crackle(at + 0.1, 16, 1.4);
   }
+  // distant thunder: a muffled crack, then a long rolling rumble
+  function thunder(at) {
+    noiseHit(at, 'bandpass', 380, 1, 0.5, 0.25);
+    const g = gain(0, master);
+    const lp = filter('lowpass', 150, 0.5);
+    lp.connect(g);
+    const src = ctx.createBufferSource();
+    src.buffer = noise;
+    src.loop = true;
+    src.connect(lp);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(0.9, at + 0.35);
+    for (let i = 1; i < 10; i++) g.gain.linearRampToValueAtTime(0.9 * Math.exp(-i / 3.5) * (0.6 + 0.4 * Math.random()), at + 0.35 + i * 0.45); // rolls
+    g.gain.linearRampToValueAtTime(0, at + 5);
+    src.start(at, Math.random());
+    src.stop(at + 5.1);
+  }
   function play(e, at) {
     switch (e.type) {
       case 'land': thump(at, 120, 0.25, 0.25); crackle(at, 9, 0.6); break;
@@ -244,6 +275,7 @@
       case 'puff': noiseHit(at, 'bandpass', 1100, 0.8, 0.9, 0.05); break;
       case 'wolf': howl(at); break;
       case 'stoke': stoke(at); break;
+      case 'thunder': if (CampAudio.season !== 'winter') thunder(at + 2.4); break; // the flash comes first; it's far off
       case 'eyes': noiseHit(at + 0.3, 'bandpass', 1500, 2, 0.05, 0.08, pan(0, master)); break; // a twig snaps out there
     }
   }
@@ -256,7 +288,8 @@
     if (scheduled < t) scheduled = t; // after the tab was hidden, skip what was missed
     const until = t + 0.3;
     for (const p of A.pops(scheduled, until)) pop(p.time + offset, p.strength);
-    if (CampAudio.season !== 'winter') for (const c of A.chirps(scheduled, until)) chirp(c.time + offset, c.cricket); // no crickets in the snow
+    const raining = A.rainAt(t);
+    if (CampAudio.season !== 'winter' && raining < 0.2) for (const c of A.chirps(scheduled, until)) chirp(c.time + offset, c.cricket); // no crickets in the snow or rain
     for (const h of A.owls(scheduled, until)) owl(h + offset);
     for (const e of A.events(scheduled + 0.3, until + 0.3)) play(e, e.time + offset); // looked up 0.3 s ahead, for the lead-ins
     for (const e of A.events(scheduled + 1.1, until + 1.1)) if (e.type === 'stoke') shimmer(e.time + offset);
@@ -264,7 +297,11 @@
     scheduled = until;
 
     const f = A.flicker(t), w = A.wind(t);
-    const fu = A.fuel(t);
+    const wet = CampAudio.season === 'winter' ? 0 : raining;
+    const fu = A.fuel(t) * (1 - 0.3 * wet);
+    rainGain.gain.setTargetAtTime(0.1 * wet, now, 0.5);
+    patter.gain.setTargetAtTime(0.06 * wet, now, 0.5);
+    sizzle.gain.setTargetAtTime(0.012 * wet * fu * (0.6 + 0.4 * A.noise1(t * 5, 970)), now, 0.1);
     roar.gain.setTargetAtTime(0.09 * f * f * (0.35 + 0.65 * fu), now, 0.08);
     windGain.gain.setTargetAtTime((0.02 + 0.14 * w * w) * (CampAudio.season === 'winter' ? 1.35 : 1), now, 0.3);
     windFilter.frequency.setTargetAtTime(300 + 500 * w, now, 0.3);

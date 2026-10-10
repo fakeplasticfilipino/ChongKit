@@ -262,6 +262,7 @@
     slots(60, 'star', 10, 40, 1, 37); // a shooting star
     slots(120, 'eyes', 50, 50, 1, 41); // eyes glinting in the forest
     for (const s of stokes(from, to)) out.push({ type: 'stoke', time: s });
+    for (const th of thunders(from, to)) out.push({ type: 'thunder', time: th });
     return out.sort((a, b) => a.time - b.time);
   }
 
@@ -361,6 +362,37 @@
     return { x: Math.cos(a) * r, z: Math.sin(a) * r, yaw, walk, bound, alert, local: L };
   }
 
+  // ---- showers: one chance every 12 minutes; most bring 60–100 s of rain (snow in winter) ----
+  function shower(k) {
+    const r = rng(k * 53 + 17);
+    const start = k * 720 + 150 + r() * 400, dur = 60 + r() * 40, happens = r() < 0.75, second = r() < 0.5;
+    return { start, dur, happens, thunder: happens ? [start + dur * 0.3].concat(second ? [start + dur * 0.68] : []) : [] };
+  }
+  // How hard it's raining, 0–1: eases in over 10 s and out over 12 s.
+  function rainAt(t) {
+    const k = Math.floor((t - 150) / 720);
+    for (const j of [k, k - 1]) {
+      if (j < 0) continue;
+      const w = shower(j);
+      if (w.happens && t >= w.start && t < w.start + w.dur) return Math.min(smooth((t - w.start) / 10), smooth((w.start + w.dur - t) / 12));
+    }
+    return 0;
+  }
+  function thunders(from, to) {
+    const out = [];
+    for (let k = Math.max(0, Math.floor((from - 150) / 720) - 1); k * 720 + 150 < to; k++) for (const th of shower(k).thunder) if (th >= from && th < to) out.push(th);
+    return out;
+  }
+  // Sheet lightning, 0–1: a double flicker, then a fading glow.
+  function flash(t) {
+    let f = 0;
+    for (const th of thunders(t - 1, t)) {
+      const a = t - th;
+      f = Math.max(f, a < 0.06 ? 1 : a < 0.12 ? 0.2 : a < 0.2 ? 0.8 : 0.4 * Math.exp(-(a - 0.2) / 0.12));
+    }
+    return f;
+  }
+
   // ---- seasons, from the calendar (northern hemisphere) ----
   const SEASONS = ['winter', 'spring', 'summer', 'autumn'];
   function season(month) { // 0 = January
@@ -420,7 +452,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
-    STORIES, story, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, story, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);
