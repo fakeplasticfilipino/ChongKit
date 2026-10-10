@@ -377,6 +377,39 @@
   }
   const inside = (x, z, s) => Math.hypot(x - s.x, z - s.z) < s.r;
 
+  // ---- secrets at the clearing's edge (walk up to them); +z is behind the starting view ----
+  const polar = (a, r) => [Math.round(Math.sin(a) * r * 100) / 100, Math.round(Math.cos(a) * r * 100) / 100];
+  const SECRET_PLACES = {
+    season: polar(0, 5.2), mushrooms: polar(0.45, 5.7), skull: polar(0.75, 5.4), hedgehog: polar(1.3, 5.9),
+    wisp: polar(1.65, 5.95), nest: polar(2.0, 5.8), initials: polar(2.3, 5.9),
+    shrine: polar(-0.5, 5.8), stones: polar(-1.0, 5.5), sword: polar(-1.45, 5.7),
+  };
+  const SECRETS = [
+    { id: 'mushrooms', group: 'nature', place: 'mushrooms', trigger: 'step' },
+    { id: 'hedgehog', group: 'nature', place: 'hedgehog', act: 'look' },
+    { id: 'nest', group: 'nature', place: 'nest', act: 'look' },
+    { id: 'shrine', group: 'relics', place: 'shrine', act: 'pray' },
+    { id: 'sword', group: 'relics', place: 'sword', act: 'pull' },
+    { id: 'initials', group: 'relics', place: 'initials', act: 'read' },
+    { id: 'wisp', group: 'spooky', place: 'wisp', trigger: 'near' },
+    { id: 'skull', group: 'spooky', place: 'skull', act: 'look' },
+    { id: 'stones', group: 'spooky', place: 'stones', trigger: 'step' },
+    { id: 'snowman', group: 'seasonal', place: 'season', season: 'winter', act: 'look' },
+    { id: 'pumpkin', group: 'seasonal', place: 'season', season: 'autumn', act: 'look' },
+    { id: 'crown', group: 'seasonal', place: 'season', season: 'spring', act: 'wear' },
+    { id: 'jar', group: 'seasonal', place: 'season', season: 'summer', act: 'open' },
+  ];
+  const secretsFor = (season) => SECRETS.filter((s) => !s.season || s.season === season);
+  // The saved tally (JSON text): known ids only, no duplicates; [] for anything broken.
+  function readFound(text) {
+    let list;
+    try { list = JSON.parse(text); } catch (e) { return []; }
+    if (!Array.isArray(list)) return [];
+    const known = new Set(SECRETS.map((s) => s.id)), out = [];
+    for (const id of list) if (typeof id === 'string' && known.has(id) && !out.includes(id)) out.push(id);
+    return out;
+  }
+
   // ---- campfire talk: two of them murmur (wordless), the other nods; sometimes they all laugh ----
   const TALK = { period: 53, offset: 15, dur: 9 };
   const PAIRS = [['wizard', 'traveler'], ['traveler', 'samurai'], ['samurai', 'wizard'], ['traveler', 'wizard'], ['wizard', 'samurai'], ['samurai', 'traveler']];
@@ -709,7 +742,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX, collide, gait, eventOwner,
-    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, ACTIONS, act, cancelAct, clearActs, actAt, nearestSpot, inside, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, ACTIONS, act, cancelAct, clearActs, actAt, nearestSpot, inside, SECRETS, SECRET_PLACES, secretsFor, readFound, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

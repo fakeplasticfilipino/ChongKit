@@ -468,3 +468,37 @@ test('spots: nearest in reach, ties to the first, inside', () => {
   assert.ok(A.inside(0.5, 0, spots[0]));
   assert.ok(!A.inside(1, 0, spots[0]));
 });
+
+test('secrets: thirteen, places inside the edge and clear of the camp, one per season', () => {
+  assert.strictEqual(A.SECRETS.length, 13);
+  assert.strictEqual(new Set(A.SECRETS.map((s) => s.id)).size, 13);
+  const seasonal = A.SECRETS.filter((s) => s.group === 'seasonal');
+  assert.deepStrictEqual(seasonal.map((s) => s.season).sort(), ['autumn', 'spring', 'summer', 'winter']);
+  const camp = [[-3.4, -5.3], [2.6, -5.8], [1.55, -5.25], [4.8, -5.63], [-3.6, -2.6], [4.4, 2.4]];
+  const places = Object.entries(A.SECRET_PLACES);
+  for (const [name, [x, z]] of places) {
+    const r = Math.hypot(x, z);
+    assert.ok(r <= 6.0 && r >= 4.9, name + ' at the edge: ' + r);
+    for (const [cx, cz] of camp) assert.ok(Math.hypot(x - cx, z - cz) >= 1.4, name + ' clear of the camp');
+  }
+  for (let i = 0; i < places.length; i++) for (let j = i + 1; j < places.length; j++) {
+    assert.ok(Math.hypot(places[i][1][0] - places[j][1][0], places[i][1][1] - places[j][1][1]) >= 1.5, places[i][0] + ' / ' + places[j][0]);
+  }
+  for (const s of A.SECRETS) {
+    assert.ok(A.SECRET_PLACES[s.place], s.id + ' has a place');
+    assert.ok((s.act && A.ACTIONS[s.act]) || s.trigger === 'step' || s.trigger === 'near', s.id + ' is found somehow');
+  }
+  for (const season of A.SEASONS) {
+    const list = A.secretsFor(season);
+    assert.strictEqual(list.length, 10);
+    assert.strictEqual(list.filter((s) => s.group === 'seasonal')[0].season, season);
+  }
+});
+
+test('readFound: known ids, no duplicates, empty for anything broken', () => {
+  assert.deepStrictEqual(A.readFound(JSON.stringify(['shrine', 'shrine', 'bogus', 'skull'])), ['shrine', 'skull']);
+  assert.deepStrictEqual(A.readFound(null), []);
+  assert.deepStrictEqual(A.readFound('{oops'), []);
+  assert.deepStrictEqual(A.readFound('{"a":1}'), []);
+  assert.deepStrictEqual(A.readFound('[1, null, "nest"]'), ['nest']);
+});
