@@ -626,7 +626,8 @@
       const raise = A.win(sk, 0, A.STOKE_LEAD + A.STOKE_DUR - 1, 0.7);
       staff.position.y = 0.25 * raise;
       staff.rotation.x = 0.25 * raise;
-      wizard.arms[1].sh.rotation.x = -1.0 - 0.5 * raise;
+      wizard.arms[1].sh.rotation.set(-1.0 - 0.5 * raise, 0, 0.4); // the staff hand (set every frame: the idle motion adds to it)
+      wizard.arms[1].el.rotation.x = -1.2;
       wizard.head.rotation.y = lookAtMix(wizard, [
         [raise, FIRE_AT],
         [stir, camp.POT],
@@ -799,6 +800,17 @@
         fc.setXYZ(i, fb.r * on, fb.g * on, fb.b * on);
       }
       fp.needsUpdate = fc.needsUpdate = true;
+
+      // idle life in the arms: hands never freeze; they rest a little away from the body, wrists relaxed
+      [traveler, wizard, samurai].forEach((p, n) => {
+        p.arms.forEach((a, i) => {
+          const sd = n * 10 + i * 3;
+          a.sh.rotation.x += 0.035 * A.noise1(t * 0.6 + sd, 1600 + sd);
+          a.sh.rotation.z += a.side * 0.07 + 0.025 * A.noise1(t * 0.5 + sd, 1700 + sd);
+          a.el.rotation.x += 0.05 * A.noise1(t * 0.8 + sd, 1800 + sd);
+          a.wr.rotation.set(0.25 + 0.15 * A.noise1(t * 0.7 + sd, 1900 + sd), 0, 0.12 * A.noise1(t * 0.9 + sd, 2000 + sd));
+        });
+      });
 
       // the walker (walk.js), posed over whatever their stories did
       const wk = walk.update(t, dt, view.yaw);

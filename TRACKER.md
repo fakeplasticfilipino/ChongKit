@@ -135,6 +135,12 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Walking around: E / Walk (1–3 choose), WASD / arrows / Shift / touch joystick, follow camera, collisions, walk back and sit; jointed legs, long robe standing, footsteps by season; the walker's own stories pause and the others look up
 - [x] Tests: talks, flute, whetstone, collide, gait
 
+### ✅ v8 — done
+- [x] Livelier arms: shoulders clear of the body, wrists, idle motion in shoulders / elbows / wrists; walking arms swing with bent elbows
+- [x] The traveler's coat hangs at the hips instead of jutting forward
+- [x] The horse's neck arches forward (was bent back); grazing lowers the head to the grass
+- [x] The wizard walks with the staff, planting it with each stride
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

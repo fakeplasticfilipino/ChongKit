@@ -103,11 +103,11 @@
     for (const s of [-1, 1]) body.add(box(0.02, 0.35, 0.03, DARK, s * 0.24, -0.05, 0.02)); // stirrup straps
     horse.add(body);
     const neck = group(0, 1.2, 0.5);
-    neck.rotation.x = -0.6;
+    neck.rotation.x = 0.55; // arched forward and up
     neck.add(box(0.24, 0.62, 0.3, BAY, 0, 0.28, 0));
     neck.add(box(0.06, 0.62, 0.16, MANE, 0, 0.3, -0.12)); // mane
     const head = group(0, 0.6, 0.02);
-    head.rotation.x = 1.3;
+    head.rotation.x = -0.15; // nose a little down
     head.add(box(0.2, 0.22, 0.52, BAY, 0, 0, 0.18));
     head.add(box(0.16, 0.14, 0.12, 0x3a2416, 0, -0.03, 0.44)); // muzzle
     for (const s of [-1, 1]) head.add(box(0.03, 0.04, 0.02, DARK, s * 0.1, 0.05, 0.12)); // eyes
@@ -185,8 +185,8 @@
 
       // horse: breathes, swishes its tail, grazes now and then, flicks its ears, shifts its weight
       const graze = A.envelope(t, 41, 12, 9);
-      neck.rotation.x = -0.6 + 1.25 * graze + 0.03 * Math.sin(t * 1.3);
-      head.rotation.x = 1.3 - 0.5 * graze;
+      neck.rotation.x = 0.55 + 1.35 * graze + 0.03 * Math.sin(t * 1.3); // grazing: the neck lowers forward
+      head.rotation.x = -0.15 + 0.65 * graze + 0.04 * A.noise1(t * 0.5, 1500); // and the nose goes down to the grass
       body.scale.y = 1 + 0.015 * A.breath(t, 4.2, 0.2);
       tail.rotation.z = 0.25 * Math.sin(t * 2.3) * (0.4 + 0.6 * Math.max(0, A.noise1(t * 0.4, 920)));
       tail.rotation.x = 0.15 + 0.1 * Math.sin(t * 1.1);

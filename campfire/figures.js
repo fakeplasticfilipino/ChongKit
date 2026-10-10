@@ -42,18 +42,22 @@
       return h;
     }
 
-    // An arm: shoulder → upper arm → elbow → forearm → hand. Turn `sh` and `el` to pose it.
+    // An arm: shoulder → upper arm → elbow → forearm → wrist → hand. Turn `sh`, `el` and `wr` to pose it.
+    // The shoulder sits just outside the torso, so the arms hang clear of the body.
     function arm(torso, s, o) {
-      const sh = group(s * 0.25, 0.52, 0);
+      const sh = group(s * 0.29, 0.52, 0);
       const up = 0.26, lo = 0.25;
       sh.add(o.bell ? cyl(0.065, 0.08, up, 6, o.sleeve, 0, -up / 2, 0) : box(0.12, up, 0.13, o.sleeve, 0, -up / 2, 0));
       const el = group(0, -up, 0);
       el.add(o.bell ? cyl(0.08, 0.15, lo, 7, o.sleeve, 0, -lo / 2, 0) : box(0.11, lo, 0.12, o.sleeve, 0, -lo / 2, 0));
       if (o.cuff) el.add(box(0.115, 0.04, 0.125, o.cuff, 0, -lo + 0.01, 0));
-      el.add(box(0.1, 0.1, 0.1, o.skin, 0, -lo - 0.05, 0)); // hand
+      const wr = group(0, -lo, 0);
+      wr.add(box(0.1, 0.11, 0.1, o.skin, 0, -0.055, 0.005)); // hand
+      wr.add(box(0.035, 0.06, 0.04, o.skin, 0, -0.02, 0.06)); // thumb
+      el.add(wr);
       sh.add(el);
       torso.add(sh);
-      return { sh, el };
+      return { sh, el, wr, side: s };
     }
 
     // A seated person facing the fire (front is +z). Returns the parts that move.
@@ -83,7 +87,7 @@
     tt.add(box(0.42, 0.58, 0.25, BROWN, 0, 0.29, 0));
     tt.add(box(0.46, 0.36, 0.06, BROWN, 0, -0.1, -0.12)); // coat tails over the log
     for (const s of [-1, 1]) {
-      tt.add(box(0.06, 0.26, 0.42, BROWN, s * 0.22, -0.02, 0.1)); // coat skirt over the hips
+      tt.add(box(0.06, 0.3, 0.2, BROWN, s * 0.22, -0.06, -0.04)); // coat skirt at the hips (hangs, doesn't jut forward)
       tt.add(tilt(box(0.08, 0.28, 0.03, BROWN_DK, s * 0.1, 0.43, 0.133), 0, 0, s * 0.35)); // lapel
       tt.add(tilt(box(0.06, 0.05, 0.03, WHITE, s * 0.05, 0.56, 0.13), 0, 0, s * 0.6)); // shirt collar point
       tt.add(box(0.12, 0.03, 0.02, BROWN_DK, s * 0.12, 0.13, 0.128)); // pocket flap
@@ -189,6 +193,7 @@
     crystalLight.position.y = 1.92;
     staff.add(crystalLight);
     wz.root.add(staff);
+    wz.staff = staff; // walks with it, like a walking stick
 
     // ================= samurai: topknot, red lacquered armour, hakama, katana on the back =================
     const KIMONO = 0x6e2a1f, HAKAMA = 0x22304a, LACE = 0x24170f, OBI = 0x3a3f4a;

@@ -104,9 +104,16 @@
       p.torso.rotation.z = lerp(p.torso.rotation.z, 0, k);
       p.arms.forEach((a, i) => {
         if (who === 'wizard' && i === 1) return; // the staff hand stays on the staff
-        a.sh.rotation.set(lerp(a.sh.rotation.x, g.arms[i], k), 0, lerp(a.sh.rotation.z, (i ? -1 : 1) * 0.08, k));
-        a.el.rotation.x = lerp(a.el.rotation.x, -0.25, k);
+        // swing from the shoulder, the elbow bending more on the forward swing, hands a little out from the hips
+        a.sh.rotation.set(lerp(a.sh.rotation.x, g.arms[i] * 1.3, k), 0, lerp(a.sh.rotation.z, a.side * 0.13, k));
+        a.el.rotation.x = lerp(a.el.rotation.x, -0.3 - 0.35 * Math.max(0, -g.arms[i] * 1.3), k);
+        a.wr.rotation.x = lerp(a.wr.rotation.x, 0.2, k);
       });
+      if (p.staff) { // the wizard plants the staff with each stride, the hand staying on it
+        const th = (0.1 + 0.28 * Math.sin(phase) * Math.min(1, speed / WALK)) * k, hand = 1.0;
+        p.staff.rotation.set(th, 0, 0);
+        p.staff.position.set(0.4, hand - hand * Math.cos(th), 0.47 - hand * Math.sin(th));
+      }
       p.head.rotation.x = lerp(p.head.rotation.x, 0, k);
       if (p.robes) { p.robes.stand.visible = k > 0.5; p.robes.sit.forEach((m) => { m.visible = k <= 0.5; }); }
       return { who, k, at: [x, z], yaw, moving: speed > 0.2 && state === 'walking' && ahead };
