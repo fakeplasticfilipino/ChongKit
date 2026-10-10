@@ -15,7 +15,11 @@
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.BasicShadowMap; // hard-edged shadows suit pixels
 
-  const world = CampScene.build(THREE);
+  // The season comes from the calendar; ?season=winter (spring, summer, autumn) previews another.
+  const params = new URLSearchParams(location.search);
+  const season = A.SEASONS.includes(params.get('season')) ? params.get('season') : A.season(new Date().getMonth());
+  const world = CampScene.build(THREE, { season });
+  CampAudio.season = season;
   const target = new THREE.WebGLRenderTarget(384, 216, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
   target.depthTexture = new THREE.DepthTexture(384, 216); // for the outlines
 
@@ -117,7 +121,7 @@
   ['pointerdown', 'keydown', 'touchend'].forEach((e) => window.addEventListener(e, CampAudio.start, { passive: true }));
 
   // ?at=SECONDS starts the clock there (for checking a story without waiting for it)
-  const START = Number(new URLSearchParams(location.search).get('at')) || 0;
+  const START = Number(params.get('at')) || 0;
   let last = 0;
   function frame(ms) {
     const t = START + ms / 1000, dt = Math.min(0.1, t - last || 0);

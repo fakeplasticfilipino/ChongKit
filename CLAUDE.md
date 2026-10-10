@@ -193,7 +193,8 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
    (noise-eaten tongues) at 20 frames a second. Keep the night dark: the fire lights a small pool.
    Stories (`CampAnim.STORIES`) are picked so one figure never runs two at once (tested); their
    moments (`CampAnim.events`) drive both the picture and the sound. `?at=SECONDS` starts the clock
-   there, for checking a moment.
+   there, for checking a moment. The fire burns down (`CampAnim.fuel`) and the wizard stokes it back
+   when free (`stokeTime`). Seasons come from the calendar (`CampAnim.season`; `?season=` previews).
 4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
    `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
    comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw

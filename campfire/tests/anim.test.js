@@ -210,9 +210,9 @@ test('events: sorted, in range, split ranges agree, each where its story says', 
   for (const t of at('land')) close(A.story('twig', t), A.TWIG_LAND, 1e-6, 'land');
   for (const t of at('draw')) close(A.story('katana', t), A.DRAW, 1e-6, 'draw');
   for (const t of at('sheathe')) close(A.story('katana', t), A.SHEATHE, 1e-6, 'sheathe');
-  for (const t of at('snap')) assert.ok(A.doze(t - 0.05, 26, 9, 9) > 0.9 && A.doze(t + 1.1, 26, 9, 9) < 0.1, 'snap');
+  for (const t of at('snap')) assert.ok(A.dozeAt(t - 0.05) > 0.9 && A.dozeAt(t + 1.1) < 0.1, 'snap');
   for (const t of at('puff')) assert.ok(A.story('pipe', t) >= 0, 'puff');
-  for (const type of ['land', 'settle', 'snap', 'draw', 'sheathe', 'puff', 'wolf', 'star', 'eyes']) assert.ok(at(type).length > 0, type);
+  for (const type of ['land', 'settle', 'snap', 'draw', 'sheathe', 'puff', 'wolf', 'star', 'eyes', 'stoke']) assert.ok(at(type).length > 0, type);
   const wolves = at('wolf');
   for (let i = 1; i < wolves.length; i++) assert.ok(wolves[i] - wolves[i - 1] >= 90 && wolves[i] - wolves[i - 1] <= 210);
 });
@@ -236,6 +236,49 @@ test('keyframes hold before and after, ease between, hit every key', () => {
 
 test('since counts up from each moment and wraps with the story', () => {
   close(A.since('twig', A.TWIG_LAND, 28 + A.TWIG_LAND + 1.5), 1.5, 1e-9, 'after landing');
-  close(A.since('twig', 0, 28 + 46 * 3 + 0.25), 0.25, 1e-9, 'later runs');
-  for (let t = 0; t < 300; t += 1.3) { const s = A.since('pipe', 4.2, t); assert.ok(s >= 0 && s < 43); }
+  close(A.since('twig', 0, 28 + A.STORIES.twig.period * 3 + 0.25), 0.25, 1e-9, 'later runs');
+  for (let t = 0; t < 300; t += 1.3) { const s = A.since('pipe', 4.2, t); assert.ok(s >= 0 && s < A.STORIES.pipe.period); }
+});
+
+test('stories are spaced out: each runs at most about once a minute', () => {
+  for (const name of Object.keys(A.STORIES)) assert.ok(A.STORIES[name].period >= 30, name);
+});
+
+test('the fire burns down, and the wizard stokes it back when free', () => {
+  close(A.fuel(0), 1, 1e-9, 'full at the start');
+  assert.ok(A.fuel(500) < A.fuel(100), 'burns down');
+  const s0 = A.stokeTime(0);
+  assert.ok(s0 >= 600 && s0 < 800);
+  assert.ok(A.fuel(s0 - 0.01) < 0.75, 'low before the stoke');
+  assert.ok(A.fuel(s0 + 2.5) > 0.98, 'full after the stoke');
+  for (let k = 0; k < 6; k++) {
+    const s = A.stokeTime(k);
+    for (let x = s - A.STOKE_LEAD; x <= s + A.STOKE_DUR; x += 0.25) assert.ok(A.story('reach', x) < 0 && A.story('pipe', x) < 0, 'wizard busy at ' + x);
+    if (k) assert.ok(s - A.stokeTime(k - 1) > 700);
+  }
+  let prev = A.fuel(0);
+  for (let t = 0; t < 4000; t += 0.5) {
+    const f = A.fuel(t);
+    assert.ok(f >= 0.34 && f <= 1.0000001, 'fuel ' + f);
+    assert.ok(Math.abs(f - prev) < 0.4, 'no jumps at ' + t);
+    prev = f;
+  }
+  assert.deepStrictEqual(A.events(0, 3000).filter((e) => e.type === 'stoke').map((e) => e.time), A.stokes(0, 3000));
+});
+
+test('seasons follow the calendar', () => {
+  assert.deepStrictEqual([0, 1, 2, 4, 5, 7, 8, 10, 11].map(A.season), ['winter', 'winter', 'spring', 'spring', 'summer', 'summer', 'autumn', 'autumn', 'winter']);
+});
+
+test('leaves fall from the treetops to the ground; snow stays in its box', () => {
+  for (let seed = 0; seed < 50; seed++) {
+    const a = A.leaf(seed, 0.5, 10), b = A.leaf(seed, 9.5, 10);
+    assert.ok(a.y > b.y && b.y >= 0 && a.y <= 7);
+    assert.ok(Math.hypot(a.x, a.z) < 10);
+    assert.strictEqual(A.leaf(seed, 10, 10).alpha, 0);
+  }
+  for (let i = 0; i < 200; i++) for (let t = 0; t < 30; t += 3.7) {
+    const f = A.snowflake(i, t);
+    assert.ok(f.y > -0.6 && f.y <= 8 && Math.abs(f.x) < 10.5 && Math.abs(f.z) < 10.5);
+  }
 });

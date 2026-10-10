@@ -114,6 +114,12 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Sound: twig whoosh and landing, logs settling, katana ring and click, armour creak, pipe puffs, a distant wolf, leaves rustling, a twig snapping where the eyes are
 - [x] `?at=SECONDS` to start the clock at a moment; tests for the flame shape, stories, events, flares, keyframes
 
+### ✅ v5 — done
+- [x] Stories spaced out (periods 31–74 s) so they stay special over a session
+- [x] The fire burns down over ~15 minutes (darker night, smaller flames, quieter roar); the wizard raises the staff, the crystal flares, and it whooms back (shimmer + whoomp)
+- [x] Seasons from the calendar: autumn (red and gold trees, falling and fallen leaves), winter (snowfall, snow on trees and ground, steaming breath, no crickets, stronger wind), spring (flowers), summer (more fireflies); `?season=` to preview
+- [x] Tests: fuel and stokes (never while the wizard is busy), seasons, leaves, snow
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

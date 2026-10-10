@@ -4,7 +4,10 @@
   'use strict';
   const A = window.CampAnim;
 
-  function build(THREE) {
+  // opts.season: 'winter' | 'spring' | 'summer' | 'autumn' (app.js picks it from the calendar)
+  function build(THREE, opts) {
+    const SEASON = (opts && opts.season) || 'autumn';
+    const WINTER = SEASON === 'winter', AUTUMN = SEASON === 'autumn', SPRING = SEASON === 'spring';
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x05070c);
     scene.fog = new THREE.FogExp2(0x0a0f1a, 0.065);
@@ -43,11 +46,12 @@
     scene.add(fireLight);
 
     // ---- ground: dark earth that breaks up into grass ----
-    scene.add(flat(40, 24, 0x16241b, 0, 0, 0));
+    scene.add(flat(40, 24, WINTER ? 0x31445e : 0x16241b, 0, 0, 0)); // snow lies blue at night
     scene.add(flat(3.3, 14, 0x150e0b, 0, 0.01, 0));
     for (let i = 0; i < 40; i++) {
       const [x, z] = around(2.4, 4.4);
-      scene.add(flat(0.3 + rand() * 0.45, 6, [0x16241b, 0x213425, 0x24170f, 0x3a2416][i % 4], x, 0.012 + rand() * 0.008, z));
+      const patch = WINTER ? [0x4a6280, 0x31445e, 0x22304a, 0x24170f] : [0x16241b, 0x213425, 0x24170f, 0x3a2416];
+      scene.add(flat(0.3 + rand() * 0.45, 6, patch[i % 4], x, 0.012 + rand() * 0.008, z));
     }
     for (let i = 0; i < 12; i++) { // trodden patches by the fire
       const [x, z] = around(0.9, 2.4);
@@ -58,7 +62,8 @@
       if (!clear(x, z, 0.7)) continue;
       const tuft = group(x, 0, z);
       for (let j = 0; j < 3; j++) {
-        const blade = cone(0.03 + rand() * 0.03, 0.18 + rand() * 0.22, 3, rand() < 0.5 ? 0x213425 : 0x2f4a30, (rand() - 0.5) * 0.15, 0.1, (rand() - 0.5) * 0.15);
+        const grass = WINTER ? [0x31445e, 0x4a6280] : AUTUMN ? [0x213425, 0x55341d] : [0x213425, 0x2f4a30];
+        const blade = cone(0.03 + rand() * 0.03, 0.18 + rand() * 0.22, 3, grass[rand() < 0.5 ? 0 : 1], (rand() - 0.5) * 0.15, 0.1, (rand() - 0.5) * 0.15);
         blade.rotation.z = (rand() - 0.5) * 0.6;
         blade.castShadow = false;
         tuft.add(blade);
@@ -118,11 +123,11 @@
     scene.add(flame);
     const fireRGB = {};
     let fireFrame = -1;
-    function drawFire(t, flare) {
+    function drawFire(t, flare, fu) {
       const frame = Math.floor(t * 20); // redrawn 20 times a second: flickery, like hand-drawn frames
       if (frame === fireFrame) return;
       fireFrame = frame;
-      const ft = frame / 20, grow = 0.85 + 0.35 * (A.flicker(ft) - 1) / 0.26 * 0.5 + 0.4 * flare;
+      const ft = frame / 20, grow = (0.4 + 0.6 * fu) * (0.85 + 0.35 * (A.flicker(ft) - 1) / 0.26 * 0.5) + 0.4 * flare;
       const cells = [];
       for (let y = 0; y < FH; y++) for (let x = 0; x < FW; x++) cells.push(A.fireHeat((x + 0.5) / FW - 0.5, 1 - (y + 0.5) / FH, ft, grow));
       const fireCells = cells;
@@ -148,7 +153,7 @@
     seatLog(0, -2.3);
     scene.add(mesh(new THREE.DodecahedronGeometry(0.28), 0x5e5650, 2.15, 0.15, 0.35));
     const fig = CampFigures.build({ THREE, scene, mat, mesh, box, cyl, cone, group });
-    const { traveler, wizard, samurai, crystal, crystalLight, hilt, blade, glint, pipe, pipeGlow, twig } = fig;
+    const { traveler, wizard, samurai, crystal, crystalLight, staff, hilt, blade, glint, pipe, pipeGlow, twig } = fig;
     const HEADS = new Map([traveler, wizard, samurai].map((p) => [p, p.root.localToWorld(new THREE.Vector3(0, 1.1, 0.1))]));
     const FIRE_AT = new THREE.Vector3(0, 0.4, 0);
 
@@ -194,6 +199,18 @@
       }
       scene.add(fern);
     }
+    if (AUTUMN) for (let i = 0; i < 110; i++) { // fallen leaves on the ground
+      const [x, z] = around(1.0, 7.5);
+      const l = box(0.09, 0.01, 0.065, [0x9b3a1c, 0x744726, 0xc8561b, 0x55341d][i % 4], x, 0.02, z);
+      l.rotation.y = rand() * 3;
+      l.castShadow = false;
+      scene.add(l);
+    }
+    if (SPRING) for (let i = 0; i < 70; i++) { // flowers in the grass
+      const [x, z] = around(2.8, 7);
+      if (!clear(x, z, 0.7)) continue;
+      scene.add(box(0.045, 0.045, 0.045, [0xe8e2d4, 0xf8b347, 0x5e3a56][i % 3], x, 0.06 + rand() * 0.08, z));
+    }
     for (let i = 0; i < 16; i++) { // bushes
       const [x, z] = around(5.6, 7.6);
       const bush = group(x, 0, z);
@@ -237,11 +254,18 @@
         t.add(box(0.08, 0.3, 0.03, 0x150e0b, 0, h * 0.18, r * 0.27)); // knot hole
       }
       const top = group(0, h * 0.3, 0);
-      const cols = [0x0d1612, 0x16241b, 0x213425];
+      const turned = AUTUMN && rand() < 0.35; // some trees turn red and gold in autumn
+      const cols = turned ? [0x6e2a1f, 0x9b3a1c, 0x744726] : [0x0d1612, 0x16241b, 0x213425];
       for (let k = 0; k < 4; k++) {
-        const c = cone(r * (1 - k * 0.2), h * (0.36 - k * 0.05), 7, cols[(k + (rand() * 3 | 0)) % 3], 0, h * (0.18 + k * 0.17), 0);
+        const ch = h * (0.36 - k * 0.05), cy = h * (0.18 + k * 0.17);
+        const c = cone(r * (1 - k * 0.2), ch, 7, cols[(k + (rand() * 3 | 0)) % 3], 0, cy, 0);
         c.rotation.y = rand() * 3;
         top.add(c);
+        if (WINTER) { // snow on each tier
+          const cap = cone(r * (1 - k * 0.2) * 0.55, ch * 0.45, 7, 0x8fa6c4, 0, cy + ch * 0.29, 0);
+          cap.rotation.y = c.rotation.y;
+          top.add(cap);
+        }
       }
       t.add(top);
       canopies.push({ top, seed: canopies.length + 1 });
@@ -291,7 +315,7 @@
       scene.add(p);
       return p;
     }
-    const EMBERS = 36, BURSTS = 80, FLIES = 9;
+    const EMBERS = 36, BURSTS = 80, FLIES = { summer: 14, spring: 6 }[SEASON] || 0; // no fireflies in the cold
     const embers = particles(EMBERS, 0xf8b347, 1.5);
     const sparks = particles(BURSTS, 0xffe08a, 1.5);
     const flies = particles(FLIES, 0xb7d65a, 1.5);
@@ -342,6 +366,29 @@
     let eyesSeen = -1;
     const skyPoint = (az, el, out) => out.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).multiplyScalar(95).add(CAM0);
 
+    // ---- the season's weather: falling leaves in autumn; snow and steaming breath in winter ----
+    const LEAVES = AUTUMN ? 30 : 0, FLAKES = WINTER ? 650 : 0;
+    const leafGeo = new THREE.PlaneGeometry(0.09, 0.065);
+    const leaves = Array.from({ length: LEAVES }, (_, i) => {
+      const m = new THREE.Mesh(leafGeo, new THREE.MeshStandardMaterial({ color: [0x9b3a1c, 0xc8561b, 0x744726, 0xe8812c][i % 4], side: THREE.DoubleSide, flatShading: true, roughness: 1 }));
+      scene.add(m);
+      return m;
+    });
+    const leafLife = Array.from({ length: LEAVES }, () => 9 + rand() * 6), leafOff = Array.from({ length: LEAVES }, () => rand() * 15);
+    let snow = null;
+    if (FLAKES) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(FLAKES * 3), 3));
+      snow = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xd6e0ec, size: 1, sizeAttenuation: false }));
+      snow.frustumCulled = false;
+      scene.add(snow);
+    }
+    const breaths = WINTER ? [traveler, wizard, samurai].map(() => {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: blob, color: 0x9a948c, transparent: true, depthWrite: false }));
+      scene.add(m);
+      return m;
+    }) : [];
+
     // ---- the wizard's smoke rings: two puffs of three rings ----
     const ringGeo = new THREE.TorusGeometry(0.055, 0.016, 4, 8);
     const rings = Array.from({ length: 6 }, () => {
@@ -375,12 +422,14 @@
     function update(t, view) {
       // fire
       const f = A.flicker(t);
-      const fl = A.flare(t); // a twig landed or the logs settled
-      fireLight.intensity = 3.2 * f + 2.4 * fl;
+      const fl = A.flare(t); // a twig landed, the logs settled, or the wizard stoked it
+      const fu = A.fuel(t); // burns down over the evening
+      fireLight.intensity = 3.2 * f * (0.35 + 0.65 * fu) + 2.4 * fl;
+      fireLight.distance = 6.5 * (0.65 + 0.35 * fu);
       fireLight.color.setRGB(1, 0.62 + 0.3 * (f - 1), 0.36);
       fireLight.position.x = 0.08 * A.noise1(t * 2, 21);
       fireLight.position.z = 0.08 * A.noise1(t * 2, 22);
-      drawFire(t, fl);
+      drawFire(t, fl, fu);
       embersBed.material.color.setHex(f > 1.08 ? 0xc8561b : 0x9b3a1c);
       coals.forEach((c, i) => c.material.color.setHex(A.noise1(t * 1.5 + i * 7, 200 + i) > 0.2 ? 0xc8561b : 0x6e2a1f));
 
@@ -390,7 +439,7 @@
         const L = emberLife[i], k = t + emberOff[i];
         const e = A.ember(i * 1000 + Math.floor(k / L), k % L, L);
         ep.setXYZ(i, e.x, e.y, e.z);
-        const a = e.alpha * (0.7 + 0.3 * A.noise1(t * 8 + i, 5));
+        const a = e.alpha * (0.7 + 0.3 * A.noise1(t * 8 + i, 5)) * (i < EMBERS * (0.3 + 0.7 * fu) ? 1 : 0);
         ec.setXYZ(i, eb.r * a, eb.g * a, eb.b * a);
       }
       ep.needsUpdate = ec.needsUpdate = true;
@@ -420,11 +469,14 @@
       });
 
       const tw = A.story('twig', t), pp = A.story('pipe', t), kt = A.story('katana', t);
-      const dz = kt < 0 ? A.doze(t, 26, 9, 9) : 0;
+      const dz = kt < 0 ? A.dozeAt(t) : 0;
+      const stoke = A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD)[0];
+      const sk = stoke === undefined ? -1 : t - (stoke - A.STOKE_LEAD); // seconds into the wizard's stoke
+      const watchFire = A.win(sk, 1.2, 4.5, 0.4);
       const snapAgo = A.since('doze', A.SNAP, t);
 
       // traveler: shifts on the cane; now and then tosses a twig on the fire
-      const shift = A.envelope(t, 23, 13, 3);
+      const shift = A.win(A.story('shift', t), 0, 3, 0.75);
       const lean = A.win(tw, 0.3, 3.4, 0.5);
       traveler.torso.rotation.z = -0.1 * shift;
       traveler.torso.rotation.x = traveler.lean - 0.1 * shift + 0.22 * lean;
@@ -449,6 +501,8 @@
         [A.win(pp, 3.8, 8.6, 0.5), HEADS.get(wizard)],
         [A.win(tw, 0.9, 3.4, 0.3), FIRE_AT],
         [A.win(snapAgo, 0.15, 2.6, 0.3), HEADS.get(samurai)],
+        [A.win(sk, 0.2, 1.5, 0.3), HEADS.get(wizard)],
+        [watchFire, FIRE_AT],
       ]) + 0.12 * A.noise1(t * 0.2, 61);
 
       // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
@@ -460,7 +514,13 @@
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
       pipeGlow.material.color.setHex(inhale > 0.5 ? 0xffe08a : inhale > 0.1 ? 0xe8812c : 0x9b3a1c);
       wizard.head.rotation.x = 0.2 * reach - 0.1 * inhale;
+      // the stoke: the staff rises, the crystal flares, the fire roars back
+      const raise = A.win(sk, 0, A.STOKE_LEAD + A.STOKE_DUR - 1, 0.7);
+      staff.position.y = 0.25 * raise;
+      staff.rotation.x = 0.25 * raise;
+      wizard.arms[1].sh.rotation.x = -1.0 - 0.5 * raise;
       wizard.head.rotation.y = lookAtMix(wizard, [
+        [raise, FIRE_AT],
         [A.win(kt, 2.5, 8.5, 0.6), HEADS.get(samurai)],
         [A.win(tw, 0.6, 2.0, 0.3), HEADS.get(traveler)],
         [A.win(tw, 2.0, 3.6, 0.3), FIRE_AT],
@@ -476,7 +536,7 @@
         r.material.opacity = 0.6 * (1 - a2 / 3.5);
         r.lookAt(camera.position);
       });
-      const glow = 0.55 + 0.25 * A.breath(t, 2.4, 0) + 0.6 * reach;
+      const glow = 0.55 + 0.25 * A.breath(t, 2.4, 0) + 0.6 * reach + 4 * A.win(sk, 1.1, 2.6, 0.25);
       crystalLight.intensity = glow;
       crystal.scale.setScalar(0.85 + 0.3 * glow);
       crystal.rotation.y = t * 0.8;
@@ -496,6 +556,7 @@
       samurai.head.rotation.x = 0.6 * dz + kdown;
       samurai.torso.rotation.x = samurai.lean + 0.12 * dz;
       samurai.head.rotation.y = (1 - dz) * lookAtMix(samurai, [
+        [watchFire, FIRE_AT],
         [A.win(tw, 0.6, 2.2, 0.3), HEADS.get(traveler)],
         [A.win(pp, 4.0, 6.0, 0.4), HEADS.get(wizard)],
       ]);
@@ -545,6 +606,34 @@
       for (let i = 0; i < 2; i++) ec2.setXYZ(i, eb2.r * on, eb2.g * on, eb2.b * on);
       ep2.needsUpdate = ec2.needsUpdate = true;
       if (eAge < 6) samurai.head.rotation.y = lookAtMix(samurai, [[A.win(eAge, 1, 5, 0.4), eyesAt]]) || samurai.head.rotation.y;
+
+      // the season's weather
+      const wx = 0.6 * (A.wind(t) - 0.3); // the wind pushes leaves and snow sideways
+      leaves.forEach((m, i) => {
+        const L = leafLife[i], k = t + leafOff[i];
+        const p = A.leaf(i * 1000 + Math.floor(k / L), k % L, L);
+        m.position.set(p.x + wx * (k % L) * 0.3, p.y, p.z);
+        m.rotation.set(p.spin, p.spin * 0.7, p.spin * 0.4);
+        m.visible = p.alpha > 0;
+      });
+      if (snow) {
+        const sp = snow.geometry.attributes.position;
+        for (let i = 0; i < FLAKES; i++) {
+          const p = A.snowflake(i, t);
+          sp.setXYZ(i, p.x + wx * (8 - p.y) * 0.4, p.y, p.z);
+        }
+        sp.needsUpdate = true;
+      }
+      breaths.forEach((m, i) => { // breath steams out on each exhale
+        const p = [traveler, wizard, samurai][i];
+        const c = ((t / (3.6 + i * 0.5) + i * 0.31) % 1 + 1) % 1, u = c < 0.5 ? -1 : (c - 0.5) * 2;
+        m.visible = u >= 0;
+        if (!m.visible) return;
+        p.head.localToWorld(mouth.set(0, 0.07 + 0.1 * u, 0.2 + 0.3 * u));
+        m.position.copy(mouth);
+        m.scale.setScalar(0.12 + 0.3 * u);
+        m.material.opacity = 0.35 * Math.sin(Math.PI * u);
+      });
 
       // trees sway with the wind
       const w = 0.4 + 1.2 * A.wind(t);

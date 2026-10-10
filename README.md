@@ -315,10 +315,12 @@ night stays dark); embers and smoke rise; everyone breathes; treetops sway, star
 fireflies drift at the forest edge, mist creeps between the trees, clouds cross the moon (its light
 dims), and the camera drifts slowly. Little stories, each on its own repeating schedule:
 
-- the traveler shifts on the cane, and every 46 s tosses a twig on the fire (it flares and throws sparks);
+- the traveler shifts on the cane, and about once a minute tosses a twig on the fire (it flares and throws sparks);
 - the wizard warms a hand at the fire, and smokes a pipe, blowing smoke rings;
 - the samurai nods off and jerks awake, and draws the katana to look it over (a glint runs down the blade);
 - they glance at whoever is doing something; the samurai notices the eyes;
+- the fire burns down over about 15 minutes (the night gets darker), until the wizard raises the
+  staff: the crystal flares, a shimmer, and the fire whooms back up;
 - now and then logs settle (a flare and a shower of sparks), a shooting star crosses the gap by the
   moon, and once in a long while two eyes glint in the dark across the fire.
 
@@ -330,8 +332,14 @@ the wizard's puffs, a twig snapping out where the eyes are. Browsers only allow 
 interact, so it starts with your first click, tap or key. The sound and the picture share one clock
 (`CampAnim.events`): every strong pop throws sparks, and the trees sway harder when the wind rises.
 
+**Seasons** follow the calendar: autumn turns some trees red and gold and drops leaves; winter
+brings snow on the ground and the trees, falling snow, steaming breath and silent crickets; spring
+puts flowers in the grass; summer fills the forest edge with fireflies. Add `?season=winter` (or
+spring, summer, autumn) to preview one.
+
 **Checking a moment:** add `?at=SECONDS` to the address to start the clock there (the twig lands at
-30.3 s, the katana comes out at 21.6 s, the first shooting star is at 30.7 s).
+30.3 s, the katana comes out at 21.6 s, the first shooting star is at 30.7 s, the wizard first
+stokes the fire at 600 s).
 
 **How the pixel look works:** [three.js](https://threejs.org) draws a simple 3D scene (boxes,
 cones and cylinders) into a small image about 216 pixels tall; a shader then draws a dark outline around near things

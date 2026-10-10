@@ -257,7 +257,7 @@
     twig.visible = false;
     scene.add(twig);
 
-    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, hilt, blade, glint, pipe, pipeGlow, twig };
+    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, staff, hilt, blade, glint, pipe, pipeGlow, twig };
   }
 
   window.CampFigures = { build };

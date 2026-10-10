@@ -209,6 +209,31 @@
       o.stop(at + 3.1); vib.stop(at + 3.1);
     });
   }
+  // the wizard's stoke: a rising shimmer as the staff goes up (a second before)…
+  function shimmer(at) {
+    const out = pan(0, master);
+    [523, 659, 784, 1047, 1319].forEach((fr, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'triangle';
+      o.frequency.value = fr;
+      const g = gain(0, out);
+      o.connect(g);
+      const s = at - 1.0 + i * 0.12;
+      g.gain.setValueAtTime(0, s);
+      g.gain.linearRampToValueAtTime(0.02, s + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0003, s + 1.4);
+      o.start(s);
+      o.stop(s + 1.5);
+    });
+  }
+  // …then the fire whooms back up
+  function stoke(at) {
+    const f = noiseHit(at, 'lowpass', 300, 0.7, 1.4, 0.5);
+    f.frequency.setValueAtTime(300, at);
+    f.frequency.exponentialRampToValueAtTime(1400, at + 0.4);
+    thump(at, 70, 0.6, 0.3);
+    crackle(at + 0.1, 16, 1.4);
+  }
   function play(e, at) {
     switch (e.type) {
       case 'land': thump(at, 120, 0.25, 0.25); crackle(at, 9, 0.6); break;
@@ -218,6 +243,7 @@
       case 'sheathe': swoosh(at - 0.3, 5000, 2000, 0.3, 0.04); noiseHit(at, 'bandpass', 1200, 4, 0.06, 0.2); break;
       case 'puff': noiseHit(at, 'bandpass', 1100, 0.8, 0.9, 0.05); break;
       case 'wolf': howl(at); break;
+      case 'stoke': stoke(at); break;
       case 'eyes': noiseHit(at + 0.3, 'bandpass', 1500, 2, 0.05, 0.08, pan(0, master)); break; // a twig snaps out there
     }
   }
@@ -230,19 +256,21 @@
     if (scheduled < t) scheduled = t; // after the tab was hidden, skip what was missed
     const until = t + 0.3;
     for (const p of A.pops(scheduled, until)) pop(p.time + offset, p.strength);
-    for (const c of A.chirps(scheduled, until)) chirp(c.time + offset, c.cricket);
+    if (CampAudio.season !== 'winter') for (const c of A.chirps(scheduled, until)) chirp(c.time + offset, c.cricket); // no crickets in the snow
     for (const h of A.owls(scheduled, until)) owl(h + offset);
     for (const e of A.events(scheduled + 0.3, until + 0.3)) play(e, e.time + offset); // looked up 0.3 s ahead, for the lead-ins
+    for (const e of A.events(scheduled + 1.1, until + 1.1)) if (e.type === 'stoke') shimmer(e.time + offset);
     for (const e of A.events(scheduled + 0.75, until + 0.75)) if (e.type === 'land') swoosh(e.time + offset - 0.75, 700, 1600, 0.6, 0.03); // the twig flying
     scheduled = until;
 
     const f = A.flicker(t), w = A.wind(t);
-    roar.gain.setTargetAtTime(0.09 * f * f, now, 0.08);
-    windGain.gain.setTargetAtTime(0.02 + 0.14 * w * w, now, 0.3);
+    const fu = A.fuel(t);
+    roar.gain.setTargetAtTime(0.09 * f * f * (0.35 + 0.65 * fu), now, 0.08);
+    windGain.gain.setTargetAtTime((0.02 + 0.14 * w * w) * (CampAudio.season === 'winter' ? 1.35 : 1), now, 0.3);
     windFilter.frequency.setTargetAtTime(300 + 500 * w, now, 0.3);
     rustle.gain.setTargetAtTime(0.04 * Math.max(0, w - 0.5) * 2 * (0.5 + 0.5 * A.noise1(t * 3, 950)), now, 0.1);
   }
 
   const state = () => (ctx ? ctx.state : 'waiting for a click');
-  window.CampAudio = { start, update, state };
+  window.CampAudio = { start, update, state, season: 'autumn' };
 })();

@@ -190,16 +190,19 @@
     return out.sort((a, b) => a.time - b.time);
   }
 
-  // ---- little stories: each on its own cycle. Periods are picked so one figure's stories never overlap
-  // (twig 46 = 2 × shift 23; pipe and reach share 43; katana 52 = 2 × doze 26). ----
+  // ---- little stories: each on its own cycle, spaced out so they stay special through a long session.
+  // Periods are picked so one figure's stories never overlap (twig 62 = 2 × shift 31; pipe and reach
+  // share 67; katana 74 = 2 × doze 37). ----
   const STORIES = {
-    shift: { period: 23, offset: 13, dur: 3 }, // traveler shifts on the cane
-    twig: { period: 46, offset: 28, dur: 4 }, // traveler tosses a twig on the fire
-    reach: { period: 43, offset: 6, dur: 6 }, // wizard warms a hand
-    pipe: { period: 43, offset: 24, dur: 11 }, // wizard smokes a pipe
-    doze: { period: 26, offset: 9, dur: 9 }, // samurai nods off
-    katana: { period: 52, offset: 20, dur: 12 }, // samurai checks the blade
+    shift: { period: 31, offset: 13, dur: 3 }, // traveler shifts on the cane
+    twig: { period: 62, offset: 28, dur: 4 }, // traveler tosses a twig on the fire
+    reach: { period: 67, offset: 6, dur: 6 }, // wizard warms a hand
+    pipe: { period: 67, offset: 30, dur: 11 }, // wizard smokes a pipe
+    doze: { period: 37, offset: 9, dur: 9 }, // samurai nods off
+    katana: { period: 74, offset: 20, dur: 12 }, // samurai checks the blade
   };
+  // The samurai's dozing (0 awake … 1 asleep), on the doze story's schedule.
+  const dozeAt = (t) => doze(t, STORIES.doze.period, STORIES.doze.offset, STORIES.doze.dur);
   // Seconds into the story's current run, or -1 when it isn't running.
   function story(name, t) {
     const s = STORIES[name];
@@ -257,26 +260,89 @@
     slots(150, 'wolf', 70, 60, 1, 23); // a wolf far off, every 2–3 minutes
     slots(60, 'star', 10, 40, 1, 37); // a shooting star
     slots(120, 'eyes', 50, 50, 1, 41); // eyes glinting in the forest
+    for (const s of stokes(from, to)) out.push({ type: 'stoke', time: s });
     return out.sort((a, b) => a.time - b.time);
   }
 
-  // The fire flares when a twig lands or the logs settle: 0–1, fading over a second and a half.
+  // The fire flares when a twig lands, the logs settle or the wizard stokes it: 0–1, fading over a second and a half.
   function flare(t) {
     let f = 0;
-    for (const e of events(t - 2, t)) if (e.type === 'land' || e.type === 'settle') f += Math.exp(-(t - e.time) / 0.5);
+    for (const e of events(t - 2, t)) if (e.type === 'land' || e.type === 'settle' || e.type === 'stoke') f += Math.exp(-(t - e.time) / 0.5);
     return Math.min(1, f);
   }
   // Showers of sparks from the same moments.
   function showers(t) {
     const out = [];
     for (const e of events(t - 1.6, t)) {
-      if (e.type !== 'land' && e.type !== 'settle') continue;
+      if (e.type !== 'land' && e.type !== 'settle' && e.type !== 'stoke') continue;
       for (let j = 0; j < 16; j++) {
         const p = ember(Math.floor(e.time * 100) * 16 + j + 7777, t - e.time, 1.6);
         out.push({ x: p.x * 2.2, y: p.y * 1.25 - 0.1, z: p.z * 2.2, alpha: p.alpha });
       }
     }
     return out;
+  }
+
+  // ---- the fire burns down over the evening; the wizard stokes it back with the staff ----
+  const BURN = 900; // seconds from a full fire to a low one
+  const STOKE_LEAD = 1.5, STOKE_DUR = 5; // the wizard raises the staff 1.5 s before the fire roars back
+  // The k-th stoke: about every 15 minutes (the first at 10), moved later until the wizard is free.
+  const stokeCache = new Map();
+  function stokeTime(k) {
+    if (stokeCache.has(k)) return stokeCache.get(k);
+    const busy = (x) => story('reach', x) >= 0 || story('pipe', x) >= 0;
+    let t = 600 + k * BURN;
+    for (let n = 0; n < 200; n++, t += 1) {
+      let free = true;
+      for (let x = t - STOKE_LEAD - 0.5; x <= t + STOKE_DUR; x += 0.5) if (busy(x)) { free = false; break; }
+      if (free) break;
+    }
+    stokeCache.set(k, t);
+    return t;
+  }
+  function stokes(from, to) {
+    const out = [];
+    for (let k = Math.max(0, Math.floor((from - 600) / BURN) - 1); 600 + k * BURN < to; k++) {
+      const s = stokeTime(k);
+      if (s >= from && s < to) out.push(s);
+    }
+    return out;
+  }
+  // How much the fire has to burn: 1 full … 0.35 low embers. It starts full when the page opens,
+  // burns down, and jumps back up over 2 s at each stoke.
+  const burn = (age) => 1 - 0.65 * Math.pow(Math.min(1, age / BURN), 1.3);
+  function fuel(t) {
+    let i = -1;
+    for (let k = Math.max(0, Math.floor((t - 600) / BURN) - 1); stokeTime(k) <= t; k++) i = k;
+    if (i < 0) return burn(t);
+    const last = stokeTime(i), before = burn(last - (i > 0 ? stokeTime(i - 1) : 0));
+    return before + (burn(t - last) - before) * smooth((t - last) / 2);
+  }
+
+  // ---- seasons, from the calendar (northern hemisphere) ----
+  const SEASONS = ['winter', 'spring', 'summer', 'autumn'];
+  function season(month) { // 0 = January
+    return month === 11 || month <= 1 ? 'winter' : month <= 4 ? 'spring' : month <= 7 ? 'summer' : 'autumn';
+  }
+  // A falling leaf, `age` s into a `life` s fall: tumbles down from the treetops, drifting with the wind.
+  function leaf(seed, age, life) {
+    const r = rng(seed * 4517 + 3);
+    const a = r() * Math.PI * 2, rad = 1.2 + r() * 7, h = 4 + r() * 3, spin = 2 + r() * 3;
+    if (age >= life) return { x: 0, y: 0, z: 0, spin: 0, alpha: 0 };
+    const u = age / life;
+    return {
+      x: Math.cos(a) * rad + 0.8 * u + 0.25 * Math.sin(age * 1.7 + seed),
+      y: h * (1 - u),
+      z: Math.sin(a) * rad + 0.25 * Math.cos(age * 1.3 + seed),
+      spin: age * spin,
+      alpha: 1,
+    };
+  }
+  // Snowflake i: falls through a 20 × 8.5 × 20 box around the fire, swaying.
+  function snowflake(i, t) {
+    const r = rng(i * 7349 + 11);
+    const x0 = (r() - 0.5) * 20, z0 = (r() - 0.5) * 20, v = 0.45 + r() * 0.4, ph = r() * 8.5;
+    return { x: x0 + 0.3 * Math.sin(t * 0.7 + i), y: 8 - ((t * v + ph) % 8.5), z: z0 + 0.3 * Math.cos(t * 0.6 + i * 1.3) };
   }
 
   // ---- turning around the fire ----
@@ -312,7 +378,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
-    STORIES, story, since, keyframes, win, events, flare, showers, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, story, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);
