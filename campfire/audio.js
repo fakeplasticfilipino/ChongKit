@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const A = window.CampAnim;
-  let ctx, master, noise, roar, hiss, windGain, windFilter, echo;
+  let ctx, master, noise, roar, hiss, windGain, windFilter, echo, rustle;
   let offset = null, scheduled = 0;
 
   function loop(dest) {
@@ -65,7 +65,13 @@
     windFilter.connect(windGain);
     loop(windFilter);
 
-    // a soft echo for faraway sounds (owl)
+    // leaves rustling in strong gusts
+    rustle = gain(0, master);
+    const leaves = filter('highpass', 2600);
+    leaves.connect(rustle);
+    loop(leaves);
+
+    // a soft echo for faraway sounds (owl, wolf)
     echo = ctx.createDelay(1);
     echo.delayTime.value = 0.23;
     const fb = gain(0.32, echo);
@@ -126,6 +132,96 @@
     });
   }
 
+  // ---- the moments from anim.js's events ----
+  function noiseHit(at, type, freq, q, len, vol, dest) {
+    const src = ctx.createBufferSource();
+    src.buffer = noise;
+    const f = filter(type, freq, q);
+    const g = gain(0);
+    src.connect(f); f.connect(g); g.connect(dest || master);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(vol, at + Math.min(0.02, len * 0.2));
+    g.gain.exponentialRampToValueAtTime(0.0005, at + len);
+    src.start(at, Math.random() * 1.5, len + 0.05);
+    return f;
+  }
+  function thump(at, freq, len, vol) {
+    const o = ctx.createOscillator();
+    o.frequency.setValueAtTime(freq, at);
+    o.frequency.exponentialRampToValueAtTime(freq * 0.55, at + len);
+    const g = gain(0, master);
+    o.connect(g);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(vol, at + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0005, at + len);
+    o.start(at);
+    o.stop(at + len + 0.05);
+  }
+  function crackle(at, n, spread) {
+    for (let i = 0; i < n; i++) pop(at + Math.random() * spread, 0.4 + Math.random() * 0.6);
+  }
+  function swoosh(at, f0, f1, len, vol) {
+    const f = noiseHit(at, 'bandpass', f0, 2, len, vol);
+    f.frequency.setValueAtTime(f0, at);
+    f.frequency.exponentialRampToValueAtTime(f1, at + len);
+  }
+  function ring(at, freqs, len, vol) {
+    const out = pan(0.45, master);
+    freqs.forEach((fr, i) => {
+      const o = ctx.createOscillator();
+      o.frequency.value = fr;
+      const g = gain(0, out);
+      o.connect(g);
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(vol / (i + 1), at + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0003, at + len / (1 + i * 0.4));
+      o.start(at);
+      o.stop(at + len + 0.05);
+    });
+  }
+  function creak(at) {
+    const out = pan(0.45, master);
+    const f = noiseHit(at, 'bandpass', 650, 9, 0.35, 0.25, out);
+    f.frequency.setValueAtTime(650, at);
+    f.frequency.linearRampToValueAtTime(820, at + 0.3);
+    for (let i = 0; i < 2; i++) noiseHit(at + 0.05 + i * 0.09, 'bandpass', 1800, 3, 0.04, 0.12, out); // plates clacking
+  }
+  function howl(at) {
+    const out = pan(0.55, master);
+    const lp = filter('lowpass', 1400);
+    lp.connect(out); lp.connect(echo);
+    [1, 2].forEach((h) => {
+      const o = ctx.createOscillator();
+      o.frequency.setValueAtTime(280 * h, at);
+      o.frequency.linearRampToValueAtTime(520 * h, at + 0.7);
+      o.frequency.linearRampToValueAtTime(480 * h, at + 2.0);
+      o.frequency.linearRampToValueAtTime(360 * h, at + 3.0);
+      const vib = ctx.createOscillator(), vg = gain(6 * h);
+      vib.frequency.value = 5;
+      vib.connect(vg); vg.connect(o.frequency);
+      const g = gain(0, lp);
+      o.connect(g);
+      g.gain.setValueAtTime(0, at);
+      g.gain.linearRampToValueAtTime(0.035 / h, at + 0.5);
+      g.gain.setValueAtTime(0.035 / h, at + 2.3);
+      g.gain.linearRampToValueAtTime(0, at + 3.0);
+      o.start(at); vib.start(at);
+      o.stop(at + 3.1); vib.stop(at + 3.1);
+    });
+  }
+  function play(e, at) {
+    switch (e.type) {
+      case 'land': thump(at, 120, 0.25, 0.25); crackle(at, 9, 0.6); break;
+      case 'settle': thump(at, 85, 0.45, 0.3); noiseHit(at, 'lowpass', 500, 1, 0.35, 0.2); crackle(at + 0.05, 14, 0.9); break;
+      case 'snap': creak(at); break;
+      case 'draw': swoosh(at - 0.25, 2500, 6000, 0.3, 0.05); ring(at, [2350, 3610, 5230], 1.6, 0.025); break;
+      case 'sheathe': swoosh(at - 0.3, 5000, 2000, 0.3, 0.04); noiseHit(at, 'bandpass', 1200, 4, 0.06, 0.2); break;
+      case 'puff': noiseHit(at, 'bandpass', 1100, 0.8, 0.9, 0.05); break;
+      case 'wolf': howl(at); break;
+      case 'eyes': noiseHit(at + 0.3, 'bandpass', 1500, 2, 0.05, 0.08, pan(0, master)); break; // a twig snaps out there
+    }
+  }
+
   // called every frame with the scene's clock (seconds); schedules what's coming in the next 0.3 s
   function update(t) {
     if (!ctx || ctx.state !== 'running') return;
@@ -136,12 +232,15 @@
     for (const p of A.pops(scheduled, until)) pop(p.time + offset, p.strength);
     for (const c of A.chirps(scheduled, until)) chirp(c.time + offset, c.cricket);
     for (const h of A.owls(scheduled, until)) owl(h + offset);
+    for (const e of A.events(scheduled + 0.3, until + 0.3)) play(e, e.time + offset); // looked up 0.3 s ahead, for the lead-ins
+    for (const e of A.events(scheduled + 0.75, until + 0.75)) if (e.type === 'land') swoosh(e.time + offset - 0.75, 700, 1600, 0.6, 0.03); // the twig flying
     scheduled = until;
 
     const f = A.flicker(t), w = A.wind(t);
     roar.gain.setTargetAtTime(0.09 * f * f, now, 0.08);
     windGain.gain.setTargetAtTime(0.02 + 0.14 * w * w, now, 0.3);
     windFilter.frequency.setTargetAtTime(300 + 500 * w, now, 0.3);
+    rustle.gain.setTargetAtTime(0.04 * Math.max(0, w - 0.5) * 2 * (0.5 + 0.5 * A.noise1(t * 3, 950)), now, 0.1);
   }
 
   const state = () => (ctx ? ctx.state : 'waiting for a click');

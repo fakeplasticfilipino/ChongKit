@@ -106,6 +106,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Samurai: chonmage topknot, red lacquered dō with lacing, shoulder sode and hip kusazuri, white collar, obi, indigo hakama, tabi and sandals, katana on the back (wrapped hilt, gold tsuba) and a wakizashi, pack with a straw mat
 - [x] Dark outline around near things (depth edges), 216-pixel render, 40-colour palette (skin, white, red, gold, indigo added), softer firelight colour, a soft fill light from the viewer, closer camera
 
+### ✅ v4 — done
+- [x] Darker night: a small warm pool of firelight, dim sky and fill light, dark corners
+- [x] Pixel-art flames: three noise-eaten tongues on a sprite, redrawn 20 times a second; low log teepee
+- [x] Stories: twig tossed on the fire (flare + sparks), the wizard's pipe and smoke rings, the samurai looking over the drawn katana (glint), glances at whoever moves
+- [x] Ambience: mist between the trees, clouds crossing the moon (dimming it), shooting stars by the moon, eyes glinting across the fire (the samurai notices)
+- [x] Sound: twig whoosh and landing, logs settling, katana ring and click, armour creak, pipe puffs, a distant wolf, leaves rustling, a twig snapping where the eyes are
+- [x] `?at=SECONDS` to start the clock at a moment; tests for the flame shape, stories, events, flares, keyframes
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

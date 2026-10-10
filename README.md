@@ -310,17 +310,28 @@ buttons (← All tools, ⛶ fullscreen) fade when the mouse rests. **Drag** (mou
 circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there. The moon
 keeps its one place in the sky, up and to the right of the starting view.
 
-**What moves:** the flames flicker and the firelight pulses (light and shadows waver on the
-figures); embers and smoke rise; everyone breathes; the traveler looks around and shifts on the
-cane; the wizard's staff crystal pulses and they reach toward the fire; the samurai nods off and
-jerks awake; treetops sway, stars twinkle, fireflies drift at the forest edge, and the camera
-drifts slowly. Each idle moment has its own repeating schedule, so they rarely line up.
+**What moves:** pixel flames lick and flicker and the firelight pulses (a small warm pool; the
+night stays dark); embers and smoke rise; everyone breathes; treetops sway, stars twinkle,
+fireflies drift at the forest edge, mist creeps between the trees, clouds cross the moon (its light
+dims), and the camera drifts slowly. Little stories, each on its own repeating schedule:
+
+- the traveler shifts on the cane, and every 46 s tosses a twig on the fire (it flares and throws sparks);
+- the wizard warms a hand at the fire, and smokes a pipe, blowing smoke rings;
+- the samurai nods off and jerks awake, and draws the katana to look it over (a glint runs down the blade);
+- they glance at whoever is doing something; the samurai notices the eyes;
+- now and then logs settle (a flare and a shower of sparks), a shooting star crosses the gap by the
+  moon, and once in a long while two eyes glint in the dark across the fire.
 
 **Sound** is always on (no mute), made in the browser with Web Audio, so there are no sound files:
-the fire's roar and pops, wind in the trees, three crickets taking turns, and a distant owl every
-60–120 s. Browsers only allow sound after you interact, so it starts with your first click, tap or
-key. The sound and the picture share one clock: every strong pop throws a burst of sparks, and
-the trees sway harder when the wind rises.
+the fire's roar and pops, wind in the trees and leaves rustling in the gusts, three crickets taking
+turns, a distant owl every 60–120 s and a wolf every few minutes; and the moments of the stories: the
+twig's whoosh and landing, logs settling, the katana's ring and click, the samurai's armour creaking,
+the wizard's puffs, a twig snapping out where the eyes are. Browsers only allow sound after you
+interact, so it starts with your first click, tap or key. The sound and the picture share one clock
+(`CampAnim.events`): every strong pop throws sparks, and the trees sway harder when the wind rises.
+
+**Checking a moment:** add `?at=SECONDS` to the address to start the clock there (the twig lands at
+30.3 s, the katana comes out at 21.6 s, the first shooting star is at 30.7 s).
 
 **How the pixel look works:** [three.js](https://threejs.org) draws a simple 3D scene (boxes,
 cones and cylinders) into a small image about 216 pixels tall; a shader then draws a dark outline around near things
@@ -328,8 +339,8 @@ cones and cylinders) into a small image about 216 pixels tall; a shader then dra
 sampled from the art reference, with a light ordered dither, and the image is
 stretched to the window without smoothing.
 
-**Files:** `anim.js` is the timing math (flicker, breathing, idle moments, ember and smoke paths,
-the pop / wind / cricket / owl schedules, the turning; tested), `figures.js` builds the three
+**Files:** `anim.js` is the timing math (flicker, breathing, the flame shape, the stories and their
+moments, ember / spark / smoke paths, the pop / wind / cricket / owl schedules, the turning; tested), `figures.js` builds the three
 figures, `scene.js` builds and moves the world, `audio.js` makes the sound, `app.js` renders it
 and handles dragging. three.js r153 is copied into
 `campfire/vendor/three.min.js` (the non-module build, so the page opens from `file://`) with its

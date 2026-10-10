@@ -189,7 +189,11 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
    The moon has one fixed place in the sky (up and right of the starting view; trees in its line of
    sight are kept short, `underMoon`); it never follows the camera (the table hated that).
    Near things get a dark 1-pixel outline from a depth-edge test in the pixel pass (flames are kept
-   out of it: they don't write depth).
+   out of it: they don't write depth). The flames are a sprite drawn from `CampAnim.fireHeat`
+   (noise-eaten tongues) at 20 frames a second. Keep the night dark: the fire lights a small pool.
+   Stories (`CampAnim.STORIES`) are picked so one figure never runs two at once (tested); their
+   moments (`CampAnim.events`) drive both the picture and the sound. `?at=SECONDS` starts the clock
+   there, for checking a moment.
 4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
    `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
    comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw
