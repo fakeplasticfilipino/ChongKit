@@ -123,6 +123,9 @@
     tail.add(box(0.1, 0.6, 0.1, MANE, 0, -0.3, -0.05));
     horse.add(tail);
     scene.add(horse);
+    const apple = box(0.08, 0.08, 0.08, 0x9b3a1c, 0, -0.08, 0.42); // held at the muzzle while the horse eats
+    apple.visible = false;
+    head.add(apple);
     // the rein, from the muzzle to the tree trunk
     const rein = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0x3a2416 }));
     rein.frustumCulled = false;
@@ -187,6 +190,12 @@
       const graze = A.envelope(t, 41, 12, 9);
       neck.rotation.x = 0.55 + 1.35 * graze + 0.03 * Math.sin(t * 1.3); // grazing: the neck lowers forward
       head.rotation.x = -0.15 + 0.65 * graze + 0.04 * A.noise1(t * 0.5, 1500); // and the nose goes down to the grass
+      const pet = s.pet || 0, eat = s.eat || 0;
+      neck.rotation.x += (0.9 - neck.rotation.x) * Math.max(pet, eat) * 0.9; // lowers its head toward the walker
+      head.rotation.x += 0.12 * pet * Math.sin(t * 5) + 0.18 * eat * Math.abs(Math.sin(t * 7)); // nuzzles; chews
+      apple.visible = eat > 0.05;
+      apple.scale.setScalar(Math.max(0.2, 1 - 0.8 * Math.min(1, (s.eatLocal || 0) / 3)));
+      candle.intensity = 0.5 + 0.6 * (s.peek || 0) * (0.85 + 0.15 * A.noise1(t * 9, 1600));
       body.scale.y = 1 + 0.015 * A.breath(t, 4.2, 0.2);
       tail.rotation.z = 0.25 * Math.sin(t * 2.3) * (0.4 + 0.6 * Math.max(0, A.noise1(t * 0.4, 920)));
       tail.rotation.x = 0.15 + 0.1 * Math.sin(t * 1.1);

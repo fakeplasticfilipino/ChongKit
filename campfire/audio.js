@@ -321,6 +321,11 @@
     f.frequency.setValueAtTime(2200, at);
     f.frequency.linearRampToValueAtTime(3200, at + 0.33);
   }
+  // the walker's actions
+  function snort(at) { const f = noiseHit(at, 'bandpass', 520, 1.5, 0.35, 0.22); f.frequency.exponentialRampToValueAtTime(300, at + 0.3); }
+  function nuzzle(at) { noiseHit(at, 'lowpass', 400, 0.7, 0.6, 0.08); }
+  function chew(at) { noiseHit(at, 'bandpass', 1800, 2, 0.06, 0.12); noiseHit(at + 0.11, 'bandpass', 1500, 2, 0.06, 0.1); }
+  function flap(at) { swoosh(at, 400, 900, 0.3, 0.06); }
   function play(e, at) {
     switch (e.type) {
       case 'land': thump(at, 120, 0.25, 0.25); crackle(at, 9, 0.6); break;
@@ -331,6 +336,15 @@
       case 'puff': noiseHit(at, 'bandpass', 1100, 0.8, 0.9, 0.05); break;
       case 'wolf': howl(at); break;
       case 'stoke': stoke(at); break;
+      case 'nuzzle': nuzzle(at); break;
+      case 'snort': snort(at); break;
+      case 'chew': chew(at); break;
+      case 'ladle': ring(at, [1800, 2700], 0.5, 0.02); break;
+      case 'spoon': ring(at, [2600, 3900], 0.25, 0.012); break;
+      case 'flap': flap(at); break;
+      case 'kindle': thump(at, 90, 0.4, 0.15); crackle(at + 0.05, 6, 0.5); break;
+      case 'strain': creak(at); break;
+      case 'uncork': thump(at, 600, 0.08, 0.12); break;
       case 'syl': syllable(at, e.who, e.rise, e.reply); break;
       case 'laugh': laughter(at); break;
       case 'strum': strum(at, e.notes, e.dir, e.last); break;

@@ -425,10 +425,17 @@
       ],
     };
     const interact = CampInteract.build(interactKit);
+    const bowl = cyl(0.09, 0.06, 0.06, 7, 0x744726, 0, 0, 0);
+    bowl.visible = false;
+    scene.add(bowl);
+    const bowlSteam = new THREE.Sprite(new THREE.SpriteMaterial({ map: blob, color: 0x9a948c, transparent: true, depthWrite: false }));
+    bowlSteam.visible = false;
+    scene.add(bowlSteam);
     scene.add(box(0.7, 0.35, 0.5, 0x3a3f4a, 4.4, 0.17, 2.4)); // a rock to sit on at the edge
     obstacles.push([4.4, 2.4, 0.4]);
     const OWNER = {};
     for (const [w, list] of Object.entries(A.BUSY)) for (const n of list) OWNER[n] = w;
+    let sitCam = 0;
     let lastT = null, walkWas = { who: null, k: 0, at: [0, 0] };
     const walkerHead = new THREE.Vector3(), camTarget = new THREE.Vector3(), follow = new THREE.Vector3();
     const NAMES = new Map([[traveler, 'traveler'], [wizard, 'wizard'], [samurai, 'samurai']]);
@@ -640,7 +647,8 @@
         a0.sh.rotation.set(a0.sh.rotation.x + (-0.4 - a0.sh.rotation.x) * hold, 0, a0.sh.rotation.z + (-2.3 - a0.sh.rotation.z) * hold);
         a0.el.rotation.x += (-1.5 - a0.el.rotation.x) * hold;
       }
-      camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu });
+      const rx = interact.react(t);
+      camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu, pet: rx.pet, eat: rx.eat, eatLocal: rx.name === 'apple' ? rx.local - 0.8 : 0, peek: rx.peek });
       extras.update(t, { fuel: fu, pot: camp.POT, musicAt: guitar.visible ? guitarAt : null });
       pipe.visible = pp >= 1.0 && pp < 10.0;
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
@@ -841,15 +849,25 @@
       const wk = walk.update(t, dt, view.yaw);
       nowT = t;
       interact.update(t, wk);
+      const rxw = interact.react(t);
+      bowl.visible = bowlSteam.visible = !!(rxw.stewing && rxw.local > 0.9 && wk.who);
+      if (bowl.visible) {
+        const wp = { traveler, wizard, samurai }[wk.who], arm = wp.arms[1];
+        (arm.wr || arm.el).getWorldPosition(bowl.position);
+        bowlSteam.position.copy(bowl.position).y += 0.12 + 0.05 * Math.sin(t * 2);
+        bowlSteam.scale.setScalar(0.12);
+        bowlSteam.material.opacity = 0.25;
+      }
+      sitCam += ((rxw.sitting ? 1 : 0) - sitCam) * Math.min(1, dt * 3);
       walkWas = wk.who ? wk : { who: null, k: 0, at: [0, 0] };
       if (wk.who) { const wp = { traveler, wizard, samurai }[wk.who]; wp.head.getWorldPosition(walkerHead); }
       const wkK = A.smooth(wk.k || 0);
       if (wk.moving) view.yaw += Math.atan2(Math.sin(wk.yaw + Math.PI - view.yaw), Math.cos(wk.yaw + Math.PI - view.yaw)) * Math.min(1, dt * 1.2); // swing round behind them
 
       // camera: where you turned it (round the fire, or round the walker), plus a slow drift
-      if (wk.who) follow.set(wk.at[0], 0.95, wk.at[1]);
+      if (wk.who) follow.set(wk.at[0], 0.95 - 0.35 * sitCam, wk.at[1]);
       camTarget.copy(lookAt).lerp(follow, wkK);
-      const R = RADIUS + (3.6 - RADIUS) * wkK;
+      const R = RADIUS + (3.6 - 0.6 * sitCam - RADIUS) * wkK;
       const yaw = view.yaw + 0.18 * Math.sin(t * 0.045) * (1 - wkK);
       const pitch = view.pitch + 0.02 * Math.sin(t * 0.031);
       camera.position.set(camTarget.x + Math.sin(yaw) * Math.cos(pitch) * R, camTarget.y + Math.sin(pitch) * R + 0.25 * wkK, camTarget.z + Math.cos(yaw) * Math.cos(pitch) * R);

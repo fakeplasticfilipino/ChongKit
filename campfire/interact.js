@@ -105,7 +105,7 @@
       current = walk.state() === 'walking' ? A.nearestSpot(wk.at[0], wk.at[1], list) : null;
       if (running && a) {
         const p = people[wk.who], s = running.spot;
-        const yaw = turnToward(wk.yaw, Math.atan2(s.x - wk.at[0], s.z - wk.at[1]), 0.15); // turn to it
+        const yaw = turnToward(wk.yaw, (running.name === 'sit' || running.name === 'stew') ? Math.atan2(-wk.at[0], -wk.at[1]) : Math.atan2(s.x - wk.at[0], s.z - wk.at[1]), 0.15); // turn to it; sitting faces the fire
         walk.face(yaw);
         p.root.rotation.y = yaw;
         pose(p, a, wk.who);
