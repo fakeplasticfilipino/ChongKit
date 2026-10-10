@@ -29,7 +29,7 @@
     const rand = A.rng(42);
     const around = (rMin, rMax) => { const a = rand() * Math.PI * 2, r = rMin + rand() * (rMax - rMin); return [Math.cos(a) * r, Math.sin(a) * r, a]; };
     // keep props clear of the figures (and their seats) around the fire
-    const SPOTS = [[-2.1, 0.35], [0, -2.25], [2.1, 0.35], [2.7, 0.05]];
+    const SPOTS = [[-2.1, 0.35], [0, -2.25], [2.1, 0.35], [2.7, 0.05], [-3.4, -5.3], [2.6, -5.8], [3.3, -5.7], [1.55, -5.25], [-3.2, -4.6], [4.6, -5.5]]; // figures, seats, tent, horse, lantern post
     const clear = (x, z, d) => SPOTS.every(([sx, sz]) => Math.hypot(x - sx, z - sz) > d);
 
     // ---- light ----
@@ -213,6 +213,7 @@
     }
     for (let i = 0; i < 16; i++) { // bushes
       const [x, z] = around(5.6, 7.6);
+      if (!clear(x, z, 1.3)) continue;
       const bush = group(x, 0, z);
       for (let j = 0; j < 3; j++) {
         const r = 0.3 + rand() * 0.3;
@@ -366,6 +367,9 @@
     let eyesSeen = -1;
     const skyPoint = (az, el, out) => out.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).multiplyScalar(95).add(CAM0);
 
+    // ---- the camp: tripod and stew, tent, horse, lantern (camp.js) ----
+    const camp = CampProps.build({ THREE, scene, mat, mesh, box, cyl, cone, group, flat, rand, particles, blob });
+
     // ---- the season's weather: falling leaves in autumn; snow and steaming breath in winter ----
     const LEAVES = AUTUMN ? 30 : 0, FLAKES = WINTER ? 650 : 0;
     const leafGeo = new THREE.PlaneGeometry(0.09, 0.065);
@@ -507,9 +511,11 @@
 
       // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
       const reach = A.win(A.story('reach', t), 0, 6, 1.5);
+      const sl = A.story('stir', t), stir = A.win(sl, 0.3, 5.7, 0.6); // a flick of the hand, and the ladle stirs itself
       const [wsx, wsz, wel] = A.keyframes(pp < 0 ? -1 : pp, [[0, -0.5, 0.05, -0.7], [1.2, -1.3, 0.6, -1.2], [9.6, -1.3, 0.6, -1.2], [10.8, -0.5, 0.05, -0.7]]);
-      wizard.arms[0].sh.rotation.set(wsx - 0.6 * reach, 0, wsz);
-      wizard.arms[0].el.rotation.x = wel + 0.55 * reach;
+      wizard.arms[0].sh.rotation.set(wsx - 0.6 * reach - 0.75 * stir, 0, wsz + 0.18 * stir * Math.sin(sl * 6));
+      wizard.arms[0].el.rotation.x = wel + 0.55 * reach + 0.6 * stir;
+      camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu });
       pipe.visible = pp >= 1.0 && pp < 10.0;
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
       pipeGlow.material.color.setHex(inhale > 0.5 ? 0xffe08a : inhale > 0.1 ? 0xe8812c : 0x9b3a1c);
@@ -521,6 +527,7 @@
       wizard.arms[1].sh.rotation.x = -1.0 - 0.5 * raise;
       wizard.head.rotation.y = lookAtMix(wizard, [
         [raise, FIRE_AT],
+        [stir, camp.POT],
         [A.win(kt, 2.5, 8.5, 0.6), HEADS.get(samurai)],
         [A.win(tw, 0.6, 2.0, 0.3), HEADS.get(traveler)],
         [A.win(tw, 2.0, 3.6, 0.3), FIRE_AT],

@@ -198,6 +198,7 @@
     twig: { period: 62, offset: 28, dur: 4 }, // traveler tosses a twig on the fire
     reach: { period: 67, offset: 6, dur: 6 }, // wizard warms a hand
     pipe: { period: 67, offset: 30, dur: 11 }, // wizard smokes a pipe
+    stir: { period: 67, offset: 50, dur: 6 }, // wizard stirs the stew with a flick of the hand (the ladle stirs itself)
     doze: { period: 37, offset: 9, dur: 9 }, // samurai nods off
     katana: { period: 74, offset: 20, dur: 12 }, // samurai checks the blade
   };
@@ -290,7 +291,7 @@
   const stokeCache = new Map();
   function stokeTime(k) {
     if (stokeCache.has(k)) return stokeCache.get(k);
-    const busy = (x) => story('reach', x) >= 0 || story('pipe', x) >= 0;
+    const busy = (x) => story('reach', x) >= 0 || story('pipe', x) >= 0 || story('stir', x) >= 0;
     let t = 600 + k * BURN;
     for (let n = 0; n < 200; n++, t += 1) {
       let free = true;

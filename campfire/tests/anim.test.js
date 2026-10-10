@@ -187,7 +187,7 @@ test('fire colours: clear when cold, a colour for every hotter heat', () => {
 });
 
 test('stories: one figure never runs two at once', () => {
-  const pairs = [['shift', 'twig'], ['reach', 'pipe'], ['doze', 'katana']];
+  const pairs = [['shift', 'twig'], ['reach', 'pipe'], ['reach', 'stir'], ['pipe', 'stir'], ['doze', 'katana']];
   for (let t = 0; t < 2000; t += 0.25) {
     for (const [a, b] of pairs) assert.ok(A.story(a, t) < 0 || A.story(b, t) < 0, `${a} and ${b} at ${t}`);
   }
@@ -253,7 +253,7 @@ test('the fire burns down, and the wizard stokes it back when free', () => {
   assert.ok(A.fuel(s0 + 2.5) > 0.98, 'full after the stoke');
   for (let k = 0; k < 6; k++) {
     const s = A.stokeTime(k);
-    for (let x = s - A.STOKE_LEAD; x <= s + A.STOKE_DUR; x += 0.25) assert.ok(A.story('reach', x) < 0 && A.story('pipe', x) < 0, 'wizard busy at ' + x);
+    for (let x = s - A.STOKE_LEAD; x <= s + A.STOKE_DUR; x += 0.25) assert.ok(A.story('reach', x) < 0 && A.story('pipe', x) < 0 && A.story('stir', x) < 0, 'wizard busy at ' + x);
     if (k) assert.ok(s - A.stokeTime(k - 1) > 700);
   }
   let prev = A.fuel(0);
