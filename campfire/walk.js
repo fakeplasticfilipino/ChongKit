@@ -14,6 +14,7 @@
     let who = null, state = 'seated', k = 0;
     let x = 0, z = 0, yaw = 0, vx = 0, vz = 0, phase = 0, speed = 0, back = 0, ahead = false;
     let chosen = 'traveler';
+    let held = false, sitAmt = 0, sitDrop = 0;
 
     const person = () => kit.people[who];
     function start(name) {
@@ -26,7 +27,7 @@
     // E / the button: stand up as the chosen one, or go back and sit down
     function toggle() {
       if (!who) start(chosen);
-      else if (state === 'rising' || state === 'walking') { state = 'returning'; back = 0; }
+      else if (state === 'rising' || state === 'walking') { state = 'returning'; back = 0; held = false; sitAmt = 0; }
     }
     function choose(name) { if (kit.people[name]) chosen = name; }
     function setKey(code, down) { if (down) keys.add(code); else keys.delete(code); }
@@ -52,7 +53,7 @@
       let want = [0, 0], run = false;
       if (state === 'rising') { k = Math.min(1, k + dt / RISE); if (k >= 1) state = 'walking'; }
       if (state === 'walking') {
-        const [ix, iz] = input();
+        const [ix, iz] = held ? [0, 0] : input();
         ahead = iz > 0.3; // walking away from the camera: it may follow round behind
         const fx = -Math.sin(viewYaw), fz = -Math.cos(viewYaw), rx = Math.cos(viewYaw), rz = -Math.sin(viewYaw);
         run = keys.has('ShiftLeft') || keys.has('ShiftRight') || Math.hypot(joy[0], joy[1]) > 0.95;
@@ -91,13 +92,13 @@
 
       // pose: legs straighten and swing, the body rises, arms swing, a slight bob
       const g = A.gait(phase, Math.min(1.6, speed / WALK));
-      const hipY = lerp(p.sitY, p.standY, k);
-      p.root.position.set(x, k * 0.025 * Math.abs(Math.sin(phase)) * Math.min(1, speed), z);
+      const hipY = lerp(lerp(p.sitY, p.standY, k), p.sitY, sitAmt);
+      p.root.position.set(x, k * 0.025 * Math.abs(Math.sin(phase)) * Math.min(1, speed) - sitDrop * sitAmt, z);
       p.root.rotation.y = yaw;
       p.legs.forEach((l, i) => {
         l.hip.position.y = hipY;
-        l.hip.rotation.x = lerp(l.sitHip, Math.PI / 2 - g.legs[i].hip, k);
-        l.knee.rotation.x = lerp(l.sitKnee, -Math.PI / 2 - g.legs[i].knee, k);
+        l.hip.rotation.x = lerp(lerp(l.sitHip, Math.PI / 2 - g.legs[i].hip, k), l.sitHip, sitAmt);
+        l.knee.rotation.x = lerp(lerp(l.sitKnee, -Math.PI / 2 - g.legs[i].knee, k), l.sitKnee, sitAmt);
       });
       p.torso.position.y = hipY;
       p.torso.rotation.x = lerp(p.torso.rotation.x, 0.06 + 0.08 * Math.min(1, speed / RUN), k);
@@ -115,12 +116,16 @@
         p.staff.position.set(0.4, hand - hand * Math.cos(th), 0.47 - hand * Math.sin(th));
       }
       p.head.rotation.x = lerp(p.head.rotation.x, 0, k);
-      if (p.robes) { p.robes.stand.visible = k > 0.5; p.robes.sit.forEach((m) => { m.visible = k <= 0.5; }); }
+      if (p.robes) { const standing = k > 0.5 && sitAmt < 0.5; p.robes.stand.visible = standing; p.robes.sit.forEach((m) => { m.visible = !standing; }); }
       return { who, k, at: [x, z], yaw, moving: speed > 0.2 && state === 'walking' && ahead };
     }
 
     const info = () => ({ who, state, k, x, z, yaw, speed, keys: [...keys] });
-    return { update, toggle, choose, setKey, setJoy, info, away: (name) => who === name, walking: () => !!who };
+    const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    const wantsToMove = () => MOVE_KEYS.some((c) => keys.has(c)) || Math.hypot(joy[0], joy[1]) > 0.2;
+    const hold = (on) => { held = !!on; };
+    const sitAt = (amount, drop) => { sitAmt = Math.max(0, Math.min(1, amount)); sitDrop = drop || 0; };
+    return { update, toggle, choose, setKey, setJoy, info, hold, sitAt, wantsToMove, state: () => state, away: (name) => who === name, walking: () => !!who };
   }
 
   window.CampWalk = { build };
