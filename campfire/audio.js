@@ -344,7 +344,7 @@
     const raining = A.rainAt(t);
     if (CampAudio.season !== 'winter' && raining < 0.2) for (const c of A.chirps(scheduled, until)) chirp(c.time + offset, c.cricket); // no crickets in the snow or rain
     for (const h of A.owls(scheduled, until)) owl(h + offset);
-    for (const e of A.events(scheduled + 0.3, until + 0.3)) play(e, e.time + offset); // looked up 0.3 s ahead, for the lead-ins
+    for (const e of A.events(scheduled + 0.3, until + 0.3)) if (!(CampAudio.skip && CampAudio.skip(e))) play(e, e.time + offset); // looked up 0.3 s ahead, for the lead-ins
     for (const e of A.events(scheduled + 1.1, until + 1.1)) if (e.type === 'stoke') shimmer(e.time + offset);
     for (const e of A.events(scheduled + 0.75, until + 0.75)) if (e.type === 'land') swoosh(e.time + offset - 0.75, 700, 1600, 0.6, 0.03); // the twig flying
     scheduled = until;
@@ -361,6 +361,18 @@
     rustle.gain.setTargetAtTime(0.013 * Math.max(0, w - 0.5) * 2 * (0.5 + 0.5 * A.noise1(t * 3, 950)), now, 0.1);
   }
 
+  // a footstep: leaves crunching in autumn, snow squeaking in winter, soft grass otherwise
+  function step(speed) {
+    if (!ctx || ctx.state !== 'running') return;
+    const at = ctx.currentTime + 0.01, v = 0.05 + 0.025 * Math.min(1.6, speed), out = pan(0, master);
+    if (CampAudio.season === 'autumn') {
+      noiseHit(at, 'bandpass', 2600, 1, 0.09, v, out);
+      for (let i = 0; i < 3; i++) noiseHit(at + 0.01 + Math.random() * 0.06, 'bandpass', 4000 + Math.random() * 2500, 3, 0.02, v * 0.7, out);
+    } else if (CampAudio.season === 'winter') {
+      const f = noiseHit(at, 'bandpass', 1300, 6, 0.12, v * 1.3, out);
+      f.frequency.linearRampToValueAtTime(1800, at + 0.1);
+    } else noiseHit(at, 'lowpass', 650, 1, 0.08, v * 1.4, out);
+  }
   const state = () => (ctx ? ctx.state : 'waiting for a click');
-  window.CampAudio = { start, update, state, season: 'autumn' };
+  window.CampAudio = { start, update, state, step, season: 'autumn', skip: null };
 })();

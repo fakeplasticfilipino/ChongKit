@@ -18,7 +18,8 @@
   // The season comes from the calendar; ?season=winter (spring, summer, autumn) previews another.
   const params = new URLSearchParams(location.search);
   const season = A.SEASONS.includes(params.get('season')) ? params.get('season') : A.season(new Date().getMonth());
-  const world = CampScene.build(THREE, { season });
+  const world = CampScene.build(THREE, { season, onStep: (speed) => CampAudio.step(speed) });
+  CampAudio.skip = (e) => world.walk.away(A.eventOwner(e)); // the walker's own story sounds pause
   CampAudio.season = season;
   const target = new THREE.WebGLRenderTarget(384, 216, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
   target.depthTexture = new THREE.DepthTexture(384, 216); // for the outlines
@@ -123,11 +124,40 @@
     if (click && e.type === 'pointerup') { // a click, not a drag: whoever's under it does something
       view.vyaw = view.vpitch = 0;
       const who = world.pick(...toNdc(e));
-      if (who) world.act(who, last);
+      if (who) { world.walk.choose(who); world.act(who, last); } // the last one clicked is who walks
     }
   };
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
+
+  // Walking around the camp: E or the Walk button stands up the last one clicked (the traveler at first);
+  // WASD / arrows move, Shift runs; on touch screens, a joystick. 1 / 2 / 3 pick who walks next.
+  const MOVE = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight'];
+  window.addEventListener('keydown', (e) => {
+    if (MOVE.includes(e.code)) { world.walk.setKey(e.code, true); if (e.code.startsWith('Arrow')) e.preventDefault(); }
+    else if (e.code === 'KeyE' && !e.repeat) world.walk.toggle();
+    else if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') world.walk.choose(['traveler', 'wizard', 'samurai'][+e.code.slice(-1) - 1]);
+  });
+  window.addEventListener('keyup', (e) => world.walk.setKey(e.code, false));
+  window.addEventListener('blur', () => MOVE.forEach((c) => world.walk.setKey(c, false)));
+  const walkBtn = document.getElementById('walk');
+  walkBtn.addEventListener('click', () => world.walk.toggle());
+  const joy = document.getElementById('joy'), knob = joy.firstElementChild;
+  let joyId = null;
+  const joyMove = (e) => {
+    const r = joy.getBoundingClientRect(), R = r.width / 2;
+    let dx = (e.clientX - r.left - R) / R, dy = (e.clientY - r.top - R) / R;
+    const m = Math.hypot(dx, dy);
+    if (m > 1) { dx /= m; dy /= m; }
+    knob.style.transform = 'translate(' + dx * R * 0.6 + 'px,' + dy * R * 0.6 + 'px)';
+    world.walk.setJoy(dx, -dy);
+  };
+  joy.addEventListener('pointerdown', (e) => { joyId = e.pointerId; joy.setPointerCapture(e.pointerId); joyMove(e); });
+  joy.addEventListener('pointermove', (e) => { if (e.pointerId === joyId) joyMove(e); });
+  const joyEnd = (e) => { if (e.pointerId !== joyId) return; joyId = null; knob.style.transform = ''; world.walk.setJoy(0, 0); };
+  joy.addEventListener('pointerup', joyEnd);
+  joy.addEventListener('pointercancel', joyEnd);
+  let walkingShown = null;
 
   // Sound is always on; browsers only allow it after the first click, tap or key.
   ['pointerdown', 'keydown', 'touchend'].forEach((e) => window.addEventListener(e, CampAudio.start, { passive: true }));
@@ -140,6 +170,8 @@
     last = t;
     if (!drag) view = A.orbit(view, dt);
     world.update(t, view);
+    const walking = world.walk.walking();
+    if (walking !== walkingShown) { walkingShown = walking; walkBtn.textContent = walking ? 'Sit' : 'Walk'; document.body.classList.toggle('walking', walking); }
     CampAudio.update(t);
     renderer.setRenderTarget(target);
     renderer.render(world.scene, world.camera);

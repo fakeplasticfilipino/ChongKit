@@ -375,3 +375,29 @@ test('the flute: notes from the scale, inside the run; whetstone strokes inside 
   }
   for (const r of A.events(0, 1200).filter((e) => e.type === 'rasp')) assert.ok(A.story('whet', r.time) >= 0);
 });
+
+test('collide: out of every obstacle, inside the treeline, untouched when clear', () => {
+  const circles = [[0, 0, 1], [2.8, 0, 0.5]]; // room to pass between
+  assert.deepStrictEqual(A.collide(3, 3, 0.3, circles, 7), [3, 3]);
+  let [x, z] = A.collide(0.5, 0, 0.3, circles, 7);
+  assert.ok(Math.hypot(x, z) >= 1.3 - 1e-9);
+  [x, z] = A.collide(10, 0, 0.3, circles, 7);
+  close(Math.hypot(x, z), 6.7, 1e-9, 'kept inside');
+  for (let i = 0; i < 300; i++) {
+    const r = A.rng(i);
+    [x, z] = A.collide((r() - 0.5) * 16, (r() - 0.5) * 16, 0.3, circles, 7);
+    assert.ok(Math.hypot(x, z) <= 6.7 + 1e-9);
+    for (const [cx, cz, cr] of circles) assert.ok(Math.hypot(x - cx, z - cz) >= 0.3 + cr - 0.02, 'inside an obstacle');
+  }
+});
+
+test('gait: legs swing opposite, arms against them, nothing when standing', () => {
+  for (let p = 0; p < 7; p += 0.3) {
+    const g = A.gait(p, 1);
+    close(g.legs[0].hip, -g.legs[1].hip, 1e-9, 'legs opposite');
+    close(g.arms[0], -g.arms[1], 1e-9, 'arms opposite');
+    assert.ok(g.legs[0].knee <= 0 && g.legs[1].knee <= 0, 'knees bend one way');
+  }
+  const still = A.gait(1.2, 0);
+  assert.strictEqual(Math.abs(still.legs[0].hip) + Math.abs(still.arms[0]) + Math.abs(still.legs[0].knee), 0);
+});

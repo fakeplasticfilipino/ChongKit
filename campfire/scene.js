@@ -213,10 +213,12 @@
       if (!clear(x, z, 0.7)) continue;
       scene.add(box(0.045, 0.045, 0.045, [0xe8e2d4, 0xf8b347, 0x5e3a56][i % 3], x, 0.06 + rand() * 0.08, z));
     }
+    const bushSpots = []; // for walking: bushes block the way
     for (let i = 0; i < 16; i++) { // bushes
       const [x, z] = around(5.6, 7.6);
       if (!clear(x, z, 1.3)) continue;
       const bush = group(x, 0, z);
+      bushSpots.push([x, z, 0.55]);
       for (let j = 0; j < 3; j++) {
         const r = 0.3 + rand() * 0.3;
         bush.add(mesh(new THREE.IcosahedronGeometry(r, 0), [0x0d1612, 0x16241b, 0x213425][j], (rand() - 0.5) * 0.6, r * 0.8, (rand() - 0.5) * 0.6));
@@ -388,6 +390,25 @@
     const camp = CampProps.build({ THREE, scene, mat, mesh, box, cyl, cone, group, flat, rand, particles, blob });
     const visitors = CampVisitors.build({ THREE, scene, box, cyl, cone, group });
     const extras = CampExtras.build({ THREE, scene, particles });
+
+    // ---- walking around the camp (walk.js): what blocks the way ----
+    const packAt = samurai.root.localToWorld(new THREE.Vector3(-0.62, 0, -0.3));
+    const hx = Math.sin(1.49), hz = Math.cos(1.49), lx = Math.cos(0.65), lz = -Math.sin(0.65);
+    const obstacles = [
+      [0, 0, 0.95], // the fire and the tripod
+      [-2.12, 0.35, 0.6, 'traveler'], [0, -2.25, 0.85, 'wizard'], [2.12, 0.35, 0.55, 'samurai'], // the seats, and whoever sits there
+      [packAt.x, packAt.z, 0.3],
+      [-3.4, -5.3, 1.05], // the tent
+      [2.6 - 0.45 * hx, -5.8 - 0.45 * hz, 0.4], [2.6, -5.8, 0.4], [2.6 + 0.45 * hx, -5.8 + 0.45 * hz, 0.4], // the horse
+      [1.55, -5.25, 0.2], // the lantern post
+      [-3.6 - 0.9 * lx, -2.6 - 0.9 * lz, 0.32], [-3.6, -2.6, 0.32], [-3.6 + 0.9 * lx, -2.6 + 0.9 * lz, 0.32], // the fallen log
+      ...bushSpots,
+    ];
+    const walk = CampWalk.build({ people: { traveler, wizard, samurai }, obstacles, onStep: (opts && opts.onStep) || null });
+    const OWNER = {};
+    for (const [w, list] of Object.entries(A.BUSY)) for (const n of list) OWNER[n] = w;
+    let lastT = null, walkWas = { who: null, k: 0, at: [0, 0] };
+    const walkerHead = new THREE.Vector3(), camTarget = new THREE.Vector3(), follow = new THREE.Vector3();
     const NAMES = new Map([[traveler, 'traveler'], [wizard, 'wizard'], [samurai, 'samurai']]);
     const fluteTip = new THREE.Vector3();
     const NOWHERE = new THREE.Vector3(0, 0.4, 20);
@@ -495,10 +516,13 @@
         p.torso.scale.set(1 + 0.02 * b, 1 + 0.03 * b, 1 + 0.02 * b);
       });
 
-      const tw = A.story('twig', t), pp = A.story('pipe', t), kt = A.story('katana', t);
+      const dt = lastT === null ? 0 : Math.min(0.1, Math.max(0, t - lastT));
+      lastT = t;
+      const S = (name) => (walk.away(OWNER[name]) ? -1 : A.story(name, t)); // the walker's own stories pause
+      const tw = S('twig'), pp = S('pipe'), kt = S('katana');
       const vis = visitors.update(t); // the fox, the deer, the owl
-      const fl3 = A.story('flute', t), wt = A.story('whet', t);
-      const ta = A.talkAt(t); // two of them talking
+      const fl3 = S('flute'), wt = S('whet');
+      const ta0 = A.talkAt(t), ta = ta0 && !walk.away(ta0.speaker) && !walk.away(ta0.listener) ? ta0 : null; // two of them talking
       const talkW = ta ? A.win(ta.local, 0.2, A.TALK.dur - 0.3, 0.4) : 0;
       const recentSyl = ta ? A.events(t - 0.16, t).filter((e) => e.type === 'syl') : [];
       const laughE = A.events(t - 1.3, t).find((e) => e.type === 'laugh');
@@ -512,6 +536,10 @@
           else list.push([talkW * 0.6, HEADS.get(ta.speaker === 'traveler' ? traveler : ta.speaker === 'wizard' ? wizard : samurai)]);
         }
         if (me !== 'traveler') list.push([A.win(fl3, 1, 13, 1), HEADS.get(traveler)]);
+        if (walkWas.who && walkWas.who !== me) { // turn to look at whoever is walking close by
+          const d = Math.hypot(p.root.position.x - walkWas.at[0], p.root.position.z - walkWas.at[1]);
+          list.push([A.smooth((2.8 - d) / 1.2) * walkWas.k, walkerHead]);
+        }
         return list;
       };
       const chat = (p) => { // a little head bob on each syllable; a nod on each reply; a laugh shakes everyone
@@ -522,14 +550,14 @@
         return bob - 0.12 * laugh;
       };
       for (const p of [traveler, wizard, samurai]) if (p.torso.userData.y0 === undefined) p.torso.userData.y0 = p.torso.position.y;
-      const dz = kt < 0 ? A.dozeAt(t) : 0;
+      const dz = kt < 0 && !walk.away('samurai') ? A.dozeAt(t) : 0;
       const stoke = A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD)[0];
-      const sk = stoke === undefined ? -1 : t - (stoke - A.STOKE_LEAD); // seconds into the wizard's stoke
+      const sk = stoke === undefined || walk.away('wizard') ? -1 : t - (stoke - A.STOKE_LEAD); // seconds into the wizard's stoke
       const watchFire = A.win(sk, 1.2, 4.5, 0.4);
-      const snapAgo = A.since('doze', A.SNAP, t);
+      const snapAgo = walk.away('samurai') ? 99 : A.since('doze', A.SNAP, t);
 
       // traveler: shifts on the cane; now and then tosses a twig on the fire
-      const shift = A.win(A.story('shift', t), 0, 3, 0.75);
+      const shift = A.win(S('shift'), 0, 3, 0.75);
       const lean = A.win(tw, 0.3, 3.4, 0.5);
       traveler.torso.rotation.z = -0.1 * shift;
       traveler.torso.rotation.x = traveler.lean - 0.1 * shift + 0.22 * lean + 0.15 * wet; // hunches in the rain
@@ -576,8 +604,8 @@
       traveler.head.rotation.x = chat(traveler) - 0.1 * play;
 
       // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
-      const reach = A.win(A.story('reach', t), 0, 6, 1.5);
-      const sl = A.story('stir', t), stir = A.win(sl, 0.3, 5.7, 0.6); // a flick of the hand, and the ladle stirs itself
+      const reach = A.win(S('reach'), 0, 6, 1.5);
+      const sl = S('stir'), stir = A.win(sl, 0.3, 5.7, 0.6); // a flick of the hand, and the ladle stirs itself
       const [wsx, wsz, wel] = A.keyframes(pp < 0 ? -1 : pp, [[0, -0.5, 0.05, -0.7], [1.2, -1.3, 0.6, -1.2], [9.6, -1.3, 0.6, -1.2], [10.8, -0.5, 0.05, -0.7]]);
       wizard.arms[0].sh.rotation.set(wsx - 0.6 * reach - 0.75 * stir, 0, wsz + 0.18 * stir * Math.sin(sl * 6));
       wizard.arms[0].el.rotation.x = wel + 0.55 * reach + 0.6 * stir;
@@ -611,7 +639,7 @@
       rings.forEach((r, i) => {
         const puff = i < 3 ? 0 : 1;
         const a2 = A.since('pipe', A.PUFFS[puff] + (i % 3) * 0.35, t);
-        r.visible = a2 < 3.5;
+        r.visible = a2 < 3.5 && !walk.away('wizard');
         if (!r.visible) return;
         r.position.set(mouth.x + 0.1 * a2, mouth.y + 0.3 * a2, mouth.z + 0.05 * a2);
         r.scale.setScalar(1 + 0.9 * a2);
@@ -772,11 +800,21 @@
       }
       fp.needsUpdate = fc.needsUpdate = true;
 
-      // camera: where you turned it, plus a slow drift
-      const yaw = view.yaw + 0.18 * Math.sin(t * 0.045);
+      // the walker (walk.js), posed over whatever their stories did
+      const wk = walk.update(t, dt, view.yaw);
+      walkWas = wk.who ? wk : { who: null, k: 0, at: [0, 0] };
+      if (wk.who) { const wp = { traveler, wizard, samurai }[wk.who]; wp.head.getWorldPosition(walkerHead); }
+      const wkK = A.smooth(wk.k || 0);
+      if (wk.moving) view.yaw += Math.atan2(Math.sin(wk.yaw + Math.PI - view.yaw), Math.cos(wk.yaw + Math.PI - view.yaw)) * Math.min(1, dt * 1.2); // swing round behind them
+
+      // camera: where you turned it (round the fire, or round the walker), plus a slow drift
+      if (wk.who) follow.set(wk.at[0], 0.95, wk.at[1]);
+      camTarget.copy(lookAt).lerp(follow, wkK);
+      const R = RADIUS + (3.6 - RADIUS) * wkK;
+      const yaw = view.yaw + 0.18 * Math.sin(t * 0.045) * (1 - wkK);
       const pitch = view.pitch + 0.02 * Math.sin(t * 0.031);
-      camera.position.set(Math.sin(yaw) * Math.cos(pitch) * RADIUS, lookAt.y + Math.sin(pitch) * RADIUS, Math.cos(yaw) * Math.cos(pitch) * RADIUS);
-      camera.lookAt(lookAt);
+      camera.position.set(camTarget.x + Math.sin(yaw) * Math.cos(pitch) * R, camTarget.y + Math.sin(pitch) * R + 0.25 * wkK, camTarget.z + Math.cos(yaw) * Math.cos(pitch) * R);
+      camera.lookAt(camTarget);
       moon.lookAt(camera.position);
       halo.lookAt(camera.position);
       fill.position.set(camera.position.x, camera.position.y + 2, camera.position.z);
@@ -801,6 +839,7 @@
     // Start their story now (unless they're busy): the traveler tosses a twig, the wizard smokes or stirs,
     // the samurai draws the katana, the fire gets stoked.
     function act(who, t) {
+      if (walk.away(who)) return false; // they're out walking
       const busy = (names) => names.some((n) => A.story(n, t) >= 0);
       const wizardBusy = busy(['reach', 'pipe', 'stir']) || A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD).length > 0;
       if (who === 'traveler' && !busy(['twig', 'flute'])) A.trigger(travelerTurn++ % 2 ? 'flute' : 'twig', t);
@@ -811,7 +850,7 @@
       return true;
     }
 
-    return { scene, camera, update, pick, act };
+    return { scene, camera, update, pick, act, walk };
   }
 
   window.CampScene = { build };

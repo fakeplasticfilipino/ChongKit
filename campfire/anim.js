@@ -542,6 +542,35 @@
     return { x: x0 + 0.3 * Math.sin(t * 0.7 + i), y: 8 - ((t * v + ph) % 8.5), z: z0 + 0.3 * Math.cos(t * 0.6 + i * 1.3) };
   }
 
+  // Whose moment an event is (so the walker's own sounds can pause), or null for everyone's.
+  const EVENT_OWNER = { land: 'traveler', note: 'traveler', puff: 'wizard', snap: 'samurai', draw: 'samurai', sheathe: 'samurai', rasp: 'samurai' };
+  const eventOwner = (e) => e.who || EVENT_OWNER[e.type] || null;
+
+  // ---- walking around the camp ----
+  // Push a walker (a circle at x, z with radius r) out of obstacles [[cx, cz, cr], …] and keep it inside
+  // the treeline (distance maxR from the fire). Returns [x, z].
+  function collide(x, z, r, circles, maxR) {
+    for (let pass = 0; pass < 3; pass++) {
+      for (const [cx, cz, cr] of circles) {
+        const dx = x - cx, dz = z - cz, d = Math.hypot(dx, dz), min = r + cr;
+        if (d >= min) continue;
+        if (d < 1e-6) { x = cx + min; continue; }
+        x = cx + (dx / d) * min;
+        z = cz + (dz / d) * min;
+      }
+      const d0 = Math.hypot(x, z), lim = maxR - r;
+      if (d0 > lim) { x *= lim / d0; z *= lim / d0; }
+    }
+    return [x, z];
+  }
+  // A walking step: phase in radians (one stride = 2π). For each leg [left, right]: hip swing, knee bend;
+  // arms swing against the legs. Swings scale with speed (0 standing … 1 walking … 1.6 running).
+  function gait(phase, speed) {
+    const k = Math.min(1.6, speed);
+    const leg = (off) => ({ hip: 0.5 * k * Math.sin(phase + off), knee: -0.8 * k * Math.max(0, Math.sin(phase + off + Math.PI / 2)) });
+    return { legs: [leg(0), leg(Math.PI)], arms: [0.4 * k * Math.sin(phase + Math.PI), 0.4 * k * Math.sin(phase)] };
+  }
+
   // ---- turning around the fire ----
   const PITCH_MIN = 0.03, PITCH_MAX = 0.55;
   // One step of the view: yaw/pitch move by their speed, which eases off; yaw wraps, pitch stays in range.
@@ -574,7 +603,7 @@
   ];
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
-    fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
+    fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX, collide, gait, eventOwner,
     STORIES, BUSY, story, trigger, talk, talkAt, TALK, tune, FLUTE_SCALE, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;

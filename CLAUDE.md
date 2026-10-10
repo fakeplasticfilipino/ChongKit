@@ -182,8 +182,8 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
 2. **The pixel look:** render about 216 px on the short side (`CampAnim.renderSize`) into a render
    target, then a shader pass snaps every pixel to `CampAnim.PALETTE` (48 colours max, the shader's array; sampled from
    the art reference) with a light 4×4 dither. Keep materials flat-shaded and low-poly.
-3. **No controls beyond** "← All tools" and fullscreen in a corner (they fade when the mouse rests),
-   and dragging to circle the fire (`CampAnim.orbit`; the view stays where it's left). The figures
+3. **No controls beyond** "← All tools", fullscreen and Walk/Sit in a corner (they fade when the mouse
+   rests), the walking keys (E, WASD / arrows, Shift, 1–3; a joystick on touch screens) and dragging to circle the fire (`CampAnim.orbit`; the view stays where it's left). The figures
    are fixed (traveler, wizard, samurai), turned three-quarters toward the starting view like the
    reference; the animation is the point. The forest is a full ring, so every angle must look finished.
    The moon has one fixed place in the sky (up and right of the starting view; trees in its line of
@@ -199,6 +199,11 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
    them, so sounds and sparks follow); `stokeTime` ignores clicks so its cache stays valid.
    Showers (`rainAt`, `thunders`, `flash`) and visitors (`foxAt`, `deerAt`) are pure and tested too.
    Things placed around the camp keep clear of the camera's circle (radius 4.7) and of the figures.
+   Walking (`walk.js`, spec `docs/superpowers/specs/2026-10-10-campfire-walking-design.md`): legs are jointed
+   (hip → knee) so the seated pose, standing and the gait (`CampAnim.gait`) share one rig; `CampAnim.collide`
+   keeps the walker out of the obstacles listed in `scene.js` and inside the treeline. The walker's own
+   stories, talks and sounds pause (`CampAnim.eventOwner`). New props that block the way go in that list.
+   Talks (`CampAnim.talk`) only start when both are free; the wind stays a calm, quiet sigh.
 4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
    `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
    comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw
@@ -229,6 +234,8 @@ campfire/                    Ambience scene (three.js, pixel style) → /campfir
   figures.js                 The traveler, wizard and samurai
   camp.js                    Tripod and stew, tent, horse, lantern, moths
   visitors.js                Fox, deer, owl
+  extras.js                  Ground sparks, the stew's smell, music notes
+  walk.js                    Walking around as one of the three
   audio.js                   Generated sound (Web Audio): fire, wind, crickets, owl
   anim.js                    Pure timing math: flicker, idle moments, embers, sound schedules, orbit, palette
   vendor/three.min.js        three.js r153, copied (don't edit)

@@ -127,6 +127,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Click a character (twig / pipe or stir / katana) or the fire (stoke); pointer cursor over clickable things
 - [x] Tests: clicks, showers, thunder, flash, fox and deer paths, the stir story
 
+### ✅ v7 — done
+- [x] A calmer breeze: quieter, lower, barely swells
+- [x] Campfire talk: wordless murmurs, the listener nods and answers, sometimes everyone laughs (only when both are free)
+- [x] The traveler's flute: a short pentatonic tune, notes floating up, the others listen
+- [x] The samurai's whetstone; sparks that land and glow; the stew's smell in wavy lines
+- [x] Walking around: E / Walk (1–3 choose), WASD / arrows / Shift / touch joystick, follow camera, collisions, walk back and sit; jointed legs, long robe standing, footsteps by season; the walker's own stories pause and the others look up
+- [x] Tests: talks, flute, whetstone, collide, gait
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

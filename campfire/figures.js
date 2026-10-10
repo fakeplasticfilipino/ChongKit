@@ -11,17 +11,21 @@
     const { THREE, scene, mesh, box, cyl, cone, group } = kit;
     const tilt = (m, x, y, z) => { m.rotation.set(x || 0, y || 0, z || 0); return m; };
 
-    // A seated leg: the thigh runs forward (+z) from the hip, lifted by kneeUp; the shin drops to the ground.
+    // A leg: hip → thigh (along +z) → knee → shin (down) → foot. Seated, the thigh runs forward lifted by
+    // kneeUp and the knee turns back so the shin stands straight; standing, the hip turns the thigh down.
     function leg(root, s, o) {
       const sp = o.spread || 0.11, L = o.thigh || 0.42, a = o.kneeUp || 0, w = o.legW || 0.15;
+      const shin = o.hip + Math.sin(a) * L - 0.06;
       const hip = group(s * sp, o.hip, 0);
-      hip.rotation.x = -a;
       hip.add(box(w, w, L, o.legs, 0, 0, L / 2));
+      const knee = group(0, 0, L);
+      knee.add(box(w * (o.flare || 0.95), shin, w * 0.95, o.legs, 0, -shin / 2, -0.03));
+      if (o.foot) o.foot(knee, -(shin + 0.06)); // the ground, from the knee
+      hip.add(knee);
       root.add(hip);
-      const ky = o.hip + Math.sin(a) * L, kz = Math.cos(a) * L;
-      const shin = ky - 0.06;
-      root.add(box(w * (o.flare || 0.95), shin, w * 0.95, o.legs, s * sp, 0.06 + shin / 2, kz - 0.03));
-      if (o.foot) o.foot(root, s * sp, kz);
+      hip.rotation.x = -a;
+      knee.rotation.x = a;
+      return { hip, knee, sitHip: -a, sitKnee: a, standY: L + shin + 0.06 };
     }
 
     // A head: face, nose, eyes, ears. Hair and hats are added per character.
@@ -56,7 +60,7 @@
     function person(o) {
       const root = group(o.x, 0, o.z);
       root.rotation.y = Math.atan2(-o.x, -o.z) + (o.turn || 0); // turn: three-quarters toward the viewer
-      for (const s of [-1, 1]) leg(root, s, o);
+      const legs = [-1, 1].map((s) => leg(root, s, o));
       const torso = group(0, o.hip, 0);
       torso.rotation.x = o.lean;
       root.add(torso);
@@ -64,15 +68,15 @@
       const hd = head(torso, o.skin);
       const arms = [-1, 1].map((s) => arm(torso, s, o));
       scene.add(root);
-      return { root, torso, head: hd, arms, lean: o.lean };
+      return { root, torso, head: hd, arms, legs, lean: o.lean, sitY: o.hip, standY: legs[0].standY, seat: { x: o.x, z: o.z, yaw: root.rotation.y } };
     }
 
     // ================= traveler: brown frock coat, white shirt, red tie, cane =================
     const HAIR = 0x4a2c18;
-    const boot = (root, x, kz) => {
-      root.add(box(0.17, 0.2, 0.17, DARK, x, 0.1, kz - 0.02));
-      root.add(box(0.18, 0.05, 0.18, BROWN_DK, x, 0.2, kz - 0.02)); // boot cuff
-      root.add(box(0.16, 0.08, 0.26, DARK, x, 0.04, kz + 0.06));
+    const boot = (knee, gy) => {
+      knee.add(box(0.17, 0.2, 0.17, DARK, 0, gy + 0.1, -0.02));
+      knee.add(box(0.18, 0.05, 0.18, BROWN_DK, 0, gy + 0.2, -0.02)); // boot cuff
+      knee.add(box(0.16, 0.08, 0.26, DARK, 0, gy + 0.04, 0.06));
     };
     const tr = person({ x: -2.1, z: 0.35, turn: -0.65, hip: 0.42, lean: 0.18, legs: CLOTH_DARK, skin: SKIN, sleeve: BROWN, cuff: WHITE, foot: boot });
     const tt = tr.torso;
@@ -107,6 +111,9 @@
     cane.add(mesh(new THREE.DodecahedronGeometry(0.045), GOLD, 0, 0.68, 0)); // knob
     cane.add(cyl(0.03, 0.02, 0.04, 5, DARK, 0, 0.02, 0)); // tip
     tr.root.add(cane);
+    tr.root.updateMatrixWorld();
+    cane.applyMatrix4(tr.root.matrixWorld); // leave it leaning at the log, even when the traveler walks off
+    scene.add(cane);
     // a wooden flute, held to the lips while playing
     const flute = group(0.17, 0.065, 0.16);
     flute.add(tilt(cyl(0.016, 0.016, 0.36, 5, BROWN_DK, 0, 0, 0), 0, 0, Math.PI / 2));
@@ -116,10 +123,16 @@
 
     // ================= wizard: wide purple robe, long white beard, drooping hat, gnarled staff =================
     const ROBE = 0x2c1a28, ROBE_MID = 0x45293e, ROBE_HI = 0x5e3a56, BEARD = 0xcfc8bb, HAIR_W = 0x9a948c;
-    const shoes = (root, x, kz) => root.add(box(0.13, 0.07, 0.14, DARK, x * 1.3, 0.035, kz + 0.48));
+    const shoes = (knee, gy) => knee.add(box(0.13, 0.07, 0.16, DARK, 0, gy + 0.035, 0.06));
     const wz = person({ x: 0, z: -2.25, hip: 0.42, lean: 0.12, legs: ROBE, skin: SKIN, sleeve: ROBE_MID, bell: true, foot: shoes });
-    wz.root.add(cyl(0.34, 0.82, 0.52, 10, ROBE, 0, 0.26, 0.12)); // robe spread on the ground
-    wz.root.add(cyl(0.83, 0.85, 0.05, 10, ROBE_HI, 0, 0.025, 0.12)); // hem
+    const sitRobe = [cyl(0.34, 0.82, 0.52, 10, ROBE, 0, 0.26, 0.12), cyl(0.83, 0.85, 0.05, 10, ROBE_HI, 0, 0.025, 0.12)]; // spread on the ground, hem
+    sitRobe.forEach((m) => wz.root.add(m));
+    const longRobe = group(0, 0, 0); // hangs to the ground when standing
+    longRobe.add(cyl(0.26, 0.44, wz.standY, 10, ROBE, 0, wz.standY / 2, 0));
+    longRobe.add(cyl(0.45, 0.46, 0.05, 10, ROBE_HI, 0, 0.025, 0));
+    longRobe.visible = false;
+    wz.root.add(longRobe);
+    wz.robes = { sit: sitRobe, stand: longRobe };
     const wt = wz.torso;
     wt.add(cyl(0.18, 0.28, 0.6, 8, ROBE_MID, 0, 0.3, 0));
     wt.add(cyl(0.21, 0.31, 0.15, 8, ROBE_HI, 0, 0.55, 0)); // mantle
@@ -179,9 +192,9 @@
 
     // ================= samurai: topknot, red lacquered armour, hakama, katana on the back =================
     const KIMONO = 0x6e2a1f, HAKAMA = 0x22304a, LACE = 0x24170f, OBI = 0x3a3f4a;
-    const tabi = (root, x, kz) => {
-      root.add(box(0.14, 0.09, 0.22, BONE, x, 0.055, kz + 0.04)); // tabi socks
-      root.add(box(0.15, 0.025, 0.25, DARK, x, 0.012, kz + 0.04)); // sandal
+    const tabi = (knee, gy) => {
+      knee.add(box(0.14, 0.09, 0.22, BONE, 0, gy + 0.055, 0.04)); // tabi socks
+      knee.add(box(0.15, 0.025, 0.25, DARK, 0, gy + 0.012, 0.04)); // sandal
     };
     const sm = person({ x: 2.1, z: 0.35, turn: 0.65, hip: 0.3, lean: 0.3, kneeUp: 0.55, thigh: 0.4, spread: 0.13, legW: 0.19, flare: 1.2, legs: HAKAMA, skin: SKIN, sleeve: KIMONO, foot: tabi });
     const st = sm.torso;
@@ -258,6 +271,9 @@
     pack.add(box(0.04, 0.42, 0.26, CLOTH_DARK, 0.1, 0.21, 0.01));
     pack.add(tilt(cyl(0.11, 0.11, 0.46, 8, 0x96603a, 0, 0.53, 0), 0, 0, Math.PI / 2)); // straw mat roll
     sm.root.add(pack);
+    sm.root.updateMatrixWorld();
+    pack.applyMatrix4(sm.root.matrixWorld); // stays on the ground when the samurai walks off
+    scene.add(pack);
 
     // a twig the traveler tosses on the fire
     const twig = group(0, 0, 0);

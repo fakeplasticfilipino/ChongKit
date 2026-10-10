@@ -310,7 +310,16 @@ buttons (← All tools, ⛶ fullscreen) fade when the mouse rests. **Drag** (mou
 circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there.
 **Click** a character to make them do something now (the traveler tosses a twig, the wizard smokes
 or stirs the stew, the samurai draws the katana) or click the fire to have the wizard stoke it; the
-pointer turns into a hand over anything you can click, and busy characters ignore it. The moon
+pointer turns into a hand over anything you can click, and busy characters ignore it. Clicking the
+traveler alternates the twig and the flute; the samurai, the katana and the whetstone.
+
+**Walking around:** press **E** or the **Walk** button and the last character you clicked (the traveler
+at first; or press 1 / 2 / 3) stands up. **WASD** or the **arrow keys** move them, relative to the
+camera, and **Shift** runs; on touch screens a joystick appears bottom-left. The camera follows behind;
+drag to look around. They're blocked by the fire, the seats, the tent, the horse, the lantern post,
+the fallen log and the bushes, and the treeline is the edge. Press **E** or **Sit** and they walk back
+to their seat and sit down. While someone walks, their own stories pause and the others look up as
+they pass; footsteps crunch leaves in autumn and squeak in winter. The moon
 keeps its one place in the sky, up and to the right of the starting view.
 
 **What moves:** pixel flames lick and flicker and the firelight pulses (a small warm pool; the
@@ -323,6 +332,10 @@ dims), and the camera drifts slowly. Little stories, each on its own repeating s
   hand makes the ladle stir the stew by itself;
 - the samurai nods off and jerks awake, and draws the katana to look it over (a glint runs down the blade);
 - they glance at whoever is doing something; the samurai notices the eyes;
+- they talk: two murmur in wordless voices while the listener nods and answers, and now and then they all
+  laugh; the traveler sometimes plays a short tune on a flute (notes float up, the others listen); the
+  samurai sharpens the blade on a whetstone;
+- sparks land on the ground and glow for a moment; the stew's smell curls up in wavy lines;
 - the fire burns down over about 15 minutes (the night gets darker), until the wizard raises the
   staff: the crystal flares, a shimmer, and the fire whooms back up;
 - the camp: a tripod with a pot of stew (bubbles, steam), a tent lit by a candle inside, the
@@ -364,6 +377,7 @@ stretched to the window without smoothing.
 **Files:** `anim.js` is the timing math (flicker, breathing, the flame shape, the stories and their
 moments, ember / spark / smoke paths, the pop / wind / cricket / owl schedules, the turning; tested), `figures.js` builds the three
 figures, `camp.js` the camp (pot, tent, horse, lantern), `visitors.js` the fox, deer and owl,
+`extras.js` the small touches (ground sparks, the stew's smell, music notes), `walk.js` walking around,
 `scene.js` builds and moves the world (and picks what you click), `audio.js` makes the sound, `app.js` renders it
 and handles dragging. three.js r153 is copied into
 `campfire/vendor/three.min.js` (the non-module build, so the page opens from `file://`) with its

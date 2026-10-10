@@ -16,6 +16,10 @@
   }
   .corner a:hover, .corner button:hover { border-color: #8fa6c4; }
   body.idle .corner { opacity: 0; }
+  #joy { display: none; position: fixed; left: 24px; bottom: 24px; width: 110px; height: 110px; border-radius: 50%;
+    border: 1px solid #31445e; background: rgba(10, 15, 26, 0.45); touch-action: none; }
+  #joy > div { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(143, 166, 196, 0.5); }
+  @media (pointer: coarse) { body.walking #joy { display: block; } }
   body.idle { cursor: none; }
   .nogl-msg { display: none; position: fixed; inset: 0; place-items: center; text-align: center; padding: 16px; }
   body.nogl .nogl-msg { display: grid; }
@@ -26,7 +30,9 @@
 <div class="corner">
   <a href="../">← All tools</a>
   <button id="fullscreen" type="button" title="Fullscreen">⛶</button>
+  <button id="walk" type="button" title="Walk around (E)">Walk</button>
 </div>
+<div id="joy" aria-hidden="true"><div></div></div>
 <p class="nogl-msg">This browser can't draw the scene (WebGL is off).</p>
 <script src="vendor/three.min.js"></script>
 <script src="anim.js"></script>
@@ -34,6 +40,7 @@
 <script src="camp.js"></script>
 <script src="visitors.js"></script>
 <script src="extras.js"></script>
+<script src="walk.js"></script>
 <script src="scene.js"></script>
 <script src="audio.js"></script>
 <script src="app.js"></script>
