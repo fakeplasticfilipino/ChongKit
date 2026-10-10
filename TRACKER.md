@@ -80,6 +80,20 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 
+## Campfire (`campfire/`)
+
+### ✅ v1 — done (spec: `docs/superpowers/specs/2026-10-10-campfire-design.md`)
+- [x] three.js r153 copied into `campfire/vendor/` (UMD build, opens from `file://`)
+- [x] Scene: clearing, stone ring, forest with a gap for the moon, stars, fog; traveler, wizard, fighter around the fire
+- [x] Pixel look: ~180 px render, palette snap + 4×4 dither, flat shading, hard shadows from the fire
+- [x] Animation: flickering flames and firelight, embers, smoke, breathing, idle moments (look around, crystal pulse + reach, doze off), swaying trees, twinkling stars, fireflies, camera drift
+- [x] Corner controls (← All tools, fullscreen) fade when idle; phones widen the view to keep everyone in frame
+- [x] Tests: seeded random, noise, flicker, breathing, idle and doze envelopes, embers, smoke, render size, palette
+
+### 💡 Ideas
+- Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
+- Crackling-fire sound (off by default)
+
 ## Site look
 
 ### ✅ Back to the GM Guide look, easier on the eyes — done

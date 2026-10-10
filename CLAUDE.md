@@ -5,8 +5,8 @@ Guidance for Claude (and humans) working in this repo.
 ## What this is
 
 ChongKit is a set of TTRPG tools for one table running **Nimble 5e (v2)**, plus **Chong's Tracker**, a
-system-agnostic Owlbear Rodeo extension, and **Chong Die**, a fork of the Owlbear Rodeo dice
-extension (see their own sections below; the Nimble ground rules don't apply to them). The rules source is
+system-agnostic Owlbear Rodeo extension, **Chong Die**, a fork of the Owlbear Rodeo dice
+extension, and **Campfire**, a three.js ambience scene (see their own sections below; the Nimble ground rules don't apply to them). The rules source is
 `source/nimble-gm-guide-v2.0.1.pdf` (Nimble 5e v2 GM Guide v2.0.1, 115 pages).
 Page numbers in code and docs are the **printed** page numbers (PDF page index = printed + 1).
 
@@ -171,6 +171,22 @@ line, an engine that decides every roll, and saved-roll pills. How it works: `ch
    Status and backlog: `chong-die/TRACKER.md`. Upstream fixes: diff the upstream repo against
    `chong-die-src/` and port by hand.
 
+## Campfire (ambience scene)
+
+`campfire/`: a pixel-art scene of the party around a campfire in a forest at night, for a screen at
+the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or footer, no `nimble.css`.
+
+1. **three.js is its one library**: `vendor/three.min.js` (r153, the UMD build with global `THREE`,
+   so it still opens from `file://`; ES-module builds don't) with `vendor/three.LICENSE.txt`. Copied,
+   not built; don't edit it. Everything else is plain JS with no build step.
+2. **The pixel look:** render about 180 px on the short side (`CampAnim.renderSize`) into a render
+   target, then a shader pass snaps every pixel to `CampAnim.PALETTE` (32 colours max, sampled from
+   the art reference) with a light 4×4 dither. Keep materials flat-shaded and low-poly.
+3. **No controls beyond** "← All tools" and fullscreen in a corner (they fade when the mouse rests).
+   The figures are fixed (traveler, wizard, fighter); the animation is the point.
+4. Timing math lives in `anim.js` (global `CampAnim`, CommonJS for tests), covered by
+   `tests/anim.test.js`; `scene.js` (`CampScene.build`) makes and moves the world; `app.js` renders.
+
 ## Layout
 
 ```
@@ -187,6 +203,12 @@ character-sheet/             → /character-sheet/
   cloud.js                   Optional sign-in (Discord / email) and sync via Supabase
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)
+campfire/                    Ambience scene (three.js, pixel style) → /campfire/
+  index.html, app.js         Page, renderer, pixel pass, loop
+  scene.js                   Builds and moves the world (forest, fire, three figures)
+  anim.js                    Pure timing math: flicker, breathing, idle moments, embers, palette
+  vendor/three.min.js        three.js r153, copied (don't edit)
+  tests/anim.test.js         node:test suite (not published)
 combat-generator/            → /combat-generator/
   index.html                 UI (setup panel, the fight as editable text)
   nimble-data.js             All rules data from the guide (single source of numbers)

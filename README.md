@@ -9,6 +9,7 @@ Tools for our Nimble 5e table. All rules and numbers come from the **Nimble 5e v
 | [Chong's Tracker](chongs-tracker/) | ✅ v1 | Owlbear Rodeo extension: tracks token health, any system. |
 | [Chong Die](chong-die/) | ✅ v4 | Owlbear Rodeo 3D dice with a plain-words command line, saved rolls in a panel beside the tray. Fork of Owlbear Rodeo Dice (GPL-3.0). |
 | [Character Sheet](character-sheet/) | ✅ v4 | A character sheet in the browser: HP, small boxes, wounds, stats with save pips, skills, and tabs of note boxes (three lists and a free notepad); a Characters menu of cards; saves locally. |
+| [Campfire](campfire/) | ✅ v1 | Ambience for a screen at the table: the party around a campfire in a forest at night, pixel style, animated with three.js. |
 | [Combat Generator](combat-generator/) | ✅ v2 | Builds an encounter for your party, with generic or named bestiary monsters: HP, armor, damage, Save DC, and the expected gold reward. |
 
 See [TRACKER.md](TRACKER.md) for what's done and what's next.
@@ -301,6 +302,29 @@ which writes the site files into `chong-die/`. Commit both folders. How it works
 
 **Tests:** `npm test` in the repo root runs every tool's tests.
 
+## Campfire
+
+An ambience scene for a screen or TV at the table: a traveler, a wizard and a fighter around a
+campfire in a forest at night, in a pixel-art style. Open it and leave it running; the corner
+buttons (← All tools, ⛶ fullscreen) fade when the mouse rests.
+
+**What moves:** the flames flicker and the firelight pulses (light and shadows waver on the
+figures); embers and smoke rise; everyone breathes; the traveler looks around and shifts on the
+cane; the wizard's staff crystal pulses and they reach toward the fire; the fighter nods off and
+jerks awake; treetops sway, stars twinkle, fireflies drift at the forest edge, and the camera
+drifts slowly. Each idle moment has its own repeating schedule, so they rarely line up.
+
+**How the pixel look works:** [three.js](https://threejs.org) draws a simple 3D scene (boxes,
+cones and cylinders) into a small image about 180 pixels tall; a shader then snaps every pixel to
+a fixed palette sampled from the art reference, with a light ordered dither, and the image is
+stretched to the window without smoothing.
+
+**Files:** `anim.js` is the timing math (flicker, breathing, idle moments, ember and smoke paths;
+tested), `scene.js` builds and moves the world, `app.js` renders it. three.js r153 is copied into
+`campfire/vendor/three.min.js` (the non-module build, so the page opens from `file://`) with its
+MIT license. To update it, copy `build/three.min.js` from a three.js release (r159 or older: later
+releases drop this file).
+
 ## Hosting (GitHub Pages)
 
 The repo root is the website:
@@ -320,7 +344,7 @@ To preview locally, run `python3 -m http.server` in the repo root and open http:
 ## Development
 
 ```
-node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js
+node --test combat-generator/tests/*.test.js chongs-tracker/tests/*.test.js character-sheet/tests/*.test.js campfire/tests/*.test.js
 cd chong-die-src && npx yarn@1.22.22 test
 ```
 

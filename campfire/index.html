@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campfire · ChongKit</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05070c; overflow: hidden; }
+  body { font: 14px/1.2 system-ui, sans-serif; color: #cfc8bb; }
+  #scene { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  .corner { position: fixed; top: 12px; left: 12px; display: flex; gap: 8px; transition: opacity 0.6s; }
+  .corner a, .corner button {
+    font: inherit; color: inherit; text-decoration: none; cursor: pointer;
+    background: rgba(10, 15, 26, 0.7); border: 1px solid #31445e; border-radius: 3px; padding: 6px 10px;
+  }
+  .corner a:hover, .corner button:hover { border-color: #8fa6c4; }
+  body.idle .corner { opacity: 0; }
+  body.idle { cursor: none; }
+  .nogl-msg { display: none; position: fixed; inset: 0; place-items: center; text-align: center; padding: 16px; }
+  body.nogl .nogl-msg { display: grid; }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="corner">
+  <a href="../">← All tools</a>
+  <button id="fullscreen" type="button" title="Fullscreen">⛶</button>
+</div>
+<p class="nogl-msg">This browser can't draw the scene (WebGL is off).</p>
+<script src="vendor/three.min.js"></script>
+<script src="anim.js"></script>
+<script src="scene.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
