@@ -425,3 +425,46 @@ test('gait: legs swing opposite, arms against them, nothing when standing', () =
   const still = A.gait(1.2, 0);
   assert.strictEqual(Math.abs(still.legs[0].hip) + Math.abs(still.arms[0]) + Math.abs(still.legs[0].knee), 0);
 });
+
+test('walker actions: start, run, end, cancel, events marked act', () => {
+  A.clearActs();
+  assert.strictEqual(A.actAt(10), null);
+  A.act('pet', 10, { who: 'traveler' });
+  assert.strictEqual(A.actAt(10.5).name, 'pet');
+  assert.ok(Math.abs(A.actAt(10.5).local - 0.5) < 1e-9);
+  assert.strictEqual(A.actAt(10 + A.ACTIONS.pet.dur + 0.01), null, 'ends on its own');
+  const ev = A.events(10, 10 + A.ACTIONS.pet.dur).filter((e) => e.act);
+  assert.ok(ev.length >= 1 && ev.every((e) => e.who === 'traveler'));
+  assert.strictEqual(A.eventOwner(ev[0]), null, 'the walker\'s own act sounds never pause');
+  // a held action runs until cancelled; nothing after the cancel
+  A.act('sit', 50, { who: 'wizard' });
+  assert.strictEqual(A.actAt(500).name, 'sit');
+  A.cancelAct(60);
+  assert.strictEqual(A.actAt(60.01), null);
+  A.act('twig', 70, { who: 'samurai' });
+  A.cancelAct(70.5); // before the twig lands
+  assert.strictEqual(A.events(70, 75).filter((e) => e.act).length, 0);
+  // twig: the same landing as the traveler's story, so the fire flares
+  A.act('twig', 80, { who: 'samurai' });
+  assert.ok(A.events(80, 84).some((e) => e.type === 'land' && e.act));
+  assert.ok(A.flare(80 + A.TWIG_LAND + 0.1) > 0.5);
+  // talk fills both voices
+  A.act('talk', 90, { who: 'traveler', with: 'wizard' });
+  const syl = A.events(90, 90 + A.ACTIONS.talk.dur).filter((e) => e.type === 'syl');
+  assert.ok(syl.some((e) => e.who === 'traveler') && syl.some((e) => e.who === 'wizard'));
+  for (const [name, a] of Object.entries(A.ACTIONS)) {
+    assert.ok(a.label && typeof a.label === 'string', name + ' has a label');
+    assert.ok(a.hold || a.dur > 0, name + ' ends or holds');
+    for (const [at] of a.events || []) assert.ok(at >= 0 && (a.hold || at < a.dur), name + ' event inside');
+  }
+  A.clearActs();
+});
+
+test('spots: nearest in reach, ties to the first, inside', () => {
+  const spots = [{ id: 'a', x: 0, z: 0, r: 1 }, { id: 'b', x: 1.5, z: 0, r: 1 }, { id: 'c', x: 0, z: 0, r: 1 }];
+  assert.strictEqual(A.nearestSpot(5, 5, spots), null);
+  assert.strictEqual(A.nearestSpot(0.2, 0, spots).id, 'a', 'closest, and a beats its twin c');
+  assert.strictEqual(A.nearestSpot(1.2, 0, spots).id, 'b');
+  assert.ok(A.inside(0.5, 0, spots[0]));
+  assert.ok(!A.inside(1, 0, spots[0]));
+});

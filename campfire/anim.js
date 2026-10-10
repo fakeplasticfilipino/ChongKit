@@ -305,6 +305,78 @@
     return out;
   }
 
+  // ---- the walker's actions (F near a spot): a timeline like the stories, kept apart from them ----
+  // dur: seconds (hold: runs until cancelled); events: [[at, type, extra?]] (extra.who: 'walker' or 'with');
+  // loop: [period, [[at, type]]] repeats while a held action runs. label: the hint's verb.
+  const ACTIONS = {
+    pet: { label: 'Pet', dur: 3.2, events: [[0.6, 'nuzzle'], [2.0, 'snort']] },
+    apple: { label: 'Apple', dur: 4.5, events: [[1.4, 'chew'], [2.0, 'chew'], [2.6, 'chew'], [3.6, 'snort']] },
+    stew: { label: 'Stew', hold: true, events: [[0.7, 'ladle']], loop: [3.2, [[2.4, 'spoon']]] },
+    sit: { label: 'Sit', hold: true, events: [] },
+    twig: { label: 'Twig', dur: 4, events: [[TWIG_LAND, 'land']] },
+    warm: { label: 'Warm', dur: 5, events: [] },
+    peek: { label: 'Peek', dur: 4, events: [[0.4, 'flap'], [3.2, 'flap']] },
+    talk: { label: 'Talk', dur: 5, events: [[0.4, 'syl', { who: 'walker', rise: 0.6 }], [0.7, 'syl', { who: 'walker', rise: -0.2 }], [1.5, 'syl', { who: 'with', rise: 0.3, reply: true }], [1.8, 'syl', { who: 'with', rise: -0.4 }], [2.6, 'syl', { who: 'walker', rise: 0.8 }], [3.4, 'nod']] },
+    hello: { label: 'Talk', dur: 2, events: [[0.3, 'syl', { who: 'walker', rise: 0.5 }]] },
+    look: { label: 'Look', dur: 4, events: [] },
+    pray: { label: 'Pray', dur: 4, events: [[1.6, 'kindle']] },
+    pull: { label: 'Pull', dur: 3.5, events: [[0.8, 'strain'], [2.0, 'strain']] },
+    read: { label: 'Read', dur: 3.5, events: [] },
+    wear: { label: 'Wear', dur: 2, events: [] },
+    open: { label: 'Open', dur: 3, events: [[0.8, 'uncork']] },
+  };
+  const acts = []; // { name, start, end (Infinity while running), info }
+  function act(name, t, info) {
+    cancelAct(t);
+    acts.push({ name, start: t, end: ACTIONS[name].hold ? Infinity : t + ACTIONS[name].dur, info: info || {} });
+    if (acts.length > 40) acts.shift();
+  }
+  function cancelAct(t) {
+    const a = acts[acts.length - 1];
+    if (a && a.end > t) a.end = Math.max(a.start, t);
+  }
+  function clearActs() { acts.length = 0; }
+  function actAt(t) {
+    for (let i = acts.length - 1; i >= 0; i--) {
+      const a = acts[i];
+      if (t >= a.start && t < a.end) return { name: a.name, local: t - a.start, info: a.info };
+    }
+    return null;
+  }
+  function actEvents(from, to, out) {
+    for (const a of acts) {
+      const def = ACTIONS[a.name], stop = Math.min(to, a.end);
+      if (a.start >= stop) continue;
+      const push = (time, type, extra) => {
+        if (time < from || time >= stop) return;
+        const e = { type, time, act: true, name: a.name, who: a.info.who };
+        if (extra) {
+          Object.assign(e, extra);
+          if (extra.who === 'walker') e.who = a.info.who;
+          if (extra.who === 'with') e.who = a.info.with;
+        }
+        out.push(e);
+      };
+      for (const [at, type, extra] of def.events || []) push(a.start + at, type, extra);
+      if (def.loop) {
+        const [period, list] = def.loop;
+        for (let k = Math.max(0, Math.floor((from - a.start) / period) - 1); a.start + k * period < stop; k++) {
+          for (const [at, type] of list) push(a.start + k * period + at, type);
+        }
+      }
+    }
+  }
+  // Spots: { x, z, r, … }. The closest one whose reach holds the point (ties go to the first), or null.
+  function nearestSpot(x, z, spots) {
+    let best = null, bd = Infinity;
+    for (const s of spots) {
+      const d = Math.hypot(x - s.x, z - s.z);
+      if (d < s.r && d < bd) { best = s; bd = d; }
+    }
+    return best;
+  }
+  const inside = (x, z, s) => Math.hypot(x - s.x, z - s.z) < s.r;
+
   // ---- campfire talk: two of them murmur (wordless), the other nods; sometimes they all laugh ----
   const TALK = { period: 53, offset: 15, dur: 9 };
   const PAIRS = [['wizard', 'traveler'], ['traveler', 'samurai'], ['samurai', 'wizard'], ['traveler', 'wizard'], ['wizard', 'samurai'], ['samurai', 'traveler']];
@@ -416,6 +488,7 @@
     slots(120, 'eyes', 50, 50, 1, 41); // eyes glinting in the forest
     for (const s of stokes(from, to)) out.push({ type: 'stoke', time: s });
     for (const th of thunders(from, to)) out.push({ type: 'thunder', time: th });
+    actEvents(from, to, out);
     return out.sort((a, b) => a.time - b.time);
   }
 
@@ -576,7 +649,7 @@
 
   // Whose moment an event is (so the walker's own sounds can pause), or null for everyone's.
   const EVENT_OWNER = { land: 'traveler', strum: 'traveler', puff: 'wizard', snap: 'samurai', draw: 'samurai', sheathe: 'samurai', rasp: 'samurai' };
-  const eventOwner = (e) => e.who || EVENT_OWNER[e.type] || null;
+  const eventOwner = (e) => (e.act ? null : e.who || EVENT_OWNER[e.type] || null);
 
   // ---- walking around the camp ----
   // Push a walker (a circle at x, z with radius r) out of obstacles [[cx, cz, cr], …] and keep it inside
@@ -636,7 +709,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX, collide, gait, eventOwner,
-    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, ACTIONS, act, cancelAct, clearActs, actAt, nearestSpot, inside, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);
