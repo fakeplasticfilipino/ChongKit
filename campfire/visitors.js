@@ -101,27 +101,37 @@
     // fox / deer: where to look; foxLook / deerLook: how much it's worth looking (eases in and out)
     const out = { fox: null, deer: null, foxLook: 0, deerLook: 0, owl: PERCH };
     const foxAt = new THREE.Vector3(), deerAt = new THREE.Vector3();
-    function update(t) {
+    let spooked = null;
+    function update(t, walker) {
       const f = A.foxAt(t);
-      fox.visible = !!f;
+      let fx = f;
+      if (f && walker) {
+        if (!spooked && f.sit > 0.5 && Math.hypot(f.x - walker.at[0], f.z - walker.at[1]) < 2.5) spooked = { t, x: f.x, z: f.z, yaw: Math.atan2(f.x - walker.at[0], f.z - walker.at[1]) };
+      }
+      if (spooked && (!f || t < spooked.t)) spooked = null; // the visit ended (or the clock jumped back)
+      if (f && spooked) {
+        const u = t - spooked.t;
+        fx = u > 2.5 ? null : { ...f, x: spooked.x + Math.sin(spooked.yaw) * 2.4 * u, z: spooked.z + Math.cos(spooked.yaw) * 2.4 * u, yaw: spooked.yaw, sit: 0, walk: 1, local: -1 };
+      }
+      fox.visible = !!fx;
       out.fox = null;
       out.foxLook = 0;
-      if (f) {
-        fox.position.set(f.x, 0, f.z);
-        fox.rotation.y = f.yaw;
-        const step = Math.sin(t * 14) * f.walk;
+      if (fx) {
+        fox.position.set(fx.x, 0, fx.z);
+        fox.rotation.y = fx.yaw;
+        const step = Math.sin(t * 14) * fx.walk;
         foxLegs.forEach((l, i) => { l.rotation.x = (i === 0 || i === 3 ? 1 : -1) * 0.5 * step; });
-        foxLegs[2].rotation.x += -1.2 * f.sit; // hind legs fold to sit
-        foxLegs[3].rotation.x += -1.2 * f.sit;
-        foxBody.rotation.x = -0.55 * f.sit;
-        foxBody.position.y = 0.3 - 0.05 * f.sit;
-        foxHead.position.set(0, 0.42 + 0.14 * f.sit, 0.26 - 0.06 * f.sit);
-        foxHead.rotation.y = f.sit * 0.5 * Math.sin(t * 0.6 + Math.floor(t / 4) * 2.1); // looks around the camp
-        foxHead.rotation.x = f.walk * 0.1 * Math.sin(t * 14);
-        foxTail.position.y = 0.32 - 0.22 * f.sit;
-        foxTail.rotation.set(0.4 * f.sit, 0.5 * f.sit * Math.sin(t * 1.3) + 0.3 * f.walk * Math.sin(t * 7), 0); // swish
-        out.fox = foxAt.set(f.x, 0.4, f.z);
-        out.foxLook = A.win(f.local, 6, 27, 1.2);
+        foxLegs[2].rotation.x += -1.2 * fx.sit; // hind legs fold to sit
+        foxLegs[3].rotation.x += -1.2 * fx.sit;
+        foxBody.rotation.x = -0.55 * fx.sit;
+        foxBody.position.y = 0.3 - 0.05 * fx.sit;
+        foxHead.position.set(0, 0.42 + 0.14 * fx.sit, 0.26 - 0.06 * fx.sit);
+        foxHead.rotation.y = fx.sit * 0.5 * Math.sin(t * 0.6 + Math.floor(t / 4) * 2.1); // looks around the camp
+        foxHead.rotation.x = fx.walk * 0.1 * Math.sin(t * 14);
+        foxTail.position.y = 0.32 - 0.22 * fx.sit;
+        foxTail.rotation.set(0.4 * fx.sit, 0.5 * fx.sit * Math.sin(t * 1.3) + 0.3 * fx.walk * Math.sin(t * 7), 0); // swish
+        out.fox = foxAt.set(fx.x, 0.4, fx.z);
+        out.foxLook = A.win(fx.local, 6, 27, 1.2);
       }
       const d = A.deerAt(t);
       deer.visible = !!d;
@@ -138,7 +148,8 @@
         out.deerLook = A.win(d.local, 4.5, 16, 0.8);
       }
       // owl: snaps its head round, blinks, bobs when it hoots
-      const look = Math.round(A.noise1(t * 0.25, 1300) * 2.4) * 0.55;
+      const near = walker && Math.hypot(walker.at[0] - PERCH.x, walker.at[1] - PERCH.z) < 1.5;
+      const look = near ? Math.atan2(walker.at[0] - PERCH.x, walker.at[1] - PERCH.z) - owl.rotation.y : Math.round(A.noise1(t * 0.25, 1300) * 2.4) * 0.55;
       owlHead.rotation.y += (look - owlHead.rotation.y) * 0.35;
       const blink = A.envelope(t, 4.3, 2, 0.18) > 0.2 || A.envelope(t, 11.7, 6, 0.15) > 0.2;
       owlEyes.color.setHex(blink ? 0x55341d : 0xf8b347);

@@ -550,7 +550,7 @@
       lastT = t;
       const S = (name) => (walk.away(OWNER[name]) ? -1 : A.story(name, t)); // the walker's own stories pause
       const tw = S('twig'), pp = S('pipe'), kt = S('katana');
-      const vis = visitors.update(t); // the fox, the deer, the owl
+      const vis = visitors.update(t, walkWas.who ? walkWas : null); // the fox, the deer, the owl
       const gt = S('guitar'), wt = S('whet');
       const ta0 = A.talkAt(t), ta = ta0 && !walk.away(ta0.speaker) && !walk.away(ta0.listener) ? ta0 : null; // two of them talking
       const talkW = ta ? A.win(ta.local, 0.2, A.TALK.dur - 0.3, 0.4) : 0;
@@ -570,14 +570,17 @@
           const d = Math.hypot(p.root.position.x - walkWas.at[0], p.root.position.z - walkWas.at[1]);
           list.push([A.smooth((2.8 - d) / 1.2) * walkWas.k, walkerHead]);
         }
+        const rs = interact.react(t);
+        if (rs.talkWith === me && walkWas.who) list.push([4, walkerHead]); // answers the walker
         return list;
       };
       const chat = (p) => { // a little head bob on each syllable; a nod on each reply; a laugh shakes everyone
         const me = NAMES.get(p);
+        const rn = interact.react(t), nodAdd = rn.talkWith === me ? 0.35 * rn.nod : 0;
         let bob = 0;
         for (const e of recentSyl) if (e.who === me) bob = e.reply ? 0.14 : -0.06;
         p.torso.position.y = p.torso.userData.y0 + 0.02 * laugh * Math.abs(Math.sin(t * 22));
-        return bob - 0.12 * laugh;
+        return bob - 0.12 * laugh + nodAdd;
       };
       for (const p of [traveler, wizard, samurai]) if (p.torso.userData.y0 === undefined) p.torso.userData.y0 = p.torso.position.y;
       const dz = kt < 0 && !walk.away('samurai') ? A.dozeAt(t) : 0;
