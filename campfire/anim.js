@@ -320,6 +320,47 @@
     return before + (burn(t - last) - before) * smooth((t - last) / 2);
   }
 
+  // ---- forest visitors ----
+  // When the k-th visit of a kind starts: one per slot, somewhere inside it.
+  const visitStart = (k, len, base, spread, salt) => k * len + base + rng(k * 977 + salt)() * spread;
+  function visitAt(t, len, base, spread, dur, salt) {
+    const k = Math.floor((t - base) / len);
+    for (const j of [k, k - 1]) {
+      if (j < 0) continue;
+      const s = visitStart(j, len, base, spread, salt);
+      if (t >= s && t < s + dur) return { local: t - s, k: j };
+    }
+    return null;
+  }
+  // The fox: trots out of the trees behind the wizard, sits and watches the fire, trots back off.
+  // { x, z, yaw (facing), walk (gait 0–1), sit 0–1 } or null when it's away.
+  const FOX_DIR = -1.95, FOX_SIT = 4.6;
+  function foxAt(t) {
+    const v = visitAt(t, 330, 40, 200, 34, 3);
+    if (!v) return null;
+    const L = v.local, ca = Math.cos(FOX_DIR), sa = Math.sin(FOX_DIR);
+    let r, out = false, walk = 0, sit = 0;
+    if (L < 9) { r = 10 - (10 - FOX_SIT) * (L / 9); walk = 1; }
+    else if (L < 25) { r = FOX_SIT; sit = Math.min(smooth((L - 9) / 1.5), smooth((25 - L) / 1.2)); }
+    else if (L < 26.5) { r = FOX_SIT; out = L > 25.75; }
+    else { r = FOX_SIT + (10.5 - FOX_SIT) * ((L - 26.5) / 7.5); walk = 1; out = true; }
+    const x = ca * r, z = sa * r;
+    const yaw = Math.atan2(-x, -z) + (out ? Math.PI : 0);
+    return { x, z, yaw, walk, sit, local: L };
+  }
+  // The deer: steps out between the far trees, pauses and listens, startles and bounds away.
+  // { x, z, yaw, walk, bound (0–1 leaping), alert (head up) } or null.
+  function deerAt(t) {
+    const v = visitAt(t, 420, 200, 150, 22, 5);
+    if (!v) return null;
+    const L = v.local, a0 = -1.45 + (rng(v.k * 31 + 9)() - 0.5) * 0.1; // the gap between the wizard and the lantern post
+    let a = a0, r = 8.2, walk = 0, bound = 0, alert = 0, yaw;
+    if (L < 4) { a = a0 - 0.12 * (1 - L / 4); walk = 1; yaw = -a; } // stepping out sideways, along the circle
+    else if (L < 15) { alert = L > 12 ? 1 : 0.3 + 0.2 * Math.sin(L); yaw = Math.atan2(-Math.cos(a) * r, -Math.sin(a) * r); } // facing the fire
+    else { const u = (L - 15) / 7; r = 8.2 + 6 * u; bound = 1; yaw = Math.atan2(Math.cos(a), Math.sin(a)); } // away
+    return { x: Math.cos(a) * r, z: Math.sin(a) * r, yaw, walk, bound, alert, local: L };
+  }
+
   // ---- seasons, from the calendar (northern hemisphere) ----
   const SEASONS = ['winter', 'spring', 'summer', 'autumn'];
   function season(month) { // 0 = January
@@ -379,7 +420,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
-    STORIES, story, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, story, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

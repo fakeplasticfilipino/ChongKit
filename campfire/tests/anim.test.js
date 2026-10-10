@@ -282,3 +282,31 @@ test('leaves fall from the treetops to the ground; snow stays in its box', () =>
     assert.ok(f.y > -0.6 && f.y <= 8 && Math.abs(f.x) < 10.5 && Math.abs(f.z) < 10.5);
   }
 });
+
+test('the fox visits now and then, keeps its distance and sits a while', () => {
+  let seen = 0, sat = 0, prev = null;
+  for (let t = 0; t < 3000; t += 0.25) {
+    const f = A.foxAt(t);
+    if (f) {
+      seen++;
+      if (f.sit > 0.99) sat++;
+      assert.ok(Math.hypot(f.x, f.z) >= A.FOX_SIT - 1e-9 && Math.hypot(f.x, f.z) <= 10.6);
+      if (prev) assert.ok(Math.hypot(f.x - prev.x, f.z - prev.z) < 0.5, 'no jumps at ' + t);
+    }
+    prev = f;
+  }
+  assert.ok(seen > 0 && sat > 0);
+  assert.ok(seen * 0.25 < 3000 * 0.2, 'away most of the time');
+});
+
+test('the deer appears far off, then bounds away', () => {
+  let seen = 0, bounded = 0;
+  for (let t = 0; t < 3000; t += 0.25) {
+    const d = A.deerAt(t);
+    if (!d) continue;
+    seen++;
+    if (d.bound) bounded++;
+    assert.ok(Math.hypot(d.x, d.z) >= 8.1);
+  }
+  assert.ok(seen > 0 && bounded > 0);
+});

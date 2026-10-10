@@ -369,6 +369,8 @@
 
     // ---- the camp: tripod and stew, tent, horse, lantern (camp.js) ----
     const camp = CampProps.build({ THREE, scene, mat, mesh, box, cyl, cone, group, flat, rand, particles, blob });
+    const visitors = CampVisitors.build({ THREE, scene, box, cyl, cone, group });
+    const NOWHERE = new THREE.Vector3(0, 0.4, 20);
 
     // ---- the season's weather: falling leaves in autumn; snow and steaming breath in winter ----
     const LEAVES = AUTUMN ? 30 : 0, FLAKES = WINTER ? 650 : 0;
@@ -473,6 +475,7 @@
       });
 
       const tw = A.story('twig', t), pp = A.story('pipe', t), kt = A.story('katana', t);
+      const vis = visitors.update(t); // the fox, the deer, the owl
       const dz = kt < 0 ? A.dozeAt(t) : 0;
       const stoke = A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD)[0];
       const sk = stoke === undefined ? -1 : t - (stoke - A.STOKE_LEAD); // seconds into the wizard's stoke
@@ -507,6 +510,7 @@
         [A.win(snapAgo, 0.15, 2.6, 0.3), HEADS.get(samurai)],
         [A.win(sk, 0.2, 1.5, 0.3), HEADS.get(wizard)],
         [watchFire, FIRE_AT],
+        [vis.foxLook, vis.fox || NOWHERE],
       ]) + 0.12 * A.noise1(t * 0.2, 61);
 
       // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
@@ -564,6 +568,8 @@
       samurai.torso.rotation.x = samurai.lean + 0.12 * dz;
       samurai.head.rotation.y = (1 - dz) * lookAtMix(samurai, [
         [watchFire, FIRE_AT],
+        [vis.deerLook, vis.deer || NOWHERE],
+        [vis.foxLook * 0.6, vis.fox || NOWHERE],
         [A.win(tw, 0.6, 2.2, 0.3), HEADS.get(traveler)],
         [A.win(pp, 4.0, 6.0, 0.4), HEADS.get(wizard)],
       ]);
