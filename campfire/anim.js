@@ -190,6 +190,95 @@
     return out.sort((a, b) => a.time - b.time);
   }
 
+  // ---- little stories: each on its own cycle. Periods are picked so one figure's stories never overlap
+  // (twig 46 = 2 × shift 23; pipe and reach share 43; katana 52 = 2 × doze 26). ----
+  const STORIES = {
+    shift: { period: 23, offset: 13, dur: 3 }, // traveler shifts on the cane
+    twig: { period: 46, offset: 28, dur: 4 }, // traveler tosses a twig on the fire
+    reach: { period: 43, offset: 6, dur: 6 }, // wizard warms a hand
+    pipe: { period: 43, offset: 24, dur: 11 }, // wizard smokes a pipe
+    doze: { period: 26, offset: 9, dur: 9 }, // samurai nods off
+    katana: { period: 52, offset: 20, dur: 12 }, // samurai checks the blade
+  };
+  // Seconds into the story's current run, or -1 when it isn't running.
+  function story(name, t) {
+    const s = STORIES[name];
+    const local = (((t - s.offset) % s.period) + s.period) % s.period;
+    return local < s.dur ? local : -1;
+  }
+  // 0 outside [a, b], easing to 1 over `ramp` seconds at each end. Feed it a story's local time.
+  function win(local, a, b, ramp) {
+    if (local < a || local > b) return 0;
+    return Math.min(smooth((local - a) / ramp), smooth((b - local) / ramp));
+  }
+  // Seconds since the story last reached `at` seconds into its run (always 0 … period).
+  function since(name, at, t) {
+    const s = STORIES[name];
+    return (((t - s.offset - at) % s.period) + s.period) % s.period;
+  }
+  // Poses between keyframes [[time, ...values], …], eased; before the first and after the last, held.
+  function keyframes(local, keys) {
+    if (local <= keys[0][0]) return keys[0].slice(1);
+    for (let i = 1; i < keys.length; i++) {
+      if (local > keys[i][0]) continue;
+      const a = keys[i - 1], b = keys[i], u = smooth((local - a[0]) / (b[0] - a[0]));
+      return a.slice(1).map((v, j) => v + (b[j + 1] - v) * u);
+    }
+    return keys[keys.length - 1].slice(1);
+  }
+  // Moments inside the stories (seconds into the run).
+  const TWIG_LAND = 2.3, PUFFS = [4.2, 7.6], DRAW = 1.6, SHEATHE = 10.4;
+  const SNAP = STORIES.doze.dur * 0.88; // when doze() snaps back
+
+  // Every moment in [from, to), sorted: a twig landing, logs settling, the samurai jerking awake, the katana
+  // drawn and put away, the wizard's puffs, a wolf far off. The sound plays them; the picture shows them.
+  function events(from, to) {
+    const out = [];
+    const each = (name, at, type) => {
+      const s = STORIES[name];
+      for (let k = Math.floor((from - s.offset - at) / s.period); k * s.period + s.offset + at < to; k++) {
+        const time = k * s.period + s.offset + at;
+        if (time >= from) out.push({ type, time });
+      }
+    };
+    each('twig', TWIG_LAND, 'land');
+    each('doze', SNAP, 'snap');
+    each('katana', DRAW, 'draw');
+    each('katana', SHEATHE, 'sheathe');
+    PUFFS.forEach((p) => each('pipe', p, 'puff'));
+    const slots = (len, type, base, spread, chance, salt) => {
+      for (let k = Math.max(0, Math.floor(from / len) - 1); k * len < to; k++) {
+        const r = rng(k * 131 + salt);
+        const time = k * len + base + r() * spread;
+        if (r() < chance && time >= from && time < to) out.push({ type, time });
+      }
+    };
+    slots(37, 'settle', 4, 25, 0.65, 11); // logs shift and settle
+    slots(150, 'wolf', 70, 60, 1, 23); // a wolf far off, every 2–3 minutes
+    slots(60, 'star', 10, 40, 1, 37); // a shooting star
+    slots(120, 'eyes', 50, 50, 1, 41); // eyes glinting in the forest
+    return out.sort((a, b) => a.time - b.time);
+  }
+
+  // The fire flares when a twig lands or the logs settle: 0–1, fading over a second and a half.
+  function flare(t) {
+    let f = 0;
+    for (const e of events(t - 2, t)) if (e.type === 'land' || e.type === 'settle') f += Math.exp(-(t - e.time) / 0.5);
+    return Math.min(1, f);
+  }
+  // Showers of sparks from the same moments.
+  function showers(t) {
+    const out = [];
+    for (const e of events(t - 1.6, t)) {
+      if (e.type !== 'land' && e.type !== 'settle') continue;
+      for (let j = 0; j < 16; j++) {
+        const p = ember(Math.floor(e.time * 100) * 16 + j + 7777, t - e.time, 1.6);
+        out.push({ x: p.x * 2.2, y: p.y * 1.25 - 0.1, z: p.z * 2.2, alpha: p.alpha });
+      }
+    }
+    return out;
+  }
+
   // ---- turning around the fire ----
   const PITCH_MIN = 0.03, PITCH_MAX = 0.55;
   // One step of the view: yaw/pitch move by their speed, which eases off; yaw wraps, pitch stays in range.
@@ -222,7 +311,8 @@
   ];
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
-    fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX };
+    fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
+    STORIES, story, since, keyframes, win, events, flare, showers, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

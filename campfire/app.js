@@ -116,9 +116,11 @@
   // Sound is always on; browsers only allow it after the first click, tap or key.
   ['pointerdown', 'keydown', 'touchend'].forEach((e) => window.addEventListener(e, CampAudio.start, { passive: true }));
 
+  // ?at=SECONDS starts the clock there (for checking a story without waiting for it)
+  const START = Number(new URLSearchParams(location.search).get('at')) || 0;
   let last = 0;
   function frame(ms) {
-    const t = ms / 1000, dt = Math.min(0.1, t - last || 0);
+    const t = START + ms / 1000, dt = Math.min(0.1, t - last || 0);
     last = t;
     if (!drag) view = A.orbit(view, dt);
     world.update(t, view);

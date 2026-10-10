@@ -138,6 +138,15 @@
     hat.add(tilt(cyl(0.06, 0.14, 0.22, 7, ROBE_MID, 0, 0.33, -0.04), -0.35, 0, 0));
     hat.add(tilt(cone(0.06, 0.22, 6, ROBE_MID, 0, 0.45, -0.15), -1.05, 0, 0)); // the tip droops back
     wh.add(hat);
+    // a pipe, out only while smoking
+    const pipe = group(0, 0.06, 0.15);
+    pipe.add(tilt(box(0.022, 0.022, 0.18, BROWN_DK, 0, -0.01, 0.09), 0.12, 0, 0)); // stem
+    pipe.add(cyl(0.04, 0.032, 0.07, 6, BROWN, 0, 0.0, 0.19)); // bowl
+    const pipeGlow = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.05), new THREE.MeshBasicMaterial({ color: 0x9b3a1c }));
+    pipeGlow.position.set(0, 0.035, 0.19);
+    pipe.add(pipeGlow);
+    pipe.visible = false;
+    wh.add(pipe);
     wz.arms[0].sh.rotation.set(-0.5, 0, 0.05); // left hand on the knee (reaches toward the fire)
     wz.arms[0].el.rotation.x = -0.7;
     wz.arms[1].sh.rotation.set(-1.0, 0, 0.4); // right hand up on the staff
@@ -192,10 +201,22 @@
     katana.rotation.z = -0.6;
     katana.add(box(0.06, 0.85, 0.035, DARK, 0, 0, 0)); // saya
     katana.add(box(0.065, 0.05, 0.04, GOLD, 0, -0.42, 0)); // kojiri
-    katana.add(cyl(0.065, 0.065, 0.016, 8, GOLD, 0, 0.44, 0)); // tsuba
-    for (let k = 0; k < 4; k++) katana.add(box(0.045, 0.05, 0.04, k % 2 ? BONE : LACE, 0, 0.48 + k * 0.05, 0)); // wrapped hilt
-    katana.add(box(0.05, 0.03, 0.045, GOLD, 0, 0.68, 0)); // kashira
+    const hilt = group(0, 0, 0); // hidden while the blade is out
+    hilt.add(cyl(0.065, 0.065, 0.016, 8, GOLD, 0, 0.44, 0)); // tsuba
+    for (let k = 0; k < 4; k++) hilt.add(box(0.045, 0.05, 0.04, k % 2 ? BONE : LACE, 0, 0.48 + k * 0.05, 0)); // wrapped hilt
+    hilt.add(box(0.05, 0.03, 0.045, GOLD, 0, 0.68, 0)); // kashira
+    katana.add(hilt);
     st.add(katana);
+    // the drawn blade, held across the lap to look it over
+    const blade = group(0.05, 0.42, 0.4);
+    blade.add(box(0.72, 0.035, 0.012, 0xcfc8bb, 0.12, 0, 0)); // steel
+    blade.add(box(0.7, 0.012, 0.014, 0x9a948c, 0.12, -0.012, 0)); // the edge's shadow
+    blade.add(tilt(cyl(0.06, 0.06, 0.014, 8, GOLD, -0.25, 0, 0), 0, 0, Math.PI / 2)); // tsuba
+    for (let k = 0; k < 4; k++) blade.add(box(0.05, 0.045, 0.04, k % 2 ? BONE : LACE, -0.28 - k * 0.05, 0, 0)); // hilt
+    const glint = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.02), new THREE.MeshBasicMaterial({ color: 0xfff6d6 }));
+    blade.add(glint);
+    blade.visible = false;
+    st.add(blade);
     st.add(tilt(box(0.035, 0.6, 0.02, LACE, 0.02, 0.3, 0.145), 0, 0, 0.6)); // sageo cord across the chest
     // wakizashi at the hip
     const waki = group(-0.25, 0.1, 0.02);
@@ -229,7 +250,14 @@
     pack.add(tilt(cyl(0.11, 0.11, 0.46, 8, 0x96603a, 0, 0.53, 0), 0, 0, Math.PI / 2)); // straw mat roll
     sm.root.add(pack);
 
-    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight };
+    // a twig the traveler tosses on the fire
+    const twig = group(0, 0, 0);
+    twig.add(box(0.3, 0.03, 0.03, BROWN, 0, 0, 0));
+    twig.add(tilt(box(0.1, 0.02, 0.02, BROWN, 0.06, 0.03, 0), 0, 0, 0.6));
+    twig.visible = false;
+    scene.add(twig);
+
+    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, hilt, blade, glint, pipe, pipeGlow, twig };
   }
 
   window.CampFigures = { build };

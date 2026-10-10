@@ -148,7 +148,9 @@
     seatLog(0, -2.3);
     scene.add(mesh(new THREE.DodecahedronGeometry(0.28), 0x5e5650, 2.15, 0.15, 0.35));
     const fig = CampFigures.build({ THREE, scene, mat, mesh, box, cyl, cone, group });
-    const { traveler, wizard, samurai, crystal, crystalLight } = fig;
+    const { traveler, wizard, samurai, crystal, crystalLight, hilt, blade, glint, pipe, pipeGlow, twig } = fig;
+    const HEADS = new Map([traveler, wizard, samurai].map((p) => [p, p.root.localToWorld(new THREE.Vector3(0, 1.1, 0.1))]));
+    const FIRE_AT = new THREE.Vector3(0, 0.4, 0);
 
     // ---- props around the clearing ----
     function mushroom(x, z) {
@@ -289,7 +291,7 @@
       scene.add(p);
       return p;
     }
-    const EMBERS = 36, BURSTS = 30, FLIES = 9;
+    const EMBERS = 36, BURSTS = 80, FLIES = 9;
     const embers = particles(EMBERS, 0xf8b347, 1.5);
     const sparks = particles(BURSTS, 0xffe08a, 1.5);
     const flies = particles(FLIES, 0xb7d65a, 1.5);
@@ -305,6 +307,30 @@
       return m;
     });
 
+    // ---- the wizard's smoke rings: two puffs of three rings ----
+    const ringGeo = new THREE.TorusGeometry(0.055, 0.016, 4, 8);
+    const rings = Array.from({ length: 6 }, () => {
+      const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x9a948c, transparent: true, depthWrite: false }));
+      m.visible = false;
+      scene.add(m);
+      return m;
+    });
+    const tmp = new THREE.Vector3(), twigFrom = new THREE.Vector3(), mouth = new THREE.Vector3();
+    let twigHeld = false;
+
+    // Where a figure's head should turn: a weighted mix of targets; weights below 1 ease in from looking ahead.
+    function lookAtMix(p, list) {
+      let sw = 0, yaw = 0;
+      for (const [w, target] of list) {
+        if (w <= 0) continue;
+        tmp.copy(target);
+        p.root.worldToLocal(tmp);
+        sw += w;
+        yaw += w * Math.atan2(tmp.x, tmp.z);
+      }
+      return sw ? Math.max(-1.2, Math.min(1.2, yaw / Math.max(1, sw))) : 0;
+    }
+
     // ---- camera ----
     const camera = new THREE.PerspectiveCamera(44, 16 / 9, 0.1, 140);
     const fill = new THREE.DirectionalLight(0x8fa6c4, 0.16); // soft light from the viewer, so faces read
@@ -314,11 +340,12 @@
     function update(t, view) {
       // fire
       const f = A.flicker(t);
-      fireLight.intensity = 3.2 * f;
+      const fl = A.flare(t); // a twig landed or the logs settled
+      fireLight.intensity = 3.2 * f + 2.4 * fl;
       fireLight.color.setRGB(1, 0.62 + 0.3 * (f - 1), 0.36);
       fireLight.position.x = 0.08 * A.noise1(t * 2, 21);
       fireLight.position.z = 0.08 * A.noise1(t * 2, 22);
-      drawFire(t, 0);
+      drawFire(t, fl);
       embersBed.material.color.setHex(f > 1.08 ? 0xc8561b : 0x9b3a1c);
       coals.forEach((c, i) => c.material.color.setHex(A.noise1(t * 1.5 + i * 7, 200 + i) > 0.2 ? 0xc8561b : 0x6e2a1f));
 
@@ -333,7 +360,7 @@
       }
       ep.needsUpdate = ec.needsUpdate = true;
       const bp = sparks.geometry.attributes.position, bc = sparks.geometry.attributes.color, bb = sparks.userData.base;
-      const burst = A.bursts(t);
+      const burst = A.bursts(t).concat(A.showers(t));
       for (let i = 0; i < BURSTS; i++) {
         const e = burst[i];
         if (e) { bp.setXYZ(i, e.x, e.y, e.z); bc.setXYZ(i, bb.r * e.alpha, bb.g * e.alpha, bb.b * e.alpha); }
@@ -357,27 +384,86 @@
         p.torso.scale.set(1 + 0.02 * b, 1 + 0.03 * b, 1 + 0.02 * b);
       });
 
-      // traveler: looks at the others now and then, shifts on the cane
-      const look = A.envelope(t, 16, 3, 5) - A.envelope(t, 16, 10, 4);
-      traveler.head.rotation.y = 0.75 * look;
-      const shift = A.envelope(t, 23, 13, 3);
-      traveler.torso.rotation.z = -0.1 * shift;
-      traveler.torso.rotation.x = traveler.lean - 0.1 * shift;
+      const tw = A.story('twig', t), pp = A.story('pipe', t), kt = A.story('katana', t);
+      const dz = kt < 0 ? A.doze(t, 26, 9, 9) : 0;
+      const snapAgo = A.since('doze', A.SNAP, t);
 
-      // wizard: crystal pulses, reaches toward the fire
-      const reach = A.envelope(t, 19, 6, 6);
-      wizard.arms[0].sh.rotation.x = -0.5 - 0.6 * reach;
-      wizard.arms[0].el.rotation.x = -0.7 + 0.55 * reach;
-      wizard.head.rotation.x = 0.2 * reach;
+      // traveler: shifts on the cane; now and then tosses a twig on the fire
+      const shift = A.envelope(t, 23, 13, 3);
+      const lean = A.win(tw, 0.3, 3.4, 0.5);
+      traveler.torso.rotation.z = -0.1 * shift;
+      traveler.torso.rotation.x = traveler.lean - 0.1 * shift + 0.22 * lean;
+      const [tsx, tsz, tel] = A.keyframes(tw < 0 ? -1 : tw, [[0.6, -0.5, 0.05, -0.7], [1.2, 0.45, 0.25, -0.35], [1.55, -1.5, 0.1, -0.15], [2.3, -1.1, 0.05, -0.4], [3.4, -0.5, 0.05, -0.7]]);
+      traveler.arms[0].sh.rotation.set(tsx, 0, tsz);
+      traveler.arms[0].el.rotation.x = tel;
+      if (tw >= 0.8 && tw < 1.55) { // in hand
+        traveler.arms[0].el.localToWorld(twigFrom.set(0, -0.3, 0));
+        twig.position.copy(twigFrom);
+        twig.rotation.set(0, traveler.root.rotation.y, 1.2);
+        twig.visible = twigHeld = true;
+      } else if (tw >= 1.55 && tw < A.TWIG_LAND) { // flying
+        if (!twigHeld) traveler.arms[0].el.localToWorld(twigFrom.set(0, -0.3, 0));
+        const u = (tw - 1.55) / (A.TWIG_LAND - 1.55);
+        twig.position.lerpVectors(twigFrom, FIRE_AT, u);
+        twig.position.y += 0.7 * 4 * u * (1 - u);
+        twig.rotation.z = 1.2 + u * 7;
+        twig.visible = true;
+      } else { twig.visible = twigHeld = false; }
+      traveler.head.rotation.y = lookAtMix(traveler, [
+        [A.win(kt, 1.5, 9.5, 0.6), HEADS.get(samurai)],
+        [A.win(pp, 3.8, 8.6, 0.5), HEADS.get(wizard)],
+        [A.win(tw, 0.9, 3.4, 0.3), FIRE_AT],
+        [A.win(snapAgo, 0.15, 2.6, 0.3), HEADS.get(samurai)],
+      ]) + 0.12 * A.noise1(t * 0.2, 61);
+
+      // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
+      const reach = A.win(A.story('reach', t), 0, 6, 1.5);
+      const [wsx, wsz, wel] = A.keyframes(pp < 0 ? -1 : pp, [[0, -0.5, 0.05, -0.7], [1.2, -1.3, 0.6, -1.2], [9.6, -1.3, 0.6, -1.2], [10.8, -0.5, 0.05, -0.7]]);
+      wizard.arms[0].sh.rotation.set(wsx - 0.6 * reach, 0, wsz);
+      wizard.arms[0].el.rotation.x = wel + 0.55 * reach;
+      pipe.visible = pp >= 1.0 && pp < 10.0;
+      const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
+      pipeGlow.material.color.setHex(inhale > 0.5 ? 0xffe08a : inhale > 0.1 ? 0xe8812c : 0x9b3a1c);
+      wizard.head.rotation.x = 0.2 * reach - 0.1 * inhale;
+      wizard.head.rotation.y = lookAtMix(wizard, [
+        [A.win(kt, 2.5, 8.5, 0.6), HEADS.get(samurai)],
+        [A.win(tw, 0.6, 2.0, 0.3), HEADS.get(traveler)],
+        [A.win(tw, 2.0, 3.6, 0.3), FIRE_AT],
+      ]);
+      wizard.head.localToWorld(mouth.set(0, 0.07, 0.25)); // the mouth, for the rings
+      rings.forEach((r, i) => {
+        const puff = i < 3 ? 0 : 1;
+        const a2 = A.since('pipe', A.PUFFS[puff] + (i % 3) * 0.35, t);
+        r.visible = a2 < 3.5;
+        if (!r.visible) return;
+        r.position.set(mouth.x + 0.1 * a2, mouth.y + 0.3 * a2, mouth.z + 0.05 * a2);
+        r.scale.setScalar(1 + 0.9 * a2);
+        r.material.opacity = 0.6 * (1 - a2 / 3.5);
+        r.lookAt(camera.position);
+      });
       const glow = 0.55 + 0.25 * A.breath(t, 2.4, 0) + 0.6 * reach;
       crystalLight.intensity = glow;
       crystal.scale.setScalar(0.85 + 0.3 * glow);
       crystal.rotation.y = t * 0.8;
 
-      // samurai: nods off, jerks awake
-      const d = A.doze(t, 26, 9, 9);
-      samurai.head.rotation.x = 0.6 * d;
-      samurai.torso.rotation.x = samurai.lean + 0.12 * d;
+      // samurai: nods off and jerks awake; draws the katana and looks it over
+      const [ksx, ksz, kel, kdown] = A.keyframes(kt < 0 ? -1 : kt, [[0, -0.35, 0.08, -0.85, 0], [1.4, -0.95, 0.32, -0.5, 0.35], [9.8, -0.95, 0.32, -0.5, 0.35], [11.4, -0.35, 0.08, -0.85, 0]]);
+      samurai.arms.forEach(({ sh, el }, i) => {
+        sh.rotation.set(ksx, 0, (i ? -1 : 1) * ksz);
+        el.rotation.x = kel;
+      });
+      const out = kt >= A.DRAW && kt < A.SHEATHE;
+      blade.visible = out;
+      hilt.visible = !out;
+      const sweep = Math.max(A.win(kt, 3, 5, 0.01) ? (kt - 3) / 2 : 0, A.win(kt, 6.5, 8, 0.01) ? (kt - 6.5) / 1.5 : 0);
+      glint.visible = out && sweep > 0;
+      glint.position.set(-0.15 + 0.6 * sweep, 0, 0.008);
+      samurai.head.rotation.x = 0.6 * dz + kdown;
+      samurai.torso.rotation.x = samurai.lean + 0.12 * dz;
+      samurai.head.rotation.y = (1 - dz) * lookAtMix(samurai, [
+        [A.win(tw, 0.6, 2.2, 0.3), HEADS.get(traveler)],
+        [A.win(pp, 4.0, 6.0, 0.4), HEADS.get(wizard)],
+      ]);
 
       // trees sway with the wind
       const w = 0.4 + 1.2 * A.wind(t);
