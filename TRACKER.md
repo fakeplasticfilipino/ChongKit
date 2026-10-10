@@ -120,6 +120,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Seasons from the calendar: autumn (red and gold trees, falling and fallen leaves), winter (snowfall, snow on trees and ground, steaming breath, no crickets, stronger wind), spring (flowers), summer (more fireflies); `?season=` to preview
 - [x] Tests: fuel and stokes (never while the wizard is busy), seasons, leaves, snow
 
+### ✅ v6 — done
+- [x] A proper camp: tripod and pot of stew (bubbles, steam, a ladle the wizard stirs by magic), candle-lit tent, the samurai's saddled horse tethered to a tree, a lantern on a forked post, moths
+- [x] Forest visitors: a fox that sits to watch the fire, a deer that listens and bounds away, an owl on the lantern post (blinks, snaps its head round, bobs when it hoots); glances at them
+- [x] Rain showers every 10–20 min (snow squalls in winter): streaks, splashes, hidden moon, a damped smoking fire, the wizard holds the hat; sheet lightning and distant thunder; rain and sizzle sounds, crickets stop
+- [x] Click a character (twig / pipe or stir / katana) or the fire (stoke); pointer cursor over clickable things
+- [x] Tests: clicks, showers, thunder, flash, fox and deer paths, the stir story
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

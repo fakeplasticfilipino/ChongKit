@@ -205,10 +205,24 @@
   // The samurai's dozing (0 awake … 1 asleep), on the doze story's schedule.
   const dozeAt = (t) => doze(t, STORIES.doze.period, STORIES.doze.offset, STORIES.doze.dur);
   // Seconds into the story's current run, or -1 when it isn't running.
-  function story(name, t) {
+  function scheduled(name, t) {
     const s = STORIES[name];
     const local = (((t - s.offset) % s.period) + s.period) % s.period;
     return local < s.dur ? local : -1;
+  }
+  // ---- clicks start a story right now, on top of the schedule ----
+  const manual = []; // { name, start }; name can also be 'stoke' (the wizard raises the staff now)
+  function trigger(name, t) {
+    manual.push({ name, start: t });
+    if (manual.length > 40) manual.shift();
+  }
+  function clearTriggers() { manual.length = 0; }
+  function story(name, t) {
+    for (let i = manual.length - 1; i >= 0; i--) {
+      const m = manual[i];
+      if (m.name === name && t >= m.start && t < m.start + STORIES[name].dur) return t - m.start;
+    }
+    return scheduled(name, t);
   }
   // 0 outside [a, b], easing to 1 over `ramp` seconds at each end. Feed it a story's local time.
   function win(local, a, b, ramp) {
@@ -218,7 +232,9 @@
   // Seconds since the story last reached `at` seconds into its run (always 0 … period).
   function since(name, at, t) {
     const s = STORIES[name];
-    return (((t - s.offset - at) % s.period) + s.period) % s.period;
+    let best = (((t - s.offset - at) % s.period) + s.period) % s.period;
+    for (const m of manual) if (m.name === name && t - m.start - at >= 0) best = Math.min(best, t - m.start - at);
+    return best;
   }
   // Poses between keyframes [[time, ...values], …], eased; before the first and after the last, held.
   function keyframes(local, keys) {
@@ -244,6 +260,7 @@
         const time = k * s.period + s.offset + at;
         if (time >= from) out.push({ type, time });
       }
+      for (const m of manual) if (m.name === name && m.start + at >= from && m.start + at < to) out.push({ type, time: m.start + at });
     };
     each('twig', TWIG_LAND, 'land');
     each('doze', SNAP, 'snap');
@@ -292,7 +309,7 @@
   const stokeCache = new Map();
   function stokeTime(k) {
     if (stokeCache.has(k)) return stokeCache.get(k);
-    const busy = (x) => story('reach', x) >= 0 || story('pipe', x) >= 0 || story('stir', x) >= 0;
+    const busy = (x) => scheduled('reach', x) >= 0 || scheduled('pipe', x) >= 0 || scheduled('stir', x) >= 0;
     let t = 600 + k * BURN;
     for (let n = 0; n < 200; n++, t += 1) {
       let free = true;
@@ -308,16 +325,18 @@
       const s = stokeTime(k);
       if (s >= from && s < to) out.push(s);
     }
-    return out;
+    for (const m of manual) if (m.name === 'stoke' && m.start + STOKE_LEAD >= from && m.start + STOKE_LEAD < to) out.push(m.start + STOKE_LEAD);
+    return out.sort((a, b) => a - b);
   }
   // How much the fire has to burn: 1 full … 0.35 low embers. It starts full when the page opens,
   // burns down, and jumps back up over 2 s at each stoke.
   const burn = (age) => 1 - 0.65 * Math.pow(Math.min(1, age / BURN), 1.3);
   function fuel(t) {
-    let i = -1;
-    for (let k = Math.max(0, Math.floor((t - 600) / BURN) - 1); stokeTime(k) <= t; k++) i = k;
-    if (i < 0) return burn(t);
-    const last = stokeTime(i), before = burn(last - (i > 0 ? stokeTime(i - 1) : 0));
+    let last = -1;
+    for (let k = Math.max(0, Math.floor((t - 600) / BURN) - 1); stokeTime(k) <= t; k++) last = stokeTime(k);
+    for (const m of manual) if (m.name === 'stoke' && m.start + STOKE_LEAD <= t) last = Math.max(last, m.start + STOKE_LEAD);
+    if (last < 0) return burn(t);
+    const before = fuel(last - 1e-3); // how low it was when stoked
     return before + (burn(t - last) - before) * smooth((t - last) / 2);
   }
 
@@ -452,7 +471,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
-    STORIES, story, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, story, trigger, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

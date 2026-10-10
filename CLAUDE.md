@@ -195,6 +195,10 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
    moments (`CampAnim.events`) drive both the picture and the sound. `?at=SECONDS` starts the clock
    there, for checking a moment. The fire burns down (`CampAnim.fuel`) and the wizard stokes it back
    when free (`stokeTime`). Seasons come from the calendar (`CampAnim.season`; `?season=` previews).
+   Clicks start a story now via `CampAnim.trigger` (story, since, events, stokes and fuel all include
+   them, so sounds and sparks follow); `stokeTime` ignores clicks so its cache stays valid.
+   Showers (`rainAt`, `thunders`, `flash`) and visitors (`foxAt`, `deerAt`) are pure and tested too.
+   Things placed around the camp keep clear of the camera's circle (radius 4.7) and of the figures.
 4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
    `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
    comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw
@@ -223,6 +227,8 @@ campfire/                    Ambience scene (three.js, pixel style) → /campfir
   index.html, app.js         Page, renderer, pixel pass, loop, dragging
   scene.js                   Builds and moves the world (forest, fire, props)
   figures.js                 The traveler, wizard and samurai
+  camp.js                    Tripod and stew, tent, horse, lantern, moths
+  visitors.js                Fox, deer, owl
   audio.js                   Generated sound (Web Audio): fire, wind, crickets, owl
   anim.js                    Pure timing math: flicker, idle moments, embers, sound schedules, orbit, palette
   vendor/three.min.js        three.js r153, copied (don't edit)

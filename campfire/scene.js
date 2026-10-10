@@ -726,7 +726,36 @@
       fill.position.set(camera.position.x, camera.position.y + 2, camera.position.z);
     }
 
-    return { scene, camera, update };
+    // ---- clicking: who (or what) is under the pointer, and what they do ----
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+    const fireHit = new THREE.Mesh(new THREE.SphereGeometry(0.6, 6, 4)); // an unseen target around the fire and pot
+    fireHit.position.set(0, 0.6, 0);
+    fireHit.updateMatrixWorld();
+    const PICKS = [[traveler.root, 'traveler'], [wizard.root, 'wizard'], [samurai.root, 'samurai'], [fireHit, 'fire']];
+    function pick(x, y) { // x, y: -1 … 1 across the canvas
+      ray.setFromCamera(ndc.set(x, y), camera);
+      const hit = ray.intersectObjects(PICKS.map((p) => p[0]), true)[0];
+      for (let o = hit && hit.object; o; o = o.parent) {
+        const p = PICKS.find((q) => q[0] === o);
+        if (p) return p[1];
+      }
+      return null;
+    }
+    let wizardTurn = 0;
+    // Start their story now (unless they're busy): the traveler tosses a twig, the wizard smokes or stirs,
+    // the samurai draws the katana, the fire gets stoked.
+    function act(who, t) {
+      const busy = (names) => names.some((n) => A.story(n, t) >= 0);
+      const wizardBusy = busy(['reach', 'pipe', 'stir']) || A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD).length > 0;
+      if (who === 'traveler' && !busy(['twig'])) A.trigger('twig', t);
+      else if (who === 'wizard' && !wizardBusy) A.trigger(wizardTurn++ % 2 ? 'stir' : 'pipe', t);
+      else if (who === 'samurai' && !busy(['katana'])) A.trigger('katana', t);
+      else if (who === 'fire' && !wizardBusy) A.trigger('stoke', t);
+      else return false;
+      return true;
+    }
+
+    return { scene, camera, update, pick, act };
   }
 
   window.CampScene = { build };

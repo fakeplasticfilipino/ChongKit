@@ -307,7 +307,10 @@ which writes the site files into `chong-die/`. Commit both folders. How it works
 An ambience scene for a screen or TV at the table: a traveler, a wizard and a samurai around a
 campfire in a forest at night, in a pixel-art style. Open it and leave it running; the corner
 buttons (← All tools, ⛶ fullscreen) fade when the mouse rests. **Drag** (mouse or finger) to
-circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there. The moon
+circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there.
+**Click** a character to make them do something now (the traveler tosses a twig, the wizard smokes
+or stirs the stew, the samurai draws the katana) or click the fire to have the wizard stoke it; the
+pointer turns into a hand over anything you can click, and busy characters ignore it. The moon
 keeps its one place in the sky, up and to the right of the starting view.
 
 **What moves:** pixel flames lick and flicker and the firelight pulses (a small warm pool; the
@@ -316,11 +319,21 @@ fireflies drift at the forest edge, mist creeps between the trees, clouds cross 
 dims), and the camera drifts slowly. Little stories, each on its own repeating schedule:
 
 - the traveler shifts on the cane, and about once a minute tosses a twig on the fire (it flares and throws sparks);
-- the wizard warms a hand at the fire, and smokes a pipe, blowing smoke rings;
+- the wizard warms a hand at the fire, smokes a pipe (blowing smoke rings), and with a flick of the
+  hand makes the ladle stir the stew by itself;
 - the samurai nods off and jerks awake, and draws the katana to look it over (a glint runs down the blade);
 - they glance at whoever is doing something; the samurai notices the eyes;
 - the fire burns down over about 15 minutes (the night gets darker), until the wizard raises the
   staff: the crystal flares, a shimmer, and the fire whooms back up;
+- the camp: a tripod with a pot of stew (bubbles, steam), a tent lit by a candle inside, the
+  samurai's horse tethered to a tree (grazes, swishes its tail, flicks its ears), a lantern on a
+  forked post, moths around the lantern and the pot;
+- visitors: a fox trots out of the trees every few minutes, sits and watches the fire, and trots off;
+  a deer steps out between the far trees, listens and bounds away; an owl sits on the lantern post,
+  blinking and snapping its head round, and bobs when it hoots;
+- every 10–20 minutes or so a rain shower (snow squall in winter): streaks and splashes, the moon
+  hides, the fire hisses and smokes, the wizard holds on to the hat, the traveler hunches, and once or
+  twice sheet lightning flashes with thunder rolling in a couple of seconds later;
 - now and then logs settle (a flare and a shower of sparks), a shooting star crosses the gap by the
   moon, and once in a long while two eyes glint in the dark across the fire.
 
@@ -328,7 +341,8 @@ dims), and the camera drifts slowly. Little stories, each on its own repeating s
 the fire's roar and pops, wind in the trees and leaves rustling in the gusts, three crickets taking
 turns, a distant owl every 60–120 s and a wolf every few minutes; and the moments of the stories: the
 twig's whoosh and landing, logs settling, the katana's ring and click, the samurai's armour creaking,
-the wizard's puffs, a twig snapping out where the eyes are. Browsers only allow sound after you
+the wizard's puffs, a twig snapping out where the eyes are, the stoke's shimmer and whoomp, rain and
+the fire sizzling in it, distant thunder. Browsers only allow sound after you
 interact, so it starts with your first click, tap or key. The sound and the picture share one clock
 (`CampAnim.events`): every strong pop throws sparks, and the trees sway harder when the wind rises.
 
@@ -349,7 +363,8 @@ stretched to the window without smoothing.
 
 **Files:** `anim.js` is the timing math (flicker, breathing, the flame shape, the stories and their
 moments, ember / spark / smoke paths, the pop / wind / cricket / owl schedules, the turning; tested), `figures.js` builds the three
-figures, `scene.js` builds and moves the world, `audio.js` makes the sound, `app.js` renders it
+figures, `camp.js` the camp (pot, tent, horse, lantern), `visitors.js` the fox, deer and owl,
+`scene.js` builds and moves the world (and picks what you click), `audio.js` makes the sound, `app.js` renders it
 and handles dragging. three.js r153 is copied into
 `campfire/vendor/three.min.js` (the non-module build, so the page opens from `file://`) with its
 MIT license. To update it, copy `build/three.min.js` from a three.js release (r159 or older: later

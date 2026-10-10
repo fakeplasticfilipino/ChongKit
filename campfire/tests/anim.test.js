@@ -326,3 +326,20 @@ test('showers: rain eases in and out, now and then; thunder only while it rains'
   for (const x of th) assert.ok(A.rainAt(x) > 0.5, 'thunder in the rain');
   assert.ok(A.flash(th[0] + 0.03) === 1 && A.flash(th[0] + 3) === 0 && A.flash(th[0] - 0.5) === 0);
 });
+
+test('clicks: a story starts right away, with its moments; the fire can be stoked any time', () => {
+  A.clearTriggers();
+  const t0 = 1000.25; // between scheduled runs of the twig story
+  assert.strictEqual(A.story('twig', t0 + 1), -1);
+  A.trigger('twig', t0);
+  close(A.story('twig', t0 + 1), 1, 1e-9, 'running');
+  assert.ok(A.events(t0, t0 + 5).some((e) => e.type === 'land' && Math.abs(e.time - (t0 + A.TWIG_LAND)) < 1e-9));
+  assert.ok(A.flare(t0 + A.TWIG_LAND + 0.05) > 0.8);
+  const low = A.fuel(1450), earlier = A.fuel(1449);
+  A.trigger('stoke', 1450);
+  assert.ok(A.stokes(1449, 1460).includes(1450 + A.STOKE_LEAD));
+  assert.ok(A.fuel(1450 + A.STOKE_LEAD + 2.5) > 0.98 && low < 0.9);
+  close(A.fuel(1449), earlier, 1e-9, 'nothing changes before');
+  A.clearTriggers();
+  assert.strictEqual(A.story('twig', t0 + 1), -1);
+});

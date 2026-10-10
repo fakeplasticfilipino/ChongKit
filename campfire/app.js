@@ -94,12 +94,18 @@
   let view = { yaw: 0, pitch: 0.12, vyaw: 0, vpitch: 0 };
   let drag = null;
   canvas.addEventListener('pointerdown', (e) => {
-    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now() };
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now(), sx: e.clientX, sy: e.clientY, t0: performance.now() };
     view.vyaw = view.vpitch = 0;
     canvas.setPointerCapture(e.pointerId);
   });
+  // Where the pointer is, as -1 … 1 across the canvas (for picking).
+  const toNdc = (e) => {
+    const r = canvas.getBoundingClientRect();
+    return [((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1];
+  };
   canvas.addEventListener('pointermove', (e) => {
-    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag) { canvas.style.cursor = e.pointerType === 'mouse' && world.pick(...toNdc(e)) ? 'pointer' : ''; return; } // something to click
+    if (e.pointerId !== drag.id) return;
     const now = performance.now(), dt = Math.max(1, now - drag.at) / 1000;
     const dyaw = (-(e.clientX - drag.x) / window.innerWidth) * Math.PI * 1.3;
     const dpitch = ((e.clientY - drag.y) / window.innerHeight) * 1.2;
@@ -112,7 +118,13 @@
   const endDrag = (e) => {
     if (!drag || e.pointerId !== drag.id) return;
     if (performance.now() - drag.at > 80) view.vyaw = view.vpitch = 0; // held still before letting go
+    const click = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 6 && performance.now() - drag.t0 < 500;
     drag = null;
+    if (click && e.type === 'pointerup') { // a click, not a drag: whoever's under it does something
+      view.vyaw = view.vpitch = 0;
+      const who = world.pick(...toNdc(e));
+      if (who) world.act(who, last);
+    }
   };
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
