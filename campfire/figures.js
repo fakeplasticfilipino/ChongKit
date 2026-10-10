@@ -1,166 +1,235 @@
-// Campfire: the three seated figures (traveler, wizard, fighter), built from boxes, cones and cylinders.
-// Browser global `CampFigures`. `kit` holds scene.js's helpers.
+// Campfire: the three seated figures (traveler, wizard, samurai), built from boxes, cones and cylinders.
+// Pixel-art proportions: big heads with eyes, elbows so the poses read. Browser global `CampFigures`.
+// `kit` holds scene.js's helpers.
 (function () {
   'use strict';
 
-  const SKIN = 0x96603a, DARK = 0x150e0b, CLOTH_DARK = 0x24170f;
+  const SKIN = 0xa8704a, DARK = 0x150e0b, CLOTH_DARK = 0x24170f, WHITE = 0xe8e2d4, BONE = 0xcfc8bb;
+  const RED = 0xb03a28, GOLD = 0xc09040, BROWN = 0x55341d, BROWN_DK = 0x3a2416;
 
   function build(kit) {
     const { THREE, scene, mesh, box, cyl, cone, group } = kit;
+    const tilt = (m, x, y, z) => { m.rotation.set(x || 0, y || 0, z || 0); return m; };
+
+    // A seated leg: the thigh runs forward (+z) from the hip, lifted by kneeUp; the shin drops to the ground.
+    function leg(root, s, o) {
+      const sp = o.spread || 0.11, L = o.thigh || 0.42, a = o.kneeUp || 0, w = o.legW || 0.15;
+      const hip = group(s * sp, o.hip, 0);
+      hip.rotation.x = -a;
+      hip.add(box(w, w, L, o.legs, 0, 0, L / 2));
+      root.add(hip);
+      const ky = o.hip + Math.sin(a) * L, kz = Math.cos(a) * L;
+      const shin = ky - 0.06;
+      root.add(box(w * (o.flare || 0.95), shin, w * 0.95, o.legs, s * sp, 0.06 + shin / 2, kz - 0.03));
+      if (o.foot) o.foot(root, s * sp, kz);
+    }
+
+    // A head: face, nose, eyes, ears. Hair and hats are added per character.
+    function head(parent, skin) {
+      const h = group(0, 0.62, 0.02);
+      h.add(box(0.28, 0.3, 0.27, skin, 0, 0.15, 0));
+      h.add(box(0.05, 0.06, 0.05, skin, 0, 0.12, 0.155)); // nose
+      h.add(box(0.08, 0.02, 0.02, 0x55341d, 0, 0.065, 0.137)); // mouth
+      for (const s of [-1, 1]) {
+        h.add(box(0.045, 0.04, 0.02, DARK, s * 0.07, 0.165, 0.137)); // eye
+        h.add(box(0.04, 0.07, 0.06, skin, s * 0.15, 0.14, 0)); // ear
+      }
+      parent.add(h);
+      return h;
+    }
+
+    // An arm: shoulder → upper arm → elbow → forearm → hand. Turn `sh` and `el` to pose it.
+    function arm(torso, s, o) {
+      const sh = group(s * 0.25, 0.52, 0);
+      const up = 0.26, lo = 0.25;
+      sh.add(o.bell ? cyl(0.065, 0.08, up, 6, o.sleeve, 0, -up / 2, 0) : box(0.12, up, 0.13, o.sleeve, 0, -up / 2, 0));
+      const el = group(0, -up, 0);
+      el.add(o.bell ? cyl(0.08, 0.15, lo, 7, o.sleeve, 0, -lo / 2, 0) : box(0.11, lo, 0.12, o.sleeve, 0, -lo / 2, 0));
+      if (o.cuff) el.add(box(0.115, 0.04, 0.125, o.cuff, 0, -lo + 0.01, 0));
+      el.add(box(0.1, 0.1, 0.1, o.skin, 0, -lo - 0.05, 0)); // hand
+      sh.add(el);
+      torso.add(sh);
+      return { sh, el };
+    }
 
     // A seated person facing the fire (front is +z). Returns the parts that move.
     function person(o) {
       const root = group(o.x, 0, o.z);
-      root.rotation.y = Math.atan2(-o.x, -o.z);
-      const hip = o.hip;
-      for (const s of [-1, 1]) {
-        root.add(box(0.15, 0.15, 0.42, o.legs, s * 0.11, hip, 0.18)); // thigh
-        root.add(box(0.14, hip - 0.12, 0.14, o.legs, s * 0.11, hip / 2 + 0.06, 0.38)); // shin
-        root.add(box(0.16, 0.2, 0.16, DARK, s * 0.11, 0.1, 0.39)); // boot
-        root.add(box(0.15, 0.08, 0.26, DARK, s * 0.11, 0.04, 0.46)); // toe
-      }
-      const torso = group(0, hip, 0);
+      root.rotation.y = Math.atan2(-o.x, -o.z) + (o.turn || 0); // turn: three-quarters toward the viewer
+      for (const s of [-1, 1]) leg(root, s, o);
+      const torso = group(0, o.hip, 0);
       torso.rotation.x = o.lean;
       root.add(torso);
-      const head = group(0, 0.6, 0.02);
-      head.add(box(0.24, 0.26, 0.24, SKIN, 0, 0.13, 0));
-      head.add(box(0.05, 0.05, 0.04, SKIN, 0, 0.11, 0.13)); // nose
-      torso.add(head);
-      const arms = [-1, 1].map((s) => {
-        const sh = group(s * 0.26, 0.52, 0);
-        sh.rotation.x = -0.75;
-        torso.add(sh);
-        return sh;
-      });
+      torso.add(box(0.1, 0.08, 0.1, o.skin, 0, 0.6, 0.01)); // neck
+      const hd = head(torso, o.skin);
+      const arms = [-1, 1].map((s) => arm(torso, s, o));
       scene.add(root);
-      return { root, torso, head, arms, lean: o.lean };
+      return { root, torso, head: hd, arms, lean: o.lean };
     }
-    const sleeve = (arm, color, bell) => {
-      arm.add(bell ? cyl(0.06, 0.12, 0.48, 6, color, 0, -0.22, 0) : box(0.11, 0.48, 0.12, color, 0, -0.22, 0));
-      arm.add(box(0.09, 0.1, 0.09, SKIN, 0, -0.5, 0));
-    };
 
-    // ---- traveler: brown jacket, white collar and red tie, leaning on a cane ----
-    const tr = person({ x: -2.1, z: 0.35, hip: 0.4, lean: 0.15, legs: CLOTH_DARK });
-    const JACKET = 0x3a2416;
-    tr.torso.add(box(0.42, 0.58, 0.26, JACKET, 0, 0.29, 0));
-    tr.torso.add(box(0.46, 0.12, 0.3, JACKET, 0, 0.04, 0)); // jacket hem
-    tr.torso.add(box(0.13, 0.24, 0.02, 0xcfc8bb, 0, 0.45, 0.135)); // shirt
-    tr.torso.add(box(0.045, 0.2, 0.02, 0x6e2a1f, 0, 0.42, 0.15)); // tie
-    tr.torso.add(box(0.07, 0.045, 0.03, 0x6e2a1f, 0, 0.54, 0.15)); // knot
+    // ================= traveler: brown frock coat, white shirt, red tie, cane =================
+    const HAIR = 0x4a2c18;
+    const boot = (root, x, kz) => {
+      root.add(box(0.17, 0.2, 0.17, DARK, x, 0.1, kz - 0.02));
+      root.add(box(0.18, 0.05, 0.18, BROWN_DK, x, 0.2, kz - 0.02)); // boot cuff
+      root.add(box(0.16, 0.08, 0.26, DARK, x, 0.04, kz + 0.06));
+    };
+    const tr = person({ x: -2.1, z: 0.35, turn: -0.65, hip: 0.42, lean: 0.18, legs: CLOTH_DARK, skin: SKIN, sleeve: BROWN, cuff: WHITE, foot: boot });
+    const tt = tr.torso;
+    tt.add(box(0.42, 0.58, 0.25, BROWN, 0, 0.29, 0));
+    tt.add(box(0.46, 0.36, 0.06, BROWN, 0, -0.1, -0.12)); // coat tails over the log
     for (const s of [-1, 1]) {
-      const lapel = box(0.07, 0.26, 0.025, CLOTH_DARK, s * 0.095, 0.44, 0.145);
-      lapel.rotation.z = s * 0.35;
-      tr.torso.add(lapel);
+      tt.add(box(0.06, 0.26, 0.42, BROWN, s * 0.22, -0.02, 0.1)); // coat skirt over the hips
+      tt.add(tilt(box(0.08, 0.28, 0.03, BROWN_DK, s * 0.1, 0.43, 0.133), 0, 0, s * 0.35)); // lapel
+      tt.add(tilt(box(0.06, 0.05, 0.03, WHITE, s * 0.05, 0.56, 0.13), 0, 0, s * 0.6)); // shirt collar point
+      tt.add(box(0.12, 0.03, 0.02, BROWN_DK, s * 0.12, 0.13, 0.128)); // pocket flap
     }
-    tr.torso.add(box(0.3, 0.06, 0.28, CLOTH_DARK, 0, 0.6, 0)); // collar
-    tr.head.add(box(0.26, 0.08, 0.26, CLOTH_DARK, 0, 0.27, -0.01)); // hair
-    tr.head.add(box(0.26, 0.2, 0.06, CLOTH_DARK, 0, 0.16, -0.12));
-    const fringe = box(0.2, 0.05, 0.06, CLOTH_DARK, 0.03, 0.24, 0.11);
-    fringe.rotation.z = -0.25;
-    tr.head.add(fringe);
-    sleeve(tr.arms[0], JACKET);
-    sleeve(tr.arms[1], JACKET);
-    tr.arms[0].rotation.set(-0.95, 0, 0.05); // left hand on the knee
-    tr.arms[1].rotation.set(-1.05, 0, 0.12); // right hand on the cane
-    const cane = group(0.29, 0, 0.6);
-    cane.rotation.x = -0.12;
-    cane.add(cyl(0.022, 0.026, 0.98, 5, 0x55341d, 0, 0.49, 0));
-    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.02, 4, 6, Math.PI), kit.mat(0x55341d));
-    handle.position.set(-0.055, 0.98, 0);
-    handle.castShadow = true;
-    cane.add(handle);
+    tt.add(box(0.14, 0.26, 0.02, WHITE, 0, 0.44, 0.127)); // shirt
+    tt.add(box(0.05, 0.22, 0.02, RED, 0, 0.41, 0.14)); // tie
+    tt.add(box(0.07, 0.05, 0.03, RED, 0, 0.53, 0.14)); // knot
+    tt.add(box(0.32, 0.07, 0.27, BROWN_DK, 0, 0.6, -0.01)); // coat collar
+    tt.add(box(0.035, 0.035, 0.02, GOLD, 0.07, 0.22, 0.13)); // buttons
+    tt.add(box(0.035, 0.035, 0.02, GOLD, 0.07, 0.1, 0.13));
+    const th = tr.head;
+    th.add(box(0.3, 0.08, 0.29, HAIR, 0, 0.32, -0.01)); // hair
+    th.add(box(0.3, 0.24, 0.07, HAIR, 0, 0.2, -0.13));
+    th.add(tilt(box(0.22, 0.07, 0.08, HAIR, 0.04, 0.3, 0.12), 0, 0, -0.2)); // swept fringe
+    for (const s of [-1, 1]) {
+      th.add(box(0.035, 0.11, 0.05, HAIR, s * 0.14, 0.16, 0.07)); // sideburns
+      th.add(box(0.07, 0.025, 0.02, HAIR, s * 0.07, 0.205, 0.138)); // eyebrows
+    }
+    tr.arms[0].sh.rotation.set(-0.5, 0, 0.05); // left hand on the knee
+    tr.arms[0].el.rotation.x = -0.7;
+    tr.arms[1].sh.rotation.set(-0.75, 0, -0.05); // right hand on the cane
+    tr.arms[1].el.rotation.x = -0.6;
+    const cane = group(0.25, 0, 0.56);
+    cane.add(cyl(0.022, 0.026, 0.66, 5, BROWN, 0, 0.33, 0));
+    cane.add(mesh(new THREE.DodecahedronGeometry(0.045), GOLD, 0, 0.68, 0)); // knob
+    cane.add(cyl(0.03, 0.02, 0.04, 5, DARK, 0, 0.02, 0)); // tip
     tr.root.add(cane);
 
-    // ---- wizard: wide robe, long beard, drooping hat, gnarled staff with a glowing crystal ----
-    const ROBE = 0x2c1a28, ROBE_HI = 0x45293e, BEARD = 0xcfc8bb;
-    const wz = person({ x: 0, z: -2.25, hip: 0.4, lean: 0.12, legs: ROBE });
-    wz.root.add(cyl(0.32, 0.78, 0.5, 10, ROBE, 0, 0.25, 0.15)); // robe spread on the ground
-    wz.root.add(cyl(0.79, 0.81, 0.05, 10, ROBE_HI, 0, 0.025, 0.15)); // hem
-    wz.torso.add(cyl(0.17, 0.27, 0.6, 8, ROBE, 0, 0.3, 0));
-    wz.torso.add(box(0.36, 0.08, 0.3, ROBE_HI, 0, 0.58, 0)); // shoulders
-    wz.torso.add(box(0.36, 0.05, 0.3, CLOTH_DARK, 0, 0.12, 0)); // rope belt
-    const beard = cone(0.15, 0.5, 6, BEARD, 0, -0.14, 0.1);
-    beard.rotation.x = Math.PI + 0.15;
-    wz.head.add(beard);
-    wz.head.add(box(0.18, 0.045, 0.04, BEARD, 0, 0.06, 0.13)); // moustache
-    wz.head.add(box(0.2, 0.035, 0.03, BEARD, 0, 0.18, 0.125)); // eyebrows
-    wz.head.add(box(0.28, 0.34, 0.06, 0x9a948c, 0, 0.06, -0.12)); // long hair
-    const hat = group(0, 0.26, 0);
-    hat.add(cyl(0.4, 0.4, 0.03, 12, ROBE_HI, 0, 0, 0));
-    hat.add(cyl(0.13, 0.2, 0.22, 8, ROBE_HI, 0, 0.12, 0));
-    hat.add(cyl(0.135, 0.205, 0.04, 8, CLOTH_DARK, 0, 0.04, 0)); // band
-    const tip = cone(0.13, 0.36, 7, ROBE_HI, 0, 0.36, -0.08);
-    tip.rotation.x = -0.6; // droops back
-    hat.add(tip);
-    wz.head.add(hat);
-    sleeve(wz.arms[0], ROBE, true);
-    sleeve(wz.arms[1], ROBE, true);
-    wz.arms[1].rotation.set(-0.5, 0, -0.35); // right hand on the staff
-    const staff = group(0.55, 0, 0.3);
-    const WOOD = 0x55341d;
-    [[0.035, 0.7, 0.35, 0.05], [0.032, 0.62, 1.0, -0.07], [0.03, 0.5, 1.55, 0.06]].forEach(([r, h, y, tilt]) => {
-      const seg = cyl(r * 0.85, r, h, 5, WOOD, 0, y, 0);
-      seg.rotation.z = tilt;
-      staff.add(seg);
-    });
-    staff.add(box(0.07, 0.06, 0.07, WOOD, 0.01, 0.7, 0)); // knots
-    staff.add(box(0.06, 0.05, 0.06, WOOD, -0.01, 1.3, 0));
-    for (const s of [-1, 1]) { // the crook that cradles the crystal
-      const prong = cyl(0.014, 0.022, 0.24, 4, WOOD, s * 0.05, 1.88, 0);
-      prong.rotation.z = -s * 0.45;
-      staff.add(prong);
+    // ================= wizard: wide purple robe, long white beard, drooping hat, gnarled staff =================
+    const ROBE = 0x2c1a28, ROBE_MID = 0x45293e, ROBE_HI = 0x5e3a56, BEARD = 0xcfc8bb, HAIR_W = 0x9a948c;
+    const shoes = (root, x, kz) => root.add(box(0.13, 0.07, 0.14, DARK, x * 1.3, 0.035, kz + 0.48));
+    const wz = person({ x: 0, z: -2.25, hip: 0.42, lean: 0.12, legs: ROBE, skin: SKIN, sleeve: ROBE_MID, bell: true, foot: shoes });
+    wz.root.add(cyl(0.34, 0.82, 0.52, 10, ROBE, 0, 0.26, 0.12)); // robe spread on the ground
+    wz.root.add(cyl(0.83, 0.85, 0.05, 10, ROBE_HI, 0, 0.025, 0.12)); // hem
+    const wt = wz.torso;
+    wt.add(cyl(0.18, 0.28, 0.6, 8, ROBE_MID, 0, 0.3, 0));
+    wt.add(cyl(0.21, 0.31, 0.15, 8, ROBE_HI, 0, 0.55, 0)); // mantle
+    wt.add(box(0.05, 0.42, 0.03, ROBE_HI, 0, 0.26, 0.235)); // robe trim down the front
+    wt.add(cyl(0.255, 0.27, 0.05, 8, 0x96603a, 0, 0.13, 0)); // rope belt
+    wt.add(box(0.1, 0.12, 0.06, BROWN_DK, 0.16, 0.05, 0.21)); // pouch
+    wt.add(box(0.03, 0.14, 0.02, 0x96603a, -0.08, 0.04, 0.27)); // rope end
+    const wh = wz.head;
+    wh.add(tilt(cone(0.17, 0.52, 6, BEARD, 0, -0.13, 0.12), Math.PI + 0.15, 0, 0)); // beard
+    wh.add(box(0.26, 0.13, 0.08, BEARD, 0, 0.05, 0.12)); // cheeks
+    wh.add(box(0.22, 0.05, 0.04, BEARD, 0, 0.1, 0.16)); // moustache
+    for (const s of [-1, 1]) {
+      wh.add(box(0.1, 0.04, 0.04, BEARD, s * 0.07, 0.205, 0.145)); // bushy eyebrows
+      wh.add(box(0.04, 0.32, 0.2, HAIR_W, s * 0.15, 0.06, -0.03)); // long hair at the sides
     }
-    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), new THREE.MeshBasicMaterial({ color: 0xf8b347 }));
-    crystal.position.y = 1.95;
+    wh.add(box(0.32, 0.38, 0.08, HAIR_W, 0, 0.04, -0.13)); // long hair at the back
+    const hat = group(0, 0.3, 0);
+    hat.add(cyl(0.45, 0.45, 0.03, 12, ROBE_MID, 0, 0, 0)); // brim
+    hat.add(cyl(0.14, 0.21, 0.24, 8, ROBE_MID, 0, 0.13, 0)); // crown
+    hat.add(cyl(0.155, 0.22, 0.05, 8, 0x96603a, 0, 0.04, 0)); // band
+    hat.add(box(0.07, 0.07, 0.02, GOLD, 0, 0.04, 0.2)); // buckle
+    hat.add(tilt(cyl(0.06, 0.14, 0.22, 7, ROBE_MID, 0, 0.33, -0.04), -0.35, 0, 0));
+    hat.add(tilt(cone(0.06, 0.22, 6, ROBE_MID, 0, 0.45, -0.15), -1.05, 0, 0)); // the tip droops back
+    wh.add(hat);
+    wz.arms[0].sh.rotation.set(-0.5, 0, 0.05); // left hand on the knee (reaches toward the fire)
+    wz.arms[0].el.rotation.x = -0.7;
+    wz.arms[1].sh.rotation.set(-1.0, 0, 0.4); // right hand up on the staff
+    wz.arms[1].el.rotation.x = -1.2;
+    const staff = group(0.4, 0, 0.47);
+    const WOOD = 0x55341d;
+    [[0.036, 0.7, 0.35, 0.05], [0.033, 0.62, 1.0, -0.07], [0.03, 0.5, 1.55, 0.06]].forEach(([r, h, y, z]) => {
+      staff.add(tilt(cyl(r * 0.85, r, h, 5, WOOD, 0, y, 0), 0, 0, z));
+    });
+    staff.add(box(0.075, 0.06, 0.075, WOOD, 0.01, 0.7, 0)); // knots
+    staff.add(box(0.065, 0.05, 0.065, WOOD, -0.01, 1.3, 0));
+    staff.add(tilt(cyl(0.012, 0.018, 0.2, 4, WOOD, 0.07, 1.62, 0), 0, 0, -0.8)); // a twig
+    const loop = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.022, 4, 8), kit.mat(WOOD));
+    loop.position.y = 1.92;
+    loop.castShadow = true;
+    staff.add(loop); // the gnarled loop that holds the crystal
+    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.065), new THREE.MeshBasicMaterial({ color: 0xf8b347 }));
+    crystal.position.y = 1.92;
     staff.add(crystal);
     const crystalLight = new THREE.PointLight(0xf8b347, 0.6, 2.5, 2);
-    crystalLight.position.y = 1.95;
+    crystalLight.position.y = 1.92;
     staff.add(crystalLight);
     wz.root.add(staff);
 
-    // ---- fighter: red jacket with leather shoulder pads, hair in a bun, sword on the back, pack beside ----
-    const RED = 0x6e2a1f, LEATHER = 0x55341d;
-    const fi = person({ x: 2.1, z: 0.35, hip: 0.32, lean: 0.25, legs: CLOTH_DARK });
-    fi.torso.add(box(0.42, 0.58, 0.26, RED, 0, 0.29, 0));
-    fi.torso.add(box(0.44, 0.06, 0.28, CLOTH_DARK, 0, 0.06, 0)); // belt
-    fi.torso.add(box(0.06, 0.06, 0.02, 0x9a948c, 0, 0.06, 0.145)); // buckle
-    fi.torso.add(box(0.3, 0.07, 0.28, CLOTH_DARK, 0, 0.6, 0)); // collar
-    fi.torso.add(box(0.06, 0.6, 0.02, LEATHER, 0.08, 0.32, 0.135)); // sword strap
+    // ================= samurai: topknot, red lacquered armour, hakama, katana on the back =================
+    const KIMONO = 0x6e2a1f, HAKAMA = 0x22304a, LACE = 0x24170f, OBI = 0x3a3f4a;
+    const tabi = (root, x, kz) => {
+      root.add(box(0.14, 0.09, 0.22, BONE, x, 0.055, kz + 0.04)); // tabi socks
+      root.add(box(0.15, 0.025, 0.25, DARK, x, 0.012, kz + 0.04)); // sandal
+    };
+    const sm = person({ x: 2.1, z: 0.35, turn: 0.65, hip: 0.3, lean: 0.3, kneeUp: 0.55, thigh: 0.4, spread: 0.13, legW: 0.19, flare: 1.2, legs: HAKAMA, skin: SKIN, sleeve: KIMONO, foot: tabi });
+    const st = sm.torso;
+    st.add(box(0.42, 0.56, 0.26, KIMONO, 0, 0.28, 0));
+    for (const s of [-1, 1]) st.add(tilt(box(0.05, 0.3, 0.02, BONE, s * 0.06, 0.45, 0.135), 0, 0, -s * 0.45)); // white collar V
+    st.add(box(0.1, 0.14, 0.02, DARK, 0, 0.47, 0.13));
+    st.add(box(0.44, 0.3, 0.28, RED, 0, 0.26, 0)); // dō: chest armour
+    for (let k = 0; k < 3; k++) st.add(box(0.45, 0.018, 0.29, LACE, 0, 0.16 + k * 0.08, 0)); // lacing rows
+    st.add(box(0.45, 0.07, 0.29, OBI, 0, 0.07, 0)); // obi
     for (const s of [-1, 1]) {
-      const pad = box(0.17, 0.08, 0.22, LEATHER, s * 0.25, 0.57, 0);
-      pad.rotation.z = s * 0.3;
-      fi.torso.add(pad);
+      st.add(tilt(box(0.17, 0.17, 0.03, RED, s * 0.1, -0.03, 0.15), -0.3, 0, 0)); // kusazuri: hip plates
+      st.add(box(0.03, 0.17, 0.2, RED, s * 0.23, -0.03, 0));
+      const sode = group(s * 0.3, 0.56, 0); // sode: shoulder plates
+      sode.rotation.z = s * 0.35;
+      for (let k = 0; k < 3; k++) {
+        sode.add(box(0.045, 0.07, 0.25, RED, 0, -k * 0.08, 0));
+        sode.add(box(0.05, 0.012, 0.26, LACE, 0, -k * 0.08 - 0.042, 0));
+      }
+      st.add(sode);
     }
-    fi.head.add(box(0.26, 0.08, 0.26, DARK, 0, 0.27, -0.01));
-    fi.head.add(box(0.26, 0.2, 0.06, DARK, 0, 0.16, -0.12));
-    fi.head.add(box(0.27, 0.12, 0.05, DARK, 0, 0.2, 0.1)); // fringe
-    fi.head.add(mesh(new THREE.DodecahedronGeometry(0.085), DARK, 0, 0.33, -0.08)); // bun
-    fi.head.add(box(0.1, 0.03, 0.1, RED, 0, 0.27, -0.08)); // hair tie
-    sleeve(fi.arms[0], RED);
-    sleeve(fi.arms[1], RED);
-    fi.arms[0].rotation.set(-1.2, 0, 0.12); // arms on the knees
-    fi.arms[1].rotation.set(-1.2, 0, -0.12);
-    const sword = group(0.05, 0.3, -0.16);
-    sword.rotation.z = 0.55;
-    sword.add(box(0.06, 0.8, 0.02, 0x9a948c, 0, 0, 0));
-    sword.add(box(0.07, 0.62, 0.03, LEATHER, 0, -0.08, -0.01)); // scabbard
-    sword.add(box(0.22, 0.04, 0.05, LEATHER, 0, 0.42, 0));
-    sword.add(box(0.04, 0.18, 0.04, CLOTH_DARK, 0, 0.53, 0));
-    sword.add(box(0.06, 0.05, 0.06, 0x9a948c, 0, 0.64, 0)); // pommel
-    fi.torso.add(sword);
+    // katana across the back, hilt over the shoulder
+    const katana = group(0, 0.3, -0.17);
+    katana.rotation.z = -0.6;
+    katana.add(box(0.06, 0.85, 0.035, DARK, 0, 0, 0)); // saya
+    katana.add(box(0.065, 0.05, 0.04, GOLD, 0, -0.42, 0)); // kojiri
+    katana.add(cyl(0.065, 0.065, 0.016, 8, GOLD, 0, 0.44, 0)); // tsuba
+    for (let k = 0; k < 4; k++) katana.add(box(0.045, 0.05, 0.04, k % 2 ? BONE : LACE, 0, 0.48 + k * 0.05, 0)); // wrapped hilt
+    katana.add(box(0.05, 0.03, 0.045, GOLD, 0, 0.68, 0)); // kashira
+    st.add(katana);
+    st.add(tilt(box(0.035, 0.6, 0.02, LACE, 0.02, 0.3, 0.145), 0, 0, 0.6)); // sageo cord across the chest
+    // wakizashi at the hip
+    const waki = group(-0.25, 0.1, 0.02);
+    waki.rotation.set(1.35, 0, 0.15);
+    waki.add(box(0.045, 0.5, 0.03, DARK, 0, -0.1, 0));
+    waki.add(cyl(0.05, 0.05, 0.014, 8, GOLD, 0, 0.16, 0));
+    waki.add(box(0.04, 0.14, 0.035, BONE, 0, 0.24, 0));
+    st.add(waki);
+    const sh2 = sm.head;
+    sh2.add(box(0.3, 0.07, 0.29, DARK, 0, 0.32, -0.01)); // hair
+    sh2.add(box(0.3, 0.26, 0.07, DARK, 0, 0.18, -0.13));
+    sh2.add(box(0.2, 0.06, 0.08, DARK, 0, 0.28, 0.12)); // hairline
+    for (const s of [-1, 1]) {
+      sh2.add(box(0.04, 0.18, 0.2, DARK, s * 0.15, 0.2, -0.03));
+      sh2.add(tilt(box(0.045, 0.14, 0.04, DARK, s * 0.11, 0.24, 0.14), 0, 0, s * 0.25)); // loose strands
+      sh2.add(box(0.075, 0.025, 0.02, DARK, s * 0.07, 0.205, 0.138)); // eyebrows
+    }
+    sh2.add(box(0.08, 0.08, 0.24, DARK, 0, 0.39, -0.02)); // chonmage: the topknot along the crown
+    sh2.add(box(0.085, 0.085, 0.04, BONE, 0, 0.39, -0.12)); // its tie
+    sh2.add(mesh(new THREE.DodecahedronGeometry(0.06), DARK, 0, 0.37, -0.17));
+    sm.arms.forEach(({ sh, el }, i) => { // forearms on the knees
+      sh.rotation.set(-0.35, 0, (i ? -1 : 1) * 0.08);
+      el.rotation.x = -0.85;
+    });
     const pack = group(-0.62, 0, -0.3);
     pack.rotation.y = -0.4;
-    pack.add(box(0.36, 0.42, 0.24, 0x3a2416, 0, 0.21, 0));
-    pack.add(box(0.37, 0.12, 0.26, LEATHER, 0, 0.38, 0.01)); // flap
+    pack.add(box(0.36, 0.42, 0.24, BROWN_DK, 0, 0.21, 0));
+    pack.add(box(0.37, 0.12, 0.26, BROWN, 0, 0.38, 0.01)); // flap
     pack.add(box(0.04, 0.42, 0.26, CLOTH_DARK, -0.1, 0.21, 0.01)); // straps
     pack.add(box(0.04, 0.42, 0.26, CLOTH_DARK, 0.1, 0.21, 0.01));
-    const roll = cyl(0.11, 0.11, 0.46, 8, 0x31445e, 0, 0.53, 0);
-    roll.rotation.z = Math.PI / 2;
-    pack.add(roll);
-    fi.root.add(pack);
+    pack.add(tilt(cyl(0.11, 0.11, 0.46, 8, 0x96603a, 0, 0.53, 0), 0, 0, Math.PI / 2)); // straw mat roll
+    sm.root.add(pack);
 
-    return { traveler: tr, wizard: wz, fighter: fi, crystal, crystalLight };
+    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight };
   }
 
   window.CampFigures = { build };

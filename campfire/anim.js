@@ -160,7 +160,7 @@
 
   // The pixel canvas: about `rows` pixels on the short side, same aspect as the window.
   function renderSize(w, h, rows) {
-    rows = rows || 180;
+    rows = rows || 216;
     if (!(w > 0 && h > 0)) return { w: Math.round(rows * 16 / 9), h: rows };
     const k = rows / Math.min(w, h);
     return { w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)) };
@@ -175,6 +175,7 @@
     0x6e2a1f, 0x9b3a1c, 0xc8561b, 0xe8812c, 0xf8b347, 0xffe08a, 0xfff6d6, // fire, red cloth
     0x5e5650, 0x9a948c, 0xcfc8bb, // stone, beard
     0xb7d65a, // firefly
+    0xb87a50, 0xd8a070, 0xe8e2d4, 0xb03a28, 0x3a3f4a, 0xc09040, 0x5e3a56, 0x4a2c18, // skin, shirt, red, hakama, gold, robe, hair
   ];
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,

@@ -109,11 +109,11 @@
       const h = [0.7, 0.55, 0.4, 0.26][layer], r = [0.22, 0.17, 0.12, 0.08][layer];
       const geo = new THREE.ConeGeometry(r, h, 5);
       geo.translate(0, h / 2, 0); // grow from the base
-      const f = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: flameCols[layer] }));
+      const f = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: flameCols[layer], depthWrite: false }));
       const a = i * 2.4, off = layer === 0 ? 0.12 : 0.05;
       f.userData = { x: Math.cos(a) * off, z: Math.sin(a) * off, seed: i + 1 };
       f.position.set(f.userData.x, 0.08, f.userData.z);
-      f.renderOrder = layer;
+      f.renderOrder = 10 + layer; // drawn after the solid things, kept out of the outline pass
       scene.add(f);
       flames.push(f);
     }
@@ -129,7 +129,7 @@
     seatLog(0, -2.3);
     scene.add(mesh(new THREE.DodecahedronGeometry(0.28), 0x5e5650, 2.15, 0.15, 0.35));
     const fig = CampFigures.build({ THREE, scene, mat, mesh, box, cyl, cone, group });
-    const { traveler, wizard, fighter, crystal, crystalLight } = fig;
+    const { traveler, wizard, samurai, crystal, crystalLight } = fig;
 
     // ---- props around the clearing ----
     function mushroom(x, z) {
@@ -183,6 +183,22 @@
       scene.add(bush);
     }
 
+    // ---- the moon has one fixed place in the sky: up and to the right of the starting view ----
+    const RADIUS = 4.7, PITCH0 = 0.12;
+    const lookAt = new THREE.Vector3(0, 1.1, 0);
+    const CAM0 = new THREE.Vector3(0, lookAt.y + Math.sin(PITCH0) * RADIUS, Math.cos(PITCH0) * RADIUS);
+    const AZ = (12 * Math.PI) / 180, EL = (11 * Math.PI) / 180;
+    const MOON_DIR = new THREE.Vector3(Math.sin(AZ) * Math.cos(EL), Math.sin(EL), -Math.cos(AZ) * Math.cos(EL));
+    const MOON = CAM0.clone().addScaledVector(MOON_DIR, 100);
+    // Trees in the line of sight to the moon are kept short enough to leave it in view.
+    function underMoon(x, z, h, r) {
+      const vx = x - CAM0.x, vz = z - CAM0.z;
+      const len = Math.hypot(MOON_DIR.x, MOON_DIR.z), dx = MOON_DIR.x / len, dz = MOON_DIR.z / len;
+      const along = vx * dx + vz * dz, perp = Math.abs(vx * dz - vz * dx);
+      if (along <= 0 || perp - r > 1.2 + along * 0.09) return h;
+      return Math.min(h, CAM0.y + along * Math.tan(EL - 0.05) - 0.4);
+    }
+
     // ---- forest: a full ring, taller near the clearing so the sky shows above the far trees ----
     const canopies = [];
     function tree(x, z, h, r, old) {
@@ -213,16 +229,21 @@
     for (let i = 0; i < 120; i++) {
       const [x, z] = around(7.2, 25);
       const near = Math.hypot(x, z) < 12;
-      tree(x, z, near ? 6 + rand() * 3.5 : 4.5 + rand() * 2.5, 1.1 + rand() * 0.8);
+      const r = 1.1 + rand() * 0.8;
+      const h = underMoon(x, z, near ? 6 + rand() * 3.5 : 4.5 + rand() * 2.5, r);
+      if (h > 2.4) tree(x, z, h, r);
     }
     for (let i = 0; i < 5; i++) { // big old trees around the clearing
       const a = (i / 5) * Math.PI * 2 + 0.4, r = 7.4;
-      tree(Math.cos(a) * r, Math.sin(a) * r, 9 + rand() * 1.5, 1.7, true);
+      const x = Math.cos(a) * r, z = Math.sin(a) * r, h = underMoon(x, z, 9 + rand() * 1.5, 1.7);
+      if (h > 2.4) tree(x, z, h, 1.7, true);
     }
 
     // ---- sky: the moon stays up and to the right of the view ----
-    const moon = new THREE.Mesh(new THREE.CircleGeometry(0.9, 10), new THREE.MeshBasicMaterial({ color: 0xd6e0ec, fog: false }));
-    const halo = new THREE.Mesh(new THREE.CircleGeometry(1.7, 12), new THREE.MeshBasicMaterial({ color: 0x4a6280, fog: false, transparent: true, opacity: 0.35 }));
+    const moon = new THREE.Mesh(new THREE.CircleGeometry(1.9, 12), new THREE.MeshBasicMaterial({ color: 0xd6e0ec, fog: false }));
+    const halo = new THREE.Mesh(new THREE.CircleGeometry(3.6, 14), new THREE.MeshBasicMaterial({ color: 0x4a6280, fog: false, transparent: true, opacity: 0.35 }));
+    moon.position.copy(MOON);
+    halo.position.copy(MOON).addScaledVector(MOON_DIR, 1);
     scene.add(moon, halo);
     const starGroups = [];
     for (let g = 0; g < 4; g++) {
@@ -266,18 +287,16 @@
     });
 
     // ---- camera ----
-    const camera = new THREE.PerspectiveCamera(46, 16 / 9, 0.1, 120);
-    const lookAt = new THREE.Vector3(0, 1.25, 0);
-    const RADIUS = 5.4;
-    const moonDir = new THREE.Vector3(0.28, 0.24, -1).normalize();
-    const tmp = new THREE.Vector3();
+    const camera = new THREE.PerspectiveCamera(44, 16 / 9, 0.1, 140);
+    const fill = new THREE.DirectionalLight(0x8fa6c4, 0.3); // soft light from the viewer, so faces read
+    scene.add(fill, fill.target);
 
     // ---- every frame: t = seconds; view = { yaw, pitch } from dragging ----
     function update(t, view) {
       // fire
       const f = A.flicker(t);
       fireLight.intensity = 5 * f;
-      fireLight.color.setRGB(1, 0.5 + 0.12 * (f - 1) * 3, 0.2);
+      fireLight.color.setRGB(1, 0.62 + 0.3 * (f - 1), 0.36);
       fireLight.position.x = 0.08 * A.noise1(t * 2, 21);
       fireLight.position.z = 0.08 * A.noise1(t * 2, 22);
       for (const fl of flames) {
@@ -321,7 +340,7 @@
       }
 
       // breathing
-      [traveler, wizard, fighter].forEach((p, i) => {
+      [traveler, wizard, samurai].forEach((p, i) => {
         const b = A.breath(t, 3.6 + i * 0.5, i * 0.31);
         p.torso.scale.set(1 + 0.02 * b, 1 + 0.03 * b, 1 + 0.02 * b);
       });
@@ -335,17 +354,18 @@
 
       // wizard: crystal pulses, reaches toward the fire
       const reach = A.envelope(t, 19, 6, 6);
-      wizard.arms[0].rotation.x = -0.75 - 0.75 * reach;
+      wizard.arms[0].sh.rotation.x = -0.5 - 0.6 * reach;
+      wizard.arms[0].el.rotation.x = -0.7 + 0.55 * reach;
       wizard.head.rotation.x = 0.2 * reach;
       const glow = 0.55 + 0.25 * A.breath(t, 2.4, 0) + 0.6 * reach;
       crystalLight.intensity = glow;
       crystal.scale.setScalar(0.85 + 0.3 * glow);
       crystal.rotation.y = t * 0.8;
 
-      // fighter: nods off, jerks awake
+      // samurai: nods off, jerks awake
       const d = A.doze(t, 26, 9, 9);
-      fighter.head.rotation.x = 0.6 * d;
-      fighter.torso.rotation.x = fighter.lean + 0.12 * d;
+      samurai.head.rotation.x = 0.6 * d;
+      samurai.torso.rotation.x = samurai.lean + 0.12 * d;
 
       // trees sway with the wind
       const w = 0.4 + 1.2 * A.wind(t);
@@ -373,11 +393,9 @@
       const pitch = view.pitch + 0.02 * Math.sin(t * 0.031);
       camera.position.set(Math.sin(yaw) * Math.cos(pitch) * RADIUS, lookAt.y + Math.sin(pitch) * RADIUS, Math.cos(yaw) * Math.cos(pitch) * RADIUS);
       camera.lookAt(lookAt);
-      tmp.copy(moonDir).applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw);
-      moon.position.copy(camera.position).addScaledVector(tmp, 40);
-      halo.position.copy(camera.position).addScaledVector(tmp, 40.2);
       moon.lookAt(camera.position);
       halo.lookAt(camera.position);
+      fill.position.set(camera.position.x, camera.position.y + 2, camera.position.z);
     }
 
     return { scene, camera, update };

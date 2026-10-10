@@ -304,14 +304,15 @@ which writes the site files into `chong-die/`. Commit both folders. How it works
 
 ## Campfire
 
-An ambience scene for a screen or TV at the table: a traveler, a wizard and a fighter around a
+An ambience scene for a screen or TV at the table: a traveler, a wizard and a samurai around a
 campfire in a forest at night, in a pixel-art style. Open it and leave it running; the corner
 buttons (← All tools, ⛶ fullscreen) fade when the mouse rests. **Drag** (mouse or finger) to
-circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there.
+circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there. The moon
+keeps its one place in the sky, up and to the right of the starting view.
 
 **What moves:** the flames flicker and the firelight pulses (light and shadows waver on the
 figures); embers and smoke rise; everyone breathes; the traveler looks around and shifts on the
-cane; the wizard's staff crystal pulses and they reach toward the fire; the fighter nods off and
+cane; the wizard's staff crystal pulses and they reach toward the fire; the samurai nods off and
 jerks awake; treetops sway, stars twinkle, fireflies drift at the forest edge, and the camera
 drifts slowly. Each idle moment has its own repeating schedule, so they rarely line up.
 
@@ -322,8 +323,9 @@ key. The sound and the picture share one clock: every strong pop throws a burst 
 the trees sway harder when the wind rises.
 
 **How the pixel look works:** [three.js](https://threejs.org) draws a simple 3D scene (boxes,
-cones and cylinders) into a small image about 180 pixels tall; a shader then snaps every pixel to
-a fixed palette sampled from the art reference, with a light ordered dither, and the image is
+cones and cylinders) into a small image about 216 pixels tall; a shader then draws a dark outline around near things
+(where the depth jumps, like the outline around a sprite) and snaps every pixel to a fixed palette
+sampled from the art reference, with a light ordered dither, and the image is
 stretched to the window without smoothing.
 
 **Files:** `anim.js` is the timing math (flicker, breathing, idle moments, ember and smoke paths,

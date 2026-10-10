@@ -76,17 +76,17 @@ test('smoke rises, grows and thins out', () => {
   assert.ok(a.alpha > 0 && a.alpha <= 1);
 });
 
-test('render size keeps the aspect at about 180 rows', () => {
-  assert.deepStrictEqual(A.renderSize(1600, 900), { w: 320, h: 180 });
-  assert.deepStrictEqual(A.renderSize(900, 1600), { w: 180, h: 320 });
+test('render size keeps the aspect at about 216 rows', () => {
+  assert.deepStrictEqual(A.renderSize(1600, 900), { w: 384, h: 216 });
+  assert.deepStrictEqual(A.renderSize(900, 1600), { w: 216, h: 384 });
   const s = A.renderSize(1, 1);
   assert.ok(s.w >= 1 && s.h >= 1);
   const t = A.renderSize(0, 0);
   assert.ok(t.w >= 1 && t.h >= 1);
 });
 
-test('palette: 32 or fewer colours, all valid', () => {
-  assert.ok(A.PALETTE.length >= 8 && A.PALETTE.length <= 32);
+test('palette: 48 or fewer colours (the shader holds 48), all valid', () => {
+  assert.ok(A.PALETTE.length >= 8 && A.PALETTE.length <= 48);
   for (const c of A.PALETTE) assert.ok(Number.isInteger(c) && c >= 0 && c <= 0xffffff);
 });
 

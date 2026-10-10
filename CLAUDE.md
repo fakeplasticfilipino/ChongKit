@@ -179,13 +179,17 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
 1. **three.js is its one library**: `vendor/three.min.js` (r153, the UMD build with global `THREE`,
    so it still opens from `file://`; ES-module builds don't) with `vendor/three.LICENSE.txt`. Copied,
    not built; don't edit it. Everything else is plain JS with no build step.
-2. **The pixel look:** render about 180 px on the short side (`CampAnim.renderSize`) into a render
-   target, then a shader pass snaps every pixel to `CampAnim.PALETTE` (32 colours max, sampled from
+2. **The pixel look:** render about 216 px on the short side (`CampAnim.renderSize`) into a render
+   target, then a shader pass snaps every pixel to `CampAnim.PALETTE` (48 colours max, the shader's array; sampled from
    the art reference) with a light 4×4 dither. Keep materials flat-shaded and low-poly.
 3. **No controls beyond** "← All tools" and fullscreen in a corner (they fade when the mouse rests),
    and dragging to circle the fire (`CampAnim.orbit`; the view stays where it's left). The figures
-   are fixed (traveler, wizard, fighter); the animation is the point. The forest is a full ring,
-   so every angle must look finished; the moon follows the view.
+   are fixed (traveler, wizard, samurai), turned three-quarters toward the starting view like the
+   reference; the animation is the point. The forest is a full ring, so every angle must look finished.
+   The moon has one fixed place in the sky (up and right of the starting view; trees in its line of
+   sight are kept short, `underMoon`); it never follows the camera (the table hated that).
+   Near things get a dark 1-pixel outline from a depth-edge test in the pixel pass (flames are kept
+   out of it: they don't write depth).
 4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
    `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
    comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw
@@ -213,7 +217,7 @@ character-sheet/             → /character-sheet/
 campfire/                    Ambience scene (three.js, pixel style) → /campfire/
   index.html, app.js         Page, renderer, pixel pass, loop, dragging
   scene.js                   Builds and moves the world (forest, fire, props)
-  figures.js                 The traveler, wizard and fighter
+  figures.js                 The traveler, wizard and samurai
   audio.js                   Generated sound (Web Audio): fire, wind, crickets, owl
   anim.js                    Pure timing math: flicker, idle moments, embers, sound schedules, orbit, palette
   vendor/three.min.js        three.js r153, copied (don't edit)

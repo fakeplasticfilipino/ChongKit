@@ -98,6 +98,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Fire teepee of logs with glowing coals; darker clearing breaking into grass; full forest ring with big old rooted trees, ferns, bushes, rocks, a fallen log, mushrooms
 - [x] Tests: pops, bursts, wind, owl, crickets, orbit
 
+### ✅ v3 — done
+- [x] The moon stays in one place in the sky (up and right of the starting view), with the trees in its line of sight kept short
+- [x] Characters you can tell apart: pixel-art heads with eyes, mouths and ears, elbows for real poses, turned three-quarters toward the view
+- [x] Traveler: frock coat with tails, lapels, white shirt and collar points, red tie, buttons, cuffs, swept hair and sideburns, cane with a gold knob, boots
+- [x] Wizard: mantle, robe trim, rope belt and pouch, big beard and moustache, bushy brows, long hair, hat with band and buckle and a drooping tip, staff with a twig and a loop around the crystal
+- [x] Samurai: chonmage topknot, red lacquered dō with lacing, shoulder sode and hip kusazuri, white collar, obi, indigo hakama, tabi and sandals, katana on the back (wrapped hilt, gold tsuba) and a wakizashi, pack with a straw mat
+- [x] Dark outline around near things (depth edges), 216-pixel render, 40-colour palette (skin, white, red, gold, indigo added), softer firelight colour, a soft fill light from the viewer, closer camera
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 
