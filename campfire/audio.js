@@ -265,6 +265,55 @@
     src.start(at, Math.random());
     src.stop(at + 5.1);
   }
+  // wordless voices: a buzz through two moving formants, low and soft (a murmur, never words)
+  const VOICE = { traveler: [150, -0.5], wizard: [100, 0], samurai: [125, 0.5] };
+  function syllable(at, who, rise, reply, vol) {
+    const [f0, p] = VOICE[who];
+    const len = reply ? 0.17 : 0.13 + Math.random() * 0.09;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f0 * (1 + 0.12 * rise), at);
+    o.frequency.linearRampToValueAtTime(f0 * (1 - 0.1 * rise), at + len);
+    const f1 = filter('bandpass', reply ? 300 : 420 + Math.random() * 320, 4);
+    const f2 = filter('bandpass', reply ? 900 : 1000 + Math.random() * 800, 5);
+    const lp = filter('lowpass', reply ? 700 : 1500);
+    const g = gain(0);
+    o.connect(f1); o.connect(f2); f1.connect(g); f2.connect(g); g.connect(lp); lp.connect(pan(p, master));
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(vol || (reply ? 0.16 : 0.22), at + 0.03);
+    g.gain.linearRampToValueAtTime(0, at + len);
+    o.start(at);
+    o.stop(at + len + 0.05);
+  }
+  function laughter(at) {
+    ['traveler', 'wizard', 'samurai'].forEach((who, j) => {
+      for (let i = 0; i < 4; i++) syllable(at + j * 0.07 + i * 0.14, who, 0.5 - i * 0.25, false, 0.2);
+    });
+  }
+  function fluteNote(at, freq, len) {
+    const out = pan(-0.45, master);
+    const o = ctx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    const vib = ctx.createOscillator(), vg = gain(freq * 0.008);
+    vib.frequency.value = 5;
+    vib.connect(vg); vg.connect(o.frequency);
+    const lp = filter('lowpass', freq * 3);
+    const g = gain(0);
+    o.connect(lp); lp.connect(g); g.connect(out); g.connect(echo);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(0.07, at + 0.06);
+    g.gain.setValueAtTime(0.06, at + Math.max(0.07, len - 0.08));
+    g.gain.linearRampToValueAtTime(0, at + len);
+    noiseHit(at, 'bandpass', freq * 2, 2, 0.12, 0.025, out); // breath
+    o.start(at); vib.start(at);
+    o.stop(at + len + 0.05); vib.stop(at + len + 0.05);
+  }
+  function rasp(at) {
+    const f = noiseHit(at, 'bandpass', 2200, 3, 0.35, 0.07, pan(0.5, master));
+    f.frequency.setValueAtTime(2200, at);
+    f.frequency.linearRampToValueAtTime(3200, at + 0.33);
+  }
   function play(e, at) {
     switch (e.type) {
       case 'land': thump(at, 120, 0.25, 0.25); crackle(at, 9, 0.6); break;
@@ -275,6 +324,10 @@
       case 'puff': noiseHit(at, 'bandpass', 1100, 0.8, 0.9, 0.05); break;
       case 'wolf': howl(at); break;
       case 'stoke': stoke(at); break;
+      case 'syl': syllable(at, e.who, e.rise, e.reply); break;
+      case 'laugh': laughter(at); break;
+      case 'note': fluteNote(at, e.freq, e.len); break;
+      case 'rasp': rasp(at); break;
       case 'thunder': if (CampAudio.season !== 'winter') thunder(at + 2.4); break; // the flash comes first; it's far off
       case 'eyes': noiseHit(at + 0.3, 'bandpass', 1500, 2, 0.05, 0.08, pan(0, master)); break; // a twig snaps out there
     }

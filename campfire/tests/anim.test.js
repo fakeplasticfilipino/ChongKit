@@ -187,7 +187,7 @@ test('fire colours: clear when cold, a colour for every hotter heat', () => {
 });
 
 test('stories: one figure never runs two at once', () => {
-  const pairs = [['shift', 'twig'], ['reach', 'pipe'], ['reach', 'stir'], ['pipe', 'stir'], ['doze', 'katana']];
+  const pairs = [['shift', 'twig'], ['shift', 'flute'], ['twig', 'flute'], ['reach', 'pipe'], ['reach', 'stir'], ['pipe', 'stir'], ['doze', 'katana'], ['doze', 'whet'], ['katana', 'whet']];
   for (let t = 0; t < 2000; t += 0.25) {
     for (const [a, b] of pairs) assert.ok(A.story(a, t) < 0 || A.story(b, t) < 0, `${a} and ${b} at ${t}`);
   }
@@ -342,4 +342,36 @@ test('clicks: a story starts right away, with its moments; the fire can be stoke
   close(A.fuel(1449), earlier, 1e-9, 'nothing changes before');
   A.clearTriggers();
   assert.strictEqual(A.story('twig', t0 + 1), -1);
+});
+
+test('talks: only when both are free; syllables inside the talk; replies from the listener', () => {
+  let talks = 0;
+  for (let k = 0; k < 120; k++) {
+    const c = A.talk(k);
+    if (!c) continue;
+    talks++;
+    assert.notStrictEqual(c.speaker, c.listener);
+    for (let x = c.start; x < c.start + A.TALK.dur; x += 0.5) {
+      for (const n of A.BUSY[c.speaker].concat(A.BUSY[c.listener])) if (n !== 'shift') assert.ok(A.story(n, x) < 0, n + ' busy during a talk at ' + x);
+    }
+    for (const y of c.syl) {
+      assert.ok(y.at > 0 && y.at < A.TALK.dur);
+      assert.strictEqual(y.who, y.reply ? c.listener : c.speaker);
+    }
+  }
+  assert.ok(talks > 70, 'talks happen: ' + talks);
+  const ev = A.events(0, 2000).filter((e) => e.type === 'syl');
+  assert.ok(ev.length > 100);
+  for (const e of ev) assert.ok(A.talkAt(e.time), 'a syllable outside a talk at ' + e.time);
+});
+
+test('the flute: notes from the scale, inside the run; whetstone strokes inside theirs', () => {
+  const notes = A.events(0, 1200).filter((e) => e.type === 'note');
+  assert.ok(notes.length > 20);
+  for (const n of notes) {
+    assert.ok(A.FLUTE_SCALE.includes(n.freq));
+    const l = A.story('flute', n.time);
+    assert.ok(l >= 1.4 && l < A.STORIES.flute.dur, 'note outside the flute at ' + n.time);
+  }
+  for (const r of A.events(0, 1200).filter((e) => e.type === 'rasp')) assert.ok(A.story('whet', r.time) >= 0);
 });

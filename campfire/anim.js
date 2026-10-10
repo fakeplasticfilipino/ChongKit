@@ -201,7 +201,11 @@
     stir: { period: 67, offset: 50, dur: 6 }, // wizard stirs the stew with a flick of the hand (the ladle stirs itself)
     doze: { period: 37, offset: 9, dur: 9 }, // samurai nods off
     katana: { period: 74, offset: 20, dur: 12 }, // samurai checks the blade
+    whet: { period: 74, offset: 60, dur: 8 }, // samurai sharpens the blade on a whetstone
+    flute: { period: 186, offset: 173, dur: 14 }, // traveler plays a tune (186 = 6 × shift, 3 × twig)
   };
+  // Whose stories are whose (a figure never runs two at once; talks wait until both are free).
+  const BUSY = { traveler: ['shift', 'twig', 'flute'], wizard: ['reach', 'pipe', 'stir'], samurai: ['doze', 'katana', 'whet'] };
   // The samurai's dozing (0 awake … 1 asleep), on the doze story's schedule.
   const dozeAt = (t) => doze(t, STORIES.doze.period, STORIES.doze.offset, STORIES.doze.dur);
   // Seconds into the story's current run, or -1 when it isn't running.
@@ -249,6 +253,81 @@
   // Moments inside the stories (seconds into the run).
   const TWIG_LAND = 2.3, PUFFS = [4.2, 7.6], DRAW = 1.6, SHEATHE = 10.4;
   const SNAP = STORIES.doze.dur * 0.88; // when doze() snaps back
+  const RASPS = [1.5, 2.4, 3.3, 4.2, 5.1, 6.0]; // whetstone strokes
+  const FLUTE_SCALE = [293.66, 349.23, 392.0, 440.0, 523.25, 587.33]; // D minor pentatonic
+  // The k-th run of the flute: a little tune from 1.5 s to about 12.5 s. [{ at, freq, len }]
+  function tune(k) {
+    const r = rng(k * 613 + 29), notes = [];
+    let i = 2 + ((r() * 2) | 0), at = 1.5;
+    while (at < 11.8) {
+      const len = [0.4, 0.4, 0.6, 0.8, 1.2][(r() * 5) | 0];
+      notes.push({ at, freq: FLUTE_SCALE[i], len: len * 0.92 });
+      at += len;
+      i = Math.max(0, Math.min(FLUTE_SCALE.length - 1, i + [-2, -1, -1, 1, 1, 2][(r() * 6) | 0]));
+    }
+    notes.push({ at, freq: FLUTE_SCALE[0], len: 1.4 }); // home
+    return notes;
+  }
+
+  // ---- campfire talk: two of them murmur (wordless), the other nods; sometimes they all laugh ----
+  const TALK = { period: 53, offset: 15, dur: 9 };
+  const PAIRS = [['wizard', 'traveler'], ['traveler', 'samurai'], ['samurai', 'wizard'], ['traveler', 'wizard'], ['wizard', 'samurai'], ['samurai', 'traveler']];
+  const talkCache = new Map();
+  // Is this pair free for a talk starting at `start`? (Their scheduled stories, and no stoke.)
+  function freeFor(speaker, listener, start) {
+    for (let x = start - 1; x <= start + TALK.dur + 1; x += 0.5) {
+      for (const n of BUSY[speaker].concat(BUSY[listener])) if (n !== 'shift' && scheduled(n, x) >= 0) return false;
+    }
+    if (speaker === 'wizard' || listener === 'wizard') {
+      const k0 = Math.floor((start - 600) / BURN);
+      for (let i = Math.max(0, k0 - 1); i <= k0 + 1; i++) {
+        const st = stokeTime(i);
+        if (st > start - STOKE_DUR - 1 && st < start + TALK.dur + STOKE_LEAD + 1) return false;
+      }
+    }
+    return true;
+  }
+  // The k-th talk: the first moment in its slot when some pair is free (or null): who speaks, who
+  // listens, and its sounds.
+  function talk(k) {
+    if (talkCache.has(k)) return talkCache.get(k);
+    let start = -1, speaker, listener;
+    for (let d = 0; k >= 0 && start < 0 && d <= 30; d += 1) {
+      for (let p = 0; p < PAIRS.length; p++) {
+        const pair = PAIRS[(k + p) % PAIRS.length], at = k * TALK.period + TALK.offset + d;
+        if (freeFor(pair[0], pair[1], at)) { start = at; speaker = pair[0]; listener = pair[1]; break; }
+      }
+    }
+    const ok = start >= 0;
+    let out = null;
+    if (ok) {
+      const r = rng(k * 271 + 13), syl = [];
+      let at = 0.6;
+      while (at < TALK.dur - 2) { // phrases of a few syllables, with pauses the listener fills
+        const n = 2 + ((r() * 4) | 0);
+        for (let i = 0; i < n; i++) { syl.push({ who: speaker, at, rise: r() - 0.5 }); at += 0.17 + r() * 0.12; }
+        at += 0.25;
+        if (r() < 0.6) {
+          syl.push({ who: listener, at, rise: 0.3, reply: true });
+          syl.push({ who: listener, at: at + 0.2, rise: -0.3, reply: true });
+          at += 0.4;
+        }
+        at += 0.35 + r() * 0.6;
+      }
+      out = { k, start, speaker, listener, syl, laugh: r() < 0.4 };
+    }
+    talkCache.set(k, out);
+    return out;
+  }
+  // The talk going on at t: { speaker, listener, local, laugh, ... } or null.
+  function talkAt(t) {
+    const k = Math.floor((t - TALK.offset) / TALK.period);
+    for (const j of [k, k - 1]) {
+      const c = j >= 0 && talk(j);
+      if (c && t >= c.start && t - c.start < TALK.dur) return Object.assign({ local: t - c.start }, c);
+    }
+    return null;
+  }
 
   // Every moment in [from, to), sorted: a twig landing, logs settling, the samurai jerking awake, the katana
   // drawn and put away, the wizard's puffs, a wolf far off. The sound plays them; the picture shows them.
@@ -267,6 +346,31 @@
     each('katana', DRAW, 'draw');
     each('katana', SHEATHE, 'sheathe');
     PUFFS.forEach((p) => each('pipe', p, 'puff'));
+    RASPS.forEach((p) => each('whet', p, 'rasp'));
+    const fl = STORIES.flute; // the flute's notes
+    for (let k = Math.floor((from - fl.offset - 14) / fl.period); k * fl.period + fl.offset < to; k++) {
+      for (const n of tune(k)) {
+        const time = k * fl.period + fl.offset + n.at;
+        if (time >= from && time < to) out.push({ type: 'note', time, freq: n.freq, len: n.len });
+      }
+    }
+    for (const m of manual) {
+      if (m.name !== 'flute') continue;
+      for (const n of tune(Math.floor(m.start))) {
+        const time = m.start + n.at;
+        if (time >= from && time < to) out.push({ type: 'note', time, freq: n.freq, len: n.len });
+      }
+    }
+    for (let k = Math.max(0, Math.floor((from - TALK.offset) / TALK.period) - 1); k * TALK.period + TALK.offset < to; k++) {
+      const c = talk(k);
+      if (!c) continue;
+      for (const y of c.syl) {
+        const time = c.start + y.at;
+        if (time >= from && time < to) out.push({ type: 'syl', time, who: y.who, rise: y.rise, reply: !!y.reply });
+      }
+      const lt = c.start + TALK.dur - 1.6;
+      if (c.laugh && lt >= from && lt < to) out.push({ type: 'laugh', time: lt });
+    }
     const slots = (len, type, base, spread, chance, salt) => {
       for (let k = Math.max(0, Math.floor(from / len) - 1); k * len < to; k++) {
         const r = rng(k * 131 + salt);
@@ -471,7 +575,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX,
-    STORIES, story, trigger, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, BUSY, story, trigger, talk, talkAt, TALK, tune, FLUTE_SCALE, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

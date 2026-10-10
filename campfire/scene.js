@@ -155,7 +155,7 @@
     seatLog(0, -2.3);
     scene.add(mesh(new THREE.DodecahedronGeometry(0.28), 0x5e5650, 2.15, 0.15, 0.35));
     const fig = CampFigures.build({ THREE, scene, mat, mesh, box, cyl, cone, group });
-    const { traveler, wizard, samurai, crystal, crystalLight, staff, hilt, blade, glint, pipe, pipeGlow, twig } = fig;
+    const { traveler, wizard, samurai, crystal, crystalLight, staff, hilt, blade, glint, stone, flute, pipe, pipeGlow, twig } = fig;
     const HEADS = new Map([traveler, wizard, samurai].map((p) => [p, p.root.localToWorld(new THREE.Vector3(0, 1.1, 0.1))]));
     const FIRE_AT = new THREE.Vector3(0, 0.4, 0);
 
@@ -387,6 +387,9 @@
     // ---- the camp: tripod and stew, tent, horse, lantern (camp.js) ----
     const camp = CampProps.build({ THREE, scene, mat, mesh, box, cyl, cone, group, flat, rand, particles, blob });
     const visitors = CampVisitors.build({ THREE, scene, box, cyl, cone, group });
+    const extras = CampExtras.build({ THREE, scene, particles });
+    const NAMES = new Map([[traveler, 'traveler'], [wizard, 'wizard'], [samurai, 'samurai']]);
+    const fluteTip = new THREE.Vector3();
     const NOWHERE = new THREE.Vector3(0, 0.4, 20);
 
     // ---- the season's weather: falling leaves in autumn; snow and steaming breath in winter ----
@@ -494,6 +497,31 @@
 
       const tw = A.story('twig', t), pp = A.story('pipe', t), kt = A.story('katana', t);
       const vis = visitors.update(t); // the fox, the deer, the owl
+      const fl3 = A.story('flute', t), wt = A.story('whet', t);
+      const ta = A.talkAt(t); // two of them talking
+      const talkW = ta ? A.win(ta.local, 0.2, A.TALK.dur - 0.3, 0.4) : 0;
+      const recentSyl = ta ? A.events(t - 0.16, t).filter((e) => e.type === 'syl') : [];
+      const laughE = A.events(t - 1.3, t).find((e) => e.type === 'laugh');
+      const laugh = laughE ? Math.sin(Math.PI * (t - laughE.time) / 1.3) : 0;
+      // who looks at whom while talking / playing
+      const social = (p) => {
+        const me = NAMES.get(p), list = [];
+        if (ta) {
+          if (me === ta.speaker) list.push([talkW, HEADS.get(ta.listener === 'traveler' ? traveler : ta.listener === 'wizard' ? wizard : samurai)]);
+          else if (me === ta.listener) list.push([talkW, HEADS.get(ta.speaker === 'traveler' ? traveler : ta.speaker === 'wizard' ? wizard : samurai)]);
+          else list.push([talkW * 0.6, HEADS.get(ta.speaker === 'traveler' ? traveler : ta.speaker === 'wizard' ? wizard : samurai)]);
+        }
+        if (me !== 'traveler') list.push([A.win(fl3, 1, 13, 1), HEADS.get(traveler)]);
+        return list;
+      };
+      const chat = (p) => { // a little head bob on each syllable; a nod on each reply; a laugh shakes everyone
+        const me = NAMES.get(p);
+        let bob = 0;
+        for (const e of recentSyl) if (e.who === me) bob = e.reply ? 0.14 : -0.06;
+        p.torso.position.y = p.torso.userData.y0 + 0.02 * laugh * Math.abs(Math.sin(t * 22));
+        return bob - 0.12 * laugh;
+      };
+      for (const p of [traveler, wizard, samurai]) if (p.torso.userData.y0 === undefined) p.torso.userData.y0 = p.torso.position.y;
       const dz = kt < 0 ? A.dozeAt(t) : 0;
       const stoke = A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD)[0];
       const sk = stoke === undefined ? -1 : t - (stoke - A.STOKE_LEAD); // seconds into the wizard's stoke
@@ -508,6 +536,20 @@
       const [tsx, tsz, tel] = A.keyframes(tw < 0 ? -1 : tw, [[0.6, -0.5, 0.05, -0.7], [1.2, 0.45, 0.25, -0.35], [1.55, -1.5, 0.1, -0.15], [2.3, -1.1, 0.05, -0.4], [3.4, -0.5, 0.05, -0.7]]);
       traveler.arms[0].sh.rotation.set(tsx, 0, tsz);
       traveler.arms[0].el.rotation.x = tel;
+      const play = A.win(fl3, 0, A.STORIES.flute.dur, 1.2); // the flute: both hands up to the lips
+      if (play > 0) {
+        const [l, r] = traveler.arms;
+        l.sh.rotation.set(tsx + (-1.3 - tsx) * play, 0, tsz + (0.6 - tsz) * play);
+        l.el.rotation.x = tel + (-1.2 - tel) * play;
+        r.sh.rotation.set(-0.75 + (-1.25 + 0.75) * play, 0, -0.05 + (-0.15 + 0.05) * play);
+        r.el.rotation.x = -0.6 + (-1.0 + 0.6) * play;
+      } else {
+        traveler.arms[1].sh.rotation.set(-0.75, 0, -0.05);
+        traveler.arms[1].el.rotation.x = -0.6;
+      }
+      flute.visible = fl3 >= 0.9 && fl3 < 13.2;
+      if (flute.visible) traveler.head.localToWorld(fluteTip.set(0.35, 0.07, 0.16));
+      traveler.torso.rotation.z += 0.05 * play * Math.sin(t * 1.6); // sways to the tune
       if (tw >= 0.8 && tw < 1.55) { // in hand
         traveler.arms[0].el.localToWorld(twigFrom.set(0, -0.3, 0));
         twig.position.copy(twigFrom);
@@ -529,7 +571,9 @@
         [A.win(sk, 0.2, 1.5, 0.3), HEADS.get(wizard)],
         [watchFire, FIRE_AT],
         [vis.foxLook, vis.fox || NOWHERE],
-      ]) + 0.12 * A.noise1(t * 0.2, 61);
+        ...social(traveler),
+      ]) + 0.12 * A.noise1(t * 0.2, 61) * (1 - talkW);
+      traveler.head.rotation.x = chat(traveler) - 0.1 * play;
 
       // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
       const reach = A.win(A.story('reach', t), 0, 6, 1.5);
@@ -544,10 +588,12 @@
         a0.el.rotation.x += (-1.5 - a0.el.rotation.x) * hold;
       }
       camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu });
+      extras.update(t, { fuel: fu, pot: camp.POT, fluteTip: flute.visible ? fluteTip : null });
       pipe.visible = pp >= 1.0 && pp < 10.0;
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
       pipeGlow.material.color.setHex(inhale > 0.5 ? 0xffe08a : inhale > 0.1 ? 0xe8812c : 0x9b3a1c);
-      wizard.head.rotation.x = 0.2 * reach - 0.1 * inhale;
+      wizard.head.rotation.x = 0.2 * reach - 0.1 * inhale + chat(wizard);
+      if (ta && ta.speaker === 'wizard') wizard.arms[0].sh.rotation.x -= 0.3 * talkW * (0.6 + 0.4 * Math.sin(t * 2.3)); // talks with a hand
       // the stoke: the staff rises, the crystal flares, the fire roars back
       const raise = A.win(sk, 0, A.STOKE_LEAD + A.STOKE_DUR - 1, 0.7);
       staff.position.y = 0.25 * raise;
@@ -556,6 +602,7 @@
       wizard.head.rotation.y = lookAtMix(wizard, [
         [raise, FIRE_AT],
         [stir, camp.POT],
+        ...social(wizard),
         [A.win(kt, 2.5, 8.5, 0.6), HEADS.get(samurai)],
         [A.win(tw, 0.6, 2.0, 0.3), HEADS.get(traveler)],
         [A.win(tw, 2.0, 3.6, 0.3), FIRE_AT],
@@ -577,23 +624,32 @@
       crystal.rotation.y = t * 0.8;
 
       // samurai: nods off and jerks awake; draws the katana and looks it over
-      const [ksx, ksz, kel, kdown] = A.keyframes(kt < 0 ? -1 : kt, [[0, -0.35, 0.08, -0.85, 0], [1.4, -0.95, 0.32, -0.5, 0.35], [9.8, -0.95, 0.32, -0.5, 0.35], [11.4, -0.35, 0.08, -0.85, 0]]);
+      const [ksx, ksz, kel, kdown] = kt >= 0 || wt < 0
+        ? A.keyframes(kt < 0 ? -1 : kt, [[0, -0.35, 0.08, -0.85, 0], [1.4, -0.95, 0.32, -0.5, 0.35], [9.8, -0.95, 0.32, -0.5, 0.35], [11.4, -0.35, 0.08, -0.85, 0]])
+        : A.keyframes(wt, [[0, -0.35, 0.08, -0.85, 0], [0.9, -0.95, 0.32, -0.5, 0.4], [7, -0.95, 0.32, -0.5, 0.4], [8, -0.35, 0.08, -0.85, 0]]);
+      // the whetstone: a stroke along the blade on each rasp
+      let stroke = 0;
+      for (const at of A.RASPS) if (wt >= at && wt < at + 0.9) stroke = wt - at < 0.35 ? (wt - at) / 0.35 : 1 - (wt - at - 0.35) / 0.55;
       samurai.arms.forEach(({ sh, el }, i) => {
         sh.rotation.set(ksx, 0, (i ? -1 : 1) * ksz);
         el.rotation.x = kel;
       });
-      const out = kt >= A.DRAW && kt < A.SHEATHE;
+      const out = (kt >= A.DRAW && kt < A.SHEATHE) || (wt >= 0.9 && wt < 7.2);
+      stone.visible = wt >= 1.2 && wt < 6.8;
+      stone.position.x = -0.1 + 0.5 * stroke;
+      samurai.arms[1].sh.rotation.z += -0.3 * stroke * (stone.visible ? 1 : 0);
       blade.visible = out;
       hilt.visible = !out;
       const sweep = Math.max(A.win(kt, 3, 5, 0.01) ? (kt - 3) / 2 : 0, A.win(kt, 6.5, 8, 0.01) ? (kt - 6.5) / 1.5 : 0);
       glint.visible = out && sweep > 0;
       glint.position.set(-0.15 + 0.6 * sweep, 0, 0.008);
-      samurai.head.rotation.x = 0.6 * dz + kdown;
+      samurai.head.rotation.x = 0.6 * dz + kdown + chat(samurai);
       samurai.torso.rotation.x = samurai.lean + 0.12 * dz;
       samurai.head.rotation.y = (1 - dz) * lookAtMix(samurai, [
         [watchFire, FIRE_AT],
         [vis.deerLook, vis.deer || NOWHERE],
         [vis.foxLook * 0.6, vis.fox || NOWHERE],
+        ...social(samurai),
         [A.win(tw, 0.6, 2.2, 0.3), HEADS.get(traveler)],
         [A.win(pp, 4.0, 6.0, 0.4), HEADS.get(wizard)],
       ]);
@@ -741,15 +797,15 @@
       }
       return null;
     }
-    let wizardTurn = 0;
+    let wizardTurn = 0, travelerTurn = 0, samuraiTurn = 0;
     // Start their story now (unless they're busy): the traveler tosses a twig, the wizard smokes or stirs,
     // the samurai draws the katana, the fire gets stoked.
     function act(who, t) {
       const busy = (names) => names.some((n) => A.story(n, t) >= 0);
       const wizardBusy = busy(['reach', 'pipe', 'stir']) || A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD).length > 0;
-      if (who === 'traveler' && !busy(['twig'])) A.trigger('twig', t);
+      if (who === 'traveler' && !busy(['twig', 'flute'])) A.trigger(travelerTurn++ % 2 ? 'flute' : 'twig', t);
       else if (who === 'wizard' && !wizardBusy) A.trigger(wizardTurn++ % 2 ? 'stir' : 'pipe', t);
-      else if (who === 'samurai' && !busy(['katana'])) A.trigger('katana', t);
+      else if (who === 'samurai' && !busy(['katana', 'whet'])) A.trigger(samuraiTurn++ % 2 ? 'whet' : 'katana', t);
       else if (who === 'fire' && !wizardBusy) A.trigger('stoke', t);
       else return false;
       return true;

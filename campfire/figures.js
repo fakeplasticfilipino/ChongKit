@@ -107,6 +107,12 @@
     cane.add(mesh(new THREE.DodecahedronGeometry(0.045), GOLD, 0, 0.68, 0)); // knob
     cane.add(cyl(0.03, 0.02, 0.04, 5, DARK, 0, 0.02, 0)); // tip
     tr.root.add(cane);
+    // a wooden flute, held to the lips while playing
+    const flute = group(0.17, 0.065, 0.16);
+    flute.add(tilt(cyl(0.016, 0.016, 0.36, 5, BROWN_DK, 0, 0, 0), 0, 0, Math.PI / 2));
+    for (let k = 0; k < 4; k++) flute.add(box(0.012, 0.01, 0.01, DARK, -0.02 + k * 0.05, 0.016, 0)); // finger holes
+    flute.visible = false;
+    tr.head.add(flute);
 
     // ================= wizard: wide purple robe, long white beard, drooping hat, gnarled staff =================
     const ROBE = 0x2c1a28, ROBE_MID = 0x45293e, ROBE_HI = 0x5e3a56, BEARD = 0xcfc8bb, HAIR_W = 0x9a948c;
@@ -215,6 +221,9 @@
     for (let k = 0; k < 4; k++) blade.add(box(0.05, 0.045, 0.04, k % 2 ? BONE : LACE, -0.28 - k * 0.05, 0, 0)); // hilt
     const glint = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.02), new THREE.MeshBasicMaterial({ color: 0xfff6d6 }));
     blade.add(glint);
+    const stone = box(0.1, 0.035, 0.05, 0x5e5650, 0, 0.03, 0.012); // the whetstone
+    stone.visible = false;
+    blade.add(stone);
     blade.visible = false;
     st.add(blade);
     st.add(tilt(box(0.035, 0.6, 0.02, LACE, 0.02, 0.3, 0.145), 0, 0, 0.6)); // sageo cord across the chest
@@ -257,7 +266,7 @@
     twig.visible = false;
     scene.add(twig);
 
-    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, staff, hilt, blade, glint, pipe, pipeGlow, twig };
+    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, staff, hilt, blade, glint, stone, flute, pipe, pipeGlow, twig };
   }
 
   window.CampFigures = { build };
