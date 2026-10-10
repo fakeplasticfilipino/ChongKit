@@ -202,10 +202,10 @@
     doze: { period: 37, offset: 9, dur: 9 }, // samurai nods off
     katana: { period: 74, offset: 20, dur: 12 }, // samurai checks the blade
     whet: { period: 74, offset: 60, dur: 8 }, // samurai sharpens the blade on a whetstone
-    flute: { period: 186, offset: 173, dur: 14 }, // traveler plays a tune (186 = 6 × shift, 3 × twig)
+    guitar: { period: 186, offset: 173, dur: 24 }, // traveler plays the guitar (186 = 6 × shift, 3 × twig)
   };
   // Whose stories are whose (a figure never runs two at once; talks wait until both are free).
-  const BUSY = { traveler: ['shift', 'twig', 'flute'], wizard: ['reach', 'pipe', 'stir'], samurai: ['doze', 'katana', 'whet'] };
+  const BUSY = { traveler: ['shift', 'twig', 'guitar'], wizard: ['reach', 'pipe', 'stir'], samurai: ['doze', 'katana', 'whet'] };
   // The samurai's dozing (0 awake … 1 asleep), on the doze story's schedule.
   const dozeAt = (t) => doze(t, STORIES.doze.period, STORIES.doze.offset, STORIES.doze.dur);
   // Seconds into the story's current run, or -1 when it isn't running.
@@ -254,19 +254,24 @@
   const TWIG_LAND = 2.3, PUFFS = [4.2, 7.6], DRAW = 1.6, SHEATHE = 10.4;
   const SNAP = STORIES.doze.dur * 0.88; // when doze() snaps back
   const RASPS = [1.5, 2.4, 3.3, 4.2, 5.1, 6.0]; // whetstone strokes
-  const FLUTE_SCALE = [293.66, 349.23, 392.0, 440.0, 523.25, 587.33]; // D minor pentatonic
-  // The k-th run of the flute: a little tune from 1.5 s to about 12.5 s. [{ at, freq, len }]
-  function tune(k) {
-    const r = rng(k * 613 + 29), notes = [];
-    let i = 2 + ((r() * 2) | 0), at = 1.5;
-    while (at < 11.8) {
-      const len = [0.4, 0.4, 0.6, 0.8, 1.2][(r() * 5) | 0];
-      notes.push({ at, freq: FLUTE_SCALE[i], len: len * 0.92 });
-      at += len;
-      i = Math.max(0, Math.min(FLUTE_SCALE.length - 1, i + [-2, -1, -1, 1, 1, 2][(r() * 6) | 0]));
+  // The guitar: Creep's chords, G – B – C – Cm, a bar each, twice through, strummed down, down-up, up-down-up,
+  // then a last G. The same for every run. [{ at, chord, dir (1 down, -1 up), beat, first, last }]
+  const BEAT = 60 / 92; // about the song's tempo
+  const CHORDS = [
+    { name: 'G', notes: [98.0, 123.47, 146.83, 196.0, 246.94, 392.0] }, // 320003
+    { name: 'B', notes: [123.47, 185.0, 246.94, 311.13, 369.99] }, // x24442
+    { name: 'C', notes: [130.81, 164.81, 196.0, 261.63, 329.63] }, // x32010
+    { name: 'Cm', notes: [130.81, 196.0, 261.63, 311.13, 392.0] }, // x35543
+  ];
+  const PATTERN = [[0, 1], [1, 1], [1.5, -1], [2.5, -1], [3, 1], [3.5, -1]]; // [beat, direction]
+  const GUITAR_IN = 1.5; // seconds to settle the guitar on the lap
+  function strums() {
+    const out = [];
+    for (let bar = 0; bar < 8; bar++) {
+      for (const [b, dir] of PATTERN) out.push({ at: GUITAR_IN + (bar * 4 + b) * BEAT, chord: bar % 4, dir, beat: b, first: b === 0, last: false });
     }
-    notes.push({ at, freq: FLUTE_SCALE[0], len: 1.4 }); // home
-    return notes;
+    out.push({ at: GUITAR_IN + 32 * BEAT, chord: 0, dir: 1, beat: 0, first: true, last: true }); // end on G, let it ring
+    return out;
   }
 
   // ---- campfire talk: two of them murmur (wordless), the other nods; sometimes they all laugh ----
@@ -347,20 +352,15 @@
     each('katana', SHEATHE, 'sheathe');
     PUFFS.forEach((p) => each('pipe', p, 'puff'));
     RASPS.forEach((p) => each('whet', p, 'rasp'));
-    const fl = STORIES.flute; // the flute's notes
-    for (let k = Math.floor((from - fl.offset - 14) / fl.period); k * fl.period + fl.offset < to; k++) {
-      for (const n of tune(k)) {
-        const time = k * fl.period + fl.offset + n.at;
-        if (time >= from && time < to) out.push({ type: 'note', time, freq: n.freq, len: n.len });
+    const gs = STORIES.guitar, song = strums(); // the guitar's strums
+    const strumEv = (start) => {
+      for (const n of song) {
+        const time = start + n.at;
+        if (time >= from && time < to) out.push({ type: 'strum', time, chord: n.chord, dir: n.dir, beat: n.beat, first: n.first, last: n.last });
       }
-    }
-    for (const m of manual) {
-      if (m.name !== 'flute') continue;
-      for (const n of tune(Math.floor(m.start))) {
-        const time = m.start + n.at;
-        if (time >= from && time < to) out.push({ type: 'note', time, freq: n.freq, len: n.len });
-      }
-    }
+    };
+    for (let k = Math.floor((from - gs.offset - gs.dur) / gs.period); k * gs.period + gs.offset < to; k++) strumEv(k * gs.period + gs.offset);
+    for (const m of manual) if (m.name === 'guitar') strumEv(m.start);
     for (let k = Math.max(0, Math.floor((from - TALK.offset) / TALK.period) - 1); k * TALK.period + TALK.offset < to; k++) {
       const c = talk(k);
       if (!c) continue;
@@ -543,7 +543,7 @@
   }
 
   // Whose moment an event is (so the walker's own sounds can pause), or null for everyone's.
-  const EVENT_OWNER = { land: 'traveler', note: 'traveler', puff: 'wizard', snap: 'samurai', draw: 'samurai', sheathe: 'samurai', rasp: 'samurai' };
+  const EVENT_OWNER = { land: 'traveler', strum: 'traveler', puff: 'wizard', snap: 'samurai', draw: 'samurai', sheathe: 'samurai', rasp: 'samurai' };
   const eventOwner = (e) => e.who || EVENT_OWNER[e.type] || null;
 
   // ---- walking around the camp ----
@@ -604,7 +604,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX, collide, gait, eventOwner,
-    STORIES, BUSY, story, trigger, talk, talkAt, TALK, tune, FLUTE_SCALE, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

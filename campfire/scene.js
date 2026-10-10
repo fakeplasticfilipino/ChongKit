@@ -155,7 +155,7 @@
     seatLog(0, -2.3);
     scene.add(mesh(new THREE.DodecahedronGeometry(0.28), 0x5e5650, 2.15, 0.15, 0.35));
     const fig = CampFigures.build({ THREE, scene, mat, mesh, box, cyl, cone, group });
-    const { traveler, wizard, samurai, crystal, crystalLight, staff, hilt, blade, glint, stone, flute, pipe, pipeGlow, twig } = fig;
+    const { traveler, wizard, samurai, crystal, crystalLight, staff, hilt, blade, glint, stone, guitar, pipe, pipeGlow, twig } = fig;
     const HEADS = new Map([traveler, wizard, samurai].map((p) => [p, p.root.localToWorld(new THREE.Vector3(0, 1.1, 0.1))]));
     const FIRE_AT = new THREE.Vector3(0, 0.4, 0);
 
@@ -410,7 +410,7 @@
     let lastT = null, walkWas = { who: null, k: 0, at: [0, 0] };
     const walkerHead = new THREE.Vector3(), camTarget = new THREE.Vector3(), follow = new THREE.Vector3();
     const NAMES = new Map([[traveler, 'traveler'], [wizard, 'wizard'], [samurai, 'samurai']]);
-    const fluteTip = new THREE.Vector3();
+    const guitarAt = new THREE.Vector3();
     const NOWHERE = new THREE.Vector3(0, 0.4, 20);
 
     // ---- the season's weather: falling leaves in autumn; snow and steaming breath in winter ----
@@ -521,7 +521,7 @@
       const S = (name) => (walk.away(OWNER[name]) ? -1 : A.story(name, t)); // the walker's own stories pause
       const tw = S('twig'), pp = S('pipe'), kt = S('katana');
       const vis = visitors.update(t); // the fox, the deer, the owl
-      const fl3 = S('flute'), wt = S('whet');
+      const gt = S('guitar'), wt = S('whet');
       const ta0 = A.talkAt(t), ta = ta0 && !walk.away(ta0.speaker) && !walk.away(ta0.listener) ? ta0 : null; // two of them talking
       const talkW = ta ? A.win(ta.local, 0.2, A.TALK.dur - 0.3, 0.4) : 0;
       const recentSyl = ta ? A.events(t - 0.16, t).filter((e) => e.type === 'syl') : [];
@@ -535,7 +535,7 @@
           else if (me === ta.listener) list.push([talkW, HEADS.get(ta.speaker === 'traveler' ? traveler : ta.speaker === 'wizard' ? wizard : samurai)]);
           else list.push([talkW * 0.6, HEADS.get(ta.speaker === 'traveler' ? traveler : ta.speaker === 'wizard' ? wizard : samurai)]);
         }
-        if (me !== 'traveler') list.push([A.win(fl3, 1, 13, 1), HEADS.get(traveler)]);
+        if (me !== 'traveler') list.push([A.win(gt, 1, A.STORIES.guitar.dur - 1, 1), HEADS.get(traveler)]);
         if (walkWas.who && walkWas.who !== me) { // turn to look at whoever is walking close by
           const d = Math.hypot(p.root.position.x - walkWas.at[0], p.root.position.z - walkWas.at[1]);
           list.push([A.smooth((2.8 - d) / 1.2) * walkWas.k, walkerHead]);
@@ -564,20 +564,22 @@
       const [tsx, tsz, tel] = A.keyframes(tw < 0 ? -1 : tw, [[0.6, -0.5, 0.05, -0.7], [1.2, 0.45, 0.25, -0.35], [1.55, -1.5, 0.1, -0.15], [2.3, -1.1, 0.05, -0.4], [3.4, -0.5, 0.05, -0.7]]);
       traveler.arms[0].sh.rotation.set(tsx, 0, tsz);
       traveler.arms[0].el.rotation.x = tel;
-      const play = A.win(fl3, 0, A.STORIES.flute.dur, 1.2); // the flute: both hands up to the lips
+      const play = A.win(gt, 0, A.STORIES.guitar.dur, 1.2); // the guitar: left hand on the neck, right hand strumming
       if (play > 0) {
+        const last = A.events(t - 0.3, t).filter((e) => e.type === 'strum').pop();
+        const strum = last ? last.dir * (1 - Math.min(1, (t - last.time) / 0.22)) : 0; // the hand sweeps down or up, then eases back
         const [l, r] = traveler.arms;
-        l.sh.rotation.set(tsx + (-1.3 - tsx) * play, 0, tsz + (0.6 - tsz) * play);
-        l.el.rotation.x = tel + (-1.2 - tel) * play;
-        r.sh.rotation.set(-0.75 + (-1.25 + 0.75) * play, 0, -0.05 + (-0.15 + 0.05) * play);
-        r.el.rotation.x = -0.6 + (-1.0 + 0.6) * play;
+        l.sh.rotation.set(tsx + (-0.95 - tsx) * play, 0, tsz + (-0.45 - tsz) * play);
+        l.el.rotation.x = tel + (-0.9 - tel) * play;
+        r.sh.rotation.set(-0.75 + (-0.5 + 0.14 * strum + 0.75) * play, 0, -0.05 + (-0.35 + 0.05) * play);
+        r.el.rotation.x = -0.6 + (-0.8 - 0.1 * strum + 0.6) * play;
       } else {
         traveler.arms[1].sh.rotation.set(-0.75, 0, -0.05);
         traveler.arms[1].el.rotation.x = -0.6;
       }
-      flute.visible = fl3 >= 0.9 && fl3 < 13.2;
-      if (flute.visible) traveler.head.localToWorld(fluteTip.set(0.35, 0.07, 0.16));
-      traveler.torso.rotation.z += 0.05 * play * Math.sin(t * 1.6); // sways to the tune
+      guitar.visible = gt >= 0.6 && gt < A.STORIES.guitar.dur - 0.6;
+      if (guitar.visible) guitar.localToWorld(guitarAt.set(-0.07, 0.12, 0.05));
+      traveler.torso.rotation.z += 0.04 * play * Math.sin((t * Math.PI) / A.BEAT / 2); // sways to the beat
       if (tw >= 0.8 && tw < 1.55) { // in hand
         traveler.arms[0].el.localToWorld(twigFrom.set(0, -0.3, 0));
         twig.position.copy(twigFrom);
@@ -601,7 +603,7 @@
         [vis.foxLook, vis.fox || NOWHERE],
         ...social(traveler),
       ]) + 0.12 * A.noise1(t * 0.2, 61) * (1 - talkW);
-      traveler.head.rotation.x = chat(traveler) - 0.1 * play;
+      traveler.head.rotation.x = chat(traveler) + play * (0.15 + 0.06 * Math.abs(Math.sin((t * Math.PI) / A.BEAT))); // looks down at the strings, nods to the beat
 
       // wizard: crystal pulses; warms a hand at the fire; smokes a pipe and blows rings
       const reach = A.win(S('reach'), 0, 6, 1.5);
@@ -616,7 +618,7 @@
         a0.el.rotation.x += (-1.5 - a0.el.rotation.x) * hold;
       }
       camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu });
-      extras.update(t, { fuel: fu, pot: camp.POT, fluteTip: flute.visible ? fluteTip : null });
+      extras.update(t, { fuel: fu, pot: camp.POT, musicAt: guitar.visible ? guitarAt : null });
       pipe.visible = pp >= 1.0 && pp < 10.0;
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
       pipeGlow.material.color.setHex(inhale > 0.5 ? 0xffe08a : inhale > 0.1 ? 0xe8812c : 0x9b3a1c);
@@ -854,7 +856,7 @@
       if (walk.away(who)) return false; // they're out walking
       const busy = (names) => names.some((n) => A.story(n, t) >= 0);
       const wizardBusy = busy(['reach', 'pipe', 'stir']) || A.stokes(t - A.STOKE_DUR, t + A.STOKE_LEAD).length > 0;
-      if (who === 'traveler' && !busy(['twig', 'flute'])) A.trigger(travelerTurn++ % 2 ? 'flute' : 'twig', t);
+      if (who === 'traveler' && !busy(['twig', 'guitar'])) A.trigger(travelerTurn++ % 2 ? 'guitar' : 'twig', t);
       else if (who === 'wizard' && !wizardBusy) A.trigger(wizardTurn++ % 2 ? 'stir' : 'pipe', t);
       else if (who === 'samurai' && !busy(['katana', 'whet'])) A.trigger(samuraiTurn++ % 2 ? 'whet' : 'katana', t);
       else if (who === 'fire' && !wizardBusy) A.trigger('stoke', t);

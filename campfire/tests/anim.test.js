@@ -187,7 +187,7 @@ test('fire colours: clear when cold, a colour for every hotter heat', () => {
 });
 
 test('stories: one figure never runs two at once', () => {
-  const pairs = [['shift', 'twig'], ['shift', 'flute'], ['twig', 'flute'], ['reach', 'pipe'], ['reach', 'stir'], ['pipe', 'stir'], ['doze', 'katana'], ['doze', 'whet'], ['katana', 'whet']];
+  const pairs = [['shift', 'twig'], ['shift', 'guitar'], ['twig', 'guitar'], ['reach', 'pipe'], ['reach', 'stir'], ['pipe', 'stir'], ['doze', 'katana'], ['doze', 'whet'], ['katana', 'whet']];
   for (let t = 0; t < 2000; t += 0.25) {
     for (const [a, b] of pairs) assert.ok(A.story(a, t) < 0 || A.story(b, t) < 0, `${a} and ${b} at ${t}`);
   }
@@ -365,14 +365,18 @@ test('talks: only when both are free; syllables inside the talk; replies from th
   for (const e of ev) assert.ok(A.talkAt(e.time), 'a syllable outside a talk at ' + e.time);
 });
 
-test('the flute: notes from the scale, inside the run; whetstone strokes inside theirs', () => {
-  const notes = A.events(0, 1200).filter((e) => e.type === 'note');
-  assert.ok(notes.length > 20);
-  for (const n of notes) {
-    assert.ok(A.FLUTE_SCALE.includes(n.freq));
-    const l = A.story('flute', n.time);
-    assert.ok(l >= 1.4 && l < A.STORIES.flute.dur, 'note outside the flute at ' + n.time);
+test('the guitar: Creep\'s chords in order, strums inside the run; whetstone strokes inside theirs', () => {
+  assert.deepStrictEqual(A.CHORDS.map((c) => c.name), ['G', 'B', 'C', 'Cm']);
+  const strums = A.events(0, 1200).filter((e) => e.type === 'strum');
+  assert.ok(strums.length > 40);
+  for (const s of strums) {
+    const l = A.story('guitar', s.time);
+    assert.ok(l >= 1.4 && l < A.STORIES.guitar.dur, 'strum outside the guitar at ' + s.time);
+    assert.ok(s.dir === 1 || s.dir === -1);
   }
+  const bars = A.strums().filter((s) => s.first && !s.last).map((s) => A.CHORDS[s.chord].name);
+  assert.deepStrictEqual(bars, ['G', 'B', 'C', 'Cm', 'G', 'B', 'C', 'Cm']);
+  assert.ok(A.strums().pop().at < A.STORIES.guitar.dur - 1, 'the last G rings before putting it down');
   for (const r of A.events(0, 1200).filter((e) => e.type === 'rasp')) assert.ok(A.story('whet', r.time) >= 0);
 });
 

@@ -92,7 +92,7 @@
   resize();
 
   // Turning around the fire: drag (mouse or finger) to circle it; it eases to a stop and stays there.
-  let view = { yaw: 0, pitch: 0.12, vyaw: 0, vpitch: 0 };
+  let view = { yaw: Number(params.get('yaw')) || 0, pitch: 0.12, vyaw: 0, vpitch: 0 }; // ?yaw=RADIANS starts turned (for checking)
   let drag = null;
   canvas.addEventListener('pointerdown', (e) => {
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now(), sx: e.clientX, sy: e.clientY, t0: performance.now() };

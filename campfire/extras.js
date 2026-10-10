@@ -1,5 +1,5 @@
 // Campfire: small touches: sparks that land and glow on the ground, the stew's smell curling up as wavy
-// lines, music notes floating up from the flute. Browser global `CampExtras`.
+// lines, music notes floating up from the guitar. Browser global `CampExtras`.
 (function () {
   'use strict';
   const A = window.CampAnim;
@@ -43,7 +43,7 @@
       return s;
     });
 
-    // every frame. o: { fuel 0–1, pot (Vector3), fluteTip (Vector3 or null) }
+    // every frame. o: { fuel 0–1, pot (Vector3), musicAt: where the music comes from (Vector3 or null) }
     function update(t, o) {
       const gp = ground.geometry.attributes.position, gc = ground.geometry.attributes.color, gb = ground.userData.base;
       for (let i = 0; i < SPARKS; i++) {
@@ -66,13 +66,13 @@
         l.material.opacity = 0.32 * Math.sin(Math.PI * age);
       });
 
-      const recent = o.fluteTip ? A.events(t - 2.4, t).filter((e) => e.type === 'note') : [];
+      const recent = o.musicAt ? A.events(t - 2.4, t).filter((e) => e.type === 'strum' && (e.beat === 0 || e.beat === 3)) : [];
       notes.forEach((s, i) => {
         const e = recent[recent.length - 1 - i];
         s.visible = !!e;
         if (!e) return;
         const age = t - e.time;
-        s.position.set(o.fluteTip.x + 0.15 * Math.sin(age * 3 + e.freq), o.fluteTip.y + 0.12 + age * 0.35, o.fluteTip.z);
+        s.position.set(o.musicAt.x + 0.15 * Math.sin(age * 3 + e.chord * 1.7 + e.beat), o.musicAt.y + 0.12 + age * 0.35, o.musicAt.z);
         s.material.opacity = 1 - age / 2.4;
       });
     }

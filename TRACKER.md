@@ -141,6 +141,9 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] The horse's neck arches forward (was bent back); grazing lowers the head to the grass
 - [x] The wizard walks with the staff, planting it with each stride
 
+### ✅ v9 — done
+- [x] The flute is now an acoustic guitar: Creep's chords (G – B – C – Cm) strummed down, down-up, up-down-up, plucked-string sound, strumming hand, nods to the beat
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

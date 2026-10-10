@@ -290,24 +290,30 @@
       for (let i = 0; i < 4; i++) syllable(at + j * 0.07 + i * 0.14, who, 0.5 - i * 0.25, false, 0.2);
     });
   }
-  function fluteNote(at, freq, len) {
-    const out = pan(-0.45, master);
-    const o = ctx.createOscillator();
-    o.type = 'triangle';
-    o.frequency.value = freq;
-    const vib = ctx.createOscillator(), vg = gain(freq * 0.008);
-    vib.frequency.value = 5;
-    vib.connect(vg); vg.connect(o.frequency);
-    const lp = filter('lowpass', freq * 3);
+  // the guitar: plucked strings (a bright buzz that mellows and fades), swept low → high on a downstroke,
+  // high → low on an upstroke
+  function pluck(at, freq, vol, ring, out) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator();
+    o.type = 'sawtooth'; o.frequency.value = freq;
+    o2.type = 'triangle'; o2.frequency.value = freq * 1.003;
+    const lp = filter('lowpass', Math.min(5000, freq * 14), 0.8);
+    lp.frequency.setValueAtTime(Math.min(5000, freq * 14), at);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(300, freq * 2.2), at + 0.6);
     const g = gain(0);
-    o.connect(lp); lp.connect(g); g.connect(out); g.connect(echo);
+    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(out);
     g.gain.setValueAtTime(0, at);
-    g.gain.linearRampToValueAtTime(0.07, at + 0.06);
-    g.gain.setValueAtTime(0.06, at + Math.max(0.07, len - 0.08));
-    g.gain.linearRampToValueAtTime(0, at + len);
-    noiseHit(at, 'bandpass', freq * 2, 2, 0.12, 0.025, out); // breath
-    o.start(at); vib.start(at);
-    o.stop(at + len + 0.05); vib.stop(at + len + 0.05);
+    g.gain.linearRampToValueAtTime(vol, at + 0.004);
+    g.gain.exponentialRampToValueAtTime(vol * 0.25, at + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0003, at + ring);
+    o.start(at); o2.start(at);
+    o.stop(at + ring + 0.05); o2.stop(at + ring + 0.05);
+  }
+  function strum(at, chord, dir, last) {
+    const out = pan(-0.45, master);
+    const notes = A.CHORDS[chord].notes, order = dir > 0 ? notes : notes.slice().reverse();
+    const vol = (dir > 0 ? 0.035 : 0.024) * (last ? 1.3 : 1);
+    order.forEach((f, i) => pluck(at + i * (dir > 0 ? 0.012 : 0.009), f, vol, last ? 3 : 1.3, out));
+    noiseHit(at, 'highpass', 3000, 0.7, 0.04, 0.01, out); // the pick on the strings
   }
   function rasp(at) {
     const f = noiseHit(at, 'bandpass', 2200, 3, 0.35, 0.07, pan(0.5, master));
@@ -326,7 +332,7 @@
       case 'stoke': stoke(at); break;
       case 'syl': syllable(at, e.who, e.rise, e.reply); break;
       case 'laugh': laughter(at); break;
-      case 'note': fluteNote(at, e.freq, e.len); break;
+      case 'strum': strum(at, e.chord, e.dir, e.last); break;
       case 'rasp': rasp(at); break;
       case 'thunder': if (CampAudio.season !== 'winter') thunder(at + 2.4); break; // the flash comes first; it's far off
       case 'eyes': noiseHit(at + 0.3, 'bandpass', 1500, 2, 0.05, 0.08, pan(0, master)); break; // a twig snaps out there

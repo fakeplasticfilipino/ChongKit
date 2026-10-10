@@ -118,12 +118,20 @@
     tr.root.updateMatrixWorld();
     cane.applyMatrix4(tr.root.matrixWorld); // leave it leaning at the log, even when the traveler walks off
     scene.add(cane);
-    // a wooden flute, held to the lips while playing
-    const flute = group(0.17, 0.065, 0.16);
-    flute.add(tilt(cyl(0.016, 0.016, 0.36, 5, BROWN_DK, 0, 0, 0), 0, 0, Math.PI / 2));
-    for (let k = 0; k < 4; k++) flute.add(box(0.012, 0.01, 0.01, DARK, -0.02 + k * 0.05, 0.016, 0)); // finger holes
-    flute.visible = false;
-    tr.head.add(flute);
+    // an acoustic guitar, across the lap while playing: the face toward the fire, the neck up to the left
+    const guitar = group(0.06, 0.17, 0.31);
+    guitar.rotation.set(-0.2, 0, -0.5); // the neck rises to the left, as guitarists hold it
+    const SPRUCE = 0xc09040, EDGE = 0x744726;
+    guitar.add(box(0.36, 0.32, 0.08, SPRUCE, 0.06, -0.04, 0)); // lower bout
+    guitar.add(box(0.26, 0.25, 0.08, SPRUCE, -0.16, -0.02, 0)); // upper bout
+    guitar.add(box(0.38, 0.34, 0.05, EDGE, 0.06, -0.04, -0.035)); // sides and back
+    guitar.add(box(0.11, 0.11, 0.01, DARK, -0.08, -0.02, 0.045)); // soundhole
+    guitar.add(box(0.03, 0.14, 0.012, DARK, 0.15, -0.04, 0.045)); // bridge
+    guitar.add(box(0.36, 0.055, 0.035, BROWN_DK, -0.46, 0.0, 0.02)); // neck
+    guitar.add(box(0.11, 0.075, 0.03, BROWN_DK, -0.69, 0.0, 0.02)); // headstock
+    guitar.add(box(0.78, 0.014, 0.006, BONE, -0.27, -0.01, 0.046)); // strings
+    guitar.visible = false;
+    tt.add(guitar);
 
     // ================= wizard: wide purple robe, long white beard, drooping hat, gnarled staff =================
     const ROBE = 0x2c1a28, ROBE_MID = 0x45293e, ROBE_HI = 0x5e3a56, BEARD = 0xcfc8bb, HAIR_W = 0x9a948c;
@@ -287,7 +295,7 @@
     twig.visible = false;
     scene.add(twig);
 
-    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, staff, hilt, blade, glint, stone, flute, pipe, pipeGlow, twig };
+    return { traveler: tr, wizard: wz, samurai: sm, crystal, crystalLight, staff, hilt, blade, glint, stone, guitar, pipe, pipeGlow, twig };
   }
 
   window.CampFigures = { build };
