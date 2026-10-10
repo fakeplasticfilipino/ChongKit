@@ -183,7 +183,7 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
    target, then a shader pass snaps every pixel to `CampAnim.PALETTE` (48 colours max, the shader's array; sampled from
    the art reference) with a light 4×4 dither. Keep materials flat-shaded and low-poly.
 3. **No controls beyond** "← All tools", fullscreen and Walk/Sit in a corner (they fade when the mouse
-   rests), the walking keys (E, WASD / arrows, Shift, 1–3; a joystick on touch screens) and dragging to circle the fire (`CampAnim.orbit`; the view stays where it's left). The figures
+   rests), the walking keys (E, WASD / arrows, Shift, 1–3; a joystick on touch screens), **F** to use the spot in reach (its floating hint, a button on touch screens; `interact.js`, actions are `CampAnim.act`), the secrets tally (top right, only while walking; `secrets.js`) and dragging to circle the fire (`CampAnim.orbit`; the view stays where it's left). The figures
    are fixed (traveler, wizard, samurai), turned three-quarters toward the starting view like the
    reference; the animation is the point. The forest is a full ring, so every angle must look finished.
    The moon has one fixed place in the sky (up and right of the starting view; trees in its line of

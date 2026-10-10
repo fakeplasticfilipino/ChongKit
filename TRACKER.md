@@ -148,8 +148,10 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] The guitar varies: four songs (Creep + G Em C D, Am F C G, Em C G D) take turns, each in one of four styles (strum, fingerpick, slow melody over the bass, boom-chick with a walking bass); every song meets every style within 16 runs; clicks pick their own
 - [x] Tests: songs, styles, rotation, notes inside the run
 
-### 📋 Next: walk-up interactions (design first)
-- Things to do while walking (horse, log, stew, tent, twig, visitors) and hidden secrets in the forest ring
+### 🚧 v11 — walk-up interactions and secrets (spec: `docs/superpowers/specs/2026-10-10-campfire-interactions-design.md`)
+- [x] Spots with an F hint (tap on touch): horse (pet / apple), stew, sit (log, rock), fire (twig / warm), tent (peek), talk to the others; moving cancels
+- [x] Props react (horse, apple, bowl, tent candle), sitting lowers the camera, action sounds; the owl looks, the fox runs off
+- [ ] Secrets at the clearing's edge (13) and the tally
 
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
