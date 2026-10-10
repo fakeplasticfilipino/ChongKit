@@ -82,8 +82,80 @@
       y: 0.9 + 0.45 * age,
       z: 0.6 * noise1(age * 0.4 + 30, seed) * u,
       scale: 0.12 + 0.09 * age,
-      alpha: 0.2 * Math.sin(Math.PI * u),
+      alpha: 0.14 * Math.sin(Math.PI * u),
     };
+  }
+
+  // ---- sound schedules (shared with the picture: pops throw embers, wind sways the trees) ----
+
+  // Fire pops in [from, to): a chance every 1/12 s, more when the fire flares. Strength 0.3–1.
+  const POP_SLOT = 1 / 12;
+  function pops(from, to) {
+    const out = [];
+    for (let k = Math.floor(from / POP_SLOT); k * POP_SLOT < to; k++) {
+      const r = rng(k * 7919 + 17);
+      const flare = Math.max(0, flicker(k * POP_SLOT) - 1) / 0.26;
+      if (r() >= 0.12 + 0.3 * flare) continue;
+      const time = (k + r()) * POP_SLOT;
+      if (time >= from && time < to) out.push({ time, strength: 0.3 + 0.7 * r(), id: k });
+    }
+    return out;
+  }
+
+  // Embers thrown up by the strong pops of the last second.
+  function bursts(t) {
+    const out = [];
+    for (const p of pops(t - 1, t)) {
+      if (p.strength < 0.7) continue;
+      for (let j = 0; j < 3; j++) {
+        const e = ember(p.id * 3 + j + 99991, t - p.time, 1);
+        out.push({ x: e.x, y: e.y * 1.4 - 0.15, z: e.z, alpha: e.alpha });
+      }
+    }
+    return out;
+  }
+
+  // Wind strength 0–1: slow gusts. The treetops sway with it and the wind sound follows it.
+  function wind(t) {
+    return 0.5 + 0.5 * noise1(t * 0.15, 900);
+  }
+
+  // Owl hoots in [from, to): one every 60–120 s.
+  function owls(from, to) {
+    const out = [];
+    for (let k = Math.max(0, Math.floor(from / 90) - 1); k * 90 < to; k++) {
+      const time = k * 90 + 30 + rng(k * 31 + 5)() * 30;
+      if (time >= from && time < to) out.push(time);
+    }
+    return out;
+  }
+
+  // Cricket chirps in [from, to): three crickets taking turns, each chirping steadily while it sings.
+  const CRICKETS = [
+    { every: 0.85, period: 17, offset: 0, dur: 10 },
+    { every: 1.1, period: 23, offset: 7, dur: 12 },
+    { every: 0.7, period: 29, offset: 15, dur: 9 },
+  ];
+  function chirps(from, to) {
+    const out = [];
+    CRICKETS.forEach((c, i) => {
+      for (let k = Math.floor(from / c.every); k * c.every < to; k++) {
+        const time = k * c.every;
+        if (time >= from && envelope(time, c.period, c.offset, c.dur) > 0) out.push({ time, cricket: i });
+      }
+    });
+    return out.sort((a, b) => a.time - b.time);
+  }
+
+  // ---- turning around the fire ----
+  const PITCH_MIN = 0.03, PITCH_MAX = 0.55;
+  // One step of the view: yaw/pitch move by their speed, which eases off; yaw wraps, pitch stays in range.
+  function orbit(s, dt) {
+    const k = Math.exp(-3.5 * dt);
+    let yaw = s.yaw + s.vyaw * dt;
+    yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
+    const pitch = Math.min(PITCH_MAX, Math.max(PITCH_MIN, s.pitch + s.vpitch * dt));
+    return { yaw, pitch, vyaw: s.vyaw * k, vpitch: s.vpitch * k };
   }
 
   // The pixel canvas: about `rows` pixels on the short side, same aspect as the window.
@@ -105,7 +177,8 @@
     0xb7d65a, // firefly
   ];
 
-  const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth };
+  const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
+    pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

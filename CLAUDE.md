@@ -182,10 +182,17 @@ the table. Not a rules tool: no Nimble text, no GM Guide numbers, no notice or f
 2. **The pixel look:** render about 180 px on the short side (`CampAnim.renderSize`) into a render
    target, then a shader pass snaps every pixel to `CampAnim.PALETTE` (32 colours max, sampled from
    the art reference) with a light 4×4 dither. Keep materials flat-shaded and low-poly.
-3. **No controls beyond** "← All tools" and fullscreen in a corner (they fade when the mouse rests).
-   The figures are fixed (traveler, wizard, fighter); the animation is the point.
-4. Timing math lives in `anim.js` (global `CampAnim`, CommonJS for tests), covered by
-   `tests/anim.test.js`; `scene.js` (`CampScene.build`) makes and moves the world; `app.js` renders.
+3. **No controls beyond** "← All tools" and fullscreen in a corner (they fade when the mouse rests),
+   and dragging to circle the fire (`CampAnim.orbit`; the view stays where it's left). The figures
+   are fixed (traveler, wizard, fighter); the animation is the point. The forest is a full ring,
+   so every angle must look finished; the moon follows the view.
+4. **Sound is always on, never a mute button** (the table's choice). It's generated with Web Audio in
+   `audio.js` (no sound files), starting on the first click/tap/key as browsers require. Its timing
+   comes from `anim.js` (`pops`, `wind`, `chirps`, `owls`), shared with the picture: pops throw
+   sparks (`bursts`), wind drives the sway.
+5. Timing math lives in `anim.js` (global `CampAnim`, CommonJS for tests), covered by
+   `tests/anim.test.js`; `figures.js` (`CampFigures`) builds the figures; `scene.js`
+   (`CampScene.build`) makes and moves the world; `app.js` renders and handles dragging.
 
 ## Layout
 
@@ -204,9 +211,11 @@ character-sheet/             → /character-sheet/
   sheet.css                  The sheet's look
   tests/sheet.test.js        node:test suite (not published)
 campfire/                    Ambience scene (three.js, pixel style) → /campfire/
-  index.html, app.js         Page, renderer, pixel pass, loop
-  scene.js                   Builds and moves the world (forest, fire, three figures)
-  anim.js                    Pure timing math: flicker, breathing, idle moments, embers, palette
+  index.html, app.js         Page, renderer, pixel pass, loop, dragging
+  scene.js                   Builds and moves the world (forest, fire, props)
+  figures.js                 The traveler, wizard and fighter
+  audio.js                   Generated sound (Web Audio): fire, wind, crickets, owl
+  anim.js                    Pure timing math: flicker, idle moments, embers, sound schedules, orbit, palette
   vendor/three.min.js        three.js r153, copied (don't edit)
   tests/anim.test.js         node:test suite (not published)
 combat-generator/            → /combat-generator/

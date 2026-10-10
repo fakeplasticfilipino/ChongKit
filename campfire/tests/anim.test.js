@@ -89,3 +89,68 @@ test('palette: 32 or fewer colours, all valid', () => {
   assert.ok(A.PALETTE.length >= 8 && A.PALETTE.length <= 32);
   for (const c of A.PALETTE) assert.ok(Number.isInteger(c) && c >= 0 && c <= 0xffffff);
 });
+
+test('fire pops: repeatable, inside the range, split ranges agree, a few per second', () => {
+  const all = A.pops(0, 60);
+  assert.deepStrictEqual(all, A.pops(0, 60));
+  assert.deepStrictEqual(all, [...A.pops(0, 23.3), ...A.pops(23.3, 60)]);
+  for (const p of all) {
+    assert.ok(p.time >= 0 && p.time < 60);
+    assert.ok(p.strength >= 0.3 && p.strength <= 1);
+  }
+  const rate = all.length / 60;
+  assert.ok(rate > 0.8 && rate < 5, `rate ${rate}`);
+});
+
+test('ember bursts come only from strong pops in the last second', () => {
+  let seen = 0;
+  for (let t = 1; t < 60; t += 0.25) {
+    const b = A.bursts(t);
+    const strong = A.pops(t - 1, t).filter((p) => p.strength >= 0.7).length;
+    assert.strictEqual(b.length, strong * 3);
+    for (const e of b) assert.ok(e.alpha >= 0 && e.alpha <= 1);
+    seen += b.length;
+  }
+  assert.ok(seen > 0);
+});
+
+test('wind is smooth and in [0, 1]', () => {
+  for (let t = 0; t < 200; t += 0.05) {
+    const w = A.wind(t);
+    assert.ok(w >= 0 && w <= 1);
+    close(A.wind(t + 0.05), w, 0.02, `gust at ${t}`);
+  }
+});
+
+test('owl hoots every 60–120 s', () => {
+  const hoots = A.owls(0, 3600);
+  assert.ok(hoots.length >= 30 && hoots.length <= 60);
+  for (let i = 1; i < hoots.length; i++) {
+    const gap = hoots[i] - hoots[i - 1];
+    assert.ok(gap >= 60 && gap <= 120, `gap ${gap}`);
+  }
+  assert.deepStrictEqual(hoots, [...A.owls(0, 1000), ...A.owls(1000, 3600)]);
+});
+
+test('crickets take turns: each sings only in its window, never all silent for long', () => {
+  const cs = A.chirps(0, 300);
+  for (const c of cs) {
+    const k = A.CRICKETS[c.cricket];
+    assert.ok(A.envelope(c.time, k.period, k.offset, k.dur) > 0);
+  }
+  assert.deepStrictEqual(new Set(cs.map((c) => c.cricket)).size, 3);
+  for (let i = 1; i < cs.length; i++) assert.ok(cs[i].time >= cs[i - 1].time);
+  for (let i = 1; i < cs.length; i++) assert.ok(cs[i].time - cs[i - 1].time < 20, 'long silence');
+});
+
+test('orbit: speed eases off, yaw wraps, pitch stays in range', () => {
+  let s = { yaw: 3, pitch: 0.2, vyaw: 2, vpitch: 5 };
+  for (let i = 0; i < 300; i++) s = A.orbit(s, 1 / 60);
+  assert.ok(Math.abs(s.vyaw) < 0.01 && Math.abs(s.vpitch) < 0.03);
+  assert.ok(s.yaw > -Math.PI && s.yaw <= Math.PI);
+  assert.strictEqual(s.pitch, A.PITCH_MAX);
+  s = A.orbit({ yaw: 0, pitch: 0.2, vyaw: 0, vpitch: -100 }, 1);
+  assert.strictEqual(s.pitch, A.PITCH_MIN);
+  s = A.orbit({ yaw: 1, pitch: 0.2, vyaw: 0, vpitch: 0 }, 1);
+  assert.deepStrictEqual(s, { yaw: 1, pitch: 0.2, vyaw: 0, vpitch: 0 });
+});

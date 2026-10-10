@@ -67,8 +67,43 @@
   window.addEventListener('resize', resize);
   resize();
 
+  // Turning around the fire: drag (mouse or finger) to circle it; it eases to a stop and stays there.
+  let view = { yaw: 0, pitch: 0.12, vyaw: 0, vpitch: 0 };
+  let drag = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, at: performance.now() };
+    view.vyaw = view.vpitch = 0;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const now = performance.now(), dt = Math.max(1, now - drag.at) / 1000;
+    const dyaw = (-(e.clientX - drag.x) / window.innerWidth) * Math.PI * 1.3;
+    const dpitch = ((e.clientY - drag.y) / window.innerHeight) * 1.2;
+    view.yaw += dyaw;
+    view.pitch = Math.min(A.PITCH_MAX, Math.max(A.PITCH_MIN, view.pitch + dpitch));
+    view.vyaw = 0.6 * view.vyaw + 0.4 * (dyaw / dt); // remembered for the glide after letting go
+    view.vpitch = 0.6 * view.vpitch + 0.4 * (dpitch / dt);
+    drag.x = e.clientX; drag.y = e.clientY; drag.at = now;
+  });
+  const endDrag = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (performance.now() - drag.at > 80) view.vyaw = view.vpitch = 0; // held still before letting go
+    drag = null;
+  };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  // Sound is always on; browsers only allow it after the first click, tap or key.
+  ['pointerdown', 'keydown', 'touchend'].forEach((e) => window.addEventListener(e, CampAudio.start, { passive: true }));
+
+  let last = 0;
   function frame(ms) {
-    world.update(ms / 1000);
+    const t = ms / 1000, dt = Math.min(0.1, t - last || 0);
+    last = t;
+    if (!drag) view = A.orbit(view, dt);
+    world.update(t, view);
+    CampAudio.update(t);
     renderer.setRenderTarget(target);
     renderer.render(world.scene, world.camera);
     renderer.setRenderTarget(null);

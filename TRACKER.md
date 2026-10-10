@@ -90,9 +90,16 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Corner controls (← All tools, fullscreen) fade when idle; phones widen the view to keep everyone in frame
 - [x] Tests: seeded random, noise, flicker, breathing, idle and doze envelopes, embers, smoke, render size, palette
 
+### ✅ v2 — done
+- [x] Sound, always on (Web Audio, no files): fire roar and pops, wind, three crickets taking turns, a distant owl every 60–120 s; starts on the first click/tap/key
+- [x] Pops throw bursts of sparks; the wind sound and the tree sway share one gust curve
+- [x] Drag to circle the fire (and raise/lower the view); glides to a stop and stays; the moon follows the view
+- [x] More detail: traveler (lapels, shirt, tie, curved cane, boots), wizard (spread robe, bell sleeves, long beard, drooping hat, gnarled staff with a crook), fighter (bun, shoulder pads, belt, scabbard, pack with bedroll)
+- [x] Fire teepee of logs with glowing coals; darker clearing breaking into grass; full forest ring with big old rooted trees, ferns, bushes, rocks, a fallen log, mushrooms
+- [x] Tests: pops, bursts, wind, owl, crickets, orbit
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
-- Crackling-fire sound (off by default)
 
 ## Site look
 

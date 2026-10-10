@@ -306,7 +306,8 @@ which writes the site files into `chong-die/`. Commit both folders. How it works
 
 An ambience scene for a screen or TV at the table: a traveler, a wizard and a fighter around a
 campfire in a forest at night, in a pixel-art style. Open it and leave it running; the corner
-buttons (← All tools, ⛶ fullscreen) fade when the mouse rests.
+buttons (← All tools, ⛶ fullscreen) fade when the mouse rests. **Drag** (mouse or finger) to
+circle the fire, and up/down to raise or lower the view; it glides to a stop and stays there.
 
 **What moves:** the flames flicker and the firelight pulses (light and shadows waver on the
 figures); embers and smoke rise; everyone breathes; the traveler looks around and shifts on the
@@ -314,13 +315,21 @@ cane; the wizard's staff crystal pulses and they reach toward the fire; the figh
 jerks awake; treetops sway, stars twinkle, fireflies drift at the forest edge, and the camera
 drifts slowly. Each idle moment has its own repeating schedule, so they rarely line up.
 
+**Sound** is always on (no mute), made in the browser with Web Audio, so there are no sound files:
+the fire's roar and pops, wind in the trees, three crickets taking turns, and a distant owl every
+60–120 s. Browsers only allow sound after you interact, so it starts with your first click, tap or
+key. The sound and the picture share one clock: every strong pop throws a burst of sparks, and
+the trees sway harder when the wind rises.
+
 **How the pixel look works:** [three.js](https://threejs.org) draws a simple 3D scene (boxes,
 cones and cylinders) into a small image about 180 pixels tall; a shader then snaps every pixel to
 a fixed palette sampled from the art reference, with a light ordered dither, and the image is
 stretched to the window without smoothing.
 
-**Files:** `anim.js` is the timing math (flicker, breathing, idle moments, ember and smoke paths;
-tested), `scene.js` builds and moves the world, `app.js` renders it. three.js r153 is copied into
+**Files:** `anim.js` is the timing math (flicker, breathing, idle moments, ember and smoke paths,
+the pop / wind / cricket / owl schedules, the turning; tested), `figures.js` builds the three
+figures, `scene.js` builds and moves the world, `audio.js` makes the sound, `app.js` renders it
+and handles dragging. three.js r153 is copied into
 `campfire/vendor/three.min.js` (the non-module build, so the page opens from `file://`) with its
 MIT license. To update it, copy `build/three.min.js` from a three.js release (r159 or older: later
 releases drop this file).
