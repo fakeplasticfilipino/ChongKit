@@ -307,6 +307,41 @@
       return m;
     });
 
+    // ---- night ambience: mist, clouds over the moon, a shooting star, eyes in the dark ----
+    const blobCanvas = document.createElement('canvas');
+    blobCanvas.width = blobCanvas.height = 64;
+    const bc2 = blobCanvas.getContext('2d');
+    const grad = bc2.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.6, 'rgba(255,255,255,0.5)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    bc2.fillStyle = grad;
+    bc2.fillRect(0, 0, 64, 64);
+    const blob = new THREE.CanvasTexture(blobCanvas);
+    const mist = Array.from({ length: 18 }, () => {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: blob, color: 0x31445e, transparent: true, opacity: 0.16, depthWrite: false }));
+      m.userData = { a: rand() * Math.PI * 2, r: 4.6 + rand() * 8, y: 0.35 + rand() * 0.5, v: (rand() - 0.5) * 0.012 };
+      m.scale.set(4 + rand() * 4, 1.1 + rand() * 0.8, 1);
+      scene.add(m);
+      return m;
+    });
+    const clouds = Array.from({ length: 6 }, (_, i) => {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: blob, color: 0x101828, transparent: true, depthWrite: false, fog: false }));
+      m.userData = { o: i / 6 * 1.2, v: 0.004 + rand() * 0.004, el: EL - 0.05 + rand() * 0.11, w: 0.1 + rand() * 0.08 };
+      m.scale.set(m.userData.w * 2 * 95, 4 + rand() * 3, 1);
+      m.renderOrder = 5;
+      scene.add(m);
+      return m;
+    });
+    const starLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xfff6d6, fog: false, transparent: true }));
+    starLine.frustumCulled = false;
+    starLine.visible = false;
+    scene.add(starLine);
+    const eyes = particles(2, 0xf8b347, 1.5);
+    const eyesAt = new THREE.Vector3();
+    let eyesSeen = -1;
+    const skyPoint = (az, el, out) => out.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).multiplyScalar(95).add(CAM0);
+
     // ---- the wizard's smoke rings: two puffs of three rings ----
     const ringGeo = new THREE.TorusGeometry(0.055, 0.016, 4, 8);
     const rings = Array.from({ length: 6 }, () => {
@@ -464,6 +499,52 @@
         [A.win(tw, 0.6, 2.2, 0.3), HEADS.get(traveler)],
         [A.win(pp, 4.0, 6.0, 0.4), HEADS.get(wizard)],
       ]);
+
+      // mist drifts between the trees
+      for (const m of mist) {
+        const u = m.userData, a = u.a + u.v * t;
+        m.position.set(Math.cos(a) * u.r, u.y + 0.1 * A.noise1(t * 0.05 + u.r, 70), Math.sin(a) * u.r);
+      }
+      // clouds cross the moon; the moonlight dims as they pass
+      let cover = 0;
+      for (const c of clouds) {
+        const u = c.userData, off = ((u.o + u.v * t) % 1.2) - 0.6;
+        skyPoint(AZ + off, u.el, c.position);
+        c.material.opacity = 0.85 * A.smooth((0.6 - Math.abs(off)) / 0.15);
+        cover = Math.max(cover, (1 - A.smooth(Math.hypot(off, u.el - EL) / u.w)) * c.material.opacity);
+      }
+      moonLight.intensity = 0.25 * (1 - 0.7 * cover);
+      halo.material.opacity = 0.35 * (1 - 0.8 * cover);
+      // a shooting star, and eyes glinting in the forest
+      const recent = A.events(t - 6, t);
+      const star = recent.filter((e) => e.type === 'star').pop();
+      const sAge = star ? t - star.time : 9;
+      starLine.visible = sAge < 1.1;
+      if (starLine.visible) {
+        const r = A.rng(Math.floor(star.time * 10));
+        const dir = r() < 0.5 ? -1 : 1, az0 = AZ - dir * (0.12 + r() * 0.06), el0 = EL + 0.03 + r() * 0.04; // through the gap by the moon
+        const p = starLine.geometry.attributes.position, head = Math.min(1, sAge / 0.8), tail = Math.max(0, head - 0.35);
+        skyPoint(az0 + dir * 0.24 * head, el0 - 0.06 * head, tmp); p.setXYZ(0, tmp.x, tmp.y, tmp.z);
+        skyPoint(az0 + dir * 0.24 * tail, el0 - 0.06 * tail, tmp); p.setXYZ(1, tmp.x, tmp.y, tmp.z);
+        p.needsUpdate = true;
+        starLine.material.opacity = 1 - A.smooth((sAge - 0.8) / 0.3);
+      }
+      const glintE = recent.filter((e) => e.type === 'eyes').pop();
+      const eAge = glintE ? t - glintE.time : 99;
+      if (glintE && eyesSeen !== glintE.time) { // place them across the fire from wherever you're looking
+        eyesSeen = glintE.time;
+        const r = A.rng(Math.floor(glintE.time * 10));
+        const yaw = view.yaw + Math.PI + (r() - 0.5) * 1.0;
+        eyesAt.set(Math.sin(yaw) * 8.5, 0.75, Math.cos(yaw) * 8.5);
+      }
+      const on = eAge < 6 && ((eAge > 0.5 && eAge < 2) || (eAge > 2.15 && eAge < 4.2) || (eAge > 4.35 && eAge < 5.3)) ? 0.9 : 0;
+      const ep2 = eyes.geometry.attributes.position, ec2 = eyes.geometry.attributes.color, eb2 = eyes.userData.base;
+      tmp.set(Math.cos(Math.atan2(eyesAt.z, eyesAt.x) + Math.PI / 2), 0, Math.sin(Math.atan2(eyesAt.z, eyesAt.x) + Math.PI / 2)).multiplyScalar(0.07);
+      ep2.setXYZ(0, eyesAt.x + tmp.x, eyesAt.y, eyesAt.z + tmp.z);
+      ep2.setXYZ(1, eyesAt.x - tmp.x, eyesAt.y, eyesAt.z - tmp.z);
+      for (let i = 0; i < 2; i++) ec2.setXYZ(i, eb2.r * on, eb2.g * on, eb2.b * on);
+      ep2.needsUpdate = ec2.needsUpdate = true;
+      if (eAge < 6) samurai.head.rotation.y = lookAtMix(samurai, [[A.win(eAge, 1, 5, 0.4), eyesAt]]) || samurai.head.rotation.y;
 
       // trees sway with the wind
       const w = 0.4 + 1.2 * A.wind(t);
