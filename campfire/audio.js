@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const A = window.CampAnim;
-  let ctx, master, noise, roar, hiss, windGain, windFilter, echo, rustle, rainGain, patter, sizzle;
+  let ctx, master, noise, roar, hiss, windGain, windFilter, echo, rustle, rainGain, patter, sizzle, humGain;
   let offset = null, scheduled = 0;
 
   function loop(dest) {
@@ -91,6 +91,15 @@
     const fb = gain(0.32, echo);
     echo.connect(fb);
     echo.connect(gain(0.5, master));
+
+    // the standing stones' low hum: two sines a fifth apart, silent until the walker steps into the ring
+    humGain = gain(0, master);
+    for (const fq of [55, 82.5]) {
+      const o = ctx.createOscillator();
+      o.frequency.value = fq;
+      o.connect(humGain);
+      o.start();
+    }
   }
 
   // one snap or pop from the fire
@@ -345,6 +354,7 @@
       case 'kindle': thump(at, 90, 0.4, 0.15); crackle(at + 0.05, 6, 0.5); break;
       case 'strain': creak(at); break;
       case 'uncork': thump(at, 600, 0.08, 0.12); break;
+      case 'whisper': swoosh(at, 3000, 6000, 1.2, 0.03); break;
       case 'syl': syllable(at, e.who, e.rise, e.reply); break;
       case 'laugh': laughter(at); break;
       case 'strum': strum(at, e.notes, e.dir, e.last); break;
@@ -380,7 +390,11 @@
     windGain.gain.setTargetAtTime((0.012 + 0.035 * w * w) * (CampAudio.season === 'winter' ? 1.15 : 1), now, 0.6); // a calm night: a soft sigh, never a storm
     windFilter.frequency.setTargetAtTime(250 + 200 * w, now, 0.6);
     rustle.gain.setTargetAtTime(0.013 * Math.max(0, w - 0.5) * 2 * (0.5 + 0.5 * A.noise1(t * 3, 950)), now, 0.1);
+    humGain.gain.setTargetAtTime(0.05 * (CampAudio.hum || 0), now, 0.3); // secrets.js sets CampAudio.hum (0-1)
   }
+
+  // the will-o'-wisp leaving: a high, thin sweep of breath (secrets.js calls it)
+  function whisperNow() { if (ctx && ctx.state === 'running') swoosh(ctx.currentTime + 0.01, 3000, 6000, 1.2, 0.03); }
 
   // a footstep: leaves crunching in autumn, snow squeaking in winter, soft grass otherwise
   function step(speed) {
@@ -395,5 +409,5 @@
     } else noiseHit(at, 'lowpass', 650, 1, 0.08, v * 1.4, out);
   }
   const state = () => (ctx ? ctx.state : 'waiting for a click');
-  window.CampAudio = { start, update, state, step, season: 'autumn', skip: null };
+  window.CampAudio = { start, update, state, step, whisper: whisperNow, hum: 0, season: 'autumn', skip: null };
 })();

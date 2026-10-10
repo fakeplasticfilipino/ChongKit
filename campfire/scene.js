@@ -427,7 +427,7 @@
       ],
     };
     const interact = CampInteract.build(interactKit);
-    const secrets = CampSecrets.build({ THREE, scene, box, cyl, cone, group, particles, season: SEASON });
+    const secrets = CampSecrets.build({ THREE, scene, box, cyl, cone, group, particles, blob, people: { traveler, wizard, samurai }, season: SEASON });
     interact.add(secrets.spots);
     obstacles.push(...secrets.obstacles);
     const bowl = cyl(0.09, 0.06, 0.06, 7, 0x744726, 0, 0, 0);
