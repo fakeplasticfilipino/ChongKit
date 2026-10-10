@@ -365,18 +365,38 @@ test('talks: only when both are free; syllables inside the talk; replies from th
   for (const e of ev) assert.ok(A.talkAt(e.time), 'a syllable outside a talk at ' + e.time);
 });
 
-test('the guitar: Creep\'s chords in order, strums inside the run; whetstone strokes inside theirs', () => {
-  assert.deepStrictEqual(A.CHORDS.map((c) => c.name), ['G', 'B', 'C', 'Cm']);
-  const strums = A.events(0, 1200).filter((e) => e.type === 'strum');
+test('the guitar: songs and styles take turns, notes inside the run; whetstone strokes inside theirs', () => {
+  assert.deepStrictEqual(A.SONGS[0].chords, ['G', 'B', 'C', 'Cm'], 'Creep stays the first song');
+  for (const s of A.SONGS) for (const c of s.chords) assert.ok(A.CHORDS[c], 'a voicing for ' + c);
+  const strums = A.events(0, 3000).filter((e) => e.type === 'strum');
   assert.ok(strums.length > 40);
   for (const s of strums) {
     const l = A.story('guitar', s.time);
-    assert.ok(l >= 1.4 && l < A.STORIES.guitar.dur, 'strum outside the guitar at ' + s.time);
+    assert.ok(l >= 1.4 && l < A.STORIES.guitar.dur, 'note outside the guitar at ' + s.time);
     assert.ok(s.dir === 1 || s.dir === -1);
+    assert.ok(s.notes.length >= 1 && s.notes.every((f) => f > 60 && f < 500), 'real guitar notes');
   }
-  const bars = A.strums().filter((s) => s.first && !s.last).map((s) => A.CHORDS[s.chord].name);
+  // run 0 is Creep strummed, as before
+  const bars = A.strums(0).filter((s) => s.first && !s.last).map((s) => A.SONGS[0].chords[s.chord]);
   assert.deepStrictEqual(bars, ['G', 'B', 'C', 'Cm', 'G', 'B', 'C', 'Cm']);
-  assert.ok(A.strums().pop().at < A.STORIES.guitar.dur - 1, 'the last G rings before putting it down');
+  assert.deepStrictEqual(A.guitarRun(0), { song: 0, style: 0 });
+  // every song meets every style within 16 runs; a song never plays twice in a row
+  const seen = new Set();
+  for (let k = 0; k < 16; k++) {
+    const r = A.guitarRun(k);
+    seen.add(r.song + '/' + r.style);
+    assert.notStrictEqual(r.song, A.guitarRun(k + 1).song);
+  }
+  assert.strictEqual(seen.size, A.SONGS.length * A.STYLES.length);
+  for (let k = -3; k < 20; k++) {
+    const song = A.strums(k), r = A.guitarRun(k);
+    assert.ok(song.pop().at < A.STORIES.guitar.dur - 1, 'the last chord rings before putting it down');
+    assert.ok(song.some((n) => n.beat === 0) && song.some((n) => n.beat === 3), 'notes float up on beats 1 and 4');
+    assert.ok(A.STYLES[r.style] && A.SONGS[r.song], 'run ' + k);
+  }
+  // clicked runs vary too
+  const clicked = new Set([1.2, 50.7, 99.1, 300.4, 777.7].map((t) => JSON.stringify(A.guitarRun(A.guitarId(t)))));
+  assert.ok(clicked.size > 1);
   for (const r of A.events(0, 1200).filter((e) => e.type === 'rasp')) assert.ok(A.story('whet', r.time) >= 0);
 });
 

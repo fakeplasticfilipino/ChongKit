@@ -308,12 +308,13 @@
     o.start(at); o2.start(at);
     o.stop(at + ring + 0.05); o2.stop(at + ring + 0.05);
   }
-  function strum(at, chord, dir, last) {
+  // a strum sweeps all the strings; a picked note or two rings longer and a little louder
+  function strum(at, notes, dir, last) {
     const out = pan(-0.45, master);
-    const notes = A.CHORDS[chord].notes, order = dir > 0 ? notes : notes.slice().reverse();
-    const vol = (dir > 0 ? 0.035 : 0.024) * (last ? 1.3 : 1);
-    order.forEach((f, i) => pluck(at + i * (dir > 0 ? 0.012 : 0.009), f, vol, last ? 3 : 1.3, out));
-    noiseHit(at, 'highpass', 3000, 0.7, 0.04, 0.01, out); // the pick on the strings
+    const order = dir > 0 ? notes : notes.slice().reverse(), full = notes.length > 3;
+    const vol = (full ? (dir > 0 ? 0.035 : 0.024) : notes.length > 2 ? 0.026 : 0.045) * (last ? 1.3 : 1);
+    order.forEach((f, i) => pluck(at + i * (dir > 0 ? 0.012 : 0.009), f, vol, last ? 3 : full ? 1.3 : 1.8, out));
+    if (full) noiseHit(at, 'highpass', 3000, 0.7, 0.04, 0.01, out); // the pick on the strings
   }
   function rasp(at) {
     const f = noiseHit(at, 'bandpass', 2200, 3, 0.35, 0.07, pan(0.5, master));
@@ -332,7 +333,7 @@
       case 'stoke': stoke(at); break;
       case 'syl': syllable(at, e.who, e.rise, e.reply); break;
       case 'laugh': laughter(at); break;
-      case 'strum': strum(at, e.chord, e.dir, e.last); break;
+      case 'strum': strum(at, e.notes, e.dir, e.last); break;
       case 'rasp': rasp(at); break;
       case 'thunder': if (CampAudio.season !== 'winter') thunder(at + 2.4); break; // the flash comes first; it's far off
       case 'eyes': noiseHit(at + 0.3, 'bandpass', 1500, 2, 0.05, 0.08, pan(0, master)); break; // a twig snaps out there

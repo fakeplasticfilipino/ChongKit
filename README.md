@@ -333,8 +333,10 @@ dims), and the camera drifts slowly. Little stories, each on its own repeating s
 - the samurai nods off and jerks awake, and draws the katana to look it over (a glint runs down the blade);
 - they glance at whoever is doing something; the samurai notices the eyes;
 - they talk: two murmur in wordless voices while the listener nods and answers, and now and then they all
-  laugh; the traveler sometimes plays an acoustic guitar, strumming Creep's chords (G, B, C, Cm; notes
-  float up, the others listen); the
+  laugh; the traveler sometimes plays an acoustic guitar: each time the next of four songs (Creep's
+  G, B, C, Cm, then three folk loops: G Em C D, Am F C G, Em C G D), strummed, fingerpicked, picked out
+  slowly or played boom-chick with a walking bass, so it rarely sounds the same twice (notes float up,
+  the others listen); the
   samurai sharpens the blade on a whetstone;
 - sparks land on the ground and glow for a moment; the stew's smell curls up in wavy lines;
 - the fire burns down over about 15 minutes (the night gets darker), until the wizard raises the

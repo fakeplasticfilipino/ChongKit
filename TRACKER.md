@@ -144,6 +144,13 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ### ✅ v9 — done
 - [x] The flute is now an acoustic guitar: Creep's chords (G – B – C – Cm) strummed down, down-up, up-down-up, plucked-string sound, strumming hand, nods to the beat
 
+### ✅ v10 — done
+- [x] The guitar varies: four songs (Creep + G Em C D, Am F C G, Em C G D) take turns, each in one of four styles (strum, fingerpick, slow melody over the bass, boom-chick with a walking bass); every song meets every style within 16 runs; clicks pick their own
+- [x] Tests: songs, styles, rotation, notes inside the run
+
+### 📋 Next: walk-up interactions (design first)
+- Things to do while walking (horse, log, stew, tent, twig, visitors) and hidden secrets in the forest ring
+
 ### 💡 Ideas
 - Choose the party (count and looks from presets: hat, hood, helmet, cloak colour, staff, sword)
 

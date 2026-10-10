@@ -254,23 +254,54 @@
   const TWIG_LAND = 2.3, PUFFS = [4.2, 7.6], DRAW = 1.6, SHEATHE = 10.4;
   const SNAP = STORIES.doze.dur * 0.88; // when doze() snaps back
   const RASPS = [1.5, 2.4, 3.3, 4.2, 5.1, 6.0]; // whetstone strokes
-  // The guitar: Creep's chords, G – B – C – Cm, a bar each, twice through, strummed down, down-up, up-down-up,
-  // then a last G. The same for every run. [{ at, chord, dir (1 down, -1 up), beat, first, last }]
-  const BEAT = 60 / 92; // about the song's tempo
-  const CHORDS = [
-    { name: 'G', notes: [98.0, 123.47, 146.83, 196.0, 246.94, 392.0] }, // 320003
-    { name: 'B', notes: [123.47, 185.0, 246.94, 311.13, 369.99] }, // x24442
-    { name: 'C', notes: [130.81, 164.81, 196.0, 261.63, 329.63] }, // x32010
-    { name: 'Cm', notes: [130.81, 196.0, 261.63, 311.13, 392.0] }, // x35543
+  // The guitar: a song (four chords, a bar each, twice through, then the first chord rings) in a style.
+  // Each run takes the next song, and the styles turn so every song meets every style within 16 runs.
+  // [{ at, chord (index in the song), notes (Hz, low → high), dir (1 down, -1 up), beat, first, last }]
+  const BEAT = 60 / 92; // one tempo for every song, so a run always fits the story
+  const CHORDS = { // open voicings, low string → high
+    G: [98.0, 123.47, 146.83, 196.0, 246.94, 392.0], // 320003
+    B: [123.47, 185.0, 246.94, 311.13, 369.99], // x24442
+    C: [130.81, 164.81, 196.0, 261.63, 329.63], // x32010
+    Cm: [130.81, 196.0, 261.63, 311.13, 392.0], // x35543
+    Em: [82.41, 123.47, 164.81, 196.0, 246.94, 329.63], // 022000
+    D: [146.83, 220.0, 293.66, 369.99], // xx0232
+    Am: [110.0, 164.81, 220.0, 261.63, 329.63], // x02210
+    F: [87.31, 130.81, 174.61, 220.0, 261.63, 349.23], // 133211
+  };
+  const SONGS = [ // Creep first; the rest are common folk loops
+    { name: 'Creep', chords: ['G', 'B', 'C', 'Cm'] },
+    { name: 'G Em C D', chords: ['G', 'Em', 'C', 'D'] },
+    { name: 'Am F C G', chords: ['Am', 'F', 'C', 'G'] },
+    { name: 'Em C G D', chords: ['Em', 'C', 'G', 'D'] },
   ];
-  const PATTERN = [[0, 1], [1, 1], [1.5, -1], [2.5, -1], [3, 1], [3.5, -1]]; // [beat, direction]
+  // A style is one bar: [beat, which strings ('all', or indexes: 0 the bass, -1 the top), direction].
+  const STYLES = [
+    { name: 'strum', bar: [[0, 'all', 1], [1, 'all', 1], [1.5, 'all', -1], [2.5, 'all', -1], [3, 'all', 1], [3.5, 'all', -1]] },
+    { name: 'fingerpick', bar: [0, 2, 3, -1, 3, 2, 3, -1].map((s, i) => [i / 2, [s], 1]) }, // bass, then rolling up and down
+    { name: 'melody', bar: [[0, [0, -1], 1], [1, [-2], 1], [2, [-1], 1], [3, [-3], 1]] }, // slow notes over the bass
+    { name: 'boom-chick', bar: [[0, [0], 1], [1, [-3, -2, -1], 1], [2, [1], 1], [2.5, [-3, -2, -1], -1], [3, [-3, -2, -1], 1]] }, // bass walks root – fifth
+  ];
   const GUITAR_IN = 1.5; // seconds to settle the guitar on the lap
-  function strums() {
-    const out = [];
+  const mod = (a, n) => ((a % n) + n) % n;
+  // Which song and style a run plays: scheduled runs are numbered k; clicked runs use guitarId(start).
+  function guitarRun(k) {
+    const n = SONGS.length;
+    return { song: mod(k, n), style: mod(3 * k + Math.floor(k / n), STYLES.length) };
+  }
+  const guitarId = (start) => Math.round(start * 10);
+  function pick(notes, strings) {
+    if (strings === 'all') return notes.slice();
+    return strings.map((s) => notes[s < 0 ? Math.max(0, notes.length + s) : Math.min(s, notes.length - 1)]);
+  }
+  function strums(k) {
+    const run = guitarRun(k || 0), song = SONGS[run.song], style = STYLES[run.style], out = [];
     for (let bar = 0; bar < 8; bar++) {
-      for (const [b, dir] of PATTERN) out.push({ at: GUITAR_IN + (bar * 4 + b) * BEAT, chord: bar % 4, dir, beat: b, first: b === 0, last: false });
+      const chord = bar % 4, notes = CHORDS[song.chords[chord]];
+      for (const [b, strings, dir] of style.bar) {
+        out.push({ at: GUITAR_IN + (bar * 4 + b) * BEAT, chord, notes: pick(notes, strings), dir, beat: b, first: b === 0, last: false });
+      }
     }
-    out.push({ at: GUITAR_IN + 32 * BEAT, chord: 0, dir: 1, beat: 0, first: true, last: true }); // end on G, let it ring
+    out.push({ at: GUITAR_IN + 32 * BEAT, chord: 0, notes: CHORDS[song.chords[0]].slice(), dir: 1, beat: 0, first: true, last: true }); // let the first chord ring
     return out;
   }
 
@@ -352,15 +383,16 @@
     each('katana', SHEATHE, 'sheathe');
     PUFFS.forEach((p) => each('pipe', p, 'puff'));
     RASPS.forEach((p) => each('whet', p, 'rasp'));
-    const gs = STORIES.guitar, song = strums(); // the guitar's strums
-    const strumEv = (start) => {
-      for (const n of song) {
+    const gs = STORIES.guitar; // the guitar's notes
+    const strumEv = (start, id) => {
+      if (start + gs.dur < from || start >= to) return;
+      for (const n of strums(id)) {
         const time = start + n.at;
-        if (time >= from && time < to) out.push({ type: 'strum', time, chord: n.chord, dir: n.dir, beat: n.beat, first: n.first, last: n.last });
+        if (time >= from && time < to) out.push({ type: 'strum', time, chord: n.chord, notes: n.notes, dir: n.dir, beat: n.beat, first: n.first, last: n.last });
       }
     };
-    for (let k = Math.floor((from - gs.offset - gs.dur) / gs.period); k * gs.period + gs.offset < to; k++) strumEv(k * gs.period + gs.offset);
-    for (const m of manual) if (m.name === 'guitar') strumEv(m.start);
+    for (let k = Math.floor((from - gs.offset - gs.dur) / gs.period); k * gs.period + gs.offset < to; k++) strumEv(k * gs.period + gs.offset, k);
+    for (const m of manual) if (m.name === 'guitar') strumEv(m.start, guitarId(m.start));
     for (let k = Math.max(0, Math.floor((from - TALK.offset) / TALK.period) - 1); k * TALK.period + TALK.offset < to; k++) {
       const c = talk(k);
       if (!c) continue;
@@ -604,7 +636,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX, collide, gait, eventOwner,
-    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

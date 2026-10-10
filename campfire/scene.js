@@ -567,7 +567,7 @@
       const play = A.win(gt, 0, A.STORIES.guitar.dur, 1.2); // the guitar: left hand on the neck, right hand strumming
       if (play > 0) {
         const last = A.events(t - 0.3, t).filter((e) => e.type === 'strum').pop();
-        const strum = last ? last.dir * (1 - Math.min(1, (t - last.time) / 0.22)) : 0; // the hand sweeps down or up, then eases back
+        const strum = last ? last.dir * (last.notes.length > 3 ? 1 : 0.35) * (1 - Math.min(1, (t - last.time) / 0.22)) : 0; // the hand sweeps down or up (a small flick for picked notes), then eases back
         const [l, r] = traveler.arms;
         l.sh.rotation.set(tsx + (-0.95 - tsx) * play, 0, tsz + (-0.45 - tsz) * play);
         l.el.rotation.x = tel + (-0.9 - tel) * play;
