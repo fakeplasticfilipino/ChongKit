@@ -349,6 +349,7 @@
       if (a.start >= stop) continue;
       const push = (time, type, extra) => {
         if (time < from || time >= stop) return;
+        if (type === 'nod' && a.info.laugh) type = 'laugh'; // a talk ends in a nod, or (info.laugh) in a laugh
         const e = { type, time, act: true, name: a.name, who: a.info.who };
         if (extra) {
           Object.assign(e, extra);
@@ -459,6 +460,13 @@
     }
     talkCache.set(k, out);
     return out;
+  }
+  // Is this one busy at t (a story, a talk, the wizard's stoke)? Same rules as a talk's freeFor, for the walker's talk/hello.
+  function busyAt(who, t) {
+    if ((BUSY[who] || []).some((n) => n !== 'shift' && story(n, t) >= 0)) return true;
+    const c = talkAt(t);
+    if (c && (c.speaker === who || c.listener === who)) return true;
+    return who === 'wizard' && stokes(t - STOKE_DUR, t + STOKE_LEAD).length > 0;
   }
   // The talk going on at t: { speaker, listener, local, laugh, ... } or null.
   function talkAt(t) {
@@ -742,7 +750,7 @@
 
   const CampAnim = { rng, noise1, flicker, breath, envelope, doze, ember, smoke, renderSize, PALETTE, smooth,
     fireHeat, noise2, fireColor, FIRE_MAX, pops, bursts, wind, owls, chirps, CRICKETS, orbit, PITCH_MIN, PITCH_MAX, collide, gait, eventOwner,
-    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, ACTIONS, act, cancelAct, clearActs, actAt, nearestSpot, inside, SECRETS, SECRET_PLACES, secretsFor, readFound, PUFFS, DRAW, SHEATHE, SNAP };
+    STORIES, BUSY, story, trigger, talk, talkAt, TALK, strums, guitarRun, guitarId, SONGS, STYLES, CHORDS, BEAT, RASPS, clearTriggers, dozeAt, since, keyframes, win, events, stokeTime, stokes, busyAt, fuel, STOKE_LEAD, STOKE_DUR, BURN, flare, showers, rainAt, thunders, flash, foxAt, deerAt, FOX_DIR, FOX_SIT, SEASONS, season, leaf, snowflake, TWIG_LAND, ACTIONS, act, cancelAct, clearActs, actAt, nearestSpot, inside, SECRETS, SECRET_PLACES, secretsFor, readFound, PUFFS, DRAW, SHEATHE, SNAP };
   if (typeof module !== 'undefined' && module.exports) module.exports = CampAnim;
   else root.CampAnim = CampAnim;
 })(typeof window !== 'undefined' ? window : globalThis);

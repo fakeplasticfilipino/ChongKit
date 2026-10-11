@@ -354,7 +354,6 @@
       case 'kindle': thump(at, 90, 0.4, 0.15); crackle(at + 0.05, 6, 0.5); break;
       case 'strain': creak(at); break;
       case 'uncork': thump(at, 600, 0.08, 0.12); break;
-      case 'whisper': swoosh(at, 3000, 6000, 1.2, 0.03); break;
       case 'syl': syllable(at, e.who, e.rise, e.reply); break;
       case 'laugh': laughter(at); break;
       case 'strum': strum(at, e.notes, e.dir, e.last); break;
@@ -408,6 +407,18 @@
       f.frequency.linearRampToValueAtTime(1800, at + 0.1);
     } else noiseHit(at, 'lowpass', 650, 1, 0.08, v * 1.4, out);
   }
+  // the nest's chick: two quick, tiny cheeps (secrets.js calls it)
+  function cheep() {
+    if (!ctx || ctx.state !== 'running') return;
+    const at = ctx.currentTime + 0.02;
+    ring(at, [3300], 0.07, 0.012);
+    ring(at + 0.12, [3700], 0.07, 0.01);
+  }
+  // stepping into the mushroom ring: one soft, low chime (secrets.js calls it)
+  function softChime() {
+    if (!ctx || ctx.state !== 'running') return;
+    ring(ctx.currentTime + 0.02, [1175, 1760], 0.7, 0.012);
+  }
   const state = () => (ctx ? ctx.state : 'waiting for a click');
   // A rising three-note chime for a first find.
   function chime() {
@@ -415,5 +426,5 @@
     const at = ctx.currentTime + 0.02;
     [660, 880, 1320].forEach((f, i) => ring(at + i * 0.12, [f], 0.9, 0.03));
   }
-  window.CampAudio = { start, update, state, step, whisper: whisperNow, chime, hum: 0, season: 'autumn', skip: null };
+  window.CampAudio = { start, update, state, step, whisper: whisperNow, chime, cheep, softChime, hum: 0, season: 'autumn', skip: null };
 })();

@@ -410,7 +410,7 @@
 
     // ---- walk-up spots (interact.js): F · Pet and friends. Positions are first guesses, tuned by eye ----
     const lx2 = -3.6, lz2 = -2.6; // the fallen log's middle
-    const busyNow = (who, t) => (A.BUSY[who] || []).some((n) => A.story(n, t) >= 0) || (() => { const c = A.talkAt(t); return !!c && (c.speaker === who || c.listener === who); })();
+    const busyNow = A.busyAt;
     let nowT = 0;
     const interactKit = {
       THREE, camera: null, walk, people: { traveler, wizard, samurai }, now: () => nowT, busy: busyNow,
@@ -441,6 +441,7 @@
     const OWNER = {};
     for (const [w, list] of Object.entries(A.BUSY)) for (const n of list) OWNER[n] = w;
     let sitCam = 0;
+    const props = { pet: 0, eat: 0, peek: 0 };
     let lastT = null, walkWas = { who: null, k: 0, at: [0, 0] };
     const walkerHead = new THREE.Vector3(), camTarget = new THREE.Vector3(), follow = new THREE.Vector3();
     const NAMES = new Map([[traveler, 'traveler'], [wizard, 'wizard'], [samurai, 'samurai']]);
@@ -553,6 +554,8 @@
 
       const dt = lastT === null ? 0 : Math.min(0.1, Math.max(0, t - lastT));
       lastT = t;
+      const rx0 = interact.react(t), eased = props; // the walker's action this frame, worked out once
+      for (const k of ['pet', 'eat', 'peek']) eased[k] += (rx0[k] - eased[k]) * Math.min(1, dt * 4); // the props ease back when it stops
       const S = (name) => (walk.away(OWNER[name]) ? -1 : A.story(name, t)); // the walker's own stories pause
       const tw = S('twig'), pp = S('pipe'), kt = S('katana');
       const vis = visitors.update(t, walkWas.who ? walkWas : null); // the fox, the deer, the owl
@@ -575,13 +578,13 @@
           const d = Math.hypot(p.root.position.x - walkWas.at[0], p.root.position.z - walkWas.at[1]);
           list.push([A.smooth((2.8 - d) / 1.2) * walkWas.k, walkerHead]);
         }
-        const rs = interact.react(t);
-        if (rs.talkWith === me && walkWas.who) list.push([4, walkerHead]); // answers the walker
+        if (rx0.talkWith === me && walkWas.who) list.push([4, walkerHead]); // answers the walker
+        if (rx0.name === 'sit' && walkWas.who && walkWas.who !== me && !walk.away(me)) list.push([A.win(rx0.local, 0.3, 4, 0.4), walkerHead]); // the seated ones glance over
         return list;
       };
       const chat = (p) => { // a little head bob on each syllable; a nod on each reply; a laugh shakes everyone
         const me = NAMES.get(p);
-        const rn = interact.react(t), nodAdd = rn.talkWith === me ? 0.35 * rn.nod : 0;
+        const nodAdd = rx0.talkWith === me ? 0.35 * rx0.nod : 0;
         let bob = 0;
         for (const e of recentSyl) if (e.who === me) bob = e.reply ? 0.14 : -0.06;
         p.torso.position.y = p.torso.userData.y0 + 0.02 * laugh * Math.abs(Math.sin(t * 22));
@@ -655,8 +658,7 @@
         a0.sh.rotation.set(a0.sh.rotation.x + (-0.4 - a0.sh.rotation.x) * hold, 0, a0.sh.rotation.z + (-2.3 - a0.sh.rotation.z) * hold);
         a0.el.rotation.x += (-1.5 - a0.el.rotation.x) * hold;
       }
-      const rx = interact.react(t);
-      camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu, pet: rx.pet, eat: rx.eat, eatLocal: rx.name === 'apple' ? rx.local - 0.8 : 0, peek: rx.peek });
+      camp.update(t, { stir, sl, wind: A.wind(t), fuel: fu, pet: eased.pet, eat: eased.eat, eatLocal: rx0.name === 'apple' ? rx0.local - 0.8 : 0, peek: eased.peek });
       extras.update(t, { fuel: fu, pot: camp.POT, musicAt: guitar.visible ? guitarAt : null });
       pipe.visible = pp >= 1.0 && pp < 10.0;
       const inhale = Math.max(A.win(pp, 2.0, 3.8, 0.4), A.win(pp, 5.6, 7.3, 0.4));
@@ -857,11 +859,11 @@
       const wk = walk.update(t, dt, view.yaw);
       nowT = t;
       interact.update(t, wk);
-      secrets.update(t, wk.who ? wk : null, interact.react(t));
-      const rxw = interact.react(t);
+      secrets.update(t, wk.who ? wk : null, rx0);
+      const rxw = rx0;
       bowl.visible = bowlSteam.visible = !!(rxw.stewing && rxw.local > 0.9 && wk.who);
       if (bowl.visible) {
-        const wp = { traveler, wizard, samurai }[wk.who], arm = wp.arms[1];
+        const wp = { traveler, wizard, samurai }[wk.who], arm = wp.arms[wk.who === 'wizard' ? 0 : 1]; // the wizard's left hand holds the staff
         (arm.wr || arm.el).getWorldPosition(bowl.position);
         bowlSteam.position.copy(bowl.position).y += 0.12 + 0.05 * Math.sin(t * 2);
         bowlSteam.scale.setScalar(0.12);

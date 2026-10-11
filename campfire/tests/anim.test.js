@@ -452,6 +452,9 @@ test('walker actions: start, run, end, cancel, events marked act', () => {
   A.act('talk', 90, { who: 'traveler', with: 'wizard' });
   const syl = A.events(90, 90 + A.ACTIONS.talk.dur).filter((e) => e.type === 'syl');
   assert.ok(syl.some((e) => e.who === 'traveler') && syl.some((e) => e.who === 'wizard'));
+  assert.ok(A.events(90, 95).some((e) => e.type === 'nod') && !A.events(90, 95).some((e) => e.type === 'laugh'));
+  A.act('talk', 100, { who: 'traveler', with: 'wizard', laugh: true }); // the other ending: a laugh, not a nod
+  assert.ok(A.events(100, 105).some((e) => e.type === 'laugh' && e.act) && !A.events(100, 105).some((e) => e.type === 'nod'));
   for (const [name, a] of Object.entries(A.ACTIONS)) {
     assert.ok(a.label && typeof a.label === 'string', name + ' has a label');
     assert.ok(a.hold || a.dur > 0, name + ' ends or holds');
@@ -501,4 +504,10 @@ test('readFound: known ids, no duplicates, empty for anything broken', () => {
   assert.deepStrictEqual(A.readFound('{oops'), []);
   assert.deepStrictEqual(A.readFound('{"a":1}'), []);
   assert.deepStrictEqual(A.readFound('[1, null, "nest"]'), ['nest']);
+});
+
+test('busyAt: stories and stokes count, the traveler shift does not', () => {
+  const st = A.stokes(0, 4000)[0];
+  assert.ok(A.busyAt('wizard', st), 'busy at a stoke');
+  for (let x = 0; x < 600; x += 0.5) if (A.story('shift', x) >= 0 && !A.BUSY.traveler.some((n) => n !== 'shift' && A.story(n, x) >= 0) && !A.talkAt(x)) assert.ok(!A.busyAt('traveler', x), 'shift is not busy at ' + x);
 });

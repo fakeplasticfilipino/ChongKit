@@ -16,6 +16,7 @@
     const at = new THREE.Vector3();
     let current = null, shown = null; // spot in reach; the hint's spot
     let running = null; // { name, spot }
+    let sitAmt = 0, sitDrop = 0, sitPosed = false, lastUT = null; // the walker's sit, eased back to standing after an action
     const spots = kit.spots.slice();
 
     const nameFor = (spot) => {
@@ -29,15 +30,20 @@
       if (!current) return false;
       const w = walk.info();
       const name = nameFor(current);
-      turns.set(current.id, (turns.get(current.id) || 0) + 1);
-      A.act(name, t, { who: w.who, with: current.companion || null, spot: current.id });
+      const n = turns.get(current.id) || 0; // a talk ends in a nod, then a laugh, alternating
+      turns.set(current.id, n + 1);
+      A.act(name, t, { who: w.who, with: current.companion || null, spot: current.id, laugh: name === 'talk' && n % 2 === 1 });
       running = { name, spot: current };
       walk.hold(true);
       hide();
       if (kit.onAct) kit.onAct(name, current, t);
       return true;
     }
-    function release() { walk.hold(false); walk.sitAt(0); }
+    const setSit = (amount, drop) => { sitAmt = amount; sitDrop = drop || 0; sitPosed = true; walk.sitAt(amount, drop); };
+    function release(instant) {
+      walk.hold(false);
+      if (instant) { sitAmt = 0; walk.sitAt(0); } // otherwise update() eases it up
+    }
     function stop(t) {
       A.cancelAct(t);
       running = null;
@@ -82,26 +88,34 @@
       if (name === 'look' || name === 'read') p.head.rotation.x = 0.4 * A.win(l, 0.3, ACT_DUR(name) - 0.3, 0.3);
       if (name === 'stew') { // ladle a bowl, sit by the pot, a spoonful each loop
         const sit = smooth((l - 1.4) / 0.8);
-        walk.sitAt(sit, 0.42);
+        setSit(sit, 0.42);
         p.torso.rotation.x = 0.1; // upright on the ground
         const spoon = sit >= 1 ? A.win(((l - 2.2) % 3.2 + 3.2) % 3.2, 0, 0.6, 0.2) : 0;
+        if (who === 'wizard') { // staff in the left hand: the bowl goes in the right, a small spoon bob
+          const spoonW = sit >= 1 ? A.win(((l - 2.2) % 3.2 + 3.2) % 3.2, 0, 0.6, 0.2) : 0;
+          p.arms[0].sh.rotation.x = l < 1.4 ? A.keyframes(l, [[0, 0], [0.5, -1.3], [1.0, -1.3], [1.4, -0.7]])[0] : -0.7 - 0.3 * spoonW;
+          p.arms[0].el.rotation.x = -1.3 - 0.3 * spoonW;
+          return;
+        }
         p.arms[0].sh.rotation.x = l < 1.4 ? A.keyframes(l, [[0, 0], [0.5, -1.3], [1.0, -1.3], [1.4, -0.6]])[0] : -0.6 - 0.9 * spoon;
         p.arms[0].el.rotation.x = -1.2 - 0.6 * spoon;
         if (!staffHand(1)) { p.arms[1].sh.rotation.x = l < 1.4 ? -0.3 : -0.7; p.arms[1].el.rotation.x = -1.3; } // the bowl hand
       }
       if (name === 'sit') {
-        walk.sitAt(smooth(l / 0.8), (running && running.spot.drop) || 0);
+        setSit(smooth(l / 0.8), (running && running.spot.drop) || 0);
         p.torso.rotation.x = 0.1;
       }
     }
 
     // every frame, after walk.update. wk: what walk.update returned.
     function update(t, wk) {
-      const a = A.actAt(t);
+      const a = A.actAt(t), dt = lastUT === null ? 0 : Math.min(0.1, Math.max(0, t - lastUT));
+      lastUT = t;
+      sitPosed = false;
       if (running && !a) { running = null; release(); } // it finished
       if (running && (walk.wantsToMove() || walk.state() !== 'walking')) stop(t); // moved, or E sent them back
-      if (!wk.who) { current = null; if (running) stop(t); release(); hide(); return; }
-      const list = spots.filter((s) => s.companion !== wk.who);
+      if (!wk.who) { current = null; if (running) stop(t); release(true); hide(); return; }
+      const list = spots.filter((s) => s.companion !== wk.who && !s.spent); // a spent spot (crown worn, jar open) offers nothing
       current = walk.state() === 'walking' ? A.nearestSpot(wk.at[0], wk.at[1], list) : null;
       if (running && a) {
         const p = people[wk.who], s = running.spot;
@@ -110,6 +124,7 @@
         p.root.rotation.y = yaw;
         pose(p, a, wk.who);
       }
+      if (!sitPosed && sitAmt > 0) { sitAmt = Math.max(0, sitAmt - dt / 0.5); walk.sitAt(sitAmt, sitDrop); } // stood up: ease out of the seat over ~0.5 s
       if (!current || running || !kit.camera) { hide(); return; }
       at.set(current.x, current.y || 1.4, current.z).project(kit.camera);
       if (at.z > 1) { hide(); return; }
@@ -135,7 +150,7 @@
         peek: n === 'peek' ? A.win(l, 0.4, d - 0.6, 0.4) : 0,
         stewing: n === 'stew', sitting: n === 'sit' || (n === 'stew' && l > 1.4),
         talkWith: n === 'talk' || n === 'hello' ? a.info.with : null,
-        nod: n === 'talk' ? A.win(l, 3.4, 4.2, 0.2) : 0,
+        nod: n === 'talk' && !a.info.laugh ? A.win(l, 3.4, 4.2, 0.2) : 0,
         name: n, local: l, spot: a ? a.info.spot : null,
       };
     }

@@ -94,8 +94,11 @@
         scene.add(g);
         obstacles.push([x - 0.35 * Math.sin(g.rotation.y), z - 0.35 * Math.cos(g.rotation.y), 0.2]); // the sapling's trunk
         parts.nest = { chick };
+        let cheeped = null;
         return (t, walker, rx) => {
           const up = rx.spot === 'secret:nest' ? A.win(rx.local, 0.8, 2.8, 0.2) : 0;
+          const run = rx.spot === 'secret:nest' && rx.local >= 0.8 ? Math.floor(t - rx.local) : null; // the chick pops up: it cheeps once per run
+          if (run !== null && run !== cheeped) { cheeped = run; if (window.CampAudio && window.CampAudio.cheep) window.CampAudio.cheep(); }
           chick.position.y = base + 0.06 * up;
           chick.rotation.z = 0.25 * up * Math.sin(t * 9); // looking about, cheeping
         };
@@ -427,8 +430,11 @@
         const key = rx.spot + '@' + Math.floor(t - rx.local);
         if (key !== lastFound) { lastFound = key; find(rx.spot.slice(7)); }
       }
+      const cs = spots.find((s) => s.secret === 'crown'), js = spots.find((s) => s.secret === 'jar');
+      if (cs && parts.crown) cs.spent = !!parts.crown.worn; // nothing left to do there while it's worn / once opened
+      if (js && parts.jar) js.spent = parts.jar.openedAt !== null;
       const m = parts.mushrooms, inM = !!(m && walker && Math.hypot(walker.at[0] - m.x, walker.at[1] - m.z) < 0.65);
-      if (inM && !ringIn) find('mushrooms');
+      if (inM && !ringIn) { find('mushrooms'); if (window.CampAudio && window.CampAudio.softChime) window.CampAudio.softChime(); } // a soft chime on every step in
       ringIn = inM;
       const st = parts.stones;
       if (st && st.enteredAt !== stonesAt) { stonesAt = st.enteredAt; if (stonesAt !== null) find('stones'); }
