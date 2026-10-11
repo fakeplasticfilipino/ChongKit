@@ -4,13 +4,13 @@
     {
       "id": 0,
       "subject": "Task 1: Walker actions and spots in anim.js",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Pure, tested timeline for walker actions (start, cancel, events) and spot lookup.\n\n**Files:**\n- Modify: `campfire/anim.js` (after the talk section, before `events`; `events` body; `eventOwner`; exports)\n- Test: `campfire/tests/anim.test.js`\n\n**Acceptance Criteria:**\n- [ ] `A.act(name, t, info)` records an action; `A.actAt(t)` returns `{ name, local, info }` while it runs, `null` after `ACTIONS[name].dur` (or never ends for `hold: true` until cancelled)\n- [ ] `A.cancelAct(t)` ends the running action at `t`; no act events are emitted after it\n- [ ] `A.events(from, to)` includes each action's events with `act: true` and `who`/`with` filled from `info`\n- [ ] `A.eventOwner({ type: 'land', act: true })` is `null`\n- [ ] `A.nearestSpot(x, z, spots)` returns the closest spot whose `r` contains the point, ties to the first, `null` if none\n- [ ] `A.inside(x, z, spot)` is true iff the distance is below `spot.r`\n\n**Verify:** `node --test campfire/tests/anim.test.js` → `ℹ fail 0`\n\n```json:metadata\n{\"files\":[\"campfire/anim.js\",\"campfire/tests/anim.test.js\"],\"verifyCommand\":\"node --test campfire/tests/anim.test.js\",\"acceptanceCriteria\":[\"`A.act(name, t, info)` records an action; `A.actAt(t)` returns `{ name, local, info }` while it runs, `null` after `ACTIONS[name].dur` (or never ends for `hold: true` until cancelled)\",\"`A.cancelAct(t)` ends the running action at `t`; no act events are emitted after it\",\"`A.events(from, to)` includes each action's events with `act: true` and `who`/`with` filled from `info`\",\"`A.eventOwner({ type: 'land', act: true })` is `null`\",\"`A.nearestSpot(x, z, spots)` returns the closest spot whose `r` contains the point, ties to the first, `null` if none\",\"`A.inside(x, z, spot)` is true iff the distance is below `spot.r`\"],\"modelTier\":\"standard\"}\n```"
     },
     {
       "id": 1,
       "subject": "Task 2: walk.js holds and sits",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         0
       ],
@@ -19,7 +19,7 @@
     {
       "id": 2,
       "subject": "Task 3: interact.js — camp spots, hint, F and tap, walker poses",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         1
       ],
@@ -28,7 +28,7 @@
     {
       "id": 3,
       "subject": "Task 4: Props react, sitting camera, act sounds",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         2
       ],
@@ -37,7 +37,7 @@
     {
       "id": 4,
       "subject": "Task 5: Talking to companions; owl and fox react",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         3
       ],
@@ -46,7 +46,7 @@
     {
       "id": 5,
       "subject": "Task 6: Part 1 docs and push",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         4
       ],
@@ -55,7 +55,7 @@
     {
       "id": 6,
       "subject": "Task 7: Secrets data and the saved tally in anim.js",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         5
       ],
@@ -64,7 +64,7 @@
     {
       "id": 7,
       "subject": "Task 8: secrets.js — nature and relic secrets",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         6
       ],
@@ -73,7 +73,7 @@
     {
       "id": 8,
       "subject": "Task 9: Spooky and seasonal secrets",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         7
       ],
@@ -82,7 +82,7 @@
     {
       "id": 9,
       "subject": "Task 10: The tally, first-find chime, docs, push",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         8
       ],
