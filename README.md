@@ -17,8 +17,9 @@ See [TRACKER.md](TRACKER.md) for what's done and what's next.
 ## Character Sheet
 
 **To use:** open the site and click **Character Sheet**, or open `character-sheet/index.html` in any
-browser. It opens on the character you used last. Everything saves in this browser as you type
-(localStorage), so it's there next time. The sheet's toolbar has just **☰ Characters** and
+browser. It opens on the list of your characters: click one to open it. Everything saves
+in this browser as you type (localStorage), so it's there next time.
+The sheet's toolbar has just **☰ Characters** and
 **Customize**; everything else is in the **Characters** menu: a card per character (name, Hit Die and
 Level, HP, Armor, when it was last edited and whether it's synced). Click a card to open it; its **⋯**
 has Copy, Export file (a `.json`, handy for moving to another device), Print, Reset character and

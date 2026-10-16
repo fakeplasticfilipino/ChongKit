@@ -491,7 +491,7 @@
   // --- Toolbar and the Characters menu ----------------------------------------------------
   // The sheet's toolbar has only ☰ Characters and Customize; everything else (new, copy, import,
   // export, print, reset, delete, the account) is in the Characters menu. The page opens on the
-  // character used last.
+  // menu; the character used last stays selected.
   function setEditing(on) {
     editing = on;
     const b = $('edit');
@@ -781,7 +781,7 @@
   accountButton();
 
   names();
-  render();
+  showView('menu'); // the page opens on the list of characters
   commit();
   if (C) {
     // Back from Discord (or an email confirmation link): finish signing in, then sync.

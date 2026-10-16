@@ -69,6 +69,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Notes: four fixed boxes per tab (swap by dragging in Customize), notes as name + description; read-only when playing, edited only in Customize
 - [x] Last box of each tab is a free notepad (typed in any time); tabs and save pips change only in Customize ("Edit layout" renamed Customize)
 - [x] Characters menu: a card per character (⋯: Copy, Export, Print, Reset, Delete; + New, Import, Sign in); the sheet toolbar is only ☰ Characters and Customize; opens on the last-used character
+- [x] The page opens on the Characters menu (the list), not the last-used character
 
 ### ✅ Campaigns — done (spec: `docs/superpowers/specs/2026-10-09-character-sheet-campaigns-design.md`)
 - [x] Database: campaigns, members, read rule, functions (migration `campaigns`), checked as fake users

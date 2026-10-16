@@ -69,7 +69,7 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    and the notes span the width below it: four tall note boxes side by side (two below 1150 px, one on
    phones). The sheet's toolbar is only ☰ Characters and Customize; everything else lives in the
    **Characters menu** (`menu.js`): a card per character (most recently edited first; the page opens on
-   the last-used character), each card's ⋯ with Copy, Export file, Print, Reset character and Delete,
+   this menu), each card's ⋯ with Copy, Export file, Print, Reset character and Delete,
    plus + New character, Import and the account. Printing (a card's ⋯ → Print or Ctrl+P) prints the top
    section on page 1 and the open tab's notes after it, every note open.
    Its own styles live in `character-sheet/sheet.css`.
