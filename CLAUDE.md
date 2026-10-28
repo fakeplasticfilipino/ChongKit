@@ -109,7 +109,9 @@ Page numbers in code and docs are the **printed** page numbers (PDF page index =
    per account, and older versions over newer ones (trigger `character_sheets_keep_newer`);
    `delete_my_account()` (security definer) only ever deletes the caller; signed-in users get only
    SELECT/INSERT/UPDATE/DELETE on `character_sheets` (no TRUNCATE etc.) and `anon` gets nothing. Tabs of the page merge each
-   other's saves (`storage` event); deletes made offline are queued; failed syncs retry with backoff.
+   other's saves (`storage` event) and share the session (refresh tokens are single-use: a tab re-reads
+   `chongkit.auth` before refreshing, and a refusal caused by another tab's refresh isn't a sign-out); a
+   401 refreshes and retries once before signing out; deletes made offline are queued; failed syncs retry with backoff.
    Campaign members can read each other's characters, never write them; `authenticated` has no INSERT/UPDATE on `campaign_id` (only `set_character_campaign`, `leave_campaign` and `delete_my_account` change it); every campaign change is a `security definer` function acting only as the caller; a wrong join code always says "No campaign with that code".
 8. **Campaigns** (`campaigns.js`, browser global `SheetCampaigns`): players of a campaign see each
    other's characters. Tables `campaigns` (name, 6-character `code`) and `campaign_members` (with a

@@ -78,6 +78,12 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Refresh every ~30 s (no Realtime); cache per account; `Cloud.list()` only your own rows
 - [ ] Two-account check at the table (one creates, a friend joins and sees the sheet update)
 
+### ✅ Staying signed in on phones — done
+- [x] A 401 refreshes the token and tries once more before signing out
+- [x] Token expiry counted on the device's clock (`expires_in`), so a phone with a wrong clock still refreshes in time
+- [x] Tabs share the session (`storage` event, re-read before each request); a refresh refused because another tab already used the token keeps that tab's session
+- [ ] Confirm with the player who kept getting signed out (if they open the sheet from Discord's built-in browser, use Chrome/Safari or add it to the Home Screen)
+
 ### 💡 Ideas
 - Ancestry / Class "Apply" (fills stats, HP, saves, key stats) — needs the core rules data, which isn't in the GM Guide
 

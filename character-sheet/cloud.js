@@ -26,13 +26,26 @@
     put(STORE, s);
     emit(why);
   }
+  // The expiry is counted on this device's clock (from expires_in), so a phone whose clock is off
+  // still refreshes in time; the server's expires_at is only a fallback.
   function fromTokens(t, user) {
     return {
       access_token: t.access_token, refresh_token: t.refresh_token,
-      expires_at: t.expires_at ? +t.expires_at : Math.floor(Date.now() / 1000) + (+t.expires_in || 3600),
+      expires_at: t.expires_in ? Math.floor(Date.now() / 1000) + +t.expires_in : +t.expires_at || Math.floor(Date.now() / 1000) + 3600,
       user: user || t.user || null,
     };
   }
+  // Another tab may have refreshed (refresh tokens are single-use) or signed in/out: take its session.
+  function reread() {
+    let s;
+    try { s = JSON.parse(localStorage.getItem(STORE)); } catch { return false; } // no storage: this tab only
+    if ((s && s.refresh_token) === (session && session.refresh_token)) return false;
+    session = s;
+    return true;
+  }
+  window.addEventListener('storage', (ev) => {
+    if (ev.key === STORE && reread()) emit('tab');
+  });
   // Sync records are kept per account, so one account's characters never mix into another's.
   const userKey = (name) => (session && session.user ? `chongkit.${name}.${session.user.id}` : null);
 
@@ -62,16 +75,24 @@
 
   // A fresh access token (refreshed a minute before it runs out); null when signed out.
   let refreshing = null;
-  async function token() {
+  // `force` refreshes even when the token looks current (the server turned it down).
+  async function token(force) {
+    if (reread()) emit('tab');
     if (!session) return null;
-    if (session.expires_at - 60 > Date.now() / 1000) return session.access_token;
+    if (!force && session.expires_at - 60 > Date.now() / 1000) return session.access_token;
     if (!refreshing) {
-      refreshing = auth('token?grant_type=refresh_token', { refresh_token: session.refresh_token })
+      const used = session.refresh_token;
+      refreshing = auth('token?grant_type=refresh_token', { refresh_token: used })
         .then((t) => save(fromTokens(t, t.user || session.user)))
         .catch((e) => {
           // Refused by Supabase (revoked, expired, account deleted): the session is over; sign out and say so.
+          // Unless another tab refreshed meanwhile (our token was already used): keep its session.
           // A network error keeps the session, to try again later.
-          if (e.status === 400 || e.status === 401 || e.status === 403) save(null, 'expired');
+          if (e.status === 400 || e.status === 401 || e.status === 403) {
+            const s = get(STORE);
+            if (s && s.refresh_token !== used) { session = s; emit('tab'); return; }
+            save(null, 'expired');
+          }
           throw e;
         })
         .finally(() => { refreshing = null; });
@@ -80,14 +101,16 @@
     return session && session.access_token;
   }
 
-  async function rest(method, path, body, prefer) {
-    const t = await token();
+  async function rest(method, path, body, prefer, retried) {
+    const t = await token(retried);
     if (!t) throw new Error('Signed out');
     const res = await fetch(`${URL_}/rest/v1/${path}`, {
       method,
       headers: { apikey: KEY, Authorization: `Bearer ${t}`, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
+    // Turned down: refresh and try once more before giving up on the session.
+    if (res.status === 401 && !retried) return rest(method, path, body, prefer, true);
     if (res.status === 401) { save(null, 'expired'); throw new Error('Signed out'); }
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
