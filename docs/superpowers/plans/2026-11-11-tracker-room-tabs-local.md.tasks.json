@@ -4,13 +4,13 @@
     {
       "id": 0,
       "subject": "Task 1: Room helpers in core.js",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Pure, tested helpers for the room copy, messages, pieces, the read-only rule, the move-over and the backup file.\n\n**Files:**\n- Modify: `chongs-tracker/core.js` (new section after `metadataSize`; exports)\n- Test: `chongs-tracker/tests/core.test.js`\n\n**Acceptance Criteria:**\n- [ ] `applyRoomPatch(md, patch)` returns a new object: keys starting with `KEYS.tabPrefix` / `KEYS.entryPrefix` set to the patch value, `null` deletes; other keys in the patch are ignored; `md` is not mutated\n- [ ] `readRoomCopy(text)` returns `{ v, md }` from saved JSON, keeping only room keys with object values; `{ v: 0, md: {} }` for null / broken / wrong shape\n- [ ] `newerList(have, got)` is true iff `got` is a list with a numeric `v` greater than `have.v` (or `have` is null)\n- [ ] `splitList(list, id)` gives pieces `{ type: 'piece', id, part, of, chunk }` with `chunk.length ≤ ROOM_PIECE` (8000) and `joinPieces(buf, piece, now)` rebuilds the list once all parts arrived (any order), returns `null` before, drops partial sets older than 10 s\n- [ ] `roomEditable(lastHeard, now, role)` is true for `'GM'`; for players iff `lastHeard > 0 && now - lastHeard < OFFLINE_AFTER`\n- [ ] `moveRoomPatch(roomMd, localMd)` returns `null` when `roomMd` has no room keys, else `{ md, deletes }`: `md` = local plus room keys not already local; `deletes` sets every room key found to `null`\n- [ ] `roomFile(list)` / `readRoomFile(text)` round-trip `md`; `readRoomFile` returns `null` for anything that isn't `{ chongTracker: 'room', md: {…} }`\n\n**Verify:** `node --test \"chongs-tracker/tests/*.test.js\"` → `ℹ fail 0`\n\n```json:metadata\n{\"files\":[\"chongs-tracker/core.js\",\"chongs-tracker/tests/core.test.js\"],\"verifyCommand\":\"npm test\",\"acceptanceCriteria\":[\"`applyRoomPatch(md, patch)` returns a new object: keys starting with `KEYS.tabPrefix` / `KEYS.entryPrefix` set to the patch value, `null` deletes; other keys in the patch are ignored; `md` is not mutated\",\"`readRoomCopy(text)` returns `{ v, md }` from saved JSON, keeping only room keys with object values; `{ v: 0, md: {} }` for null / broken / wrong shape\",\"`newerList(have, got)` is true iff `got` is a list with a numeric `v` greater than `have.v` (or `have` is null)\",\"`splitList(list, id)` gives pieces `{ type: 'piece', id, part, of, chunk }` with `chunk.length ≤ ROOM_PIECE` (8000) and `joinPieces(buf, piece, now)` rebuilds the list once all parts arrived (any order), returns `null` before, drops partial sets older than 10 s\",\"`roomEditable(lastHeard, now, role)` is true for `'GM'`; for players iff `lastHeard > 0 && now - lastHeard < OFFLINE_AFTER`\",\"`moveRoomPatch(roomMd, localMd)` returns `null` when `roomMd` has no room keys, else `{ md, deletes }`: `md` = local plus room keys not already local; `deletes` sets every room key found to `null`\",\"`roomFile(list)` / `readRoomFile(text)` round-trip `md`; `readRoomFile` returns `null` for anything that isn't `{ chongTracker: 'room', md: {…} }`\"],\"modelTier\":\"standard\"}\n```"
     },
     {
       "id": 1,
       "subject": "Task 2: room.js — the shared room copy",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         0
       ],
@@ -19,7 +19,7 @@
     {
       "id": 2,
       "subject": "Task 3: The panel uses the room copy",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         1
       ],
@@ -28,7 +28,7 @@
     {
       "id": 3,
       "subject": "Task 4: Badges and Track use the room copy",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         2
       ],
@@ -37,7 +37,7 @@
     {
       "id": 4,
       "subject": "Task 5: Version, docs, browser check, push",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         3
       ],
