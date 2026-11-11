@@ -26,7 +26,7 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] One ⋯ open at a time; a click elsewhere (panel or map) closes it; selecting a tracked token opens its ⋯; the pin keeps an entry open past both (v1.7.0); a map click that changes the selection closes it too (v1.7.1)
 - [x] Move an entry to another tab by dragging it onto the tab (the ⋯ menu's tab picker and + Token are gone)
 - [x] Detach: with the token selected, an × shows over its picture in the entry; click it (the Detach button is gone)
-- [x] Save a tab to the room (door button, confirm with a 16 kB warning): the tab and its entries live in room metadata and show in every scene; per tab, not per player
+- [x] Save a tab to the room (door button, confirm with a 16 kB warning): the tab and its entries live in room metadata and show in every scene; per tab, not per player (replaced in 1.13.0: kept by the GM, shared by broadcast)
 - [x] Help sheet: ⓘ in the lower-right corner opens a short prose guide over the whole panel (also shown on the extension page); no + button by the add box (Enter adds)
 - [x] Hidden stats look the same on the map for GM and players (H/B + AC); GM sees real HP in the panel; hidden entries are just dimmed (no eye icon)
 - [x] Selecting a tracked token on the map puts its entry at the top of the list (outlined) until deselected
@@ -72,7 +72,15 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 - [x] Players are read-only after 30 s without hearing the GM and re-ask every 20 s
 - [x] Old room-metadata keys are moved once by the GM's background, and only read until then
 - [x] Export / Import room tabs in the GM's help (Import: the file wins per key)
-- [ ] Check in a real Owlbear room: GM saves a tab, a player sees it; the player edits HP, the GM sees it; GM leaves, the player goes read-only within 30 s; a pre-1.13.0 room tab survives the GM opening the room
+- [ ] Check in a real Owlbear room: GM saves a tab, a player sees it; the player edits HP, the GM sees it; GM leaves, the player goes read-only within 30 s; a pre-1.13.0 room tab survives the GM opening the room; after updating, everyone reloads Owlbear (the GM first) so nobody runs the old version in the same session
+
+## ✅ Room tabs review fixes (v1.13.1)
+- [x] Players ask the GM every 20 s (with their copy's version); the GM answers the list if newer, else a tiny "here", so players with an idle GM stay editable
+- [x] Blocked localStorage no longer breaks the panel and badges (the copy lives in memory)
+- [x] The move-over deletes the old room keys only once the GM's copy is saved and reads back
+- [x] A GM on a new or cleared browser asks players for their copy (and a player holding a newer copy is asked for it) instead of wiping it
+- [x] Losing the GM drops a player's unconfirmed edits; a player moving a tab to the room keeps the scene copy
+- [x] Ticks redraw only when editing turns on or off; broadcast pieces with a bad part/count are refused; Track waits for the room copy
 
 ## Dropped
 - Custom counters (number, slider, checkbox): removed, not wanted

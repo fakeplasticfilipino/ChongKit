@@ -225,10 +225,12 @@ A system-agnostic health tracker for [Owlbear Rodeo](https://www.owlbear.rodeo/)
 players for tabs they made), so it shows in every scene of the room, e.g. the party's HP. A door
 icon marks those tabs. A room tab is kept on the GM's computer and shared with players while the GM
 is in the room; players keep the last copy they got and can only read it once the GM has been away
-for 30 seconds. A player's own edit shows at once and reaches the GM. Token links are per scene
+for 30 seconds (a Players tab saved to the room too). A player's own edit shows at once and reaches the GM. Token links are per scene
 (attach the tokens again in each scene). The GM's help has Export room tabs and Import room tabs
 (for a new computer or browser; on import, the file wins). Clicking the door again keeps the tab in
 the current scene only.
+After updating the tracker, everyone reloads Owlbear (the GM first) so nobody runs the old version in
+the same session.
 Hidden entries are hidden in the panel and on the map, but technically every player's browser
 receives the scene data.
 

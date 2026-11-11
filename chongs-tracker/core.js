@@ -380,6 +380,8 @@
   // buf: a Map kept by the caller. Returns the whole list once every piece of it has arrived.
   function joinPieces(buf, p, now) {
     for (const [id, b] of buf) if (now - b.at > 10000) buf.delete(id);
+    const int = (n, lo, hi) => Number.isInteger(n) && n >= lo && n <= hi;
+    if (!p || !int(p.of, 1, 1000) || !int(p.part, 0, p.of - 1) || typeof p.chunk !== 'string') return null;
     const b = buf.get(p.id) || { at: now, parts: [] };
     b.parts[p.part] = p.chunk;
     buf.set(p.id, b);

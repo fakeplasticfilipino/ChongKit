@@ -58,7 +58,7 @@ const el = (tag, props = {}, ...kids) => {
 };
 
 // --- Writing ------------------------------------------------------------------------
-// Scene metadata by default; tabs saved to the room (and their entries) go to the room's metadata.
+// Scene metadata by default; tabs saved to the room (and their entries) go to the GM's copy (room.js).
 const byId = (id) => entries.find((e) => e.id === id);
 const inRoom = (tabId) => !!(tabById(tabId) || {}).room;
 async function write(patch, toRoom = false) {
@@ -155,7 +155,9 @@ async function toggleRoom(tab) {
   const { to, from } = C.moveTabPatches(moved, entries, toRoom);
   tabs = tabs.map((t) => (t.id === tab.id ? moved : t));
   render();
-  if (await write(to, toRoom)) await write(from, !toRoom);
+  // A player moving a tab to the room keeps the scene copy: if the GM left before taking the edit,
+  // nothing is lost (the room copy wins where both exist).
+  if (await write(to, toRoom)) { if (!(toRoom && role !== 'GM')) await write(from, !toRoom); }
   else reload(); // nothing moved: back to what's saved
 }
 

@@ -160,3 +160,61 @@ test('room.js: blocked localStorage (the getter throws) still works, in memory',
     assert.strictEqual(g.md()[E + '1'].hp, 4);
   } finally { Object.defineProperty(window, 'localStorage', before); }
 });
+
+test('room.js: the move-over keeps the room keys when the GM copy cannot be saved', async () => {
+  const w = world();
+  w.roomMd.metadata = { [T + 'old']: { name: 'Old' }, [E + 'o']: { id: 'o', tab: 'old' } };
+  const broken = memStore(); broken.setItem = () => { throw new Error('QuotaExceededError'); };
+  const g = window.ChongRoom(w.obr('GM').OBR, { answer: true, storage: broken, ...quiet });
+  await g.ready;
+  assert.ok(w.roomMd.metadata[T + 'old'] && w.roomMd.metadata[E + 'o'], 'room keys not deleted');
+  const silent = memStore(); silent.setItem = () => {}; // "saves" but nothing reads back
+  const g2 = window.ChongRoom(w.obr('GM').OBR, { answer: true, storage: silent, ...quiet });
+  await g2.ready;
+  assert.ok(w.roomMd.metadata[T + 'old'] && w.roomMd.metadata[E + 'o'], 'room keys not deleted when the copy does not read back');
+});
+
+test('room.js: a GM on a fresh browser takes the players\' copy instead of wiping it', async () => {
+  const w = world(), pl = w.obr('PLAYER'), pl2 = w.obr('PLAYER'), now = clock();
+  const ps = memStore();
+  ps.setItem(C.ROOM_STORE + 'room1', JSON.stringify({ v: 50, md: { [E + 'old']: { id: 'old', hp: 7 } } }));
+  const p = window.ChongRoom(pl.OBR, { storage: ps, now, ...quiet });
+  await p.ready; await tick();
+  const g = window.ChongRoom(w.obr('GM').OBR, { answer: true, storage: memStore(), now, ...quiet });
+  await g.ready;
+  for (let i = 0; i < 5; i++) await tick();
+  assert.strictEqual(g.md()[E + 'old'].hp, 7, 'the GM adopted the players\' copy');
+  await g.write({ [E + 'n']: { id: 'n' } });
+  for (let i = 0; i < 5; i++) await tick();
+  assert.ok(g.md()[E + 'old'] && p.md()[E + 'old'] && p.md()[E + 'n'], 'the next GM write keeps it');
+  // A player who joins after the GM started (holding a newer copy than the GM's) is asked for it too.
+  const g2 = window.ChongRoom(w.obr('GM').OBR, { answer: true, storage: memStore(), now, ...quiet });
+  const late = memStore();
+  late.setItem(C.ROOM_STORE + 'room1', JSON.stringify({ v: 3e12, md: { [E + 'late']: { id: 'late' } } }));
+  await g2.ready; await tick(); await tick();
+  const p2 = window.ChongRoom(pl2.OBR, { storage: late, now, ...quiet });
+  await p2.ready;
+  for (let i = 0; i < 8; i++) await tick();
+  assert.ok(g2.md()[E + 'late'], 'asked the late player for its copy');
+});
+
+test('room.js: losing the GM drops unconfirmed player edits; ticks redraw only when editability changes', async () => {
+  const w = world(), gm = w.obr('GM'), pl = w.obr('PLAYER'), now = clock();
+  const g = window.ChongRoom(gm.OBR, { answer: false, storage: memStore(), now, ...quiet }); // never applies edits
+  await g.ready;
+  await g.write({ [E + '1']: { id: '1', hp: 5 } });
+  let changes = 0;
+  const p = window.ChongRoom(pl.OBR, { storage: memStore(), now, onChange: () => changes++, ...quiet });
+  await p.ready;
+  gm.OBR.broadcast.sendMessage(C.ROOM_CHANNEL, { type: 'list', v: g.list().v, md: g.list().md });
+  await tick(); await tick();
+  assert.ok(await p.write({ [E + '1']: { id: '1', hp: 2 } }));
+  assert.strictEqual(p.md()[E + '1'].hp, 2);
+  changes = 0;
+  now.add(1000); p.tick(); await tick(); await tick();
+  assert.strictEqual(changes, 0, 'no redraw when nothing changed');
+  now.add(C.OFFLINE_AFTER); p.tick(); await tick(); await tick();
+  assert.ok(!p.editable());
+  assert.strictEqual(changes, 1, 'one redraw when it turns read-only');
+  assert.strictEqual(p.md()[E + '1'].hp, 5, 'the unconfirmed edit is gone');
+});

@@ -304,3 +304,21 @@ test('room: read-only while the GM is away; move-over; backup file', () => {
   assert.deepStrictEqual(C.readRoomFile(file), { [t + 'a']: { name: 'Room A' }, [e + '1']: { id: '1' } });
   for (const bad of ['', '{', '{"md":{}}', '{"chongTracker":"room"}', '[]']) assert.strictEqual(C.readRoomFile(bad), null, bad);
 });
+
+test('joinPieces refuses pieces with a bad part or count', () => {
+  const bad = [
+    { type: 'piece', id: 'a', part: 0, of: 0, chunk: '{}' },
+    { type: 'piece', id: 'a', part: 0, of: 1001, chunk: '{}' },
+    { type: 'piece', id: 'a', part: 0, of: 1.5, chunk: '{}' },
+    { type: 'piece', id: 'a', part: 1, of: 1, chunk: '{}' },
+    { type: 'piece', id: 'a', part: -1, of: 2, chunk: '{}' },
+    { type: 'piece', id: 'a', part: '0', of: 1, chunk: '{}' },
+    { type: 'piece', id: 'a', part: 0.5, of: 2, chunk: '{}' },
+  ];
+  for (const p of bad) {
+    const buf = new Map();
+    assert.strictEqual(C.joinPieces(buf, p, 0), null, JSON.stringify(p));
+    assert.strictEqual(buf.size, 0);
+  }
+  assert.deepStrictEqual(C.joinPieces(new Map(), { type: 'piece', id: 'b', part: 0, of: 1, chunk: '{"x":1}' }, 0), { x: 1 });
+});

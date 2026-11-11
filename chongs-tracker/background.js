@@ -105,6 +105,7 @@ async function sync() {
 // Creates an entry for each selected token, attached to it. GMs: in the tab last open in the
 // panel (hidden, like every new GM entry). Players: in the Players tab.
 async function track(items) {
+  if (!room) return; // clicked before the room copy was set up
   const md = await OBR.scene.getMetadata();
   const { tabs, entries } = C.readState(md, room.md());
   let tab = C.PLAYERS_TAB;
