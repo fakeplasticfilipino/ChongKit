@@ -12,7 +12,7 @@ const TAB_STORE = `${C.NS}/tab`;
 
 let role = 'PLAYER';
 let metadata = {};
-let roomMetadata = {};
+let room = null;
 let ready = false;
 
 // --- Badges -----------------------------------------------------------------------
@@ -49,7 +49,7 @@ function buildBadge(id, spec, origin, token, sig, z) {
 // when its pill changes. Position isn't in it (the specs are relative to the token's box):
 // attached items follow their token.
 async function desiredBadges() {
-  const { entries } = C.readState(metadata, roomMetadata);
+  const { entries } = C.readState(metadata, room ? room.md() : {});
   // Minion groups get no badges: their HP is shared, so it lives in the panel only.
   const shown = entries.filter((e) => C.tokensOf(e).length && !e.group);
   if (!shown.length) return new Map();
@@ -106,7 +106,7 @@ async function sync() {
 // panel (hidden, like every new GM entry). Players: in the Players tab.
 async function track(items) {
   const md = await OBR.scene.getMetadata();
-  const { tabs, entries } = C.readState(md, await OBR.room.getMetadata());
+  const { tabs, entries } = C.readState(md, room.md());
   let tab = C.PLAYERS_TAB;
   if (role === 'GM') {
     try { const t = localStorage.getItem(TAB_STORE); if (tabs.some((x) => x.id === t)) tab = t; } catch {}
@@ -120,7 +120,7 @@ async function track(items) {
     Object.assign(patch, C.entryPatch(C.newEntry({ name, hp: 0, max: null, tab, order: order++, token: item.id })));
   }
   if (Object.keys(patch).length) {
-    if (tabs.find((t) => t.id === tab).room) await OBR.room.setMetadata(patch);
+    if (tabs.find((t) => t.id === tab).room) { if (!(await room.write(patch))) return; }
     else await OBR.scene.setMetadata(patch);
   }
   OBR.action.open();
@@ -140,8 +140,8 @@ OBR.onReady(async () => {
     onClick: (context) => track(context.items),
   });
 
-  roomMetadata = await OBR.room.getMetadata();
-  OBR.room.onMetadataChange((md) => { roomMetadata = md; schedule(); });
+  room = window.ChongRoom(OBR, { answer: true, onChange: schedule });
+  await room.ready;
   OBR.scene.onMetadataChange((md) => { metadata = md; schedule(); });
   OBR.scene.items.onChange(schedule);
   const start = async () => { ready = true; metadata = await OBR.scene.getMetadata(); schedule(); };
