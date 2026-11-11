@@ -349,6 +349,63 @@
   const ROOM_LIMIT = 16 * 1024;
   const metadataSize = (md) => new TextEncoder().encode(JSON.stringify(md || {})).length;
 
+  // --- Room tabs, kept by the GM -------------------------------------------------------
+  // Room tabs (and their entries) live in the GM's browser, in the same key/value shape as room
+  // metadata (KEYS.tabPrefix / KEYS.entryPrefix keys), and reach players by OBR broadcast.
+  const ROOM_CHANNEL = `${NS}/room`;
+  const ROOM_STORE = `${NS}/room/`; // + the room's id, in localStorage
+  const ROOM_PIECE = 8000; // characters per broadcast piece
+  const OFFLINE_AFTER = 30000; // players: no list for this long = the GM is away (read-only)
+  const ASK_EVERY = 20000; // players re-ask this often while the GM is away
+  const isRoomKey = (k) => k.startsWith(KEYS.tabPrefix) || k.startsWith(KEYS.entryPrefix);
+  const roomKeys = (md) => Object.fromEntries(Object.entries(md || {}).filter(([k, v]) => isRoomKey(k) && v && typeof v === 'object' && !Array.isArray(v)));
+  function applyRoomPatch(md, patch) {
+    const out = { ...md };
+    for (const [k, v] of Object.entries(patch || {})) {
+      if (!isRoomKey(k)) continue;
+      if (v == null) delete out[k]; else out[k] = v;
+    }
+    return out;
+  }
+  function readRoomCopy(text) {
+    try {
+      const o = JSON.parse(text);
+      if (o && typeof o.v === 'number' && o.md && typeof o.md === 'object' && !Array.isArray(o.md)) return { v: o.v, md: roomKeys(o.md) };
+    } catch {}
+    return { v: 0, md: {} };
+  }
+  const newerList = (have, got) => !!got && typeof got.v === 'number' && got.v > (have ? have.v : -1);
+  function splitList(list, id) {
+    const s = JSON.stringify(list), of = Math.max(1, Math.ceil(s.length / ROOM_PIECE)), out = [];
+    for (let part = 0; part < of; part++) out.push({ type: 'piece', id, part, of, chunk: s.slice(part * ROOM_PIECE, (part + 1) * ROOM_PIECE) });
+    return out;
+  }
+  // buf: a Map kept by the caller. Returns the whole list once every piece of it has arrived.
+  function joinPieces(buf, p, now) {
+    for (const [id, b] of buf) if (now - b.at > 10000) buf.delete(id);
+    const b = buf.get(p.id) || { at: now, parts: [] };
+    b.parts[p.part] = p.chunk;
+    buf.set(p.id, b);
+    if (b.parts.filter((x) => x != null).length < p.of) return null;
+    buf.delete(p.id);
+    try { return JSON.parse(b.parts.join('')); } catch { return null; }
+  }
+  const roomEditable = (lastHeard, now, role) => role === 'GM' || (lastHeard > 0 && now - lastHeard < OFFLINE_AFTER);
+  // Moving old room metadata into the GM's copy: keys already in the copy stay as they are.
+  function moveRoomPatch(roomMd, localMd) {
+    const found = roomKeys(roomMd);
+    if (!Object.keys(found).length) return null;
+    return { md: { ...found, ...localMd }, deletes: Object.fromEntries(Object.keys(found).map((k) => [k, null])) };
+  }
+  const roomFile = (list) => JSON.stringify({ chongTracker: 'room', v: list.v, md: list.md }, null, 1);
+  function readRoomFile(text) {
+    try {
+      const o = JSON.parse(text);
+      if (o && o.chongTracker === 'room' && o.md && typeof o.md === 'object' && !Array.isArray(o.md)) return roomKeys(o.md);
+    } catch {}
+    return null;
+  }
+
   // Who can see / change what. Everyone sees every entry; players see H/B for hidden stats.
   // Players' tabs (the Players tab, and any tab a player made) can be edited by players.
   const isPlayerTab = (tab) => !!tab && (tab.id === PLAYERS_TAB || !!tab.players);
@@ -416,6 +473,7 @@
     parseCommand, rowsToEntries, acFrom, addNote,
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,
     readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, moveTabPatches,
+    ROOM_CHANNEL, ROOM_STORE, ROOM_PIECE, OFFLINE_AFTER, ASK_EVERY, applyRoomPatch, readRoomCopy, newerList, splitList, joinPieces, roomEditable, moveRoomPatch, roomFile, readRoomFile,
     ROOM_LIMIT, metadataSize, isPlayerTab, masked, canEdit,
     BADGE, badgeSpecs,
   };

@@ -256,3 +256,52 @@ test('paste: Avrae Version damage stays in the entry note', () => {
   const { rows } = C.parseCommand('Monster A x2\nHP: 30\nArmor: Medium\nDamage: (2×) 1d6!+1d6+3\nSave DC: 13');
   assert.ok(rows[0].note.includes('Damage: (2×) 1d6!+1d6+3'));
 });
+
+test('room copy: patches, saved copy, newer lists', () => {
+  const t = C.KEYS.tabPrefix, e = C.KEYS.entryPrefix;
+  const md = { [t + 'a']: { name: 'A' }, [e + '1']: { id: '1', tab: 'a' } };
+  const out = C.applyRoomPatch(md, { [e + '1']: null, [e + '2']: { id: '2', tab: 'a' }, other: 5 });
+  assert.deepStrictEqual(Object.keys(out).sort(), [e + '2', t + 'a'].sort());
+  assert.ok(md[e + '1'], 'not mutated');
+  assert.deepStrictEqual(C.readRoomCopy(JSON.stringify({ v: 3, md: { [t + 'a']: { name: 'A' }, junk: 1, [e + 'x']: 'no' } })), { v: 3, md: { [t + 'a']: { name: 'A' } } });
+  for (const bad of [null, '', '{', '[]', '{"v":"x","md":{}}', '{"v":1}']) assert.deepStrictEqual(C.readRoomCopy(bad), { v: 0, md: {} }, String(bad));
+  assert.ok(C.newerList(null, { v: 1, md: {} }));
+  assert.ok(C.newerList({ v: 1 }, { v: 2, md: {} }));
+  assert.ok(!C.newerList({ v: 2 }, { v: 2, md: {} }));
+  assert.ok(!C.newerList({ v: 2 }, { v: 'x', md: {} }));
+});
+
+test('room pieces: split, join in any order, drop stale', () => {
+  const md = {};
+  for (let i = 0; i < 400; i++) md[C.KEYS.entryPrefix + i] = { id: String(i), name: 'Goblin number ' + i, note: 'x'.repeat(40) };
+  const list = { type: 'list', v: 7, md };
+  const pieces = C.splitList(list, 'p1');
+  assert.ok(pieces.length > 1);
+  for (const p of pieces) assert.ok(p.chunk.length <= C.ROOM_PIECE && p.of === pieces.length && p.type === 'piece');
+  const buf = new Map();
+  const order = pieces.slice().reverse();
+  let got = null;
+  order.forEach((p, i) => { const r = C.joinPieces(buf, p, 1000); if (i < order.length - 1) assert.strictEqual(r, null); else got = r; });
+  assert.deepStrictEqual(got, list);
+  const buf2 = new Map();
+  C.joinPieces(buf2, pieces[0], 0);
+  assert.strictEqual(C.joinPieces(buf2, pieces[1], 20000), null, 'old partial set dropped');
+  assert.strictEqual(C.splitList({ type: 'list', v: 1, md: {} }, 'p2').length, 1);
+});
+
+test('room: read-only while the GM is away; move-over; backup file', () => {
+  assert.ok(C.roomEditable(0, 99999, 'GM'));
+  assert.ok(!C.roomEditable(0, 1000, 'PLAYER'));
+  assert.ok(C.roomEditable(1000, 1000 + C.OFFLINE_AFTER - 1, 'PLAYER'));
+  assert.ok(!C.roomEditable(1000, 1000 + C.OFFLINE_AFTER, 'PLAYER'));
+  const t = C.KEYS.tabPrefix, e = C.KEYS.entryPrefix;
+  assert.strictEqual(C.moveRoomPatch({ other: 1 }, {}), null);
+  const room = { [t + 'a']: { name: 'Room A' }, [e + '1']: { id: '1' }, otherExt: 2 };
+  const local = { [t + 'a']: { name: 'Local A' } };
+  const m = C.moveRoomPatch(room, local);
+  assert.deepStrictEqual(m.md, { [t + 'a']: { name: 'Local A' }, [e + '1']: { id: '1' } });
+  assert.deepStrictEqual(m.deletes, { [t + 'a']: null, [e + '1']: null });
+  const file = C.roomFile({ v: 4, md: room });
+  assert.deepStrictEqual(C.readRoomFile(file), { [t + 'a']: { name: 'Room A' }, [e + '1']: { id: '1' } });
+  for (const bad of ['', '{', '{"md":{}}', '{"chongTracker":"room"}', '[]']) assert.strictEqual(C.readRoomFile(bad), null, bad);
+});
