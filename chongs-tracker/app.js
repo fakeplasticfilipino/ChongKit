@@ -24,7 +24,7 @@ let sceneReady = false;
 let picking = null; // entry waiting for a token click on the map
 let tokens = new Map();
 let selection = []; // what this player has selected on the map
-let sceneMd = {}, roomMd = {};
+let sceneMd = {}, room = null;
 let helpOpen = false;
 let focus = []; // entries whose tokens are selected on the map: shown first while selected
 
@@ -61,33 +61,31 @@ const el = (tag, props = {}, ...kids) => {
 // Scene metadata by default; tabs saved to the room (and their entries) go to the room's metadata.
 const byId = (id) => entries.find((e) => e.id === id);
 const inRoom = (tabId) => !!(tabById(tabId) || {}).room;
-async function write(patch, room = false) {
+async function write(patch, toRoom = false) {
   if (!Object.keys(patch).length) return true;
   try {
-    if (!room) { await OBR.scene.setMetadata(patch); return true; }
-    await OBR.room.setMetadata(patch);
-    roomMd = { ...roomMd, ...patch };
-    const size = C.metadataSize(roomMd);
-    if (size > C.ROOM_LIMIT * 0.75) OBR.notification.show(`Room storage is ${Math.round(size / 1024)} of 16 kB full`, 'WARNING');
-    return true;
+    if (!toRoom) { await OBR.scene.setMetadata(patch); return true; }
+    const ok = await room.write(patch);
+    if (!ok) reload(); // read-only: back to the GM's copy
+    return ok;
   } catch (err) {
     OBR.notification.show(`Chong's Tracker couldn't save: ${err.message || err}`, 'ERROR');
     return false;
   }
 }
 function saveEntries(list) {
-  const scene = {}, room = {};
+  const scene = {}, rp = {};
   for (const e of list) {
     const old = byId(e.id);
     const to = inRoom(e.tab);
-    Object.assign(to ? room : scene, C.entryPatch(e));
-    if (old && inRoom(old.tab) !== to) Object.assign(to ? scene : room, C.deletePatch(e.id));
+    Object.assign(to ? rp : scene, C.entryPatch(e));
+    if (old && inRoom(old.tab) !== to) Object.assign(to ? scene : rp, C.deletePatch(e.id));
     const i = entries.findIndex((x) => x.id === e.id);
     if (i >= 0) entries[i] = e; else entries.push(e);
   }
   entries.sort((a, b) => (a.order - b.order) || String(a.name).localeCompare(String(b.name)));
   render();
-  return Promise.all([write(room, true), write(scene)]);
+  return Promise.all([write(rp, true), write(scene)]);
 }
 const saveEntry = (e) => saveEntries([e]);
 // Merge a change into the LATEST copy of an entry (it may have changed since it was drawn).
@@ -97,11 +95,11 @@ function updateEntry(e, patch) {
   return saveEntry({ ...cur, ...(typeof patch === 'function' ? patch(cur) : patch) });
 }
 function deleteEntries(ids) {
-  const scene = {}, room = {};
-  ids.forEach((id) => Object.assign(inRoom((byId(id) || {}).tab) ? room : scene, C.deletePatch(id)));
+  const scene = {}, rp = {};
+  ids.forEach((id) => Object.assign(inRoom((byId(id) || {}).tab) ? rp : scene, C.deletePatch(id)));
   entries = entries.filter((e) => !ids.includes(e.id));
   render();
-  return Promise.all([write(room, true), write(scene)]);
+  return Promise.all([write(rp, true), write(scene)]);
 }
 // Each tab is its own metadata key, so tabs changed by different people never overwrite each other.
 function saveTab(tab) {
@@ -120,7 +118,10 @@ function setTab(id) {
 
 const tabById = (id) => tabs.find((t) => t.id === id);
 // GMs manage every tab; players manage the tabs players made. Nobody deletes the Players tab.
-const canManageTab = (t) => t.id !== C.PLAYERS_TAB && (role === 'GM' || !!t.players);
+const canManageTab = (t) => t.id !== C.PLAYERS_TAB && (role === 'GM' || (!!t.players && !roomLocked(t.id)));
+// Room tabs are read-only for players while the GM is away (nobody to save them).
+const roomLocked = (tabId) => role !== 'GM' && inRoom(tabId) && !(room && room.editable());
+const mayEdit = (e) => C.canEdit(e, role, tabs) && !roomLocked(e.tab);
 
 function addTab() {
   const id = C.uid();
@@ -146,7 +147,7 @@ const canRoom = (t) => !!t && (role === 'GM' || canManageTab(t));
 async function toggleRoom(tab) {
   const toRoom = !tab.room;
   const ask = toRoom
-    ? `Save "${tab.name}" to the room?\n\nIt will show in every scene in this room. Room storage is small (16 kB in all, shared with other extensions): keep room tabs to a few entries. Token links are per scene: attach tokens again in each scene.`
+    ? `Save "${tab.name}" to the room?\n\nIt will show in every scene in this room. The GM's browser keeps it and shares it with the players while the GM is here. Token links are per scene: attach tokens again in each scene.`
     : `Keep "${tab.name}" in this scene only?\n\nIt will be removed from every other scene in this room.`;
   if (!confirm(ask)) return;
   const moved = { ...tab, room: toRoom };
@@ -225,7 +226,7 @@ async function finishPick(sel) {
   }
   const list = entries.filter((e) => e.tab === entry.tab);
   const start = list.indexOf(entry);
-  const targets = [entry, ...list.slice(start + 1).filter((e) => !tokenOf(e) && C.canEdit(e, role, tabs))];
+  const targets = [entry, ...list.slice(start + 1).filter((e) => !tokenOf(e) && mayEdit(e))];
   saveEntries(free.slice(0, targets.length).map((token, i) => C.withTokens(targets[i], [...elsewhere(targets[i]), token])));
 }
 // A room entry keeps the tokens it has in other scenes (they aren't on this map).
@@ -249,7 +250,7 @@ function focusSelected(sel) {
   focus = next;
   // Selecting a tracked token opens its entry; clicking anything else on the map closes it.
   if (active && !next.includes(active)) active = null;
-  const opens = focus.map(byId).find((e) => C.canEdit(e, role, tabs));
+  const opens = focus.map(byId).find((e) => mayEdit(e));
   if (opens) active = opens.id;
   if (!focus.length) { render(); return; }
   const tabsOf = focus.map((id) => byId(id).tab);
@@ -445,7 +446,7 @@ document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && helpOp
 function renderBar() {
   const bar = $('bar');
   bar.replaceChildren();
-  const canAdd = role === 'GM' || C.isPlayerTab(tabById(current));
+  const canAdd = (role === 'GM' || C.isPlayerTab(tabById(current))) && !roomLocked(current);
   if (!canAdd) return;
   const box = el('textarea', { rows: 1, placeholder: 'Goblin x4 15', spellcheck: false });
   const grow = () => { box.style.height = 'auto'; box.style.height = Math.min(120, Math.max(32, box.scrollHeight + 2)) + 'px'; };
@@ -506,7 +507,7 @@ function noteView(value, placeholder, onCommit) {
 function renderNote() {
   const wrap = $('note');
   const tab = tabById(current);
-  const canAdd = role === 'GM' || C.isPlayerTab(tab);
+  const canAdd = (role === 'GM' || C.isPlayerTab(tab)) && !(tab && roomLocked(tab.id));
   if (!tab || !canAdd) { wrap.replaceChildren(); return; }
   wrap.replaceChildren(noteView(tab.note, 'Note', (text) => {
     const cur = tabById(tab.id);
@@ -533,7 +534,7 @@ function fadeLong(name) {
 addEventListener('resize', () => document.querySelectorAll('.row .name').forEach(fadeLong));
 
 function renderEntry(e) {
-  const edit = C.canEdit(e, role, tabs);
+  const edit = mayEdit(e);
   const mask = C.masked(e, role);
   const isOpen = isExpanded(e.id) && edit;
   const wrap = el('div', { className: 'entry' + (isOpen ? ' open' : '') + (e.hidden && role === 'GM' ? ' hidden-entry' : '') + (focus.includes(e.id) ? ' focus' : '') });
@@ -751,7 +752,7 @@ function renderMore(e) {
 // --- Owlbear wiring ---------------------------------------------------------------------
 function reload() {
   if (!sceneReady) return;
-  ({ tabs, entries } = C.readState(sceneMd, roomMd));
+  ({ tabs, entries } = C.readState(sceneMd, room ? room.md() : {}));
   render();
   refreshTokens().catch(() => {});
 }
@@ -782,8 +783,22 @@ if (!OBR.isAvailable) {
       else focusSelected(p.selection || []);
     });
 
-    roomMd = await OBR.room.getMetadata();
-    OBR.room.onMetadataChange((md) => { roomMd = md; reload(); });
+    room = window.ChongRoom(OBR, { answer: false, onChange: () => reload() });
+    await room.ready;
+    $('room-export').addEventListener('click', () => {
+      const a = el('a', { href: URL.createObjectURL(new Blob([C.roomFile(room.list())], { type: 'application/json' })), download: 'chongs-tracker-room.json' });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+    $('room-import').addEventListener('click', () => $('room-file').click());
+    $('room-file').addEventListener('change', async (ev) => {
+      const f = ev.target.files[0];
+      ev.target.value = '';
+      if (!f) return;
+      const md = C.readRoomFile(await f.text());
+      if (!md) { OBR.notification.show("That isn't a room tabs file", 'ERROR'); return; }
+      room.importMd(md);
+    });
     const start = async () => {
       loadScene(await OBR.scene.getMetadata());
       focusSelected((await OBR.player.getSelection()) || []);

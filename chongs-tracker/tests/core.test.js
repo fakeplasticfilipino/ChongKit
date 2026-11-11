@@ -191,7 +191,6 @@ test('tabs saved to the room: read from both, moved both ways', () => {
   const back = C.moveTabPatches({ id: C.PLAYERS_TAB, name: 'Players' }, s.entries, false);
   assert.deepStrictEqual(Object.keys(back.to), [C.entryKey(hero.id)]);
   assert.ok(!C.readState({ ...scene, ...back.to }, { ...room, ...back.from }).tabs[0].room);
-  assert.strictEqual(C.metadataSize({ a: 'é' }), 10, 'bytes, not characters');
 });
 
 test('several tokens per entry; minion rows are groups', () => {

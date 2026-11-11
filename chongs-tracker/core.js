@@ -345,9 +345,6 @@
     for (const e of entries) if (e.tab === tab.id) { Object.assign(to, entryPatch(e)); Object.assign(from, deletePatch(e.id)); }
     return { to, from };
   }
-  // Owlbear's room metadata holds 16 kB in all, shared with every extension.
-  const ROOM_LIMIT = 16 * 1024;
-  const metadataSize = (md) => new TextEncoder().encode(JSON.stringify(md || {})).length;
 
   // --- Room tabs, kept by the GM -------------------------------------------------------
   // Room tabs (and their entries) live in the GM's browser, in the same key/value shape as room
@@ -474,7 +471,7 @@
     newEntry, hpFraction, hpStatus, parseClear, clearMatches, tokensOf, withTokens, reorder,
     readState, entryKey, tabPatch, tabDeletePatch, migrateTabsPatch, entryPatch, deletePatch, moveTabPatches,
     ROOM_CHANNEL, ROOM_STORE, ROOM_PIECE, OFFLINE_AFTER, ASK_EVERY, applyRoomPatch, readRoomCopy, newerList, splitList, joinPieces, roomEditable, moveRoomPatch, roomFile, readRoomFile,
-    ROOM_LIMIT, metadataSize, isPlayerTab, masked, canEdit,
+    isPlayerTab, masked, canEdit,
     BADGE, badgeSpecs,
   };
   if (typeof module !== 'undefined') module.exports = api;
