@@ -66,6 +66,14 @@ Legend: ✅ done · 🚧 in progress · 📋 planned · 💡 idea
 ## ✅ Big HP box (v1.12.0)
 - [x] The ⋯ menu opens with a full-width HP box above Max HP / Extra HP / AC: same bar and calculator as the row's (`hpBox`)
 
+## ✅ Room tabs kept by the GM (v1.13.0)
+- [x] Room tabs live in the GM's browser (localStorage `com.chongkit.tracker/room/<room id>`) and reach players by OBR broadcast (`room.js`); the 16 kB room-metadata limit and its warning are gone
+- [x] Time-based versions; a player's own edit shows at once and is replaced by the GM's next list; only the background page answers players
+- [x] Players are read-only after 30 s without hearing the GM and re-ask every 20 s
+- [x] Old room-metadata keys are moved once by the GM's background, and only read until then
+- [x] Export / Import room tabs in the GM's help (Import: the file wins per key)
+- [ ] Check in a real Owlbear room: GM saves a tab, a player sees it; the player edits HP, the GM sees it; GM leaves, the player goes read-only within 30 s; a pre-1.13.0 room tab survives the GM opening the room
+
 ## Dropped
 - Custom counters (number, slider, checkbox): removed, not wanted
 

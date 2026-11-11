@@ -135,9 +135,11 @@ A separate tool with its own rules. It is **system-agnostic**: no Nimble rules, 
    Still no dice: HP boxes do arithmetic (`20-3`), the table rolls real dice.
 3. **State lives in the scene's metadata**: one key per entry (`com.chongkit.tracker/e/<id>`) and one
    key per tab (`com.chongkit.tracker/t/<id>`), deleted = `null`. The one exception: a tab the user
-   saves to the room lives, with its entries, in the room's metadata under the same keys (the room
-   holds only 16 kB, so it warns); `t/players` there only marks the Players tab as a room tab.
-   The old single `com.chongkit.tracker/tabs` key is only read to migrate it. Token badges
+   saves to the room (and its entries, same keys) lives in the GM's browser, in localStorage
+   `com.chongkit.tracker/room/<room id>`, and reaches players by broadcast on `com.chongkit.tracker/room`
+   (`room.js`). Players keep the last copy and are read-only while the GM is away. Old room-metadata
+   keys are moved once by the GM's background and only read until then; `t/players` there only marks
+   the Players tab as a room tab. The old single `com.chongkit.tracker/tabs` key is only read to migrate it. Token badges
    are local items drawn by `background.js`, never saved.
 4. **The Owlbear SDK is the one install exception**: `vendor/obr-sdk.js` is `@owlbear-rodeo/sdk`
    bundled once with esbuild into a single ESM file and committed. Everything else stays plain
