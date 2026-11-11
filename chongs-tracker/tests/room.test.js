@@ -73,3 +73,57 @@ test('room.js: old room metadata moves into the GM copy; big lists arrive in pie
   for (let i = 0; i < 20; i++) await tick();
   assert.strictEqual(Object.keys(p.md()).filter((k) => k.startsWith(E)).length, 401);
 });
+
+test('room.js: a GM restarting from an empty copy still wins over players holding a higher v', async () => {
+  const w = world(), gm = w.obr('GM'), pl = w.obr('PLAYER');
+  const ps = memStore();
+  ps.setItem(C.ROOM_STORE + 'room1', JSON.stringify({ v: 50, md: { [E + 'old']: { id: 'old' } } }));
+  const g = window.ChongRoom(gm.OBR, { answer: true, storage: memStore() });
+  await g.ready;
+  const p = window.ChongRoom(pl.OBR, { storage: ps });
+  await p.ready;
+  await g.write({ [E + 'n']: { id: 'n', hp: 1 } });
+  for (let i = 0; i < 5; i++) await tick();
+  assert.ok(g.list().v > 50, 'time-based version');
+  assert.ok(p.md()[E + 'n'], 'the player took the GM\'s list');
+  assert.ok(!p.md()[E + 'old']);
+});
+
+test('room.js: panel and background of one GM browser do not lose each other\'s writes', async () => {
+  const w = world(), a = w.obr('GM'), b = w.obr('GM');
+  const store = memStore();
+  const panel = window.ChongRoom(a.OBR, { answer: false, storage: store });
+  const bg = window.ChongRoom(b.OBR, { answer: true, storage: store });
+  await panel.ready; await bg.ready;
+  await panel.write({ [E + 'A']: { id: 'A' } });
+  await bg.write({ [E + 'B']: { id: 'B' } }); // no storage event or broadcast delivered in between
+  const saved = C.readRoomCopy(store.getItem(C.ROOM_STORE + 'room1'));
+  assert.ok(saved.md[E + 'A'] && saved.md[E + 'B']);
+});
+
+test('room.js: a player\'s quick edit goes away when the GM\'s next list does not have it', async () => {
+  const w = world(), gm = w.obr('GM'), pl = w.obr('PLAYER');
+  const g = window.ChongRoom(gm.OBR, { answer: false, storage: memStore() }); // never applies edits
+  await g.ready;
+  await g.write({ [E + '1']: { id: '1', hp: 5 } });
+  const p = window.ChongRoom(pl.OBR, { storage: memStore() });
+  await p.ready;
+  gm.OBR.broadcast.sendMessage(C.ROOM_CHANNEL, { type: 'list', v: g.list().v, md: g.list().md });
+  await tick(); await tick();
+  assert.ok(p.editable());
+  assert.ok(await p.write({ [E + '1']: { id: '1', hp: 2 } }));
+  assert.strictEqual(p.md()[E + '1'].hp, 2, 'shown at once');
+  gm.OBR.broadcast.sendMessage(C.ROOM_CHANNEL, { type: 'list', v: g.list().v, md: g.list().md }); // same v
+  await tick(); await tick();
+  assert.strictEqual(p.md()[E + '1'].hp, 5, 'the dropped edit is gone');
+});
+
+test('room.js: a GM change that alters nothing does not bump the version', async () => {
+  const w = world(), gm = w.obr('GM');
+  const g = window.ChongRoom(gm.OBR, { answer: true, storage: memStore() });
+  await g.ready;
+  await g.write({ [E + '1']: { id: '1' } });
+  const v = g.list().v;
+  await g.write({ [E + '1']: { id: '1' }, 'other.ext/key': 2 });
+  assert.strictEqual(g.list().v, v);
+});

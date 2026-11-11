@@ -6,28 +6,33 @@
   const C = window.ChongCore;
 
   window.ChongRoom = function (OBR, { answer = false, onChange = () => {}, storage = window.localStorage } = {}) {
-    let role = 'PLAYER', key = null, list = { v: 0, md: {} }, legacy = {}, heard = 0;
+    let role = 'PLAYER', key = null, list = { v: 0, md: {} }, legacy = {}, heard = 0, pending = [];
     const buf = new Map();
     const load = () => { try { list = C.readRoomCopy(storage.getItem(key)); heard = Number(storage.getItem(key + '/heard')) || 0; } catch {} };
     const save = () => { try { storage.setItem(key, JSON.stringify(list)); } catch {} };
     const send = (data) => OBR.broadcast.sendMessage(C.ROOM_CHANNEL, data, { destination: 'REMOTE' }).catch(() => {});
     const sendList = () => C.splitList({ type: 'list', v: list.v, md: list.md }, C.uid()).forEach(send);
     const editable = () => C.roomEditable(heard, Date.now(), role);
-    const md = () => ({ ...legacy, ...list.md });
+    const md = () => pending.reduce((m, p) => C.applyRoomPatch(m, p), { ...legacy, ...list.md });
+    const nextV = () => Math.max(list.v + 1, Date.now()); // time-based: a GM restarting from an empty copy still wins
     const ours = (m) => Object.fromEntries(Object.entries(m).filter(([k]) => k.startsWith(C.KEYS.tabPrefix) || k.startsWith(C.KEYS.entryPrefix)));
     const hear = () => { if (role === 'GM') return; heard = Date.now(); try { storage.setItem(key + '/heard', String(heard)); } catch {} };
 
     function apply(patch) { // GM: the real copy changes
-      list = { v: list.v + 1, md: C.applyRoomPatch(list.md, patch) };
+      if (role === 'GM') load(); // the panel and the background share one saved copy: start from the latest
+      const next = C.applyRoomPatch(list.md, patch);
+      if (JSON.stringify(next) === JSON.stringify(list.md)) return; // nothing of ours changed
+      list = { v: nextV(), md: next };
       save();
       sendList();
       onChange();
     }
     function got(l) { // a list from a GM
-      if (!C.newerList(list, l)) { hear(); return; }
-      list = { v: l.v, md: C.readRoomCopy(JSON.stringify(l)).md };
+      const fresh = C.newerList(list, l);
+      if (fresh) list = { v: l.v, md: C.readRoomCopy(JSON.stringify(l)).md };
       hear();
-      save();
+      if (fresh) save();
+      pending = []; // the GM's copy now decides; a quick edit it dropped goes away
       onChange();
     }
     function onMessage(data) {
@@ -39,9 +44,11 @@
       if (data.type === 'edit') apply(data.patch);
     }
     async function moveOld() { // once per room: our old keys in room metadata move into the GM's copy
-      const m = C.moveRoomPatch(await OBR.room.getMetadata(), list.md);
+      const meta = await OBR.room.getMetadata();
+      load();
+      const m = C.moveRoomPatch(meta, list.md);
       if (!m) return;
-      list = { v: list.v + 1, md: m.md };
+      list = { v: nextV(), md: m.md };
       save();
       sendList();
       await OBR.room.setMetadata(m.deletes);
@@ -52,7 +59,7 @@
       if (role === 'GM') { apply(patch); return true; }
       if (!editable()) { OBR.notification.show('Room tabs are read-only until the GM is back', 'WARNING'); return false; }
       send({ type: 'edit', patch });
-      list = { v: list.v, md: C.applyRoomPatch(list.md, patch) }; // shown now; the GM's next list replaces it
+      pending.push(patch); // shown now; the GM's next list replaces it
       onChange();
       return true;
     }
