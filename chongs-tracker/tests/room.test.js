@@ -127,3 +127,36 @@ test('room.js: a GM change that alters nothing does not bump the version', async
   await g.write({ [E + '1']: { id: '1' }, 'other.ext/key': 2 });
   assert.strictEqual(g.list().v, v);
 });
+
+// A fake clock shared by every page of a test; ticks are run by hand (no real 20 s waits).
+function clock(t = 1e12) { const c = () => t; c.add = (ms) => { t += ms; }; return c; }
+const quiet = { askEvery: 1e9 };
+
+test('room.js: a player stays editable across many ticks while the GM is here but idle', async () => {
+  const w = world(), gm = w.obr('GM'), pl = w.obr('PLAYER'), now = clock();
+  const g = window.ChongRoom(gm.OBR, { answer: true, storage: memStore(), now, ...quiet });
+  await g.ready;
+  await g.write({ [E + '1']: { id: '1', hp: 5 } });
+  const p = window.ChongRoom(pl.OBR, { storage: memStore(), now, ...quiet });
+  await p.ready; await tick(); await tick();
+  assert.ok(p.editable());
+  for (let i = 0; i < 4; i++) {
+    now.add(C.ASK_EVERY);
+    assert.ok(p.editable(), `still editable before tick ${i + 1}`);
+    p.tick();
+    await tick(); await tick();
+    assert.ok(p.editable(), `editable after tick ${i + 1}`);
+  }
+});
+
+test('room.js: blocked localStorage (the getter throws) still works, in memory', async () => {
+  const before = Object.getOwnPropertyDescriptor(window, 'localStorage');
+  Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new Error('SecurityError'); } });
+  try {
+    const w = world(), gm = w.obr('GM');
+    const g = window.ChongRoom(gm.OBR, { answer: true, ...quiet });
+    await g.ready;
+    await g.write({ [E + '1']: { id: '1', hp: 4 } });
+    assert.strictEqual(g.md()[E + '1'].hp, 4);
+  } finally { Object.defineProperty(window, 'localStorage', before); }
+});
