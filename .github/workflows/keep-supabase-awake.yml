@@ -1,6 +1,6 @@
 # Supabase's free plan pauses a project after about a week without use. This pings the Character
-# Sheet's project (and, if its secrets are set, the Capstone Project) once a day so neither goes idle.
-# A ping that can't reach a project fails the run, so GitHub emails you when one is paused anyway.
+# Sheet's project once a day so it never goes idle (the Capstone Project has its own, in its repo).
+# A ping that can't reach the project fails the run, so GitHub emails you if it pauses anyway.
 name: Keep Supabase awake
 
 on:
@@ -22,13 +22,3 @@ jobs:
           [ "$code" != "000" ]
           curl -sf -o /dev/null -H "apikey: $KEY" "$URL/auth/v1/health"
 
-      - name: Capstone Project
-        env:
-          URL: ${{ secrets.CAPSTONE_SUPABASE_URL }}
-          KEY: ${{ secrets.CAPSTONE_SUPABASE_KEY }}
-        run: |
-          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "Capstone secrets not set: skipped"; exit 0; fi
-          code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $KEY" "$URL/rest/v1/")
-          echo "rest: $code"
-          [ "$code" != "000" ]
-          curl -sf -o /dev/null -H "apikey: $KEY" "$URL/auth/v1/health"
