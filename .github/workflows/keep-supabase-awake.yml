@@ -1,0 +1,34 @@
+# Supabase's free plan pauses a project after about a week without use. This pings the Character
+# Sheet's project (and, if its secrets are set, the Capstone Project) once a day so neither goes idle.
+# A ping that can't reach a project fails the run, so GitHub emails you when one is paused anyway.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: '17 3 * * *' # every day, 03:17 UTC
+  workflow_dispatch: {} # "Run workflow" button, for trying it by hand
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Character Sheet (chong-nimble-sheet)
+        env:
+          URL: https://fmkbvoukbrxjbzlexjhu.supabase.co
+          KEY: sb_publishable_p327nFvW--OtzVX2W7saxA_1tEietW5 # the sheet's public key (also in character-sheet/cloud.js)
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $KEY" "$URL/rest/v1/character_sheets?select=id&limit=1")
+          echo "rest: $code"
+          [ "$code" != "000" ]
+          curl -sf -o /dev/null -H "apikey: $KEY" "$URL/auth/v1/health"
+
+      - name: Capstone Project
+        env:
+          URL: ${{ secrets.CAPSTONE_SUPABASE_URL }}
+          KEY: ${{ secrets.CAPSTONE_SUPABASE_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "Capstone secrets not set: skipped"; exit 0; fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $KEY" "$URL/rest/v1/")
+          echo "rest: $code"
+          [ "$code" != "000" ]
+          curl -sf -o /dev/null -H "apikey: $KEY" "$URL/auth/v1/health"
